@@ -10,33 +10,29 @@ struct ScenePiecesTests {
     /// appareils. Avec la sonde : le routeur 3 est l'appareil E...04 (un appareil qui route), E...02
     /// est l'enfant de l'Apple TV, E...03 celui du HomePod ; E...05 n'a pas de parent connu.
     static func graphe(sonde: Bool) throws -> GrapheReseau {
-        var b = Banc()
-        let omr = "fd00:5555:6666::/64"
-        b.routeur("Apple TV", partition: partition, role: .chef, primaire: true, lien: "fe80::1", omr: omr,
-                  xa: "E0000000000000A1")
-        b.routeur("HomePod", partition: partition, lien: "fe80::2", omr: omr, xa: "E0000000000000A2")
-        for k in 2...5 {
-            b.appareil(String(format: "E00000000000000%d", k), noeud: k, adresses: ["fd00:5555:6666:0:b00::\(k)"])
+        let ext = ["Apple TV": "E0000000000000A1", "HomePod": "E0000000000000A2", "E000000000000002": "E000000000000002",
+                   "E000000000000003": "E000000000000003", "E000000000000004": "E000000000000004",
+                   "E000000000000005": "E000000000000005"]
+        func noeud(_ id: String, _ genre: GrapheReseau.Genre, routeur: Bool = false, bordure: Bool = false) -> GrapheReseau.Noeud {
+            .init(id: id, genre: genre, partition: partition, routeur: routeur, bordure: bordure, inconnu: false,
+                  extMac: ext[id])
         }
-        let i = Instantane(annonces: b.annonces)
-        let r = try #require(i.reseaux.first)
-        let apps = i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
-        guard sonde else { return GrapheReseau(reseau: r, appareils: apps) }
-        var c = ConstructionMaillage(date: Date(timeIntervalSince1970: 1_790_000_000), partition: partition)
-        c.routeurs(Route64(sequence: 0, routes: (1...3).map {
-            RouteRouteur(idRouteur: $0, qualiteSortante: 3, qualiteEntrante: 3, cout: 1)
-        }), chef: 1)
-        c.identite("E0000000000000A1", routeur: 1)
-        c.identite("E0000000000000A2", routeur: 2)
-        c.identite("E000000000000004", routeur: 3)
-        c.marquer(1, bordure: true, bbrPrincipal: true)
-        c.marquer(2, bordure: true)
-        c.lien(1, 2, sortante: 3, entrante: 2)
-        c.lien(1, 3, sortante: 2, entrante: 2)
-        c.enfant(EnfantMaillage(rloc16: 0x0401, extMac: "E000000000000002", qualite: 3, source: .tableEnfants))
-        c.enfant(EnfantMaillage(rloc16: 0x0801, extMac: "E000000000000003", qualite: 2, source: .tableEnfants))
-        let m = MaillageAffiche(maillage: c.maillage(), reseau: r, appareils: i.appareils)
-        return GrapheReseau(reseau: r, appareils: apps, maillage: m)
+        let noeuds = [noeud("Apple TV", .centre, routeur: true, bordure: true),
+                      noeud("HomePod", .routeur, routeur: true, bordure: true),
+                      noeud("E000000000000002", .appareil),
+                      noeud("E000000000000003", .appareil),
+                      noeud("E000000000000004", .appareil, routeur: sonde),
+                      noeud("E000000000000005", .appareil)]
+        guard sonde else {
+            let tous = ["HomePod", "E000000000000002", "E000000000000003", "E000000000000004", "E000000000000005"]
+            return GrapheReseau(noeuds: noeuds, liens: tous.map { .init(de: $0, vers: "Apple TV") })
+        }
+        return GrapheReseau(noeuds: noeuds, liens: [
+            .init(de: "Apple TV", vers: "HomePod", genre: .radio, qualite: 2),
+            .init(de: "Apple TV", vers: "E000000000000004", genre: .radio, qualite: 2),
+            .init(de: "E000000000000002", vers: "Apple TV", genre: .parent, qualite: 3),
+            .init(de: "E000000000000003", vers: "HomePod", genre: .parent, qualite: 2),
+            .init(de: "E000000000000005", vers: "Apple TV")])
     }
 
     static let libelles = ["Apple TV": "Apple TV 👑", "HomePod": "HomePod", "E000000000000002": "Lampe salon",

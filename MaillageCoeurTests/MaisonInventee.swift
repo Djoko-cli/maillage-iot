@@ -13,37 +13,30 @@ enum MaisonInventee {
     static func appareil(_ j: Int) -> String { String(format: "E2%014X", j) }
     static func extMacRouteur(_ k: Int) -> String { String(format: "E1%014X", k) }
 
+    /// Graphe ecrit a la main, sans aucun type de protocole : le routeur 0 est le centre, les autres sont des
+    /// routeurs de bordure relies en chaine par des liens radio de qualite 2 ; chaque appareil est l'enfant
+    /// (lien parent, qualite 2) du routeur de sa piece, les liens parent classes par routeur puis par appareil.
+    /// `FixturesThreadTests` verifie qu'il est identique au graphe que bati `MaisonInventeeThread`.
     static func graphe(pieces: Int, routeurs: Int, appareils: Int) -> GrapheReseau {
-        var b = Banc()
-        let omr = "fd00:5555:6666::/64"
+        var noeuds: [GrapheReseau.Noeud] = []
         for k in 0..<routeurs {
-            b.routeur(routeur(k), partition: partition, role: k == 0 ? .chef : .routeur, primaire: k == 0,
-                      lien: "fe80::\(k + 1)", omr: omr, xa: extMacRouteur(k))
+            noeuds.append(.init(id: routeur(k), genre: k == 0 ? .centre : .routeur, partition: partition, routeur: true,
+                                bordure: true, inconnu: false, extMac: extMacRouteur(k)))
         }
         for j in 0..<appareils {
-            b.appareil(appareil(j), noeud: j + 1, adresses: [String(format: "fd00:5555:6666:0:b00::%x", j + 1)])
+            noeuds.append(.init(id: appareil(j), genre: .appareil, partition: partition, routeur: false, bordure: false,
+                                inconnu: false, extMac: appareil(j)))
         }
-        let i = Instantane(annonces: b.annonces)
-        let r = i.reseaux[0]
-        let apps = i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
-        var c = ConstructionMaillage(date: Date(timeIntervalSince1970: 1_790_000_000), partition: partition)
-        c.routeurs(Route64(sequence: 0, routes: (1...routeurs).map {
-            RouteRouteur(idRouteur: $0, qualiteSortante: 3, qualiteEntrante: 3, cout: 1)
-        }), chef: 1)
+        var liens: [GrapheReseau.Lien] = []
+        for k in 1..<max(routeurs, 1) {
+            liens.append(.init(de: routeur(k - 1), vers: routeur(k), genre: .radio, qualite: 2))
+        }
         for k in 0..<routeurs {
-            c.identite(extMacRouteur(k), routeur: k + 1)
-            c.marquer(k + 1, bordure: true, bbrPrincipal: k == 0)
-            if k > 0 { c.lien(k, k + 1, sortante: 3, entrante: 2) }
+            for j in 0..<appareils where (j % pieces) % routeurs == k {
+                liens.append(.init(de: appareil(j), vers: routeur(k), genre: .parent, qualite: 2))
+            }
         }
-        var enfants = [Int](repeating: 0, count: routeurs + 1)
-        for j in 0..<appareils {
-            let parent = (j % pieces) % routeurs + 1
-            enfants[parent] += 1
-            c.enfant(EnfantMaillage(rloc16: UInt16(parent) << 10 | UInt16(enfants[parent]), extMac: appareil(j), qualite: 2,
-                                    source: .tableEnfants))
-        }
-        let m = MaillageAffiche(maillage: c.maillage(), reseau: r, appareils: i.appareils)
-        return GrapheReseau(reseau: r, appareils: apps, maillage: m)
+        return GrapheReseau(noeuds: noeuds, liens: liens)
     }
 
     /// La scene et ses cartes.

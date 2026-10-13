@@ -108,7 +108,16 @@ public struct GrapheReseau: Hashable, Sendable {
     public private(set) var noeuds: [Noeud] = []
     public private(set) var liens: [Lien] = []
 
+    /// Graphe donne tel quel : la construction propre a un protocole (ProtocoleThread : `init(reseau:appareils:maillage:)`)
+    /// delegue ici, et les tests du coeur s'en servent sans aucun type de protocole.
+    public init(noeuds: [Noeud], liens: [Lien]) {
+        self.noeuds = noeuds
+        self.liens = liens
+    }
+
     public init(reseau: Reseau, appareils: [AppareilAffiche], maillage: MaillageAffiche? = nil) {
+        var noeuds: [Noeud] = []
+        var liens: [Lien] = []
         let connues = Set(reseau.partitions.map(\.id))
         let parPartition = Dictionary(grouping: appareils) { a in
             a.partition.flatMap { connues.contains($0) ? $0 : nil } ?? ""
@@ -157,6 +166,7 @@ public struct GrapheReseau: Hashable, Sendable {
             noeuds.append(Noeud(id: a.id, genre: .appareil, partition: "", routeur: false, bordure: false,
                                 inconnu: false, extMac: ext(a.id, Self.extMac(hote: a.id))))
         }
+        self.init(noeuds: noeuds, liens: liens)
     }
 
     public func noeud(_ id: String) -> Noeud? { noeuds.first { $0.id == id } }

@@ -371,7 +371,7 @@ EOF
 **Interfaces:**
 - Produces: `public init(noeuds: [GrapheReseau.Noeud], liens: [GrapheReseau.Lien])` ; `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` construits sans aucun type Thread ; `AidesThread.fichierPieces()` et `AidesThread.calendrier` pour les tests Thread.
 
-- [ ] **Step 1: Test du graphe manuel (RED)**
+- [x] **Step 1: Test du graphe manuel (RED)**
 
 `MaillageCoeurTests/GrapheManuelTests.swift` :
 ```swift
@@ -394,7 +394,7 @@ struct GrapheManuelTests {
 Run: `outils/tester.sh MaillageCoeurTests/GrapheManuelTests > .superpowers/sdd/etape1-t4-red.log 2>&1; echo "code=$?"`
 Expected: échec de compilation (`init(noeuds:liens:)` absent).
 
-- [ ] **Step 2: Ajouter l'init**
+- [x] **Step 2: Ajouter l'init**
 
 Dans `GrapheReseau` (le type reste au cœur) :
 ```swift
@@ -407,14 +407,14 @@ Dans `GrapheReseau` (le type reste au cœur) :
 ```
 L'init Thread existant (l. 111) se termine désormais par un appel à cet init, sans autre changement.
 
-- [ ] **Step 3: Fixtures neutres et équivalences**
+- [x] **Step 3: Fixtures neutres et équivalences**
 
 - Dans `FixturesThreadTests.swift`, déplacer **tel quel** le code actuel qui bâtit `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` avec `Banc`, `Instantane`, `ConstructionMaillage` et `MaillageAffiche`, en fonctions `MaisonInventeeThread…` et `grapheThread(sonde:)`.
 - Récrire `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` avec `GrapheReseau(noeuds:liens:)` et des littéraux : mêmes nœuds, mêmes liens, même ordre. Pour les obtenir, afficher une fois le graphe produit par la version Thread (`dump`) et le recopier.
 - Dans `FixturesThreadTests.swift`, un test par fixture : `#expect(versionManuelle == versionThread)` (les deux `GrapheReseau` sont `Hashable`).
 - Copier `PiecesRouteursTests.fichier()` et `JournalTests.calendrier` dans `AidesThreadTests.swift` (`enum AidesThread`), et faire lire ces copies par `PiecesAppareilsTests` (l. 155, 197) et `HistoriqueTests` (l. 109, 131, 143).
 
-- [ ] **Step 4: Vérifier**
+- [x] **Step 4: Vérifier**
 
 Run:
 ```bash
@@ -424,7 +424,7 @@ grep -ln "Banc\|Instantane\|ConstructionMaillage\|MaillageAffiche" MaillageCoeur
 ```
 Expected: `code=0`, `mesures code=0`, `3`, puis `0`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'

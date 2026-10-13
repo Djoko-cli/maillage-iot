@@ -152,7 +152,7 @@ struct PiecesAppareilsTests {
     /// reecrit avec les choix d'appareils sans perdre ceux des routeurs ; une app d'avant lit encore
     /// les choix des routeurs du nouveau fichier.
     @Test func ancienFormat() throws {
-        let url = PiecesRouteursTests.fichier()
+        let url = AidesThread.fichierPieces()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let ancien = """
             {
@@ -194,7 +194,7 @@ struct PiecesAppareilsTests {
     @Test(arguments: [#"["x"]"#, #""texte""#, #"{"Maison inventée": ["x"]}"#,
                       #"{"Maison inventée": {"DEADBEEF00000001": 5}}"#, "null"])
     func appareilsMalForme(champ: String) throws {
-        let url = PiecesRouteursTests.fichier()
+        let url = AidesThread.fichierPieces()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let json = """
             {

@@ -106,7 +106,7 @@ struct HistoriqueTests {
     @Test func routeurHorsPlageNonEcrit() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let h = HistoriqueFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        let h = HistoriqueFichiers(dossier: d, calendrier: AidesThread.calendrier)
         let date = Self.date("2026-09-30T10:00:00Z")
         typealias R = ReleveMaillage
         try h.ajouter(R(date: date, partition: "0000000A",
@@ -128,7 +128,7 @@ struct HistoriqueTests {
     @Test func octetNonUTF8() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let h = HistoriqueFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        let h = HistoriqueFichiers(dossier: d, calendrier: AidesThread.calendrier)
         let avant = ReleveMaillage(Self.maillage(Self.date("2026-09-20T10:00:00Z")))
         let apres = ReleveMaillage(Self.maillage(Self.date("2026-09-21T10:00:00Z")))
         try h.ajouter(avant)
@@ -140,7 +140,7 @@ struct HistoriqueTests {
         try h.ajouter(apres)
         #expect(try h.lire(depuis: .distantPast) == [avant, apres])
 
-        let j = JournalFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        let j = JournalFichiers(dossier: d, calendrier: AidesThread.calendrier)
         let e1 = Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille)
         let e2 = Evenement(date: Self.date("2026-09-11T00:00:00Z"), type: .veille)
         try j.ajouter([e1])
