@@ -738,16 +738,16 @@ EOF
 **Interfaces:**
 - Produces: même cible, même module ; seul le rangement change. Les vues de la scène liées au modèle Thread (`FicheNoeud`, `LegendePieces`, `SigneLegende`, `DessinNoeud`, `LibellesNoeuds`, `PiecesChoisies`) restent où elles sont : elles seront séparées à l'étape 3, avec la scène à deux protocoles.
 
-- [ ] **Step 1: Déplacer**
+- [x] **Step 1: Déplacer**
 
 Les `git mv` de la liste ci-dessus, puis `xcodegen generate --quiet`.
 
-- [ ] **Step 2: Vérifier**
+- [x] **Step 2: Vérifier**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t8.log 2>&1; echo "code=$?"`
 Expected: `code=0` ; `CataloguesTests` passe (même cible, mêmes `.stringsdata`).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
