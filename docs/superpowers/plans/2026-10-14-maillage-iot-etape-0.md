@@ -496,7 +496,7 @@ Expected: `MaillageIoT.xcodeproj` existe, et le dernier compte vaut `0` (ignoré
 
 Cocher dans ce fichier les étapes des tâches 2, 3 et 4 déjà faites et vérifiées (la tâche 1 est cochée quand la session Thread a répondu).
 
-- [ ] **Step 6: Contrôler ce qui va être commité**
+- [x] **Step 6: Contrôler ce qui va être commité**
 
 ```bash
 git add .gitignore README.md README.fr.md project.yml outils/garde.py outils/tests/test_garde.py outils/pre-push docs/superpowers
@@ -509,7 +509,7 @@ python3 $A/zigbee/controles.py fichiers --table $A/zigbee/table.json $F > $A/sor
 ```
 Expected: neuf fichiers indexés, rien sous `.superpowers/` ni `garde.local.txt` ; `garde=0`, `thread code=0`, `zigbee code=0`.
 
-- [ ] **Step 7: Premier commit**
+- [x] **Step 7: Premier commit**
 
 ```bash
 git commit -q -F - <<'EOF'
@@ -537,7 +537,7 @@ Critère de sortie de l'étape 0 (spec, section 6.1). Tout se passe en local : u
 - Consumes: le hook de la tâche 3, le commit racine de la tâche 4.
 - Produces: la preuve que le hook accepte un push propre et refuse chaque fuite plantée ; aucune trace d'essai à la fin (ni remote, ni branche, ni objet).
 
-- [ ] **Step 1: Écrire le planteur**
+- [x] **Step 1: Écrire le planteur**
 
 `.superpowers/essai-garde/planter.py` :
 
@@ -610,7 +610,7 @@ git init -q --bare .superpowers/essai-garde.git
 git remote add essai "$PWD/.superpowers/essai-garde.git"
 ```
 
-- [ ] **Step 2: Un push propre est accepté, commit racine contrôlé**
+- [x] **Step 2: Un push propre est accepté, commit racine contrôlé**
 
 ```bash
 git push essai main; echo "code=$?"
@@ -618,7 +618,7 @@ git diff-tree --root --no-commit-id --name-only -r "$(git rev-list --max-parents
 ```
 Expected: `code=0` ; les bilans des deux contrôles affichés par le hook (sur stderr) ; le compte vaut `9` (tous les fichiers du commit racine sont contrôlés).
 
-- [ ] **Step 3: Un identifiant hexadécimal, autre casse et autres séparateurs, est refusé**
+- [x] **Step 3: Un identifiant hexadécimal, autre casse et autres séparateurs, est refusé**
 
 ```bash
 git checkout -q -b essai-hexa main
@@ -629,7 +629,7 @@ git checkout -q main && git branch -q -D essai-hexa
 ```
 Expected: `code=1`, avec « la garde a trouve un identifiant reel » et « push refuse ».
 
-- [ ] **Step 4: Le prénom réel dans un fichier est refusé**
+- [x] **Step 4: Le prénom réel dans un fichier est refusé**
 
 ```bash
 git checkout -q -b essai-prenom main
@@ -640,7 +640,7 @@ git checkout -q main && git branch -q -D essai-prenom
 ```
 Expected: `code=1`, avec « push refuse ».
 
-- [ ] **Step 5: Un nom réel connu du seul contrôle de Thread est refusé**
+- [x] **Step 5: Un nom réel connu du seul contrôle de Thread est refusé**
 
 ```bash
 git checkout -q -b essai-nom main
@@ -651,7 +651,7 @@ git checkout -q main && git branch -q -D essai-nom
 ```
 Expected: `code=1`, avec « le controle thread a trouve un identifiant ». Si le push passe, s'arrêter et le signaler à Djoko : le contrôle de Thread ne couvre pas ce nom en mode `fichiers`.
 
-- [ ] **Step 6: Le prénom réel dans un message de commit seulement est refusé**
+- [x] **Step 6: Le prénom réel dans un message de commit seulement est refusé**
 
 ```bash
 git checkout -q -b essai-message main
@@ -663,7 +663,7 @@ rm -f .superpowers/essai-garde/message.txt
 ```
 Expected: `code=1`, avec « push refuse » (refus par un contrôle sur le message).
 
-- [ ] **Step 7: `garde.local.txt` absent : refus**
+- [x] **Step 7: `garde.local.txt` absent : refus**
 
 ```bash
 git checkout -q -b essai-sans-liste main
@@ -675,7 +675,7 @@ git checkout -q main && git branch -q -D essai-sans-liste
 ```
 Expected: `code=1`, avec « garde.local.txt absent ou vide : push refuse » ; `garde.local.txt` de retour à la racine.
 
-- [ ] **Step 8: Effacer toute trace de l'essai**
+- [x] **Step 8: Effacer toute trace de l'essai**
 
 ```bash
 git remote remove essai
@@ -687,7 +687,7 @@ python3 outils/garde.py; echo "garde=$?"
 ```
 Expected: `remotes : 0 ; branches distantes : 0` ; `commits : 1` (ou 2 si les cases ont déjà été commitées) ; `branches : main` ; `garde=0`.
 
-- [ ] **Step 9: Cocher les cases et commiter**
+- [x] **Step 9: Cocher les cases et commiter**
 
 Cocher les étapes faites des tâches 4 et 5 dans ce plan, puis :
 
