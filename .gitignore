@@ -34,3 +34,7 @@ passeur-demande.json
 releve-maison.json
 noms-pont.json
 appariements-maison.json
+# Info.plist generes par xcodegen (project.yml, info:)
+MaillageIoT/Info.plist
+Passeur/Info.plist
+Masqueur/Info.plist

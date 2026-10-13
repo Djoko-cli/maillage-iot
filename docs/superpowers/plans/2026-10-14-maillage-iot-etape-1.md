@@ -47,7 +47,7 @@
 **Interfaces:**
 - Produces: le projet `MaillageIoT.xcodeproj` (généré), schémas `MaillageIoT`, `MaillageCoeur`, `Passeur` ; module de l'app `MaillageIoT` (`@testable import MaillageIoT`) ; `struct MaillageIoTApp` ; `bash outils/controler-index.sh` (code 0 si l'index est propre).
 
-- [ ] **Step 1: Recopier les fichiers suivis de `15a499a`**
+- [x] **Step 1: Recopier les fichiers suivis de `15a499a`**
 
 ```bash
 cd ~/Dev/maillage-merge
@@ -63,7 +63,7 @@ git status --short | head -20
 ```
 Expected: les dossiers recopiés apparaissent non suivis ; `project.yml` apparaît modifié (celui de Thread a remplacé celui de l'étape 0).
 
-- [ ] **Step 2: Écrire `outils/controler-index.sh`**
+- [x] **Step 2: Écrire `outils/controler-index.sh`**
 
 ```bash
 #!/bin/bash
@@ -89,7 +89,7 @@ echo "controler-index : ${#liste[@]} fichier(s) indexe(s), $fautes defaut(s)"
 ```
 Puis `chmod +x outils/controler-index.sh`.
 
-- [ ] **Step 3: Adapter `project.yml`**
+- [x] **Step 3: Adapter `project.yml`**
 
 Sur la copie de Thread (numéros de ligne : `inventaire-app.md` §1 et §2), changer exactement :
 - `name: MaillageThread` → `name: MaillageIoT` ; `bundleIdPrefix: fr.djoko.maillage` → `fr.djoko.maillage.iot` ;
@@ -101,7 +101,7 @@ Sur la copie de Thread (numéros de ligne : `inventaire-app.md` §1 et §2), cha
 - cibles `Passeur`, `Masqueur`, `PasseurTests`, schémas `Passeur` et `MaillageCoeur` : **aucun changement** ;
 - en tête, remplacer le commentaire de Thread par : `# Maillage IoT, projet XcodeGen : ce fichier fait foi (le .xcodeproj est genere, jamais commite).`
 
-- [ ] **Step 4: Renommer le module et l'app dans le code et les tests**
+- [x] **Step 4: Renommer le module et l'app dans le code et les tests**
 
 ```bash
 grep -rl "@testable import MaillageThread" MaillageIoTTests | xargs sed -i '' 's/@testable import MaillageThread$/@testable import MaillageIoT/'
@@ -115,7 +115,7 @@ Puis, à la main :
 - `MaillageIoTTests/DemarrageTests.swift:8` : identifiant attendu `fr.djoko.maillage.iot` ;
 - `MaillageIoTTests/MisesAJourTests.swift` : version attendue `1.0.0` (l. 15), flux `https://raw.githubusercontent.com/Djoko-cli/maillage-iot/main/appcast.xml` (l. 16), services `["fr.djoko.maillage.iot-spks", "fr.djoko.maillage.iot-spki"]` (l. 32).
 
-- [ ] **Step 5: Adapter les scripts**
+- [x] **Step 5: Adapter les scripts**
 
 - `outils/tester.sh` : `DD` par défaut `$HOME/Library/Developer/Xcode/DerivedData/maillage-iot`, journal `${TMPDIR:-/tmp}/maillage-iot-tests.log`, `-project MaillageIoT.xcodeproj -scheme MaillageIoT`, exemple d'en-tête `MaillageIoTTests`.
 - `outils/mesurer.sh` : `DD` par défaut `.../DerivedData/maillage-iot`, journal `maillage-iot-mesures.log`, `-project MaillageIoT.xcodeproj` (schéma `MaillageCoeur` inchangé).
@@ -123,7 +123,7 @@ Puis, à la main :
 
 Puis : `grep -rn "MaillageThread\|DerivedData/maillage\"\|DerivedData/maillage$" outils/*.sh | wc -l` → `0`.
 
-- [ ] **Step 6: `.gitignore` des Info.plist générés**
+- [x] **Step 6: `.gitignore` des Info.plist générés**
 
 Ajouter à `.gitignore`, sous le bloc XcodeGen :
 ```gitignore
@@ -133,12 +133,12 @@ Passeur/Info.plist
 Masqueur/Info.plist
 ```
 
-- [ ] **Step 7: Lancer toute la suite**
+- [x] **Step 7: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t1.log 2>&1; echo "code=$?"; tail -5 .superpowers/sdd/etape1-t1.log`
 Expected: `code=0`, `** TEST SUCCEEDED **` ; environ 1 024 tests Swift (MaillageCoeurTests, MaillageIoTTests, PasseurTests), `ReferenceRejeuTests` compris.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -717,7 +717,7 @@ for d in MaillageCoeurTests ProtocoleThreadTests MaillageIoTTests PasseurTests; 
 ```
 Expected: la somme est égale à celle de l'étape 1 de cette tâche.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'

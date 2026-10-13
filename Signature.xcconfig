@@ -1,0 +1,24 @@
+// Signature de l'app et des tests.
+// Par defaut : ad hoc (le depot compile partout, sans compte Apple), mais
+// l'autorisation "reseau local" ne tient pas d'une compilation a l'autre. Les versions publiees
+// sont signees par le Developer ID de Djoko et notarisees (outils/publier.sh, depuis la 1.2.2 ;
+// jusqu'a la 1.2.1, par le certificat auto-signe `Djoko-cli Code Signing`). Pour que le trousseau
+// et l'autorisation "reseau local" tiennent d'une compilation a l'autre, et soient partages avec
+// la version installee, signer les compilations de travail avec le meme Developer ID : creer
+// Local.xcconfig (ignore par git) avec
+//   CODE_SIGN_IDENTITY = Developer ID Application
+//   DEVELOPMENT_TEAM = <equipe, 10 caracteres>
+// L'equipe : champ OU du certificat, seul a afficher (voir le README, section Signature).
+// Au premier codesign, macOS demande l'acces a la cle du certificat : « Toujours autoriser ».
+// Si une installation ad hoc existe deja, passer a une signature d'equipe fait dire une fois a
+// macOS « L'app differe des versions precedemment ouvertes », et l'autorisation "reseau local"
+// est redemandee.
+// Le runtime renforce est deja pose par project.yml (ENABLE_HARDENED_RUNTIME) : avec une equipe, il
+// charge les cadres de l'app (Sparkle) sans lever la validation des bibliotheques, et les versions
+// publiees l'ont toujours (outils/publication.py).
+// Le passeur n'est signe avec l'equipe (Apple Development) que par outils/passeur.sh
+// (DEVELOPMENT_TEAM en ligne de commande).
+CODE_SIGN_IDENTITY = -
+CODE_SIGN_STYLE = Manual
+DEVELOPMENT_TEAM =
+#include? "Local.xcconfig"

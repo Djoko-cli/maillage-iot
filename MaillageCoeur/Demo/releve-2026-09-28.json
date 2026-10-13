@@ -1,0 +1,836 @@
+{
+  "adresses" : {
+    "02A8C3C5600F136B.local" : [
+      "fd19:961f:2db3:0:c044:3566:4ab:2ea7"
+    ],
+    "0A84D1254BD246AD.local" : [
+      "fd19:961f:2db3:0:b0e5:ae94:d9cb:1bb5"
+    ],
+    "1E5019DAC2638F92.local" : [],
+    "327DF9C45C82BBD6.local" : [
+      "fd19:961f:2db3:0:f841:d7b8:f2d7:91ef"
+    ],
+    "3A5DFAFCAB581AAF.local" : [
+      "fd19:961f:2db3:0:bd39:a951:41b7:4eb1"
+    ],
+    "462DA5B311AFFCC7.local" : [
+      "fd19:961f:2db3:0:73c1:71e8:623d:722c"
+    ],
+    "46F77B36E071F8D0.local" : [
+      "fd19:961f:2db3:0:3dcd:a472:7b22:5f5a"
+    ],
+    "54EF4497B8820000.local" : [
+      "192.0.2.229",
+      "fd4b:36a2:b7fe:200b:56ef:44ff:fe97:b882",
+      "fe80::56ef:44ff:fe97:b882"
+    ],
+    "56B1E064401F74EF.local" : [
+      "fd19:961f:2db3:0:34a9:8acf:e48d:c424"
+    ],
+    "724CC16B32D8F820.local" : [],
+    "7A3D0C7512F8E0A5.local" : [
+      "fd19:961f:2db3:0:a1f5:1ff0:1b6f:8e6a"
+    ],
+    "7AF0B6D5006CF95F.local" : [
+      "fd19:961f:2db3:0:677d:1d26:9f57:d708"
+    ],
+    "82570DF21CF3784B.local" : [
+      "fd19:961f:2db3:0:cbf7:84b1:dd01:3266"
+    ],
+    "86E7BD1A75F28E6D.local" : [
+      "fd19:961f:2db3:0:f36:e6fc:ba42:14fe"
+    ],
+    "8A13154B7B48F32E.local" : [
+      "fd19:961f:2db3:0:566e:9a6a:a2c:a348"
+    ],
+    "8A7E6F2665F737C6.local" : [
+      "fd19:961f:2db3:0:943a:93fd:b118:25fc"
+    ],
+    "9A28601B74FF90A7.local" : [
+      "fd19:961f:2db3:0:fb20:4f79:e070:2263"
+    ],
+    "9A5C1F9FDFAB242D.local" : [
+      "fd19:961f:2db3:0:a4cc:7b49:1d72:2f6"
+    ],
+    "A013F03091F3.local" : [
+      "fd4b:36a2:b7fe:200b:22c1:10eb:885e:1b74",
+      "fd4b:36a2:b7fe:200b:3:fd31:8a5a:34f5",
+      "fe80::5a:d5f3:dc72:e7d6"
+    ],
+    "AA3D322B8A4500C4.local" : [
+      "fd19:961f:2db3:0:afb1:6f5a:4b64:59d"
+    ],
+    "Apple-TV-4K.local" : [
+      "192.0.2.25",
+      "fd4b:36a2:b7fe:200b:3:fd31:8a5a:34f5",
+      "fe80::5a:d5f3:dc72:e7d6"
+    ],
+    "Aqara-Hub-M100-B882.local" : [
+      "192.0.2.229",
+      "fd4b:36a2:b7fe:200b:56ef:44ff:fe97:b882",
+      "fe80::56ef:44ff:fe97:b882"
+    ],
+    "C4299622387B.local" : [
+      "192.0.2.41",
+      "fd4b:36a2:b7fe:200b:c629:96ff:fe05:9d33",
+      "fe80::c629:96ff:fe05:9d33"
+    ],
+    "C4E7AE91A29B.local" : [
+      "192.0.2.176",
+      "fd4b:36a2:b7fe:200b:3eab:72ff:fe8d:bc48",
+      "fe80::3eab:72ff:fe8d:bc48"
+    ],
+    "C656F369B620027F.local" : [
+      "fd19:961f:2db3:0:c577:d983:75df:b299"
+    ],
+    "C663573E49A1EC90.local" : [
+      "fd19:961f:2db3:0:bb71:eb25:bcfd:af8c"
+    ],
+    "D661EE20B3E97C66.local" : [
+      "fd19:961f:2db3:0:5b40:50bf:baa5:33fb"
+    ],
+    "D6ECDD6EF9C0CB0C.local" : [
+      "fd19:961f:2db3:0:27e0:fd28:7a0d:a7c0"
+    ],
+    "DAEF22ACB58F651C.local" : [
+      "fd19:961f:2db3:0:f51b:a670:6338:29f2"
+    ],
+    "FA15027BC681BB16.local" : [
+      "fd19:961f:2db3:0:5f66:410a:6aaf:ce20"
+    ],
+    "HomePod-Avant.local" : [
+      "192.0.2.17",
+      "fd4b:36a2:b7fe:200b:2:fd52:672d:d0f9",
+      "fe80::e1:a1a:d2dc:afd"
+    ],
+    "HomePod-Palier.local" : [
+      "192.0.2.33",
+      "fd4b:36a2:b7fe:200b:2:fd73:e57b:42b6",
+      "fe80::ae:f065:37ea:3d33"
+    ],
+    "HomePod-mini-bureau.local" : [
+      "192.0.2.94",
+      "fd4b:36a2:b7fe:200b:3:fd4f:9c:ed42",
+      "fe80::e9f:1e92:d19b:f027"
+    ],
+    "HomePod-mini-chambre.local" : [
+      "192.0.2.122",
+      "fd4b:36a2:b7fe:200b:2:fd19:961f:2db3",
+      "fe80::7c7:aa90:ed7d:91c"
+    ]
+  },
+  "date" : "2026-09-27T22:15:54.126Z",
+  "hap" : [],
+  "matter" : [
+    {
+      "hote" : "9A5C1F9FDFAB242D.local",
+      "instance" : "20D00941B54CEF76-00000000114877B4",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "3A5DFAFCAB581AAF.local",
+      "instance" : "20D00941B54CEF76-000000001236EC14",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "FA15027BC681BB16.local",
+      "instance" : "20D00941B54CEF76-0000000019E4AED2",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "800"
+      }
+    },
+    {
+      "hote" : "86E7BD1A75F28E6D.local",
+      "instance" : "20D00941B54CEF76-00000000245E9BF9",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "56B1E064401F74EF.local",
+      "instance" : "20D00941B54CEF76-00000000249F17D3",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "2000"
+      }
+    },
+    {
+      "hote" : "DAEF22ACB58F651C.local",
+      "instance" : "20D00941B54CEF76-000000002EBC302E",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "8A7E6F2665F737C6.local",
+      "instance" : "20D00941B54CEF76-000000002F165372",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "02A8C3C5600F136B.local",
+      "instance" : "20D00941B54CEF76-0000000032AFDA21",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "462DA5B311AFFCC7.local",
+      "instance" : "20D00941B54CEF76-00000000393F0FD1",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "C4299622387B.local",
+      "instance" : "20D00941B54CEF76-000000004F63C86C",
+      "port" : 5540,
+      "txt" : {
+        "t" : "6"
+      }
+    },
+    {
+      "hote" : "AA3D322B8A4500C4.local",
+      "instance" : "20D00941B54CEF76-000000004F8D892B",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "46F77B36E071F8D0.local",
+      "instance" : "20D00941B54CEF76-0000000050D0F99E",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1000",
+        "sii" : "2800",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "D6ECDD6EF9C0CB0C.local",
+      "instance" : "20D00941B54CEF76-000000005C0F6B90",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1000",
+        "sii" : "2800",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "C4E7AE91A29B.local",
+      "instance" : "20D00941B54CEF76-0000000064BE2AED",
+      "port" : 5540,
+      "txt" : {
+        "mip4" : "192.0.2.176",
+        "mip6" : "fe80:0000:0000:0000:3eab:72ff:fe8d:bc48",
+        "vp" : "4933+8193"
+      }
+    },
+    {
+      "hote" : "7AF0B6D5006CF95F.local",
+      "instance" : "20D00941B54CEF76-000000007D3462FD",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sii" : "3300",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "C656F369B620027F.local",
+      "instance" : "20D00941B54CEF76-00000000921B13C7",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "8A13154B7B48F32E.local",
+      "instance" : "20D00941B54CEF76-000000009600E098",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "800"
+      }
+    },
+    {
+      "hote" : "D661EE20B3E97C66.local",
+      "instance" : "20D00941B54CEF76-00000000A923B01B",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "C663573E49A1EC90.local",
+      "instance" : "20D00941B54CEF76-00000000BF530F42",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "A013F03091F3.local",
+      "instance" : "20D00941B54CEF76-00000000CD84E62D",
+      "port" : 58097,
+      "txt" : {
+        "t" : "2"
+      }
+    },
+    {
+      "hote" : "0A84D1254BD246AD.local",
+      "instance" : "20D00941B54CEF76-00000000D5648118",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "7A3D0C7512F8E0A5.local",
+      "instance" : "20D00941B54CEF76-00000000E5902C49",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "82570DF21CF3784B.local",
+      "instance" : "20D00941B54CEF76-00000000F497B574",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2060",
+        "sat" : "1500",
+        "sii" : "3500"
+      }
+    },
+    {
+      "hote" : "82570DF21CF3784B.local",
+      "instance" : "30FC8F95E0E1A385-0000000003C6D42C",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2060",
+        "sat" : "1500",
+        "sii" : "3500"
+      }
+    },
+    {
+      "hote" : "D661EE20B3E97C66.local",
+      "instance" : "30FC8F95E0E1A385-00000000093ACA37",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "9A28601B74FF90A7.local",
+      "instance" : "30FC8F95E0E1A385-000000000C2E6109",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1000",
+        "sii" : "2800",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "C656F369B620027F.local",
+      "instance" : "30FC8F95E0E1A385-000000001D6D3FE3",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "C663573E49A1EC90.local",
+      "instance" : "30FC8F95E0E1A385-00000000229F822F",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "462DA5B311AFFCC7.local",
+      "instance" : "30FC8F95E0E1A385-00000000332B458F",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "327DF9C45C82BBD6.local",
+      "instance" : "30FC8F95E0E1A385-000000003E0FD840",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "7A3D0C7512F8E0A5.local",
+      "instance" : "30FC8F95E0E1A385-00000000544EAFC5",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "C4299622387B.local",
+      "instance" : "30FC8F95E0E1A385-00000000672EB2C9",
+      "port" : 5540,
+      "txt" : {
+        "t" : "6"
+      }
+    },
+    {
+      "hote" : "46F77B36E071F8D0.local",
+      "instance" : "30FC8F95E0E1A385-000000006EBDAA16",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1000",
+        "sii" : "2800",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "724CC16B32D8F820.local",
+      "instance" : "30FC8F95E0E1A385-0000000083603FC3",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2060",
+        "sat" : "1500",
+        "sii" : "3500"
+      }
+    },
+    {
+      "hote" : "8A7E6F2665F737C6.local",
+      "instance" : "30FC8F95E0E1A385-000000008700D1B0",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "DAEF22ACB58F651C.local",
+      "instance" : "30FC8F95E0E1A385-00000000876030FE",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "9A5C1F9FDFAB242D.local",
+      "instance" : "30FC8F95E0E1A385-0000000092D8CB08",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "02A8C3C5600F136B.local",
+      "instance" : "30FC8F95E0E1A385-00000000A6946D2B",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "7AF0B6D5006CF95F.local",
+      "instance" : "30FC8F95E0E1A385-00000000A7F7F09A",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sii" : "3300",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "D6ECDD6EF9C0CB0C.local",
+      "instance" : "30FC8F95E0E1A385-00000000B276C879",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1000",
+        "sii" : "2800",
+        "t" : "0"
+      }
+    },
+    {
+      "hote" : "AA3D322B8A4500C4.local",
+      "instance" : "30FC8F95E0E1A385-00000000D08D1552",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "FA15027BC681BB16.local",
+      "instance" : "30FC8F95E0E1A385-00000000D2C076DB",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "800"
+      }
+    },
+    {
+      "hote" : "0A84D1254BD246AD.local",
+      "instance" : "30FC8F95E0E1A385-00000000D9314358",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "56B1E064401F74EF.local",
+      "instance" : "30FC8F95E0E1A385-00000000E36DE95F",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "2000"
+      }
+    },
+    {
+      "hote" : "3A5DFAFCAB581AAF.local",
+      "instance" : "30FC8F95E0E1A385-00000000E8405E23",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "2250",
+        "sat" : "5000",
+        "sii" : "7000"
+      }
+    },
+    {
+      "hote" : "86E7BD1A75F28E6D.local",
+      "instance" : "30FC8F95E0E1A385-00000000F86F0625",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "C4E7AE91A29B.local",
+      "instance" : "30FC8F95E0E1A385-00000000F89487F7",
+      "port" : 5540,
+      "txt" : {
+        "mip4" : "192.0.2.176",
+        "mip6" : "fe80:0000:0000:0000:3eab:72ff:fe8d:bc48",
+        "vp" : "4933+8193"
+      }
+    },
+    {
+      "hote" : "9A5C1F9FDFAB242D.local",
+      "instance" : "C3B8B0F28E0912FD-02CED134ABD97933",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "462DA5B311AFFCC7.local",
+      "instance" : "C3B8B0F28E0912FD-02E0986C1BC92E59",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "1E5019DAC2638F92.local",
+      "instance" : "C3B8B0F28E0912FD-02E212F2F2F51102",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "C663573E49A1EC90.local",
+      "instance" : "C3B8B0F28E0912FD-02E2E85AFF5F90C2",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "AA3D322B8A4500C4.local",
+      "instance" : "C3B8B0F28E0912FD-02E4BC4EED3B7D8B",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "8A7E6F2665F737C6.local",
+      "instance" : "C3B8B0F28E0912FD-02E4F58B1975DA93",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "0A84D1254BD246AD.local",
+      "instance" : "C3B8B0F28E0912FD-02E695095C99A15D",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "86E7BD1A75F28E6D.local",
+      "instance" : "C3B8B0F28E0912FD-02EAA5843AB042D5",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "7A3D0C7512F8E0A5.local",
+      "instance" : "C3B8B0F28E0912FD-02EF97DCD49B35C8",
+      "port" : 5540,
+      "txt" : {
+        "sai" : "1100",
+        "sat" : "500",
+        "sii" : "6000"
+      }
+    },
+    {
+      "hote" : "54EF4497B8820000.local",
+      "instance" : "C3B8B0F28E0912FD-1452926EF65BA600",
+      "port" : 5552,
+      "txt" : {
+        "sai" : "2000",
+        "sat" : "4000",
+        "sii" : "2000",
+        "t" : "6"
+      }
+    }
+  ],
+  "note" : "Capture réelle du 28/09/2026 à 02:15 (heure du Mac, Asia/Tbilisi) par le recenseur : réseau scindé depuis le 27/09 (Aqara HubM100 seul dans la partition E2E79FFC), 57 instances Matter, 2 hôtes sans adresse. Préfixes locaux réduits à celui du réseau local.",
+  "prefixesLocaux" : [
+    "fd4b:36a2:b7fe:200b::/64"
+  ],
+  "routes" : [
+    {
+      "interface" : "en18",
+      "passerelle" : "fe80::56ef:44ff:fe97:b882",
+      "prefixe" : "fd03:54f0:5de:1::/64"
+    },
+    {
+      "interface" : "en0",
+      "passerelle" : "fe80::5a:d5f3:dc72:e7d6",
+      "prefixe" : "fd19:961f:2db3::/64"
+    }
+  ],
+  "routeurs" : [
+    {
+      "hote" : "Apple-TV-4K.local",
+      "instance" : "Apple TV 4K",
+      "port" : 49153,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:83A724B4A5896366CA37D32954240679",
+        "mn" : "BorderRouter",
+        "nn" : "MyHome1482620090",
+        "pt" : "sXkh",
+        "rv" : "1",
+        "sb" : "hex:00000FB1",
+        "sq" : "hex:0A",
+        "tv" : "1.4.0",
+        "vn" : "Apple",
+        "xa" : "hex:0274C96BE3FC6DFD",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    },
+    {
+      "hote" : "Aqara-Hub-M100-B882.local",
+      "instance" : "Aqara HubM100 #DFEB",
+      "port" : 49184,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:C583ABEF8746D365916B70893785360C",
+        "mn" : "HubM100",
+        "nn" : "MyHome1482620090",
+        "omr" : "hex:40FD0354F005DE0001",
+        "pt" : "hex:E2E79FFC",
+        "rv" : "1",
+        "sb" : "hex:000001B1",
+        "sq" : "hex:1C",
+        "tv" : "1.3.0",
+        "vn" : "Aqara",
+        "xa" : "hex:264548D39FE8DFEB",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    },
+    {
+      "hote" : "HomePod-Avant.local",
+      "instance" : "HomePod Avant",
+      "port" : 49153,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:9A0789109D2CF36C5286DB0B2566FD70",
+        "mn" : "BorderRouter",
+        "nn" : "MyHome1482620090",
+        "pt" : "sXkh",
+        "rv" : "1",
+        "sb" : "hex:00000CB1",
+        "sq" : "h",
+        "tv" : "1.4.0",
+        "vn" : "Apple",
+        "xa" : "hex:96D26CBEC20F900F",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    },
+    {
+      "hote" : "HomePod-Palier.local",
+      "instance" : "HomePod Palier",
+      "port" : 49153,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:4E7FB40E81BBDE69F29849BB41BCDDFA",
+        "mn" : "BorderRouter",
+        "nn" : "MyHome1482620090",
+        "pt" : "sXkh",
+        "rv" : "1",
+        "sb" : "hex:00000CB1",
+        "sq" : "hex:03",
+        "tv" : "1.4.0",
+        "vn" : "Apple",
+        "xa" : "hex:EE8F695DF75B373F",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    },
+    {
+      "hote" : "HomePod-mini-bureau.local",
+      "instance" : "HomePod mini bureau",
+      "port" : 49153,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:2AAEB45142BDC6F40D0CA40129CB3599",
+        "mn" : "BorderRouter",
+        "nn" : "MyHome1482620090",
+        "pt" : "sXkh",
+        "rv" : "1",
+        "sb" : "hex:00000CB1",
+        "sq" : "d",
+        "tv" : "1.4.0",
+        "vn" : "Apple",
+        "xa" : "hex:864BDCE801F99266",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    },
+    {
+      "hote" : "HomePod-mini-chambre.local",
+      "instance" : "HomePod mini chambre",
+      "port" : 49153,
+      "txt" : {
+        "at" : "hex:000066CEC7510000",
+        "bb" : "hex:F0BF",
+        "dn" : "DefaultDomain",
+        "id" : "hex:DD1F49E944CE392E6B38889C53FD8F51",
+        "mn" : "BorderRouter",
+        "nn" : "MyHome1482620090",
+        "pt" : "sXkh",
+        "rv" : "1",
+        "sb" : "hex:00000CB1",
+        "sq" : "2",
+        "tv" : "1.4.0",
+        "vn" : "Apple",
+        "xa" : "hex:4AB6839EECEE0DBE",
+        "xp" : "hex:4B36A2B7FEFB200B"
+      }
+    }
+  ]
+}

@@ -1,0 +1,876 @@
+{
+  "etages" : [
+    {
+      "cle" : "zone:Combles",
+      "dehors" : false,
+      "niveau" : 3,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Jardin",
+      "dehors" : false,
+      "niveau" : 1,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Rez-de-chaussée",
+      "dehors" : false,
+      "niveau" : 0,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Étage",
+      "dehors" : false,
+      "niveau" : 2,
+      "principal" : true
+    }
+  ],
+  "liens" : [
+    {
+      "de" : "1E5019DAC2638F92",
+      "genre" : "rattachement",
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "327DF9C45C82BBD6",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "3A5DFAFCAB581AAF",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "HomePod Avant"
+    },
+    {
+      "de" : "462DA5B311AFFCC7",
+      "genre" : "parent",
+      "qualite" : 2,
+      "vers" : "HomePod Palier"
+    },
+    {
+      "de" : "46F77B36E071F8D0",
+      "genre" : "rattachement",
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "56B1E064401F74EF",
+      "genre" : "parent",
+      "qualite" : 1,
+      "vers" : "HomePod mini bureau"
+    },
+    {
+      "de" : "724CC16B32D8F820",
+      "genre" : "parent",
+      "vers" : "HomePod mini chambre"
+    },
+    {
+      "de" : "7A3D0C7512F8E0A5",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "02A8C3C5600F136B"
+    },
+    {
+      "de" : "7AF0B6D5006CF95F",
+      "genre" : "rattachement",
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "82570DF21CF3784B",
+      "genre" : "parent",
+      "qualite" : 2,
+      "vers" : "0A84D1254BD246AD"
+    },
+    {
+      "de" : "86E7BD1A75F28E6D",
+      "genre" : "parent",
+      "qualite" : 1,
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "8A13154B7B48F32E",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "HomePod Avant"
+    },
+    {
+      "de" : "8A7E6F2665F737C6",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "HomePod Palier"
+    },
+    {
+      "de" : "9A28601B74FF90A7",
+      "genre" : "parent",
+      "qualite" : 2,
+      "vers" : "HomePod mini bureau"
+    },
+    {
+      "de" : "9A5C1F9FDFAB242D",
+      "genre" : "parent",
+      "vers" : "HomePod mini chambre"
+    },
+    {
+      "de" : "AA3D322B8A4500C4",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "02A8C3C5600F136B"
+    },
+    {
+      "de" : "Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 3,
+      "vers" : "02A8C3C5600F136B"
+    },
+    {
+      "de" : "Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 2,
+      "vers" : "0A84D1254BD246AD"
+    },
+    {
+      "de" : "Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 3,
+      "vers" : "HomePod Avant"
+    },
+    {
+      "de" : "Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 2,
+      "vers" : "HomePod Palier"
+    },
+    {
+      "de" : "Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 1,
+      "vers" : "HomePod mini bureau"
+    },
+    {
+      "de" : "C656F369B620027F",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "0A84D1254BD246AD"
+    },
+    {
+      "de" : "C663573E49A1EC90",
+      "genre" : "parent",
+      "qualite" : 2,
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "D661EE20B3E97C66",
+      "genre" : "rattachement",
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "D6ECDD6EF9C0CB0C",
+      "genre" : "parent",
+      "qualite" : 1,
+      "vers" : "HomePod Avant"
+    },
+    {
+      "de" : "DAEF22ACB58F651C",
+      "genre" : "parent",
+      "qualite" : 3,
+      "vers" : "HomePod Palier"
+    },
+    {
+      "de" : "FA15027BC681BB16",
+      "genre" : "rattachement",
+      "vers" : "Apple TV 4K"
+    },
+    {
+      "de" : "HomePod Avant",
+      "genre" : "radio",
+      "qualite" : 1,
+      "vers" : "02A8C3C5600F136B"
+    },
+    {
+      "de" : "HomePod Palier",
+      "genre" : "radio",
+      "qualite" : 1,
+      "vers" : "0A84D1254BD246AD"
+    },
+    {
+      "de" : "rloc:041F",
+      "genre" : "parent",
+      "qualite" : 1,
+      "vers" : "Apple TV 4K"
+    }
+  ],
+  "noeuds" : [
+    {
+      "bordure" : false,
+      "extMac" : "02A8C3C5600F136B",
+      "genre" : "appareil",
+      "id" : "02A8C3C5600F136B",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : false,
+      "extMac" : "0A84D1254BD246AD",
+      "genre" : "appareil",
+      "id" : "0A84D1254BD246AD",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : false,
+      "extMac" : "1E5019DAC2638F92",
+      "genre" : "appareil",
+      "id" : "1E5019DAC2638F92",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "327DF9C45C82BBD6",
+      "genre" : "appareil",
+      "id" : "327DF9C45C82BBD6",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "3A5DFAFCAB581AAF",
+      "genre" : "appareil",
+      "id" : "3A5DFAFCAB581AAF",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "462DA5B311AFFCC7",
+      "genre" : "appareil",
+      "id" : "462DA5B311AFFCC7",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "46F77B36E071F8D0",
+      "genre" : "appareil",
+      "id" : "46F77B36E071F8D0",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "56B1E064401F74EF",
+      "genre" : "appareil",
+      "id" : "56B1E064401F74EF",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "724CC16B32D8F820",
+      "genre" : "appareil",
+      "id" : "724CC16B32D8F820",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "7A3D0C7512F8E0A5",
+      "genre" : "appareil",
+      "id" : "7A3D0C7512F8E0A5",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "7AF0B6D5006CF95F",
+      "genre" : "appareil",
+      "id" : "7AF0B6D5006CF95F",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "82570DF21CF3784B",
+      "genre" : "appareil",
+      "id" : "82570DF21CF3784B",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "86E7BD1A75F28E6D",
+      "genre" : "appareil",
+      "id" : "86E7BD1A75F28E6D",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "8A13154B7B48F32E",
+      "genre" : "appareil",
+      "id" : "8A13154B7B48F32E",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "8A7E6F2665F737C6",
+      "genre" : "appareil",
+      "id" : "8A7E6F2665F737C6",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "9A28601B74FF90A7",
+      "genre" : "appareil",
+      "id" : "9A28601B74FF90A7",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "9A5C1F9FDFAB242D",
+      "genre" : "appareil",
+      "id" : "9A5C1F9FDFAB242D",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "AA3D322B8A4500C4",
+      "genre" : "appareil",
+      "id" : "AA3D322B8A4500C4",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : true,
+      "extMac" : "0274C96BE3FC6DFD",
+      "genre" : "centre",
+      "id" : "Apple TV 4K",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : true,
+      "extMac" : "264548D39FE8DFEB",
+      "genre" : "centre",
+      "id" : "Aqara HubM100 #DFEB",
+      "inconnu" : false,
+      "partition" : "E2E79FFC",
+      "routeur" : true
+    },
+    {
+      "bordure" : false,
+      "extMac" : "C656F369B620027F",
+      "genre" : "appareil",
+      "id" : "C656F369B620027F",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "C663573E49A1EC90",
+      "genre" : "appareil",
+      "id" : "C663573E49A1EC90",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "D661EE20B3E97C66",
+      "genre" : "appareil",
+      "id" : "D661EE20B3E97C66",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "D6ECDD6EF9C0CB0C",
+      "genre" : "appareil",
+      "id" : "D6ECDD6EF9C0CB0C",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "DAEF22ACB58F651C",
+      "genre" : "appareil",
+      "id" : "DAEF22ACB58F651C",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : false,
+      "extMac" : "FA15027BC681BB16",
+      "genre" : "appareil",
+      "id" : "FA15027BC681BB16",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false
+    },
+    {
+      "bordure" : true,
+      "extMac" : "96D26CBEC20F900F",
+      "genre" : "routeur",
+      "id" : "HomePod Avant",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : true,
+      "extMac" : "EE8F695DF75B373F",
+      "genre" : "routeur",
+      "id" : "HomePod Palier",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : true,
+      "extMac" : "864BDCE801F99266",
+      "genre" : "routeur",
+      "id" : "HomePod mini bureau",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : true,
+      "extMac" : "4AB6839EECEE0DBE",
+      "genre" : "routeur",
+      "id" : "HomePod mini chambre",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true
+    },
+    {
+      "bordure" : false,
+      "extMac" : "E0000000000000FF",
+      "genre" : "appareil",
+      "id" : "rloc:041F",
+      "inconnu" : true,
+      "partition" : "73586B68",
+      "routeur" : false
+    }
+  ],
+  "pieces" : [
+    {
+      "cle" : "piece:Abri",
+      "etage" : "zone:Jardin",
+      "noeuds" : [
+        "82570DF21CF3784B",
+        "C656F369B620027F"
+      ]
+    },
+    {
+      "cle" : "piece:Buanderie",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "Aqara HubM100 #DFEB"
+      ]
+    },
+    {
+      "cle" : "piece:Bureau",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "46F77B36E071F8D0",
+        "56B1E064401F74EF",
+        "HomePod mini bureau"
+      ]
+    },
+    {
+      "cle" : "piece:Chambre",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "462DA5B311AFFCC7",
+        "D661EE20B3E97C66",
+        "HomePod mini chambre"
+      ]
+    },
+    {
+      "cle" : "piece:Chambre d'amis",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "9A28601B74FF90A7"
+      ]
+    },
+    {
+      "cle" : "piece:Cuisine",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "D6ECDD6EF9C0CB0C"
+      ]
+    },
+    {
+      "cle" : "piece:Entrée",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "86E7BD1A75F28E6D",
+        "FA15027BC681BB16"
+      ]
+    },
+    {
+      "cle" : "piece:Grenier",
+      "etage" : "zone:Combles",
+      "noeuds" : [
+        "327DF9C45C82BBD6",
+        "3A5DFAFCAB581AAF",
+        "9A5C1F9FDFAB242D"
+      ]
+    },
+    {
+      "cle" : "piece:Salle de bain",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "7A3D0C7512F8E0A5"
+      ]
+    },
+    {
+      "cle" : "piece:Salle de jeux",
+      "etage" : "zone:Combles",
+      "noeuds" : [
+        "02A8C3C5600F136B",
+        "AA3D322B8A4500C4",
+        "C663573E49A1EC90"
+      ]
+    },
+    {
+      "cle" : "piece:Salon",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "724CC16B32D8F820",
+        "7AF0B6D5006CF95F",
+        "8A7E6F2665F737C6",
+        "Apple TV 4K",
+        "HomePod Avant",
+        "HomePod Palier"
+      ]
+    },
+    {
+      "cle" : "piece:Terrasse",
+      "etage" : "zone:Jardin",
+      "noeuds" : [
+        "0A84D1254BD246AD",
+        "DAEF22ACB58F651C"
+      ]
+    },
+    {
+      "cle" : "sans-piece",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "1E5019DAC2638F92",
+        "8A13154B7B48F32E",
+        "rloc:041F"
+      ]
+    }
+  ],
+  "scene" : [
+    {
+      "chef" : false,
+      "id" : "02A8C3C5600F136B",
+      "libelle" : "Prise console",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "id" : "0A84D1254BD246AD",
+      "libelle" : "Prise terrasse",
+      "piece" : "piece:Terrasse",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "id" : "1E5019DAC2638F92",
+      "libelle" : "1E5019DAC2638F92",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "327DF9C45C82BBD6",
+      "libelle" : "Capteur d'humidité",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "3A5DFAFCAB581AAF",
+      "libelle" : "Eve Motion",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "462DA5B311AFFCC7",
+      "libelle" : "Fenêtre chambre",
+      "piece" : "piece:Chambre",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "46F77B36E071F8D0",
+      "libelle" : "Prise bureau",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "56B1E064401F74EF",
+      "libelle" : "Halo",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "724CC16B32D8F820",
+      "libelle" : "Volet salon",
+      "piece" : "piece:Salon",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "7A3D0C7512F8E0A5",
+      "libelle" : "Capteur salle de bain",
+      "piece" : "piece:Salle de bain",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "7AF0B6D5006CF95F",
+      "libelle" : "Prise salon",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "82570DF21CF3784B",
+      "libelle" : "Vanne d'arrosage",
+      "piece" : "piece:Abri",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "86E7BD1A75F28E6D",
+      "libelle" : "Nuki Ultra",
+      "piece" : "piece:Entrée",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "8A13154B7B48F32E",
+      "libelle" : "8A13154B7B48F32E",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "8A7E6F2665F737C6",
+      "libelle" : "Porte-fenêtre",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "9A28601B74FF90A7",
+      "libelle" : "Lampe chambre d'amis",
+      "piece" : "piece:Chambre d'amis",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "9A5C1F9FDFAB242D",
+      "libelle" : "Détecteur de chaleur allée",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "AA3D322B8A4500C4",
+      "libelle" : "Lampe arcade",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : true,
+      "id" : "Apple TV 4K",
+      "libelle" : "Apple TV 4K",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 15
+    },
+    {
+      "chef" : false,
+      "id" : "Aqara HubM100 #DFEB",
+      "libelle" : "Aqara HubM100 #DFEB",
+      "piece" : "piece:Buanderie",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 15
+    },
+    {
+      "chef" : false,
+      "id" : "C656F369B620027F",
+      "libelle" : "Capteur porte de l'abri",
+      "piece" : "piece:Abri",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "C663573E49A1EC90",
+      "libelle" : "Capteur de lucarne",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "D661EE20B3E97C66",
+      "libelle" : "Thermo chambre",
+      "piece" : "piece:Chambre",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "D6ECDD6EF9C0CB0C",
+      "libelle" : "Interrupteur cuisine",
+      "piece" : "piece:Cuisine",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "DAEF22ACB58F651C",
+      "libelle" : "Météo terrasse",
+      "piece" : "piece:Terrasse",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "FA15027BC681BB16",
+      "libelle" : "Ampoule entrée",
+      "piece" : "piece:Entrée",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "id" : "HomePod Avant",
+      "libelle" : "HomePod Avant",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "id" : "HomePod Palier",
+      "libelle" : "HomePod Palier",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "id" : "HomePod mini bureau",
+      "libelle" : "HomePod mini bureau",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "id" : "HomePod mini chambre",
+      "libelle" : "HomePod mini chambre",
+      "piece" : "piece:Chambre",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "id" : "rloc:041F",
+      "libelle" : "Non identifié · 041F",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    }
+  ]
+}
