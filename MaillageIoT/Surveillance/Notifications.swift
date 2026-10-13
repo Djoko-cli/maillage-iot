@@ -7,11 +7,11 @@ import os
 /// Une categorie se coupe dans les reglages ; une notification de meme
 /// identifiant remplace la precedente (pertes groupees). Un refus ou un echec
 /// du systeme est consigne dans le journal du Mac (Console, sous-systeme
-/// fr.djoko.maillage), jamais perdu en silence. Presentees aussi quand une
+/// fr.djoko.maillage.iot), jamais perdu en silence. Presentees aussi quand une
 /// fenetre de l'app est au premier plan.
 @MainActor
 final class Notifications {
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage", category: "notifications")
+    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "notifications")
     /// Delegue du centre de notifications, retenu ici : le centre ne le garde qu'en reference faible.
     private let presentation = PresentationAuPremierPlan()
 

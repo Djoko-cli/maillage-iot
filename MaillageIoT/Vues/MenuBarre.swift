@@ -40,7 +40,7 @@ struct IconeBarre: View {
                                   couleur: couleur, detourage: 1.5)
             return true
         }
-        image.accessibilityDescription = "Maillage Thread"
+        image.accessibilityDescription = "Maillage IoT"
         image.isTemplate = !alerte
         return image
     }
@@ -90,7 +90,7 @@ struct MenuBarre: View {
                 Button("Rechercher les mises à jour…") { rechercherMisesAJour() }
                     .disabled(!misesAJour.peutRechercher)
                 Button("Réglages…") { ouvrirReglages() }
-                Button("Quitter Maillage Thread") { NSApp.terminate(nil) }
+                Button("Quitter Maillage IoT") { NSApp.terminate(nil) }
             }
             .buttonStyle(ActionMenu())
             .padding(.horizontal, -8)

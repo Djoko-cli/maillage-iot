@@ -797,7 +797,7 @@ struct FenetrePiecesTests {
     /// Sans barre de titre (polissage B, section 1) : la scene du graphe, et elle seule, porte le style
     /// `.hiddenTitleBar`. SwiftUI pose alors lui-meme la barre de titre transparente et le titre masque, et les
     /// garde a chaque mise a jour de la fenetre ; le crochet d'AppKit d'avant, pose une fois, etait defait par
-    /// SwiftUI (diagnostic du 02/10 : barre opaque des 0,285 s). Le titre « Maillage Thread » reste celui de la
+    /// SwiftUI (diagnostic du 02/10 : barre opaque des 0,285 s). Le titre « Maillage IoT » reste celui de la
     /// fenetre (Mission Control, menu Fenetre). Les trois boutons restent : la capsule de gauche commence apres
     /// eux, centree sur eux. La vue pose une barre d'outils vide et invisible (reverification du 02/10 : de l'air en
     /// haut, comme dans Plans), qui abaisse les boutons : dans une fenetre ainsi faite, sous macOS 27, a leur place
@@ -813,9 +813,9 @@ struct FenetrePiecesTests {
                                styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
                                defer: false)
         fenetre.isReleasedWhenClosed = false
-        fenetre.title = "Maillage Thread"
+        fenetre.title = "Maillage IoT"
         Self.sansBarreDeTitre(fenetre)
-        #expect(fenetre.title == "Maillage Thread")
+        #expect(fenetre.title == "Maillage IoT")
         let feux = try #require(CadreFeux(fenetre: fenetre))
         let agrandir = try #require(fenetre.standardWindowButton(.zoomButton))
         #expect(feux.droite == agrandir.convert(agrandir.bounds, to: nil).maxX)
@@ -1481,7 +1481,9 @@ struct FenetrePiecesTests {
         #expect(FenetrePieces.fichierPlaces(demo: true, sousTests: false) == nil)
         #expect(FenetrePieces.fichierPlaces(demo: false, sousTests: true) == nil)
         #expect(FenetrePieces.fichierPlaces(demo: false, sousTests: false)?.lastPathComponent == "positions-pieces.json")
-        #expect(FenetrePieces.fichierPlaces(demo: false, sousTests: false)?.deletingLastPathComponent()
-                == Surveillance.dossierParDefaut)
+        // Par le chemin : une URL de dossier existant porte une barre finale, celle d'un dossier absent n'en a pas,
+        // et le test ne doit pas dependre de la presence du dossier dans le conteneur.
+        #expect(FenetrePieces.fichierPlaces(demo: false, sousTests: false)?.deletingLastPathComponent().path
+                == Surveillance.dossierParDefaut.path)
     }
 }

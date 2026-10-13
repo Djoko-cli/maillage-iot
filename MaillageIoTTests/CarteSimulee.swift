@@ -20,7 +20,7 @@ final class ConnexionSimulee: ConnexionDatagrammes {
     let port: UInt16
     private let carte: CarteSimulee?
     private let depart: Depart
-    private let file = DispatchQueue(label: "fr.djoko.maillage.tests.connexion")
+    private let file = DispatchQueue(label: "fr.djoko.maillage.iot.tests.connexion")
 
     private struct Etat {
         var changement: (@Sendable (EtatConnexion) -> Void)?

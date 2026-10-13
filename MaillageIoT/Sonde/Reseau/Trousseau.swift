@@ -35,13 +35,13 @@ enum ErreurTrousseau: Error, Equatable, Sendable, LocalizedError {
     }
 }
 
-/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.sonde`,
+/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.sonde-thread`,
 /// compte = nom d'hote SRP (sans `.local`), valeur = 64 hexa MAJUSCULES, commentaire =
 /// empreinte. Non synchronise.
 struct TrousseauSysteme: TrousseauCles {
     let service: String
 
-    init(service: String = "fr.djoko.maillage.sonde") {
+    init(service: String = "fr.djoko.maillage.iot.sonde-thread") {
         self.service = service
     }
 
@@ -79,7 +79,7 @@ struct TrousseauSysteme: TrousseauCles {
     func ranger(nom: String, cle: Data, empreinte: String) throws {
         let valeurs: [String: Any] = [kSecValueData as String: Data(H1.hexa(cle).utf8),
                                       kSecAttrComment as String: empreinte,
-                                      kSecAttrLabel as String: "Maillage Thread - sonde \(nom)"]
+                                      kSecAttrLabel as String: "Maillage IoT - sonde Thread \(nom)"]
         var s = SecItemUpdate(requete(nom) as CFDictionary, valeurs as CFDictionary)
         if s == errSecItemNotFound {
             s = SecItemAdd(requete(nom).merging(valeurs) { $1 } as CFDictionary, nil)

@@ -96,7 +96,7 @@ struct MaillageIoTApp: App {
         // Sans barre de titre (polissage B, section 1) : SwiftUI pose la barre de titre transparente et le titre
         // masque, et les garde a chaque mise a jour de la fenetre ; les trois boutons restent, et le titre reste
         // celui de la fenetre (Mission Control, menu Fenetre).
-        Window("Maillage Thread", id: "graphe") {
+        Window("Maillage IoT", id: "graphe") {
             // En demo, le jardin au niveau du rez-de-chaussee, hors de la maison (polissage C, section 7), en memoire.
             FenetrePieces(fichierPlaces: FenetrePieces.fichierPlaces(demo: Self.demo, sousTests: Surveillance.sousTests),
                           fichierPieces: PiecesChoisies.fichier(demo: Self.demo, sousTests: Surveillance.sousTests),

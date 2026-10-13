@@ -23,8 +23,8 @@ enum FichiersGardes {
         var version: Int
     }
 
-    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage) : le nom du fichier, jamais son contenu.
-    static let journal = Logger(subsystem: "fr.djoko.maillage", category: "fichiers")
+    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : le nom du fichier, jamais son contenu.
+    static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "fichiers")
     /// Fichiers d'une version plus recente deja notes au journal, dans ce processus.
     private static let notes = OSAllocatedUnfairLock(initialState: Set<String>())
 

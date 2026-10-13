@@ -121,19 +121,19 @@ final class Surveillance {
     @ObservationIgnored private var observateurs: [NSObjectProtocol] = []
 
     /// Signatures des scissions deja notifiees (`[String]`), d'un lancement a l'autre.
-    static let cleScissionsNotifiees = "scissionsNotifiees"
+    static let cleScissionsNotifiees = "thread.scissionsNotifiees"
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
     static let dureeHistorique: TimeInterval = 30 * 24 * 3600
-    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage) : jamais de donnees du reseau.
-    nonisolated static let journalMac = Logger(subsystem: "fr.djoko.maillage", category: "historique")
+    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
+    nonisolated static let journalMac = Logger(subsystem: "fr.djoko.maillage.iot", category: "historique")
 
     /// Lance par les tests (heberges dans l'app) : ne rien ecouter ni ecrire.
     static var sousTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }
 
-    /// Dossier de l'app : Application Support/Maillage Thread (dans le conteneur du bac a sable).
+    /// Dossier de l'app : Application Support/Maillage IoT (dans le conteneur du bac a sable).
     static var dossierParDefaut: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Maillage Thread")
+            .appendingPathComponent("Maillage IoT")
     }
 
     /// `dossier` : ou garder le journal, les surnoms et l'historique de la sonde (nil : nulle

@@ -36,16 +36,18 @@ final class SondeMaillage {
         let date: Date
     }
 
-    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage) : jamais de donnees du reseau.
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage", category: "sonde")
+    /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
+    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "sonde")
     /// Numero de serie USB de la sonde retenue (l'adresse MAC du C6).
-    static let cleSerie = "sondeSerieUSB"
+    static let cleSerie = "thread.sondeSerieUSB"
     /// Nom de la sonde retenue, donne par la carte (`bonjour`).
-    static let cleNom = "sondeNom"
+    static let cleNom = "thread.sondeNom"
     /// Nom d'hote SRP de la sonde retenue (sans `.local`), donne par la carte (`bonjour`, `cle`).
-    static let cleHote = "sondeHote"
+    static let cleHote = "thread.sondeHote"
     /// Liaison choisie dans les Reglages (USB si absente).
-    static let cleLiaison = "sondeLiaison"
+    static let cleLiaison = "thread.sondeLiaison"
+    /// Toutes les cles de preferences de la sonde, prefixees `thread.` (identite de Maillage IoT).
+    static let cles = [cleSerie, cleNom, cleHote, cleLiaison]
     static let periode: Duration = .seconds(300)
     /// Attente la plus longue du premier releve Bonjour avant la premiere tournee (`attendreReseau`).
     static let attenteReseau: Duration = .seconds(30)

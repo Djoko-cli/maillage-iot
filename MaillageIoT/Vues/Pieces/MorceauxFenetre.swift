@@ -185,7 +185,7 @@ struct EtatVide: View {
             ContentUnavailableView {
                 Label("Accès au réseau local refusé", systemImage: "network.slash")
             } description: {
-                Text("Autorisez Maillage Thread dans Réglages Système › Confidentialité et sécurité › Réseau local.")
+                Text("Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local.")
             } actions: {
                 Button("Ouvrir les Réglages Système") {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork") {

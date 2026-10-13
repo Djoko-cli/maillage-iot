@@ -22,7 +22,7 @@ final class LiaisonSerie: Sendable {
         var raison: String?
     }
 
-    private let file = DispatchQueue(label: "fr.djoko.maillage.sonde", qos: .userInitiated)
+    private let file = DispatchQueue(label: "fr.djoko.maillage.iot.sonde-thread", qos: .userInitiated)
     private let etat = Mutex(Etat())
 
     init(chemin: String) {

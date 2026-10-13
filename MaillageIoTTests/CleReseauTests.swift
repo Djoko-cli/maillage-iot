@@ -111,6 +111,6 @@ struct CleReseauTests {
         try t.oublier(nom: "0123456789ABCDEF")  // deja oubliee : sans erreur
         #expect(SondeConnue(nom: "0123456789ABCDEF", empreinte: "630DCD29").hote == "0123456789ABCDEF.local")
         // Le trousseau du Mac : service propre a la sonde (compte = nom d'hote).
-        #expect(TrousseauSysteme().service == "fr.djoko.maillage.sonde")
+        #expect(TrousseauSysteme().service == "fr.djoko.maillage.iot.sonde-thread")
     }
 }

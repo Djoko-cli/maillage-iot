@@ -168,7 +168,7 @@ Expected: `controler-index : … 0 defaut(s)`, puis le commit.
 - Consumes: le projet de la tâche 1.
 - Produces: `Surveillance.dossierParDefaut` se termine par `Maillage IoT` ; `Trousseau()` sert `fr.djoko.maillage.iot.sonde-thread` ; clés UserDefaults `thread.scissionsNotifiees`, `thread.sondeSerieUSB`, `thread.sondeNom`, `thread.sondeHote`, `thread.sondeLiaison`.
 
-- [ ] **Step 1: Écrire les attentes (RED)**
+- [x] **Step 1: Écrire les attentes (RED)**
 
 `MaillageIoTTests/DossierDonneesTests.swift` :
 ```swift
@@ -195,12 +195,12 @@ Si `SondeMaillage` n'expose pas encore ses clés en une liste `cles` ni `Surveil
 
 Changer les attentes existantes : `CleReseauTests.swift:114` attend le service `fr.djoko.maillage.iot.sonde-thread` ; `FenetrePiecesTests.swift` l. 754, 800, 816, 818 attendent le titre « Maillage IoT » ; `CarteSimulee.swift:23` → `fr.djoko.maillage.iot.tests.connexion` ; `SondeTests.swift:685` → `fr.djoko.maillage.iot.tests.sonde.` ; `SurveillanceTests.swift` l. 150-160 lit la clé `thread.scissionsNotifiees`.
 
-- [ ] **Step 2: Vérifier l'échec**
+- [x] **Step 2: Vérifier l'échec**
 
 Run: `outils/tester.sh MaillageIoTTests/DossierDonneesTests MaillageIoTTests/CleReseauTests MaillageIoTTests/FenetrePiecesTests > .superpowers/sdd/etape1-t2-red.log 2>&1; echo "code=$?"; grep -E "✘|error:" .superpowers/sdd/etape1-t2-red.log | head`
 Expected: échecs (ou erreurs de compilation sur `cles` et `cleScissionsNotifiees`) : le dossier vaut encore « Maillage Thread », etc.
 
-- [ ] **Step 3: Changer l'identité dans le code**
+- [x] **Step 3: Changer l'identité dans le code**
 
 - `Surveillance.swift:136` : `.appendingPathComponent("Maillage IoT")` (et le commentaire l. 133) ; l. 124 : clé `thread.scissionsNotifiees`, exposée en `static let cleScissionsNotifiees` ;
 - `SondeMaillage.swift` l. 42-48 : clés `thread.sondeSerieUSB`, `thread.sondeNom`, `thread.sondeHote`, `thread.sondeLiaison`, exposées en `static let cles: [String]` ;
@@ -213,7 +213,7 @@ Expected: échecs (ou erreurs de compilation sur `cles` et `cleScissionsNotifiee
 
 Puis : `grep -rn "Maillage Thread" MaillageIoT MaillageCoeur project.yml | grep -v "^.*//" | wc -l` → `0` (les commentaires seuls peuvent rester).
 
-- [ ] **Step 4: Resynchroniser les textes**
+- [x] **Step 4: Resynchroniser les textes**
 
 ```bash
 outils/tester.sh MaillageIoTTests/DemarrageTests > /dev/null 2>&1   # compile, produit les .stringsdata
@@ -226,12 +226,12 @@ python3 outils/traduire.py MaillageIoT/Ressources/Localizable.xcstrings outils/t
 ```
 Expected: aucune clé « stale » restante ; les quatre clés du catalogue qui contenaient le nom sont remplacées.
 
-- [ ] **Step 5: Lancer toute la suite**
+- [x] **Step 5: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t2.log 2>&1; echo "code=$?"; tail -3 .superpowers/sdd/etape1-t2.log`
 Expected: `code=0` ; `CataloguesTests` passe (catalogue et code alignés) ; `DossierDonneesTests` passe.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'

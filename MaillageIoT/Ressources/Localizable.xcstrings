@@ -929,18 +929,18 @@
         }
       }
     },
-    "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage Thread." : {
+    "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage IoT." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Local network access denied: System Settings › Privacy & Security › Local Network › Maillage Thread."
+            "value" : "Local network access denied: System Settings › Privacy & Security › Local Network › Maillage IoT."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage Thread."
+            "value" : "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage IoT."
           }
         }
       }
@@ -1313,18 +1313,18 @@
         }
       }
     },
-    "Autorisez Maillage Thread dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
+    "Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow Maillage Thread in System Settings › Privacy & Security › Local Network."
+            "value" : "Allow Maillage IoT in System Settings › Privacy & Security › Local Network."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Autorisez Maillage Thread dans Réglages Système › Confidentialité et sécurité › Réseau local."
+            "value" : "Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local."
           }
         }
       }
@@ -2513,18 +2513,18 @@
         }
       }
     },
-    "Maillage Thread" : {
+    "Maillage IoT" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage Thread"
+            "value" : "Maillage IoT"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage Thread"
+            "value" : "Maillage IoT"
           }
         }
       }
@@ -3345,18 +3345,18 @@
         }
       }
     },
-    "Quitter Maillage Thread" : {
+    "Quitter Maillage IoT" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quit Maillage Thread"
+            "value" : "Quit Maillage IoT"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quitter Maillage Thread"
+            "value" : "Quitter Maillage IoT"
           }
         }
       }

@@ -32,7 +32,7 @@ protocol ConnexionDatagrammes: AnyObject, Sendable {
 final class ConnexionNW: ConnexionDatagrammes {
     private let connexion: NWConnection
     private let hote: String
-    private let file = DispatchQueue(label: "fr.djoko.maillage.sonde.udp", qos: .userInitiated)
+    private let file = DispatchQueue(label: "fr.djoko.maillage.iot.sonde-thread.udp", qos: .userInitiated)
 
     init(hote: String, port: UInt16) {
         let parametres = NWParameters.udp

@@ -73,7 +73,7 @@ enum ResolveurDNSSD {
 /// Reponses d'une requete dns_sd, recues sur une file serie qui lui est propre :
 /// tout l'etat n'est touche que sur cette file (d'ou @unchecked Sendable).
 private final class Collecte<Resultat: Sendable>: @unchecked Sendable {
-    private let file = DispatchQueue(label: "fr.djoko.maillage.dnssd")
+    private let file = DispatchQueue(label: "fr.djoko.maillage.iot.dnssd")
     private var ref: DNSServiceRef?
     private var reponses: [Resultat] = []
     private var continuation: CheckedContinuation<[Resultat], Never>?

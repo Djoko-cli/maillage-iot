@@ -32,7 +32,7 @@ enum ErreurReseau: Error, Sendable, Equatable, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .reseauLocalRefuse:
-            String(localized: "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage Thread.")
+            String(localized: "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage IoT.")
         case .pasDeRoute:
             String(localized: "Pas de route IPv6 vers le réseau Thread : ce Mac n'a pas de route vers le préfixe OMR, où est l'adresse de la sonde. Voir « Route vers le réseau Thread » dans README.fr.md.")
         case .nomIntrouvable(let hote):

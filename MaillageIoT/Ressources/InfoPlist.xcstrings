@@ -8,13 +8,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage Thread listens to local network announcements (Thread border routers, Matter and HomeKit devices) to draw the Thread network, and connects to its probe over the Thread network if you choose to."
+            "value" : "Maillage IoT listens to local network announcements (Thread border routers, Matter and HomeKit devices) to draw the Thread network, and connects to its probe over the Thread network if you choose to."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage Thread écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit) pour dessiner le réseau Thread, et se connecte à sa sonde par le réseau Thread si vous le choisissez."
+            "value" : "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit) pour dessiner le réseau Thread, et se connecte à sa sonde par le réseau Thread si vous le choisissez."
           }
         }
       }

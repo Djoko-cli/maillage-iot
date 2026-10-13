@@ -682,7 +682,7 @@ final class PreferencesMemoire: UserDefaults, @unchecked Sendable {
 struct SondeMaillageTests {
     /// Preferences d'un test, en memoire (`PreferencesMemoire`) : aucun fichier dans le conteneur de l'app.
     static func preferences() throws -> (UserDefaults, String) {
-        let domaine = "fr.djoko.maillage.tests.sonde.\(UUID().uuidString)"
+        let domaine = "fr.djoko.maillage.iot.tests.sonde.\(UUID().uuidString)"
         return (try #require(PreferencesMemoire(domaine: domaine)), domaine)
     }
 
@@ -1100,7 +1100,7 @@ struct SondeMaillageTests {
         let dossier = FileManager.default.temporaryDirectory.appendingPathComponent("maillage-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dossier) }
         try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
-        let bouchon = dossier.appendingPathComponent("Maillage Thread")
+        let bouchon = dossier.appendingPathComponent("Maillage IoT")
         try Data().write(to: bouchon)
         let fichier = bouchon.appendingPathComponent("identites-routeurs.json")
         let s = SondeMaillage(preferences: p, actif: true,
