@@ -81,7 +81,7 @@ extension ChampsTXT: Codable {
 
 extension Data {
     /// "4B36A2" -> [0x4B, 0x36, 0xA2] ; nil si longueur impaire ou caractere invalide.
-    init?(hexa: String) {
+    public init?(hexa: String) {
         var octets: [UInt8] = []
         var haut: UInt8?
         for c in hexa.utf8 {
@@ -104,5 +104,5 @@ extension Data {
     }
 
     /// Hexadecimal majuscule ("4B36A2").
-    var hexa: String { map { String(format: "%02X", $0) }.joined() }
+    public var hexa: String { map { String(format: "%02X", $0) }.joined() }
 }

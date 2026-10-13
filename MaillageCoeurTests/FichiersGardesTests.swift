@@ -2,8 +2,7 @@ import Foundation
 import Testing
 @testable import MaillageCoeur
 
-/// Fichiers gardes dans le conteneur de l'app : places des pieces, pieces choisies, surnoms, identites
-/// des routeurs. Un fichier d'une version plus recente n'est jamais reecrit ; un fichier illisible est
+/// Fichiers gardes dans le conteneur de l'app : places des pieces, pieces choisies, surnoms. Un fichier d'une version plus recente n'est jamais reecrit ; un fichier illisible est
 /// mis de cote avant d'etre remplace ; le cas ordinaire ne change pas. Dans un dossier temporaire, avec
 /// des donnees inventees.
 @Suite("Fichiers gardes : version plus recente, fichier illisible")
@@ -45,12 +44,6 @@ struct FichiersGardesTests {
             s["DEADBEEF00000001"] = "Lampe inventée"
             try Surnoms.ecrire(s, dans: url)
             return Surnoms.lire(url) == s
-        },
-        Sorte(nom: "identites-routeurs.json") { url in
-            var g = IdentitesGardees.lire(url) ?? IdentitesGardees(partition: "0000000A", identites: [:])
-            g.identites[0x0400] = "E0000000000000A1"
-            try g.ecrire(dans: url)
-            return IdentitesGardees.lire(url) == g
         },
     ]
 

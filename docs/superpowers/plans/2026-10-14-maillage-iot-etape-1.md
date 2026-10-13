@@ -592,7 +592,7 @@ EOF
 - Consumes: `GrapheReseau.init(noeuds:liens:)` (tâche 4).
 - Produces: dans le cœur, plus aucun fichier hors `*+Thread.swift`, `*Thread.swift`, `EvenementsThread.swift` et les 30 fichiers Thread de l'inventaire ne référence un type Thread ; `public init(debut:fin:liens:parents:signal:parentsSonde:prioritaires:)` de `CourbesNoeud` ; `CourbesNoeud.reduire(_:pas:)` public ; `FichiersGardes` public (`lire`, `ecrire`, `mettreDeCote`, `examiner`, `Etat`).
 
-- [ ] **Step 1: Couper sans rien changer au comportement**
+- [x] **Step 1: Couper sans rien changer au comportement**
 
 Suivre `inventaire-coeur.md` §3, ligne à ligne :
 - `GrapheReseau+Thread.swift` : `public extension GrapheReseau` avec `init(reseau:appareils:maillage:)` (l. 111-160 actuelles, qui finit par `self.init(noeuds:liens:)`) et `static func extMac(hote:)` (l. 166-168) ;
@@ -603,7 +603,7 @@ Suivre `inventaire-coeur.md` §3, ligne à ligne :
 
 Ruling déjà pris : `ChampsTXT.swift` **reste au cœur** (spec 1.3 : identique dans les deux dépôts, analyse TXT de DNS-SD sans protocole radio).
 
-- [ ] **Step 2: Scinder les quatre tests mixtes**
+- [x] **Step 2: Scinder les quatre tests mixtes**
 
 D'après `inventaire-coeur.md` §4 : les assertions qui ne touchent que des types du cœur restent dans le fichier d'origine ; celles qui touchent `ResolveurNoms`, `Instantane`, `Releve20260928`, `NomsDemo.maison`, `CourbesNoeud(cle:releves:)`, `ClesHistorique`, `ReleveMaillage`, `IdentitesGardees` ou `Banc` partent dans `NomsThreadTests.swift`, `CourbesNoeudThreadTests.swift`, `AssociationsThreadTests.swift`, `FichiersGardesThreadTests.swift`. Aucun test n'est supprimé : le nombre total de `@Test` du dossier est le même avant et après.
 
@@ -612,12 +612,12 @@ grep -rc "@Test" MaillageCoeurTests | awk -F: '{s+=$2} END {print s}'
 ```
 Expected: le même total qu'avant l'étape (le noter à l'étape 1).
 
-- [ ] **Step 3: Vérifier**
+- [x] **Step 3: Vérifier**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t6.log 2>&1; echo "code=$?"`
 Expected: `code=0`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'

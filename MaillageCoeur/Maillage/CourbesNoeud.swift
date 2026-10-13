@@ -99,85 +99,26 @@ public struct CourbesNoeud: Hashable, Sendable {
     /// d'etre surveille passe dans les six.
     public let prioritaires: [String]
 
+    public init(debut: Date, fin: Date, liens: [CourbeLien], parents: [ChangementParent], signal: [PointCourbe],
+                parentsSonde: [ChangementParent], prioritaires: [String]) {
+        self.debut = debut
+        self.fin = fin
+        self.liens = liens
+        self.parents = parents
+        self.signal = signal
+        self.parentsSonde = parentsSonde
+        self.prioritaires = prioritaires
+    }
+
     /// La courbe de cle `cle` ; nil si elle n'existe pas.
     public func courbe(_ cle: String) -> CourbeLien? { liens.first { $0.id == cle } }
 
     public var estVide: Bool { liens.allSatisfy { $0.points.isEmpty } && parents.isEmpty && signal.isEmpty }
 
-    /// Courbes du noeud de cle `cle` dans `releves` (du plus ancien au plus recent), sur la
-    /// periode qui finit a `fin`.
-    public init(cle: String, releves: [ReleveMaillage], periode: PeriodeCourbes, fin: Date) {
-        self.init(cle: cle, releves: releves, cles: ClesHistorique(releves: releves), periode: periode, fin: fin)
-    }
-
-    /// De meme, avec la resolution des cles deja faite (`cles`, construite sur ces memes `releves`) : la
-    /// surveillance la garde d'un calcul de la fiche a l'autre, tant que l'historique ne change pas.
-    /// `trel` : ExtMac des routeurs qui annoncent TREL ; le lien entre deux d'entre eux n'a pas de courbe, comme il n'est
-    /// pas dessine (carte radio seulement, `MaillageAffiche`).
-    public init(cle: String, releves: [ReleveMaillage], cles: ClesHistorique, periode: PeriodeCourbes, fin: Date,
-                trel: Set<String> = []) {
-        let debut = fin.addingTimeInterval(-periode.duree)
-        var liens: [String: [(Date, Double)]] = [:]
-        var signal: [(Date, Double)] = []
-        var parents: [ChangementParent] = []
-        var parentsSonde: [ChangementParent] = []
-        var dernierParent: String?
-        var dernierParentSonde: String?
-        var radio: Set<String> = [], enfants: Set<String> = []
-        for (i, r) in releves.enumerated() where r.date >= debut && r.date <= fin {
-            if let id = r.routeurs.first(where: { cles.cle(releve: i, routeur: $0.id) == cle })?.id {
-                let extMacs = Dictionary(r.routeurs.compactMap { x in x.extMac.map { (x.id, $0.uppercased()) } },
-                                         uniquingKeysWith: { a, _ in a })
-                for l in r.liens where l.a == id || l.b == id {
-                    guard let q = l.qualite else { continue }
-                    if let a = extMacs[l.a], let b = extMacs[l.b], trel.contains(a), trel.contains(b) { continue }
-                    let autre = cles.cle(releve: i, routeur: l.a == id ? l.b : l.a)
-                    liens[autre, default: []].append((r.date, Double(q)))
-                    radio.insert(autre)
-                }
-                // Ses enfants : la qualite de leur lien vers lui (la courbe de leurs dependants).
-                for e in r.enfants where e.parent == id {
-                    guard let q = e.qualite else { continue }
-                    liens[e.extMac, default: []].append((r.date, Double(q)))
-                    enfants.insert(e.extMac)
-                }
-                if let s = r.signaux.first(where: { $0.routeur == id }) { signal.append((r.date, Double(s.rssi))) }
-            }
-            if let e = r.enfants.first(where: { $0.extMac == cle }) {
-                let p = cles.cle(releve: i, routeur: e.parent)
-                if let d = dernierParent, d != p { parents.append(ChangementParent(date: r.date, parent: p)) }
-                dernierParent = p
-                if let q = e.qualite { liens[Self.cleParent, default: []].append((r.date, Double(q))) }
-            }
-            if let ps = r.parentSonde {
-                let p = cles.cle(releve: i, routeur: ps)
-                if let d = dernierParentSonde, d != p { parentsSonde.append(ChangementParent(date: r.date, parent: p)) }
-                dernierParentSonde = p
-            }
-        }
-        self.debut = debut
-        self.fin = fin
-        self.liens = liens.keys.sorted().map { CourbeLien(id: $0, points: Self.reduire(liens[$0] ?? [], pas: periode.pas)) }
-        self.parents = parents
-        self.signal = Self.reduire(signal, pas: periode.pas)
-        self.parentsSonde = parentsSonde
-        // Les prioritaires : le lien vers son parent (enfant) ; ses liens radio, puis ses enfants (routeur), du plus
-        // faible au meilleur en moyenne.
-        func faiblesDabord(_ k: Set<String>) -> [String] {
-            k.map { c in
-                let v = (liens[c] ?? []).map(\.1)
-                return (cle: c, moyenne: v.reduce(0, +) / Double(max(1, v.count)))
-            }
-            .sorted { ($0.moyenne, $0.cle) < ($1.moyenne, $1.cle) }.map(\.cle)
-        }
-        let parent = liens[Self.cleParent] == nil ? [] : [Self.cleParent]
-        prioritaires = parent + faiblesDabord(radio) + faiblesDabord(enfants.subtracting(radio))
-    }
-
     /// Points d'une courbe : la moyenne de chaque pas (datee du debut du pas), ou chaque releve
     /// sans pas ; un ecart de plus de trois pas (20 min sans pas) entre deux points ouvre un
     /// nouveau troncon.
-    static func reduire(_ bruts: [(Date, Double)], pas: TimeInterval?) -> [PointCourbe] {
+    public static func reduire(_ bruts: [(Date, Double)], pas: TimeInterval?) -> [PointCourbe] {
         var points = bruts
         if let pas {
             var groupes: [(debut: Date, valeurs: [Double])] = []

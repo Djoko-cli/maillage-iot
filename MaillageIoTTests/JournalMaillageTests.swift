@@ -50,7 +50,7 @@ struct JournalMaillageTests {
         let a = try #require(s.appareil(Self.appareil))
         #expect(e.sujet == Sujet(id: Self.appareil, nom: s.nom(a)))
         #expect(e.avant == String(localized: "Routeur · \("0400")") && e.apres == String(localized: "Routeur · \("1400")"))
-        #expect(try JournalFichiers(dossier: dossier.appendingPathComponent("Journal")).lire().last == e)
+        #expect(try JournalFichiers(dossier: dossier.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal).lire().last == e)
         #expect(s.historique.map(\.date) == [t, t.addingTimeInterval(300)])
         let fichier = dossier.appendingPathComponent(HistoriqueFichiers(dossier: dossier).nomFichier(t.addingTimeInterval(300)))
         #expect(FileManager.default.fileExists(atPath: fichier.path))
@@ -137,7 +137,7 @@ struct JournalMaillageTests {
         }
         let t = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) - 600)
         let e = Evenement(date: t, type: .veille)
-        try JournalFichiers(dossier: journalDossier).ajouter([e])
+        try JournalFichiers(dossier: journalDossier, politique: Surveillance.politiqueJournal).ajouter([e])
         let r = ReleveMaillage(try Self.maillage(Self.surveillance(dossier: nil), t, parent: 1))
         try HistoriqueFichiers(dossier: dossier).ajouter(r)
         FileManager.default.createFile(atPath: journalDossier.appendingPathComponent("journal-2020-01.jsonl").path, contents: Data())

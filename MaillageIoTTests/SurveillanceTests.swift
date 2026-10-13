@@ -58,7 +58,7 @@ struct SurveillanceTests {
         for a in ScenarioPanne.releves.prefix(12) { s.integrer(a) }
         #expect(s.evenements.map(\.type) == [.surveillanceDemarree, .routeurNouvelleAdresseLien, .prefixeNouveau,
                                              .prefixeRetire])
-        let journal = JournalFichiers(dossier: dossier.appendingPathComponent("Journal"))
+        let journal = JournalFichiers(dossier: dossier.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal)
         #expect(try journal.lire().count == 4)
 
         s.renommer("56B1E064401F74EF", en: "  Pont du bureau ")

@@ -11,9 +11,9 @@ import os
 /// - present mais illisible : lu comme vide ; avant la premiere ecriture, il est mis de cote, renomme
 ///   `<nom>.illisible-AAAAMMJJ-HHMMSS.json` dans le meme dossier, et jamais efface.
 /// L'etat du fichier est relu avant chaque ecriture : rien n'est retenu d'une lecture a l'autre.
-enum FichiersGardes {
+public enum FichiersGardes {
     /// Ce qu'est le fichier sur le disque.
-    enum Etat: Equatable {
+    public enum Etat: Equatable {
         case absent, lisible, plusRecent, illisible
     }
 
@@ -30,7 +30,7 @@ enum FichiersGardes {
 
     /// L'etat du fichier, et son contenu s'il est lisible. `version` : la plus recente que l'app sait
     /// lire ; nil pour un fichier sans version.
-    static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?) -> (etat: Etat, contenu: T?) {
+    public static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?) -> (etat: Etat, contenu: T?) {
         guard FileManager.default.fileExists(atPath: url.path) else { return (.absent, nil) }
         guard let d = try? Data(contentsOf: url) else { return (.illisible, nil) }
         if let version {
@@ -42,7 +42,7 @@ enum FichiersGardes {
     }
 
     /// Le contenu du fichier ; nil s'il manque, s'il est illisible ou d'une version plus recente.
-    static func lire<T: Decodable>(_ type: T.Type, _ url: URL, version: Int? = nil) -> T? {
+    public static func lire<T: Decodable>(_ type: T.Type, _ url: URL, version: Int? = nil) -> T? {
         let (etat, contenu) = examiner(type, url, version: version)
         if etat == .plusRecent { noterPlusRecent(url) }
         return contenu
@@ -50,7 +50,7 @@ enum FichiersGardes {
 
     /// Ecrit `valeur` en JSON (cles triees, indente), d'un bloc. Sur un fichier d'une version plus
     /// recente, rien n'est ecrit, sans erreur. Un fichier illisible est d'abord mis de cote.
-    static func ecrire<T: Codable>(_ valeur: T, dans url: URL, version: Int? = nil) throws {
+    public static func ecrire<T: Codable>(_ valeur: T, dans url: URL, version: Int? = nil) throws {
         switch examiner(T.self, url, version: version).etat {
         case .plusRecent:
             noterPlusRecent(url)
@@ -70,7 +70,7 @@ enum FichiersGardes {
     /// le note au journal ; rend son nouveau chemin. Un fichier deja la sous ce nom n'est pas remplace :
     /// le renommage echoue.
     @discardableResult
-    static func mettreDeCote(_ url: URL, maintenant: Date = Date()) throws -> URL {
+    public static func mettreDeCote(_ url: URL, maintenant: Date = Date()) throws -> URL {
         var calendrier = Calendar(identifier: .gregorian)
         calendrier.timeZone = .current
         let c = calendrier.dateComponents([.year, .month, .day, .hour, .minute, .second], from: maintenant)
