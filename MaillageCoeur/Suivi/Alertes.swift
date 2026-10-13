@@ -50,7 +50,7 @@ public struct Alertes: Sendable {
     private let politique: any PolitiqueJournal
 
     /// Sans politique (`PolitiqueJournalNeutre`), rien ne se notifie : c'est le protocole qui dit quoi.
-    public init(politique: any PolitiqueJournal = PolitiqueJournalNeutre()) {
+    public init(politique: any PolitiqueJournal) {
         self.politique = politique
     }
 

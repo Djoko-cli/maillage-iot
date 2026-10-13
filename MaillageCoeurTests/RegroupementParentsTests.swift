@@ -72,7 +72,7 @@ struct RegroupementParentsTests {
 
     /// Sans politique (`PolitiqueJournalNeutre`), rien ne se regroupe.
     @Test func politiqueNeutreNeRegroupeRien() {
-        let lignes = Regroupement.lignes([Self.parent(0, "x"), Self.parent(1, "x")])
+        let lignes = Regroupement.lignes([Self.parent(0, "x"), Self.parent(1, "x")], politique: PolitiqueJournalNeutre())
         #expect(lignes.map(\.evenements.count) == [1, 1])
     }
 }

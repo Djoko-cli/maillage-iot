@@ -49,7 +49,7 @@ public enum Regroupement {
     /// une meme fenetre de 10 min forment une seule ligne ; les changements de parent d'un meme
     /// noeud dans une fenetre de 1 h aussi.
     public static func lignes(_ evenements: [Evenement],
-                              politique: any PolitiqueJournal = PolitiqueJournalNeutre()) -> [LigneJournal] {
+                              politique: any PolitiqueJournal) -> [LigneJournal] {
         let tries = evenements.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
             .map(\.element)
         var lignes: [LigneJournal] = []

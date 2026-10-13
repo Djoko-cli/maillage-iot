@@ -84,7 +84,7 @@ struct AlertesTests {
 
     /// Sans politique (`PolitiqueJournalNeutre`), rien ne se notifie.
     @Test func politiqueNeutreNeNotifieRien() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalNeutre())
         #expect(a.traiter([Self.scission(["PART-A", "PART-B"], constate: false), Self.perte(0), Self.perte(1),
                            Self.perte(2)]).isEmpty)
     }

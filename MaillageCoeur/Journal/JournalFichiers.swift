@@ -13,7 +13,7 @@ public struct JournalFichiers: Sendable {
     private let typesConnus: [String: TypeEvenement]
 
     public init(dossier: URL, calendrier: Calendar = .current,
-                politique: any PolitiqueJournal = PolitiqueJournalNeutre()) {
+                politique: any PolitiqueJournal) {
         self.dossier = dossier
         self.calendrier = calendrier
         typesConnus = politique.typesParNom
