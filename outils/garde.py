@@ -9,7 +9,9 @@ vides et celles qui commencent par « # » sont ignorees. Depuis un worktree git
 pas, la garde prend celui du depot principal. Echoue (code 1) si l'un des identifiants apparait dans un
 fichier suivi par git, sans tenir compte de la casse ni des separateurs « : », « - », « . », espace et « 0x ». Un identifiant
 hexadecimal long (16 chiffres ou plus : adresse longue, EPID, cle) est aussi cherche dans les seuls chiffres hexadecimaux du
-fichier, pour le trouver ecrit en tableau C (« 0x81, 0x42, ... », sur plusieurs lignes). Sans aucun de ces fichiers, la garde
+fichier, pour le trouver ecrit en tableau C (« 0x81, 0x42, ... », sur plusieurs lignes). Un identifiant hexadecimal court
+(moins de 8 chiffres : adresse courte, PAN) ne compte que comme un mot isole du texte brut, avec ou sans « 0x » : il apparait
+par hasard dans toute suite hexadecimale ou tout nombre plus long. Sans aucun de ces fichiers, la garde
 le dit et passe.
 """
 import os
@@ -34,6 +36,18 @@ def hexa_long(identifiant):
     return len(identifiant) >= 16 and re.fullmatch(r"[0-9A-F]+", identifiant) is not None
 
 
+def court(i):
+    """Un identifiant hexadecimal court (adresse courte, PAN : moins de 8 chiffres) : il apparait par hasard dans
+    tout binaire ou toute empreinte en base64 ; il ne compte que comme un mot isole."""
+    return len(i) < 8 and re.fullmatch(r"[0-9A-F]+", i) is not None
+
+
+def isole(i, brut):
+    """i (court) present comme un mot dans une chaine de texte : entoure de ce qui n'est ni lettre ni chiffre, avec ou
+    sans prefixe 0x."""
+    return re.search(r"(?<![0-9A-Za-z])(?:0x)?" + re.escape(i) + r"(?![0-9A-Za-z])", brut, re.IGNORECASE) is not None
+
+
 def lire_identifiants(chemin):
     with open(chemin, encoding="utf-8") as f:
         lignes = [l.strip() for l in f]
@@ -55,7 +69,8 @@ def trouver(depot, identifiants):
         with open(chemin, "rb") as g:
             brut = g.read().decode("utf-8", "replace")
         texte, hexa = normaliser(brut), chiffres_hexa(brut)
-        trouves += [(f, i) for i in identifiants if i in texte or (hexa_long(i) and i in hexa)]
+        trouves += [(f, i) for i in identifiants
+                    if (isole(i, brut) if court(i) else i in texte or (hexa_long(i) and i in hexa))]
     return trouves
 
 

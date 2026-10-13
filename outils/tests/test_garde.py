@@ -88,6 +88,27 @@ class TestGarde(unittest.TestCase):
         # Un identifiant court ne se cherche pas dans les seuls chiffres : pas de faux positif.
         self.assertNotIn("court.txt", sortie)
 
+    def test_court_dans_une_suite_hexa_ou_un_nombre_ignore(self):
+        d = depot({"a.txt": "empreinte FF1A2BCC", "b.txt": "valeur 1234567 et 91A2B3", "c.txt": "tab 0xFF, 0x1A, 0x2B"},
+                  "1A2B\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 0, sortie)
+
+    def test_court_isole_trouve(self):
+        d = depot({"a.txt": "adresse 1a2b", "b.txt": "court = 0x1A2B;", "c.txt": "noeud (1A2B)", "d.txt": "id:1A2B."},
+                  "1A2B\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 1)
+        for f in ("a.txt", "b.txt", "c.txt", "d.txt"):
+            self.assertIn(f, sortie)
+
+    def test_long_et_nom_restent_des_sous_chaines(self):
+        d = depot({"a.txt": "xxA000000000000099yy", "b.txt": "xxMarcelinexx"}, "A000000000000099\nmarceline\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 1)
+        self.assertIn("a.txt", sortie)
+        self.assertIn("b.txt", sortie)
+
     def test_nom_accentue(self):
         d = depot({"a.md": "La lampe du Salon à côté"}, "Salon à côté\n")
         code, sortie = lancer(d)
