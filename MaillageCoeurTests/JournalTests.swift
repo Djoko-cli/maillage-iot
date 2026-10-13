@@ -1,7 +1,6 @@
 import Foundation
 import Testing
 @testable import MaillageCoeur
-@testable import ProtocoleThread
 
 @Suite("Journal en fichiers mensuels")
 struct JournalTests {
@@ -22,13 +21,13 @@ struct JournalTests {
     @Test func ajouterEtLire() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueEssai())
         #expect(try j.lire().isEmpty, "dossier absent")
-        let a = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .appareilDisparu,
-                          sujet: Sujet(id: "46F77B36E071F8D0", nom: "Prise bureau"))
+        let a = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .essaiPerte,
+                          sujet: Sujet(id: "SUJET-1", nom: "Appareil 1"))
         let b = Evenement(date: Self.date("2026-09-30T21:00:00Z"), type: .veille,
                           periode: DateInterval(start: Self.date("2026-09-30T20:00:00Z"), end: Self.date("2026-09-30T21:00:00Z")))
-        let c = Evenement(date: Self.date("2026-09-27T00:10:00Z"), type: .reseauScinde, reseau: "4B36A2B7FEFB200B")
+        let c = Evenement(date: Self.date("2026-09-27T00:10:00Z"), type: .essaiScission, reseau: "RESEAU-A")
         try j.ajouter([a, b])
         try j.ajouter([c])
         // 30/09 21:00 UTC = 01/10 01:00 a Asia/Tbilisi : fichier d'octobre.
@@ -39,11 +38,25 @@ struct JournalTests {
         #expect(lignes.count == 2, "une ligne par evenement, ajoutees a la fin")
     }
 
+    /// Les types de la politique se relisent avec leur gravite ; ceux d'une autre politique restent lisibles.
+    @Test func graviteDesTypesDeLaPolitique() throws {
+        let d = Self.dossier()
+        defer { try? FileManager.default.removeItem(at: d) }
+        let ecrit = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueEssai())
+        try ecrit.ajouter([Evenement(date: Self.date("2026-09-27T00:10:00Z"), type: .essaiScission),
+                           Evenement(date: Self.date("2026-09-27T00:11:00Z"), type: .essaiPerte),
+                           Evenement(date: Self.date("2026-09-27T00:12:00Z"), type: .essaiRoutine)])
+        #expect(try ecrit.lire().map(\.gravite) == [.alerte, .attention, .info])
+        let neutre = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalNeutre())
+        #expect(try neutre.lire().map(\.type.rawValue) == ["essaiScission", "essaiPerte", "essaiRoutine"],
+                "un type inconnu de la politique se relit quand meme")
+    }
+
     @Test func ligneIllisibleIgnoree() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
-        let e = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .prefixeNouveau)
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueEssai())
+        let e = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .essaiRoutine)
         try j.ajouter([e])
         let url = d.appendingPathComponent("journal-2026-09.jsonl")
         let f = try FileHandle(forWritingTo: url)
@@ -57,7 +70,7 @@ struct JournalTests {
     @Test func purge() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalNeutre())
         try j.ajouter([Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille),
                        Evenement(date: Self.date("2026-10-10T00:00:00Z"), type: .veille)])
         // Le 05/01/2027 : septembre fini le 01/10 (96 jours), octobre le 01/11 (65 jours).

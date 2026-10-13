@@ -3,7 +3,7 @@ import Testing
 @testable import MaillageCoeur
 @testable import ProtocoleThread
 
-/// Aides des tests Thread (copies de `PiecesRouteursTests.fichier()` et de `JournalTests.calendrier`) :
+/// Aides des tests Thread (copies de `PiecesRouteursTests.fichier()` et de `JournalTests.calendrier` du coeur) :
 /// les tests Thread ne dependent plus des suites du coeur pour ces deux aides.
 enum AidesThread {
     static func fichierPieces() -> URL {

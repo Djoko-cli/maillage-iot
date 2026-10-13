@@ -3,8 +3,10 @@ import Testing
 @testable import MaillageCoeur
 @testable import ProtocoleThread
 
-@Suite("Journal : changements de parent regroupes")
-struct RegroupementParentsTests {
+/// Le mecanisme de regroupement (fenetre de 1 h, borne, ordre) est teste dans le coeur
+/// (`MaillageCoeurTests/RegroupementParentsTests.swift`, politique d'essai) ; ici, ce que Thread regroupe.
+@Suite("Regroupement Thread : changements de parent par ExtMac")
+struct RegroupementParentsThreadTests {
     static let t0 = Date(timeIntervalSince1970: 1_790_000_000)
 
     static func parent(_ minutes: Double, _ noeud: String) -> Evenement {
@@ -12,21 +14,11 @@ struct RegroupementParentsTests {
                   avant: "A", apres: "B")
     }
 
-    /// Changements de parent d'un meme noeud dans une fenetre de 1 h, comptee depuis le premier :
-    /// une ligne ; seul dans sa fenetre, il reste une ligne a lui ; un autre noeud a les siennes.
-    @Test func uneLigneParNoeudEtParHeure() throws {
-        let lignes = Regroupement.lignes([Self.parent(0, "x"), Self.parent(10, "x"), Self.parent(20, "y"),
-                                          Self.parent(50, "x"), Self.parent(59, "x"), Self.parent(70, "x")], politique: PolitiqueJournalThread())
-        try #require(lignes.map(\.evenements.count) == [1, 4, 1], "la plus recente d'abord : x a 70 min, x, y")
-        guard case .parents(let groupe) = lignes[1] else {
-            Issue.record("les 4 changements de x dans l'heure regroupes")
-            return
-        }
-        #expect(groupe.map(\.date) == [0.0, 10, 50, 59].map { Self.t0.addingTimeInterval($0 * 60) })
-        #expect(lignes[1].date == Self.t0.addingTimeInterval(59 * 60), "date du plus recent")
-        #expect(lignes[1].id.hasPrefix("parents-"))
-        #expect(lignes[0].evenements.first?.date == Self.t0.addingTimeInterval(70 * 60), "70 min : une autre fenetre")
-        #expect(lignes[2].evenements.first?.sujet?.id == "y")
+    /// `parentChange` se regroupe par noeud sur une heure.
+    @Test func parentChangeRegroupeParNoeud() {
+        let lignes = Regroupement.lignes([Self.parent(0, "x"), Self.parent(10, "x"), Self.parent(20, "y")],
+                                         politique: PolitiqueJournalThread())
+        #expect(lignes.map(\.evenements.count) == [1, 2])
     }
 
     /// Evenement d'un enfant identifie : `details["extMac"]` le designe, meme quand son id de sujet
@@ -53,16 +45,7 @@ struct RegroupementParentsTests {
         #expect(anciens.map(\.evenements.count) == [1, 2], "l'ancien regroupement, par id de sujet")
     }
 
-    /// La fenetre est de 1 h pleine : un changement a 59 min 59 s du premier est dans sa ligne, a
-    /// 60 min pile il ouvre la suivante (comme les pertes a 10 min).
-    @Test func borneExacteDeLHeure() {
-        let dedans = Regroupement.lignes([Self.parent(0, "x"), Self.parent(59.98, "x")], politique: PolitiqueJournalThread())
-        #expect(dedans.map(\.evenements.count) == [2], "59 min 59 s : meme ligne")
-        let pile = Regroupement.lignes([Self.parent(0, "x"), Self.parent(60, "x")], politique: PolitiqueJournalThread())
-        #expect(pile.map(\.evenements.count) == [1, 1], "60 min : une autre fenetre")
-    }
-
-    /// Les pertes restent regroupees a part, et les autres evenements passent tels quels.
+    /// Les pertes Thread (`appareilDisparu`) restent regroupees a part, et `sansParent` passe tel quel.
     @Test func pertesInchangees() {
         let perte = { (minutes: Double, id: String) in
             Evenement(date: Self.t0.addingTimeInterval(minutes * 60), type: .appareilDisparu, sujet: Sujet(id: id, nom: id))
