@@ -641,18 +641,18 @@ EOF
 - Consumes: les coupes des tâches 4 à 6.
 - Produces: module `ProtocoleThread` (`import ProtocoleThread`) ; `MaillageCoeur` sans aucune dépendance de protocole ; l'app dépend des deux frameworks.
 
-- [ ] **Step 1: Noter les effectifs**
+- [x] **Step 1: Noter les effectifs**
 
 ```bash
 for d in MaillageCoeurTests MaillageIoTTests PasseurTests; do printf '%s %s\n' "$d" "$(grep -rc '@Test' $d | awk -F: '{s+=$2} END {print s}')"; done
 ```
 Noter les trois nombres dans le registre : la somme des `@Test` doit être la même après le déplacement (cœur + ProtocoleThread + app + démon).
 
-- [ ] **Step 2: Déplacer les fichiers**
+- [x] **Step 2: Déplacer les fichiers**
 
 Avec `git mv`, liste exacte ci-dessus (préserve l'historique). Vérifier : `ls ProtocoleThread/Demo/releve-2026-09-28.json` existe, et `MaillageCoeur/Noms/NomsMaison.swift`, `MaillageCoeur/Noms/ProtocolePasseur.swift`, `MaillageCoeur/Annonces/CodageJSON.swift` sont toujours en place.
 
-- [ ] **Step 3: Déclarer les cibles**
+- [x] **Step 3: Déclarer les cibles**
 
 Dans `project.yml`, sur le modèle exact des cibles `MaillageCoeur` et `MaillageCoeurTests` :
 ```yaml
@@ -687,19 +687,19 @@ Dans `project.yml`, sur le modèle exact des cibles `MaillageCoeur` et `Maillage
 ```
 Ajouter `- target: ProtocoleThread` aux dépendances de `MaillageIoT` et de `MaillageIoTTests` ; ajouter `ProtocoleThread` (build) et `ProtocoleThreadTests` (test) au schéma `MaillageIoT`. Le schéma `MaillageCoeur` ne change pas : il ne doit contenir que le cœur et ses tests.
 
-- [ ] **Step 4: Imports et visibilités**
+- [x] **Step 4: Imports et visibilités**
 
 - Fichiers de `ProtocoleThread/` : `import MaillageCoeur` en tête de chacun.
 - Tests de `ProtocoleThreadTests/` : `@testable import ProtocoleThread` et `@testable import MaillageCoeur`.
 - App et ses tests : ajouter `import ProtocoleThread` (ou `@testable import ProtocoleThread` dans les tests qui touchent un interne, par exemple `NomsSceneTests.swift:59` et `MaillageDemo.maillage(…sansIdentite:)`) partout où le compilateur le demande.
 - Tout symbole interne du cœur que `ProtocoleThread` utilise devient `public` ; tout symbole interne de `ProtocoleThread` que l'app utilise devient `public`. Lister chaque symbole rendu public dans le registre (`Task 7: public : …`).
 
-- [ ] **Step 5: Lancer toute la suite**
+- [x] **Step 5: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t7.log 2>&1; echo "code=$?"; tail -3 .superpowers/sdd/etape1-t7.log`
 Expected: `code=0`, `ReferenceRejeuTests` compris.
 
-- [ ] **Step 6: Le cœur seul**
+- [x] **Step 6: Le cœur seul**
 
 Run:
 ```bash
@@ -710,7 +710,7 @@ xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageCoeur -destination 'pl
 ```
 Expected: `0`, `mesures code=0`, `3`, `coeur seul code=0`.
 
-- [ ] **Step 7: Conservation des tests**
+- [x] **Step 7: Conservation des tests**
 
 ```bash
 for d in MaillageCoeurTests ProtocoleThreadTests MaillageIoTTests PasseurTests; do printf '%s %s\n' "$d" "$(grep -rc '@Test' $d | awk -F: '{s+=$2} END {print s}')"; done

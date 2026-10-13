@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Textes de l'avancement d'une tournee : barre du graphe, Reglages › Sonde, menu.
 enum TexteTournee {

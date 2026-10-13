@@ -47,6 +47,25 @@ targets:
         # quelques secondes (80 a 100 fois plus). Il n'a ni assert ni code propre au Debug.
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
+  # Le protocole Thread : decodage des annonces, instantanes, maillage de la sonde, journal Thread. Depend du coeur,
+  # jamais l'inverse ; optimise aussi en Debug, comme le coeur.
+  ProtocoleThread:
+    type: framework
+    platform: macOS
+    sources:
+      - path: ProtocoleThread
+    dependencies:
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.thread
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        SKIP_INSTALL: YES
+        DEFINES_MODULE: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
   MaillageIoT:
     type: application
     platform: macOS
@@ -54,6 +73,7 @@ targets:
       - path: MaillageIoT
     dependencies:
       - target: MaillageCoeur
+      - target: ProtocoleThread
       - package: Sparkle
     info:
       path: MaillageIoT/Info.plist
@@ -180,6 +200,22 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.coeur.tests
         GENERATE_INFOPLIST_FILE: YES
+  # Les tests Thread compilent aussi deux fixtures neutres du coeur (sans test), pour les equivalences
+  # entre graphe bati a la main et graphe Thread.
+  ProtocoleThreadTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ProtocoleThreadTests
+      - path: MaillageCoeurTests/MaisonInventee.swift
+      - path: MaillageCoeurTests/FixturesScene.swift
+    dependencies:
+      - target: ProtocoleThread
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.thread.tests
+        GENERATE_INFOPLIST_FILE: YES
   MaillageIoTTests:
     type: bundle.unit-test
     platform: macOS
@@ -188,6 +224,7 @@ targets:
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur
+      - target: ProtocoleThread
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.tests
@@ -216,7 +253,9 @@ schemes:
       targets:
         MaillageIoT: all
         MaillageCoeur: all
+        ProtocoleThread: all
         MaillageCoeurTests: [test]
+        ProtocoleThreadTests: [test]
         MaillageIoTTests: [test]
         PasseurTests: [test]
     run:
@@ -225,6 +264,7 @@ schemes:
       config: Debug
       targets:
         - MaillageCoeurTests
+        - ProtocoleThreadTests
         - MaillageIoTTests
         - PasseurTests
     archive:

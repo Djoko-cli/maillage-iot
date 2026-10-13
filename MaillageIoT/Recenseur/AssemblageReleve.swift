@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Parties pures du releve, sans entree-sortie : assemblage des annonces et
 /// cibles gardees d'un releve a l'autre.

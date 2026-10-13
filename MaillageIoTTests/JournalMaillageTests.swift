@@ -1,5 +1,6 @@
 import Foundation
 @testable import MaillageCoeur
+@testable import ProtocoleThread
 import Testing
 @testable import MaillageIoT
 

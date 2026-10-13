@@ -1,5 +1,6 @@
 import AppKit
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Icone de la barre des menus : le maillage et, en bas a droite, le symbole de Thread ; orange quand il y a une

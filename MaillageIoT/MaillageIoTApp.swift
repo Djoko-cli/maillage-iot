@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// App de la barre des menus : ecoute le reseau local en permanence, tient

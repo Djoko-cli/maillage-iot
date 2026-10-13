@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 import Synchronization
 import SwiftUI
 import Testing

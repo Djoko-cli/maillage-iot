@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// « Associer a un accessoire de Maison… », dans la fiche d'un appareil que Maison ne nomme pas : un menu des

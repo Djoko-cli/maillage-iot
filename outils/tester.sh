@@ -1,11 +1,11 @@
 #!/bin/sh
 # Genere le projet puis lance les tests : tous, ou ceux passes en arguments
-#   outils/tester.sh MaillageCoeurTests/AdressesTests MaillageIoTTests
+#   outils/tester.sh ProtocoleThreadTests/AdressesTests MaillageIoTTests
 # Affiche les erreurs, les tests en echec et le bilan ; journal complet dans
 # $TMPDIR/maillage-iot-tests.log. Produits de compilation hors du depot (DD).
 # Chaque cible donnee doit lancer au moins un test, sinon echec : un nom faux ne lance rien, et
 # xcodebuild repond pourtant TEST SUCCEEDED. Un test de Swift Testing se nomme avec ses
-# parentheses (MaillageCoeurTests/GrapheReseauTests/stable()).
+# parentheses (ProtocoleThreadTests/GrapheReseauTests/stable()).
 set -u
 cd "$(dirname "$0")/.."
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot}

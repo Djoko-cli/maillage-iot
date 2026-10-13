@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 import Testing
 @testable import MaillageIoT

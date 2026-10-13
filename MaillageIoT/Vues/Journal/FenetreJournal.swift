@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Familles d'evenements, pour le filtre du journal.

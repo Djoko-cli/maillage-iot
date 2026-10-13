@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Cle de l'acces reseau, creee par l'USB comme pour le pont Halo (contrat 1.0.2) : l'app
 /// fournit un alea de 32 octets, la carte calcule `cle = HMAC-SHA256(alea de l'app, alea de la

@@ -1,5 +1,6 @@
 import AppKit
 import MaillageCoeur
+import ProtocoleThread
 import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers

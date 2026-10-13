@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Ce que la vue par pieces montre d'un reseau, tire de la surveillance (spec de la vue par pieces,

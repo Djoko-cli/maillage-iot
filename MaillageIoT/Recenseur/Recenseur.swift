@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Ecoute le reseau local et produit des releves (`Annonces`). Le premier des
 /// que l'ecoute est prete (tous les navigateurs), qu'un routeur de bordure est

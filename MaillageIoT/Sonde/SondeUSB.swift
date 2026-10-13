@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Lignes machine de la sonde et envoi des commandes : la liaison serie dans
 /// l'app, un canal rejoue dans les tests.

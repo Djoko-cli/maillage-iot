@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 @testable import MaillageCoeur
+@testable import ProtocoleThread
 import simd
 import SwiftUI
 import Testing

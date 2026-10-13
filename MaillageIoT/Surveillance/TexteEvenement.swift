@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Textes affiches des evenements, des lignes du journal et des notifications.
 enum TexteEvenement {

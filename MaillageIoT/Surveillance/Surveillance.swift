@@ -1,5 +1,6 @@
 import AppKit
 import MaillageCoeur
+import ProtocoleThread
 import Observation
 import os
 

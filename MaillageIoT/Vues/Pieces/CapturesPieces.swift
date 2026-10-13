@@ -1,6 +1,7 @@
 import AppKit
 import ImageIO
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 import UniformTypeIdentifiers
 

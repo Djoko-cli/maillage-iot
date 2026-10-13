@@ -9,7 +9,7 @@ struct ResumeRelaisTests {
     static let t0 = Date(timeIntervalSince1970: 1_790_000_000)
 
     static func change(_ minutes: Double, _ avant: String?, _ apres: String?) -> Evenement {
-        Evenement(date: t0.addingTimeInterval(minutes * 60), type: .parentChange, sujet: Sujet(id: "x", nom: "Capteur"),
+        Evenement(date: t0.addingTimeInterval(minutes * 60), type: TypeEvenement("parentChange"), sujet: Sujet(id: "x", nom: "Capteur"),
                   avant: avant, apres: apres)
     }
 

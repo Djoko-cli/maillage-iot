@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 // Morceaux de la fenetre de la vue par pieces, repris de celle du graphe : barre d'outils, ligne de

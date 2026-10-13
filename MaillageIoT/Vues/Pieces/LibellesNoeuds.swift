@@ -1,5 +1,6 @@
 import Foundation
 import MaillageCoeur
+import ProtocoleThread
 
 /// Textes de la vue par pieces : le libelle de chaque noeud (nom, couronne, lune, alerte) et la
 /// pastille de sa batterie faible ; les noms des pieces et des etages ; le compte d'une piece ; le

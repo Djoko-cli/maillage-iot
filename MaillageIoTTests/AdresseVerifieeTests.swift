@@ -1,5 +1,6 @@
 import Foundation
 @testable import MaillageCoeur
+@testable import ProtocoleThread
 import SwiftUI
 import Testing
 @testable import MaillageIoT

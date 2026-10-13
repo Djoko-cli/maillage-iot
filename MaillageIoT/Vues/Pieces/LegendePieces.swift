@@ -1,5 +1,6 @@
 import AppKit
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Legende de la vue par pieces (polissage B, section 2 ; maquette de la legende, colonne de droite) :

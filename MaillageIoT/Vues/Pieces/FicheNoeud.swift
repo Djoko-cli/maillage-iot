@@ -1,4 +1,5 @@
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Fiche du noeud choisi : carte de verre en bas de la fenetre, sur toute sa largeur, en quatre colonnes cote a cote
