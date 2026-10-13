@@ -712,11 +712,11 @@ Ne commencer qu'après l'accord explicite de Djoko sur la visibilité (public ou
 - Consumes: `main` propre, hook installé, aucun remote d'essai (tâche 5).
 - Produces: `origin` = `https://github.com/Djoko-cli/maillage-iot.git`, `main` poussé.
 
-- [ ] **Step 1: Demander à Djoko : public ou privé**
+- [x] **Step 1: Demander à Djoko : public ou privé**
 
 Proposer la description « About », en anglais : « Maps the Thread and Zigbee radio meshes of a home on its rooms, in 2D and 3D, from the Mac menu bar (merging Maillage Thread and Maillage Zigbee). »
 
-- [ ] **Step 2: Créer le dépôt et pousser, hook compris**
+- [x] **Step 2: Créer le dépôt et pousser, hook compris**
 
 ```bash
 gh repo create Djoko-cli/maillage-iot --public --description "Maps the Thread and Zigbee radio meshes of a home on its rooms, in 2D and 3D, from the Mac menu bar (merging Maillage Thread and Maillage Zigbee)."
@@ -726,7 +726,7 @@ git push -u origin main; echo "code=$?"
 (`--private` à la place de `--public` si Djoko le choisit.)
 Expected: `code=0`, les bilans des deux contrôles affichés par le hook, et `main` suivi par `origin/main`.
 
-- [ ] **Step 3: Vérifier l'auteur publié**
+- [x] **Step 3: Vérifier l'auteur publié**
 
 Run: `gh api repos/Djoko-cli/maillage-iot/commits --jq '.[].commit.author.email' | sort -u`
 Expected: une seule ligne, `12185352+Djoko-cli@users.noreply.github.com`.
