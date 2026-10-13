@@ -10,8 +10,9 @@ pas, la garde prend celui du depot principal. Echoue (code 1) si l'un des identi
 fichier suivi par git, sans tenir compte de la casse ni des separateurs « : », « - », « . », espace et « 0x ». Un identifiant
 hexadecimal long (16 chiffres ou plus : adresse longue, EPID, cle) est aussi cherche dans les seuls chiffres hexadecimaux du
 fichier, pour le trouver ecrit en tableau C (« 0x81, 0x42, ... », sur plusieurs lignes). Un identifiant hexadecimal court
-(moins de 8 chiffres : adresse courte, PAN) ne compte que comme un mot isole du texte brut, avec ou sans « 0x » : il apparait
-par hasard dans toute suite hexadecimale ou tout nombre plus long. Sans aucun de ces fichiers, la garde
+(moins de 8 chiffres : adresse courte, PAN) ne compte que comme un mot isole du texte brut, avec ou sans « 0x » et avec
+au plus un separateur entre deux octets : il apparait par hasard dans toute suite hexadecimale ou tout nombre plus long.
+Sans aucun de ces fichiers, la garde
 le dit et passe.
 """
 import os
@@ -44,8 +45,13 @@ def court(i):
 
 def isole(i, brut):
     """i (court) present comme un mot dans une chaine de texte : entoure de ce qui n'est ni lettre ni chiffre, avec ou
-    sans prefixe 0x."""
-    return re.search(r"(?<![0-9A-Za-z])(?:0x)?" + re.escape(i) + r"(?![0-9A-Za-z])", brut, re.IGNORECASE) is not None
+    sans prefixe 0x, et avec au plus un separateur (« : », « . », « - », espace) entre deux octets consecutifs (paires de
+    2 chiffres ; le dernier chiffre d'un identifiant impair reste attache a la derniere paire)."""
+    paires = [i[k:k + 2] for k in range(0, len(i) - len(i) % 2, 2)]
+    if len(i) % 2:
+        paires[-1:] = [paires[-1] + i[-1]] if paires else [i]
+    motif = r"[:.\- ]?".join(re.escape(p) for p in paires)
+    return re.search(r"(?<![0-9A-Za-z])(?:0x)?" + motif + r"(?![0-9A-Za-z])", brut, re.IGNORECASE) is not None
 
 
 def lire_identifiants(chemin):

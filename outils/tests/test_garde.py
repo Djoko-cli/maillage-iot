@@ -102,6 +102,20 @@ class TestGarde(unittest.TestCase):
         for f in ("a.txt", "b.txt", "c.txt", "d.txt"):
             self.assertIn(f, sortie)
 
+    def test_court_avec_separateurs_entre_octets_trouve(self):
+        d = depot({"a.txt": "adresse 1A:2B", "b.txt": "adresse 1a-2b", "c.txt": "adresse 1A.2B", "d.txt": "adresse 1A 2B",
+                   "e.txt": "adresse 0x1A:2B"}, "1A2B\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 1)
+        for f in ("a.txt", "b.txt", "c.txt", "d.txt", "e.txt"):
+            self.assertIn(f, sortie)
+
+    def test_court_avec_separateurs_dans_une_suite_ignore(self):
+        d = depot({"a.txt": "empreinte FF1A:2BCC", "b.txt": "empreinte FF1A2BCC", "c.txt": "nombre 91A2B3 et 91A:2B3"},
+                  "1A2B\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 0, sortie)
+
     def test_long_et_nom_restent_des_sous_chaines(self):
         d = depot({"a.txt": "xxA000000000000099yy", "b.txt": "xxMarcelinexx"}, "A000000000000099\nmarceline\n")
         code, sortie = lancer(d)
