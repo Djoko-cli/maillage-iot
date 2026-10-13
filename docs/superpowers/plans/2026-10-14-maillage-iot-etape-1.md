@@ -254,7 +254,7 @@ EOF
 - Consumes: le projet de la tâche 1 (schéma `Passeur`).
 - Produces: `outils/passeur.sh --comparer-versions INSTALLEE CONSTRUITE` (code 0 si `CONSTRUITE` ≥ `INSTALLEE`, code 1 et message sinon) ; l'installation refuse de remplacer un démon installé plus récent.
 
-- [ ] **Step 1: Recopier**
+- [x] **Step 1: Recopier**
 
 ```bash
 cd ~/Dev/maillage-merge
@@ -266,7 +266,7 @@ python3 -m unittest discover -s outils/tests -q 2>&1 | tail -2
 ```
 Expected: `OK` (garde, pre-push, gitignore, vérificateur du démon, empreinte de Thread Route).
 
-- [ ] **Step 2: Écrire le test de version (RED)**
+- [x] **Step 2: Écrire le test de version (RED)**
 
 `outils/tests/test_passeur_version.py` :
 ```python
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 Run: `python3 -m unittest outils/tests/test_passeur_version.py 2>&1 | tail -3`
 Expected: `FAILED` (l'option `--comparer-versions` n'existe pas encore).
 
-- [ ] **Step 3: Implémenter le refus dans `outils/passeur.sh`**
+- [x] **Step 3: Implémenter le refus dans `outils/passeur.sh`**
 
 Ajouter, juste après le traitement des options existantes (avant toute compilation) :
 ```bash
@@ -330,12 +330,12 @@ Et, après la compilation, avant d'arrêter le démon en place : lire `CFBundleS
 
 Adapter aussi : `DD` par défaut `$HOME/Library/Developer/Xcode/DerivedData/maillage-iot-passeur` (l. 32) ; `-project MaillageIoT.xcodeproj` (l. 81) ; le commentaire l. 2 renvoie à `docs/superpowers/specs/2026-10-13-maillage-iot-design.md` (section 5.3).
 
-- [ ] **Step 4: Vérifier le passage**
+- [x] **Step 4: Vérifier le passage**
 
 Run: `python3 -m unittest discover -s outils/tests -q 2>&1 | tail -2`
 Expected: `OK`.
 
-- [ ] **Step 5: Firmware et sonde**
+- [x] **Step 5: Firmware et sonde**
 
 - `sonde-thread/sonde_essai.py` l. 27 et 36, et `sonde-thread/README.md:296` : service de trousseau `fr.djoko.maillage.iot.sonde-thread`.
 - `sonde-thread/README.md` l. 23-24 et `sonde-thread/platformio.ini` l. 2 et 6 : les renvois à `docs/superpowers/…` de Thread deviennent un renvoi à `docs/superpowers/specs/2026-10-13-maillage-iot-design.md`.
@@ -349,7 +349,7 @@ sh outils/thread-route/tests.sh > .superpowers/sdd/etape1-t3-route.log 2>&1; ech
 ```
 Expected: `OK` (146 tests), `c++ code=0`, `route code=0`. Si un test de `sonde_essai` attend l'ancien service, changer cette attente seulement.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
