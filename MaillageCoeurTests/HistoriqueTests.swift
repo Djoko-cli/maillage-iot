@@ -168,7 +168,7 @@ struct HistoriqueTests {
     func identifiantHorsPlageIgnore(champs: String) throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let h = HistoriqueFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        let h = HistoriqueFichiers(dossier: d, calendrier: AidesThread.calendrier)
         let bon = ReleveMaillage(Self.maillage(Self.date("2026-09-20T10:00:00Z")))
         try h.ajouter(bon)
         let ligne = "{" + #""date":"2026-09-30T10:00:00.000Z","partition":"0000000A","# + Self.complete(champs) + "}"
@@ -226,7 +226,7 @@ struct HistoriqueTests {
     @Test func fichiersMensuels() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let h = HistoriqueFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        let h = HistoriqueFichiers(dossier: d, calendrier: AidesThread.calendrier)
         #expect(try h.lire(depuis: .distantPast).isEmpty, "dossier absent")
         let septembre = ReleveMaillage(Self.maillage(Self.date("2026-09-20T10:00:00Z")))
         let fin = ReleveMaillage(Self.maillage(Self.date("2026-09-30T21:00:00Z")))
@@ -236,7 +236,7 @@ struct HistoriqueTests {
         try f.seekToEnd()
         try f.write(contentsOf: Data("{pas du json\n".utf8))
         try f.close()
-        try JournalFichiers(dossier: d, calendrier: JournalTests.calendrier)
+        try JournalFichiers(dossier: d, calendrier: AidesThread.calendrier)
             .ajouter([Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille)])
         try Data("{}".utf8).write(to: d.appendingPathComponent("identites-routeurs.json"))
         // 30/09 21:00 UTC = 01/10 01:00 a Asia/Tbilisi : fichier d'octobre.

@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import MaillageCoeur
 
-/// Versions Thread des fixtures neutres du coeur (`MaisonInventee`, `ScenePiecesTests.graphe(sonde:)`) :
+/// Versions Thread des fixtures neutres du coeur (`MaisonInventee`, `FixturesScene.graphe(sonde:)`) :
 /// le code d'origine, qui passe par `Banc`, `Instantane`, `ConstructionMaillage` et `MaillageAffiche`.
 /// Les tests d'equivalence prouvent que les versions ecrites a la main donnent exactement le meme graphe.
 enum MaisonInventeeThread {
@@ -84,7 +84,7 @@ enum ScenePiecesThread {
 struct FixturesThreadTests {
     @Test(arguments: [false, true])
     func grapheDeLaScene(sonde: Bool) throws {
-        let manuel = try ScenePiecesTests.graphe(sonde: sonde)
+        let manuel = try FixturesScene.graphe(sonde: sonde)
         let thread = try ScenePiecesThread.grapheThread(sonde: sonde)
         #expect(manuel == thread)
         #expect(manuel.noeuds.count == 6)
