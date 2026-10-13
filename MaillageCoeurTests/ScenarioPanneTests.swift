@@ -58,7 +58,7 @@ struct ScenarioPanneTests {
     }
 
     @Test func uneLigneDePertes() throws {
-        let lignes = Regroupement.lignes(Self.rejouer().pas.flatMap(\.1))
+        let lignes = Regroupement.lignes(Self.rejouer().pas.flatMap(\.1), politique: PolitiqueJournalThread())
         #expect(lignes.count == 6)
         guard case .pertes(let pertes) = lignes.first else {
             Issue.record("la ligne la plus recente devrait regrouper les pertes")
@@ -75,7 +75,7 @@ struct ScenarioPanneTests {
     }
 
     @Test func notifications() {
-        var alertes = Alertes()
+        var alertes = Alertes(politique: PolitiqueJournalThread())
         var envoyees: [(Date, AlerteAEnvoyer)] = []
         for (date, ev) in Self.rejouer().pas {
             for a in alertes.traiter(ev) { envoyees.append((date, a)) }
@@ -96,7 +96,7 @@ struct ScenarioPanneTests {
         func perte(_ secondes: TimeInterval, _ id: String) -> Evenement {
             Evenement(date: t.addingTimeInterval(secondes), type: .appareilDisparu, sujet: Sujet(id: id, nom: id))
         }
-        var alertes = Alertes()
+        var alertes = Alertes(politique: PolitiqueJournalThread())
         let premieres = alertes.traiter([perte(0, "a"), perte(10, "b"), perte(20, "c")])
         let x = try #require(premieres.first { $0.categorie == .pertes }).identifiant
         let suite = alertes.traiter([perte(-90, "d")])
@@ -111,10 +111,10 @@ struct ScenarioPanneTests {
             Evenement(date: t.addingTimeInterval(minutes * 60), type: .appareilDisparu,
                       sujet: Sujet(id: "\(minutes)", nom: "\(minutes)"))
         }
-        let lignes = Regroupement.lignes([perte(0), perte(5), perte(12), perte(30), perte(31)])
+        let lignes = Regroupement.lignes([perte(0), perte(5), perte(12), perte(30), perte(31)], politique: PolitiqueJournalThread())
         #expect(lignes.map(\.evenements.count) == [2, 1, 2], "10 min comptees depuis la premiere perte")
         let isole = Evenement(date: t, type: .appareilChangePartition, details: ["coupee": "oui"])
-        #expect(Regroupement.estPerte(isole))
-        #expect(!Regroupement.estPerte(Evenement(date: t, type: .appareilChangePartition)))
+        #expect(PolitiqueJournalThread().estPerte(isole))
+        #expect(!PolitiqueJournalThread().estPerte(Evenement(date: t, type: .appareilChangePartition)))
     }
 }

@@ -1,33 +1,45 @@
 import Foundation
 
-/// Nature d'un evenement du journal.
-public enum TypeEvenement: String, Codable, Hashable, Sendable, CaseIterable {
-    // Surveillance
-    case surveillanceDemarree, veille
-    // Reseau
-    case reseauScinde, reseauReuni, chefChange, bbrPrimaireChange, jeuActifChange
-    // Routeurs de bordure
-    case routeurApparu, routeurDisparu, routeurRoleChange, routeurNouvelleAdresseLien
-    // Prefixes OMR
-    case prefixeNouveau, prefixeRetire
-    // Appareils
-    case appareilNouveau, appareilDisparu, appareilRevenu, appareilSansAdresse, appareilChangePartition
-    // Maillage de la sonde : un enfant change de parent ou n'en a plus ; un routeur Thread (hors
-    // routeurs de bordure) entre dans la liste des routeurs ou en sort
-    case parentChange, sansParent, routeurThreadApparu, routeurThreadDisparu
+/// Nature d'un evenement du journal : un nom stable (celui qu'ecrit le journal) et une gravite par defaut. Le coeur
+/// ne declare que les types neutres ; chaque protocole declare les siens en extension (EvenementsThread.swift).
+/// Deux types sont egaux si leurs noms le sont ; un type inconnu se relit et se garde tel quel.
+public struct TypeEvenement: RawRepresentable, Hashable, Codable, Sendable {
+    public let rawValue: String
+    /// Gravite par defaut a la creation d'un evenement ; jamais ecrite dans le journal.
+    public let gravite: Gravite
 
-    /// Gravite par defaut.
-    public var gravite: Gravite {
-        switch self {
-        case .reseauScinde, .routeurDisparu:
-            .alerte
-        case .chefChange, .jeuActifChange, .routeurNouvelleAdresseLien, .prefixeRetire,
-             .appareilDisparu, .appareilSansAdresse, .appareilChangePartition, .sansParent, .routeurThreadDisparu:
-            .attention
-        default:
-            .info
-        }
+    public init(_ rawValue: String, gravite: Gravite = .info) {
+        self.rawValue = rawValue
+        self.gravite = gravite
     }
+
+    /// Type relu sans le connaitre : gravite par defaut `info`.
+    public init(rawValue: String) { self.init(rawValue) }
+
+    public static func == (a: TypeEvenement, b: TypeEvenement) -> Bool { a.rawValue == b.rawValue }
+    public func hash(into h: inout Hasher) { h.combine(rawValue) }
+
+    /// Relu du journal : le type connu du decodeur (`CodingUserInfoKey.typesEvenement`), gravite comprise ; sinon
+    /// un type inconnu, garde tel quel.
+    public init(from decoder: Decoder) throws {
+        let nom = try decoder.singleValueContainer().decode(String.self)
+        let connus = decoder.userInfo[.typesEvenement] as? [String: TypeEvenement]
+        self = connus?[nom] ?? TypeEvenement(rawValue: nom)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(rawValue)
+    }
+
+    // Surveillance
+    public static let surveillanceDemarree = TypeEvenement("surveillanceDemarree")
+    public static let veille = TypeEvenement("veille")
+}
+
+public extension CodingUserInfoKey {
+    /// Types d'evenements connus, par nom (`[String: TypeEvenement]`), pour relire le journal.
+    static let typesEvenement = CodingUserInfoKey(rawValue: "typesEvenement")!
 }
 
 public enum Gravite: String, Codable, Hashable, Sendable, CaseIterable, Comparable {

@@ -437,9 +437,12 @@ struct SuiviTests {
                           periode: DateInterval(start: Self.t0 - 60, end: Self.t0), constate: true,
                           details: ["E2E79FFC": "Aqara HubM100 #DFEB"])
         let json = try CodageJSON.encodeur().encode(e)
-        #expect(try CodageJSON.decodeur().decode(Evenement.self, from: json) == e)
+        // Le decodeur du journal connait les types de Thread (sans eux, un type garderait la gravite `info`).
+        let decodeur = CodageJSON.decodeur()
+        decodeur.userInfo[.typesEvenement] = PolitiqueJournalThread().typesParNom
+        #expect(try decodeur.decode(Evenement.self, from: json) == e)
         let ancien = Data(#"{"date":"2026-09-27T00:14:00Z","type":"appareilDisparu"}"#.utf8)
-        let lu = try CodageJSON.decodeur().decode(Evenement.self, from: ancien)
+        let lu = try decodeur.decode(Evenement.self, from: ancien)
         #expect(lu.gravite == .attention && !lu.constate && lu.details.isEmpty, "champs manquants : valeurs par defaut")
         #expect(e.id == "1790000000000-reseauScinde-4B36A2B7FEFB200B")
     }

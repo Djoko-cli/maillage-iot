@@ -90,6 +90,9 @@ enum TexteEvenement {
             return String(localized: "Routeur Thread apparu : \(nom)")
         case .routeurThreadDisparu:
             return String(localized: "Routeur Thread disparu : \(nom)")
+        default:
+            // Type d'un autre protocole, ou relu d'un journal plus recent : son nom, tel que le journal l'ecrit.
+            return e.type.rawValue
         }
     }
 

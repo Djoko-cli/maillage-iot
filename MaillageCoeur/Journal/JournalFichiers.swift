@@ -9,10 +9,14 @@ public struct JournalFichiers: Sendable {
     public let dossier: URL
     public let calendrier: Calendar
     private let fichiersMensuels: FichiersMensuels
+    /// Types d'evenements que le journal sait nommer a la relecture (gravite par defaut comprise).
+    private let typesConnus: [String: TypeEvenement]
 
-    public init(dossier: URL, calendrier: Calendar = .current) {
+    public init(dossier: URL, calendrier: Calendar = .current,
+                politique: any PolitiqueJournal = PolitiqueJournalNeutre()) {
         self.dossier = dossier
         self.calendrier = calendrier
+        typesConnus = politique.typesParNom
         fichiersMensuels = FichiersMensuels(dossier: dossier, prefixe: "journal", calendrier: calendrier)
     }
 
@@ -29,6 +33,7 @@ public struct JournalFichiers: Sendable {
     /// illisible est ignoree.
     public func lire() throws -> [Evenement] {
         let decodeur = CodageJSON.decodeur()
+        decodeur.userInfo[.typesEvenement] = typesConnus
         let tous = try fichiersMensuels.lignes().compactMap { try? decodeur.decode(Evenement.self, from: $0) }
         return tous.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }.map(\.element)
     }

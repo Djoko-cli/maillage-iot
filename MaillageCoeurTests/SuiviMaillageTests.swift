@@ -63,7 +63,7 @@ struct SuiviMaillageTests {
     /// Evenements regroupes pour l'affichage, d'un suivi dont les enfants ont un sujet « rloc: ».
     static func lignes(_ maillages: [Maillage]) -> [LigneJournal] {
         var suivi = SuiviMaillage()
-        return Regroupement.lignes(maillages.flatMap { suivi.integrer($0, sujets: sujetsRloc($0)) })
+        return Regroupement.lignes(maillages.flatMap { suivi.integrer($0, sujets: sujetsRloc($0)) }, politique: PolitiqueJournalThread())
     }
 
     /// L'ExtMac de l'enfant est dans les details des evenements qui parlent de lui : c'est elle
@@ -297,7 +297,7 @@ struct SuiviMaillageTests {
 
     /// Aucune notification par defaut : ces evenements relevent de « Autres changements ».
     @Test func autresChangements() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalThread())
         let ev = [TypeEvenement.parentChange, .sansParent, .routeurThreadApparu, .routeurThreadDisparu].map {
             Evenement(date: Self.t0, type: $0, sujet: Sujet(id: Self.b1, nom: "Prise"))
         }

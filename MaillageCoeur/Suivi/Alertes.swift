@@ -1,6 +1,7 @@
 import Foundation
 
-/// Categories de notifications (cases des reglages).
+/// Categories de notifications (cases des reglages ; restent celles de Thread tant que les notifications ne
+/// sont pas decidees par protocole).
 public enum CategorieAlerte: String, Codable, Hashable, Sendable, CaseIterable {
     /// Reseau scinde (par defaut : oui).
     case scission
@@ -46,14 +47,18 @@ public struct Alertes: Sendable {
     /// (d'apres sa premiere perte) : une perte datee plus tot ne le change pas.
     private var identifiantPertes: String?
     private var pertes: [Evenement] = []
+    private let politique: any PolitiqueJournal
 
-    public init() {}
+    /// Sans politique (`PolitiqueJournalNeutre`), rien ne se notifie : c'est le protocole qui dit quoi.
+    public init(politique: any PolitiqueJournal = PolitiqueJournalNeutre()) {
+        self.politique = politique
+    }
 
     public mutating func traiter(_ evenements: [Evenement]) -> [AlerteAEnvoyer] {
         var sortie: [AlerteAEnvoyer] = []
         var pertesModifiees = false
         for e in evenements {
-            if Regroupement.estPerte(e) {
+            if politique.estPerte(e) {
                 if let d = debutFenetre, abs(e.date.timeIntervalSince(d)) < Regroupement.fenetre {
                     pertes.append(e)
                     debutFenetre = min(d, e.date)
@@ -63,24 +68,19 @@ public struct Alertes: Sendable {
                     pertes = [e]
                 }
                 pertesModifiees = true
+            } else if politique.estScission(e) {
+                let s = Self.signature(e)
+                if !(e.constate && scissionsNotifiees.contains(s)), let c = politique.categorie(e) {
+                    sortie.append(AlerteAEnvoyer(categorie: c, identifiant: e.id, evenements: [e]))
+                }
+                scissionsNotifiees.insert(s)
             } else {
-                switch e.type {
-                case .reseauScinde:
-                    let s = Self.signature(e)
-                    if !(e.constate && scissionsNotifiees.contains(s)) {
-                        sortie.append(AlerteAEnvoyer(categorie: .scission, identifiant: e.id, evenements: [e]))
-                    }
-                    scissionsNotifiees.insert(s)
-                case .reseauReuni:
+                if politique.estReunion(e) {
                     let reseau = (e.reseau ?? "") + "|"
                     scissionsNotifiees = scissionsNotifiees.filter { !$0.hasPrefix(reseau) }
-                    sortie.append(AlerteAEnvoyer(categorie: .informations, identifiant: e.id, evenements: [e]))
-                case .routeurDisparu:
-                    sortie.append(AlerteAEnvoyer(categorie: .routeurDisparu, identifiant: e.id, evenements: [e]))
-                case .surveillanceDemarree, .veille:
-                    break
-                default:
-                    sortie.append(AlerteAEnvoyer(categorie: .informations, identifiant: e.id, evenements: [e]))
+                }
+                if let c = politique.categorie(e) {
+                    sortie.append(AlerteAEnvoyer(categorie: c, identifiant: e.id, evenements: [e]))
                 }
             }
         }

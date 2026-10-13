@@ -45,26 +45,16 @@ public enum Regroupement {
     /// sonde, section 6 : « X a change 4 fois de parent en 1 h »).
     public static let fenetreParents: TimeInterval = 3600
 
-    /// Perte : un appareil joignable devient sans adresse, disparait, ou passe
-    /// dans une partition coupee.
-    public static func estPerte(_ e: Evenement) -> Bool {
-        switch e.type {
-        case .appareilDisparu, .appareilSansAdresse: true
-        case .appareilChangePartition: e.details["coupee"] == "oui"
-        default: false
-        }
-    }
-
     /// Lignes du journal, les plus recentes d'abord : les pertes survenues dans
     /// une meme fenetre de 10 min forment une seule ligne ; les changements de parent d'un meme
     /// noeud dans une fenetre de 1 h aussi.
-    public static func lignes(_ evenements: [Evenement]) -> [LigneJournal] {
+    public static func lignes(_ evenements: [Evenement],
+                              politique: any PolitiqueJournal = PolitiqueJournalNeutre()) -> [LigneJournal] {
         let tries = evenements.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
             .map(\.element)
         var lignes: [LigneJournal] = []
         var groupe: [Evenement] = []
-        // Changements de parent en cours de regroupement, par noeud : son ExtMac si l'evenement la
-        // donne (l'id du sujet d'un enfant sans appareil change avec son parent), sinon l'id du sujet.
+        // Changements de parent en cours de regroupement, par noeud (`politique.cleParent`).
         var parents: [String: [Evenement]] = [:]
         func fermer() {
             if groupe.count >= 2 {
@@ -83,10 +73,10 @@ public enum Regroupement {
             }
         }
         for e in tries {
-            if estPerte(e) {
+            if politique.estPerte(e) {
                 if let premiere = groupe.first, e.date.timeIntervalSince(premiere.date) >= fenetre { fermer() }
                 groupe.append(e)
-            } else if e.type == .parentChange, let noeud = e.details["extMac"] ?? e.sujet?.id {
+            } else if let noeud = politique.cleParent(e) {
                 if let premier = parents[noeud]?.first, e.date.timeIntervalSince(premier.date) >= fenetreParents {
                     fermerParents(noeud)
                 }

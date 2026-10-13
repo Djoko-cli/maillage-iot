@@ -14,7 +14,7 @@ struct TexteEvenementTests {
 
     @Test func textes() throws {
         let t = ScenarioPanne.date(4, 14)
-        for type in TypeEvenement.allCases {
+        for type in [.surveillanceDemarree, .veille] + TypeEvenement.thread {
             let e = Evenement(date: t, type: type, sujet: Sujet(id: "x", nom: "Nuki Ultra"), avant: "chef", apres: "routeur",
                               periode: type == .veille ? DateInterval(start: t, end: t.addingTimeInterval(60)) : nil)
             #expect(!TexteEvenement.titre(e).isEmpty, "\(type)")

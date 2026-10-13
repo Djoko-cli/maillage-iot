@@ -450,7 +450,7 @@ EOF
   - dans `EvenementsThread.swift` : les 18 constantes Thread (`extension TypeEvenement`), avec les gravités d'aujourd'hui, `TypeEvenement.thread: [TypeEvenement]`, et `public struct PolitiqueJournalThread: PolitiqueJournal` ;
   - `CodingUserInfoKey.typesEvenement` : le décodeur du journal retrouve un type connu, gravité comprise, par son nom.
 
-- [ ] **Step 1: Tests de compatibilité (RED)**
+- [x] **Step 1: Tests de compatibilité (RED)**
 
 `MaillageCoeurTests/TypeEvenementTests.swift` :
 ```swift
@@ -500,7 +500,7 @@ Adapter la stratégie de date du décodeur à celle de `CodageJSON` si elle diff
 Run: `outils/tester.sh MaillageCoeurTests/TypeEvenementTests MaillageCoeurTests/EvenementsThreadTests > .superpowers/sdd/etape1-t5-red.log 2>&1; echo "code=$?"`
 Expected: échec de compilation (`TypeEvenement("…", gravite:)`, `.typesEvenement` absents).
 
-- [ ] **Step 2: Implémenter le type ouvert**
+- [x] **Step 2: Implémenter le type ouvert**
 
 Dans `Evenement.swift`, remplacer l'`enum TypeEvenement` par :
 ```swift
@@ -547,14 +547,14 @@ public extension CodingUserInfoKey {
 ```
 `Evenement.init(from:)` garde sa lecture tolérante : une `gravite` absente prend `type.gravite`, qui est désormais celle du type connu.
 
-- [ ] **Step 3: Déclarer les types Thread et la politique**
+- [x] **Step 3: Déclarer les types Thread et la politique**
 
 - `MaillageCoeur/Suivi/EvenementsThread.swift` : `public extension TypeEvenement` avec les 18 constantes (`static let reseauScinde = TypeEvenement("reseauScinde", gravite: .alerte)`, etc., mêmes noms et gravités qu'aujourd'hui) et `static let thread: [TypeEvenement]` (les 18 dans l'ordre de l'enum actuel) ; `public struct PolitiqueJournalThread: PolitiqueJournal` dont `types` vaut `[.surveillanceDemarree, .veille] + TypeEvenement.thread`.
 - `MaillageCoeur/Suivi/PolitiqueJournal.swift` : le protocole et `PolitiqueJournalNeutre` (`types` = les deux types neutres ; aucune perte, aucune catégorie, aucun parent). Les membres du protocole sont tirés de la lecture d'`Alertes.swift` (l. 8, 68, 74, 78-79) et de `Regroupement.swift` (l. 52-53, 89) : un membre par décision qui nomme aujourd'hui un type Thread ou une clé de `details` propre à Thread (`coupee`, `extMac`).
 - `Alertes` et `Regroupement` prennent la politique en paramètre (valeur par défaut : aucune) et n'en nomment plus aucun type Thread. `JournalFichiers` reçoit la politique et pose `userInfo[.typesEvenement]` sur son décodeur.
 - App : `Surveillance` crée et passe `PolitiqueJournalThread()` ; `FenetreJournal.swift:21` remplace `TypeEvenement.allCases` par `[.surveillanceDemarree, .veille] + TypeEvenement.thread` ; les `switch` sur un type d'événement (`TexteEvenement.swift` et autres) gagnent un `default:` qui rend le texte générique actuel du cas le plus proche, ou le nom brut pour un type inconnu.
 
-- [ ] **Step 4: Vérifier**
+- [x] **Step 4: Vérifier**
 
 Run:
 ```bash
@@ -566,7 +566,7 @@ for t in reseauScinde reseauReuni chefChange bbrPrimaireChange jeuActifChange ro
 ```
 Expected: `code=0` ; le compte vaut `0` (aucun fichier du cœur, hors `EvenementsThread.swift`, ne nomme un type Thread).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'

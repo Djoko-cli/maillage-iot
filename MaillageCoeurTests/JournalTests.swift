@@ -21,7 +21,7 @@ struct JournalTests {
     @Test func ajouterEtLire() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier)
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
         #expect(try j.lire().isEmpty, "dossier absent")
         let a = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .appareilDisparu,
                           sujet: Sujet(id: "46F77B36E071F8D0", nom: "Prise bureau"))
@@ -41,7 +41,7 @@ struct JournalTests {
     @Test func ligneIllisibleIgnoree() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier)
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
         let e = Evenement(date: Self.date("2026-09-27T00:14:00Z"), type: .prefixeNouveau)
         try j.ajouter([e])
         let url = d.appendingPathComponent("journal-2026-09.jsonl")
@@ -56,7 +56,7 @@ struct JournalTests {
     @Test func purge() throws {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
-        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier)
+        let j = JournalFichiers(dossier: d, calendrier: Self.calendrier, politique: PolitiqueJournalThread())
         try j.ajouter([Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille),
                        Evenement(date: Self.date("2026-10-10T00:00:00Z"), type: .veille)])
         // Le 05/01/2027 : septembre fini le 01/10 (96 jours), octobre le 01/11 (65 jours).

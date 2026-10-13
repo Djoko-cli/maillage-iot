@@ -106,7 +106,7 @@ final class Surveillance {
     /// Ce qui est sur disque dans `dernieres-adresses.json` (vide : rien d'ecrit, ou fichier illisible) : on n'ecrit
     /// que ce qui change.
     @ObservationIgnored private var adressesEcrites: [String: Suivi.AdresseGardee] = [:]
-    @ObservationIgnored private var alertes = Alertes()
+    @ObservationIgnored private var alertes = Alertes(politique: Surveillance.politiqueJournal)
     @ObservationIgnored private var suiviMaillage = SuiviMaillage()
     /// Historique sur disque : mode direct avec un dossier ; nil : nulle part (demo, tests).
     @ObservationIgnored private let fichiersHistorique: HistoriqueFichiers?
@@ -120,6 +120,8 @@ final class Surveillance {
     @ObservationIgnored private var debutVeille: Date?
     @ObservationIgnored private var observateurs: [NSObjectProtocol] = []
 
+    /// Ce que le journal sait de Thread : types d'evenements, pertes, notifications, changements de parent.
+    nonisolated static let politiqueJournal = PolitiqueJournalThread()
     /// Signatures des scissions deja notifiees (`[String]`), d'un lancement a l'autre.
     static let cleScissionsNotifiees = "thread.scissionsNotifiees"
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
@@ -145,7 +147,9 @@ final class Surveillance {
         case .direct:
             etatEcoute = .demarrage
             recenseur = Recenseur()
-            journal = dossier.map { JournalFichiers(dossier: $0.appendingPathComponent("Journal")) }
+            journal = dossier.map {
+                JournalFichiers(dossier: $0.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal)
+            }
             fichierSurnoms = dossier?.appendingPathComponent("surnoms.json")
             fichierAssociations = dossier?.appendingPathComponent("associations.json")
             fichierMaillage = dossier?.appendingPathComponent("dernier-maillage.json")
@@ -820,7 +824,7 @@ final class Surveillance {
         return evenements.reversed().prefix { $0.date >= recent }.contains { $0.gravite == .alerte }
     }
 
-    var lignesJournal: [LigneJournal] { Regroupement.lignes(evenements) }
+    var lignesJournal: [LigneJournal] { Regroupement.lignes(evenements, politique: Self.politiqueJournal) }
 
     /// Derniere scission du reseau (pour le bandeau : "depuis" ou "constate a").
     func derniereScission(_ r: Reseau) -> Evenement? {
@@ -840,7 +844,7 @@ final class Surveillance {
     /// ceux de la fenetre du journal (`Regroupement.lignes`), ses changements de parent d'une meme heure en une seule
     /// ligne (reprise de Maillage Zigbee, 09/10).
     func lignesJournal(de id: String) -> [LigneJournal] {
-        Array(Regroupement.lignes(evenements.filter(concernant(id))).prefix(5))
+        Array(Regroupement.lignes(evenements.filter(concernant(id)), politique: Self.politiqueJournal).prefix(5))
     }
 
     /// Un evenement concerne le noeud `id` : par son ExtMac s'il la porte (l'id du sujet d'un enfant sans appareil

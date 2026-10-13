@@ -22,7 +22,7 @@ struct AlertesTests {
 
     /// Une scission constatee (lancement, ouverture de session) deja notifiee ne l'est pas de nouveau.
     @Test func constateeDejaNotifiee() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalThread())
         a.scissionsNotifiees = ["4B36A2B7FEFB200B|73586B68,E2E79FFC"]
         #expect(a.traiter([Self.scission(["73586B68", "E2E79FFC"], constate: true)]).isEmpty)
         #expect(a.scissionsNotifiees == ["4B36A2B7FEFB200B|73586B68,E2E79FFC"])
@@ -30,7 +30,7 @@ struct AlertesTests {
 
     /// Une scission constatee d'une nouvelle forme (autre signature) notifie, et est retenue.
     @Test func nouvelleSignature() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalThread())
         a.scissionsNotifiees = ["4B36A2B7FEFB200B|73586B68,E2E79FFC"]
         let e = Self.scission(["73586B68", "686B5873"], constate: true)
         #expect(a.traiter([e]).map(\.categorie) == [.scission])
@@ -40,7 +40,7 @@ struct AlertesTests {
 
     /// Une scission observee notifie toujours, et est retenue : le lancement suivant ne la notifie pas.
     @Test func observeeToujoursNotifiee() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalThread())
         a.scissionsNotifiees = ["4B36A2B7FEFB200B|73586B68,E2E79FFC"]
         #expect(a.traiter([Self.scission(["73586B68", "E2E79FFC"], constate: false)]).map(\.categorie) == [.scission],
                 "observee : notifiee meme si deja connue")
@@ -51,7 +51,7 @@ struct AlertesTests {
 
     /// Une reunion efface les signatures de son reseau, et seulement les siennes.
     @Test func reunion() {
-        var a = Alertes()
+        var a = Alertes(politique: PolitiqueJournalThread())
         a.scissionsNotifiees = ["4B36A2B7FEFB200B|73586B68,E2E79FFC", "4B36A2B7FEFB200B|686B5873,73586B68",
                                 "1122334455667788|BBBBBBBB,CCCCCCCC"]
         let reuni = Evenement(date: Self.t, type: .reseauReuni, reseau: Self.xp, sujet: Sujet(id: Self.xp, nom: Self.xp),

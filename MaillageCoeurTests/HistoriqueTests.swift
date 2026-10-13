@@ -140,7 +140,7 @@ struct HistoriqueTests {
         try h.ajouter(apres)
         #expect(try h.lire(depuis: .distantPast) == [avant, apres])
 
-        let j = JournalFichiers(dossier: d, calendrier: AidesThread.calendrier)
+        let j = JournalFichiers(dossier: d, calendrier: AidesThread.calendrier, politique: PolitiqueJournalThread())
         let e1 = Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille)
         let e2 = Evenement(date: Self.date("2026-09-11T00:00:00Z"), type: .veille)
         try j.ajouter([e1])
@@ -236,7 +236,7 @@ struct HistoriqueTests {
         try f.seekToEnd()
         try f.write(contentsOf: Data("{pas du json\n".utf8))
         try f.close()
-        try JournalFichiers(dossier: d, calendrier: AidesThread.calendrier)
+        try JournalFichiers(dossier: d, calendrier: AidesThread.calendrier, politique: PolitiqueJournalThread())
             .ajouter([Evenement(date: Self.date("2026-09-10T00:00:00Z"), type: .veille)])
         try Data("{}".utf8).write(to: d.appendingPathComponent("identites-routeurs.json"))
         // 30/09 21:00 UTC = 01/10 01:00 a Asia/Tbilisi : fichier d'octobre.

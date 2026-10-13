@@ -31,7 +31,7 @@ struct JournalVueTests {
                       sujet: Sujet(id: "E0000000000000B1", nom: "Prise bureau"), avant: avant, apres: apres,
                       details: ["extMac": "E0000000000000B1"])
         }
-        let lignes = Regroupement.lignes([change(0, "HomePod salon", "Routeur · 5000"), change(5, "Routeur · 5000", "HomePod salon")])
+        let lignes = Regroupement.lignes([change(0, "HomePod salon", "Routeur · 5000"), change(5, "Routeur · 5000", "HomePod salon")], politique: PolitiqueJournalThread())
         #expect(lignes.count == 1 && lignes.first?.evenements.count == 2)
         #expect(FiltreJournal(recherche: "homepod").appliquer(lignes).count == 1, "nom « avant »")
         #expect(FiltreJournal(recherche: "5000").appliquer(lignes).count == 1, "nom « apres »")
