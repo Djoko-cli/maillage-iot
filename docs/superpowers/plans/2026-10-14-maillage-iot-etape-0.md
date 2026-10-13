@@ -43,11 +43,11 @@
 - Consumes: `Surveillance(mode: .demo, dossier: nil)`, `demarrer()`, `reseau`, `EntreeScene(surveillance:reseau:places:)`, `PlacesGardees()`, `GrapheReseau.noeuds` et `.liens`, `ScenePieces.noeuds`, `.pieces` et `.etages`.
 - Produces: `docs/rejeu/thread-demo.json`, JSON trié (`noeuds`, `liens`, `scene`, `pieces`, `etages`), que l'étape 1 de Maillage IoT compare au sien, préfixes `thread:` retirés.
 
-- [ ] **Step 1: Vérifier la signification des indices**
+- [x] **Step 1: Vérifier la signification des indices**
 
 Lire dans `MaillageCoeur/Scene/ScenePieces.swift` la doc de `Noeud.piece` et de `Piece.etage` : ce doivent être des indices dans `pieces` et dans `etages`. Lire aussi les dates de `ScenarioPanne` et de `MaillageDemo` : elles doivent être relatives à `maintenant`, pas des dates fixes. Si l'un des deux points est faux, s'arrêter et le signaler à la session de fusion avant d'écrire le test.
 
-- [ ] **Step 2: Écrire le test**
+- [x] **Step 2: Écrire le test**
 
 ```swift
 import Foundation
@@ -154,22 +154,22 @@ struct ReferenceRejeuTests {
 }
 ```
 
-- [ ] **Step 3: Premier lancement : le test écrit la référence et échoue**
+- [x] **Step 3: Premier lancement : le test écrit la référence et échoue**
 
 Run: `outils/tester.sh MaillageThreadTests/ReferenceRejeuTests`
 Expected: `stable()` passe ; `egaleALaReference()` échoue avec « reference absente : ecrite dans docs/rejeu/thread-demo.json » ; le fichier existe.
 
-- [ ] **Step 4: Contrôler la référence avant tout commit**
+- [x] **Step 4: Contrôler la référence avant tout commit**
 
 Run: `python3 .superpowers/anonymisation/outils/controles.py fichiers --table .superpowers/anonymisation/execution/table.json docs/rejeu/thread-demo.json MaillageThreadTests/ReferenceRejeuTests.swift; echo "code=$?"`
 Expected: `code=0`, aucun fichier en défaut. Sinon, ne pas commiter et signaler les comptes à la session de fusion.
 
-- [ ] **Step 5: Deuxième lancement : le test passe**
+- [x] **Step 5: Deuxième lancement : le test passe**
 
 Run: `outils/tester.sh MaillageThreadTests/ReferenceRejeuTests`
 Expected: les deux tests passent.
 
-- [ ] **Step 6: Commit et push**
+- [x] **Step 6: Commit et push**
 
 ```bash
 git add MaillageThreadTests/ReferenceRejeuTests.swift docs/rejeu/thread-demo.json

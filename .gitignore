@@ -13,18 +13,24 @@ xcuserdata/
 .swiftpm/
 .DS_Store
 __pycache__/
+.pytest_cache/
+.vscode/
 # Espace de travail prive : etats des lieux, anonymisation, essais, suivi d'execution, maquettes
 .superpowers/
 # Signature propre au poste, jamais commitee
 Local.xcconfig
 # Garde : les vrais identifiants des reseaux de Djoko et son prenom reel, jamais dans le depot
 garde.local.txt
-# Sondes : secrets et reglages locaux (cle_hue.local.h, sonde.local.json...)
+# Sondes : secrets et reglages locaux (cle_hue.local.h, sonde.local.json, cle_reseau.local...)
 *.local.*
+*.local
 .pio/
-# Essais de banc, releves et captures reels
+# Essais de banc, releves et captures reels (les captures anonymisees des tests restent suivies)
 essais/
-# Noms de Maison ecrits par le demon : jamais dans le depot
+docs/releves/**/capture-*-essai.jsonl
+# Noms ecrits par le demon ou tires du pont Hue, appariements reels : jamais dans le depot
 noms.json
 passeur-demande.json
 releve-maison.json
+noms-pont.json
+appariements-maison.json

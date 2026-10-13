@@ -1,45 +1,74 @@
 #!/bin/bash
 # Barriere avant tout push de Maillage IoT (depot public ; spec, section 5.1). Installation :
 #   cp outils/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
-#  1. auteur ET committer de chaque commit pousse = l'adresse noreply ;
-#  2. garde.local.txt present et non vide, puis garde des vrais identifiants sur les fichiers suivis (outils/garde.py) ;
-#  3. les deux controles d'anonymisation prives (celui de Maillage Thread, celui de Maillage Zigbee) sur les
-#     fichiers changes, commit racine compris (--root), et sur les messages des commits pousses.
+# Ce qui est controle, c'est ce qui part reellement, pas la copie de travail :
+#  1. jamais de push force : l'historique distant doit etre connu et ancetre de ce qui part ;
+#  2. auteur ET committer de chaque commit pousse = l'adresse noreply ; tagger d'un tag annote aussi ;
+#  3. garde.local.txt present et non vide, puis garde des vrais identifiants sur les fichiers suivis (outils/garde.py) ;
+#  4. les deux controles d'anonymisation prives (celui de Maillage Thread, celui de Maillage Zigbee) sur le contenu
+#     de chaque fichier ajoute ou modifie par chaque commit pousse (commit racine et merges compris), et sur les
+#     noms d'auteur et de committer, les messages et les tags annotes.
+# Les commits deja connus du remote vise ne sont pas recontroles ; ceux d'un autre remote, si.
 # Chaque controle est lance seul et son code de sortie teste : jamais de tube. Jamais de --no-verify.
 set -u
 attendu="12185352+Djoko-cli@users.noreply.github.com"
 zero=0000000000000000000000000000000000000000
+distant="${1:-aucun-remote}"
 racine=$(git rev-parse --show-toplevel)
 anon="$racine/.superpowers/anonymisation"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/contenus"
 fautifs=0
-: > "$tmp/fichiers"
 n=0
+refuser() { echo "pre-push : $1" >&2; fautifs=$((fautifs + 1)); }
 while read -r ref_locale sha_local ref_distante sha_distant; do
-  [ "$sha_local" = "$zero" ] && continue   # suppression d'une branche
-  if [ "$sha_distant" = "$zero" ]; then plage=$(git rev-list "$sha_local" --not --remotes)
-  else plage=$(git rev-list "$sha_distant..$sha_local"); fi
+  [ "$sha_local" = "$zero" ] && continue   # suppression d'une branche distante : rien ne part
+  if [ "$(git cat-file -t "$sha_local")" = "tag" ]; then
+    n=$((n + 1))
+    git cat-file tag "$sha_local" > "$tmp/message-$n.txt"
+    te=$(sed -n 's/^tagger .*<\(.*\)>.*/\1/p' "$tmp/message-$n.txt")
+    [ "$te" = "$attendu" ] || refuser "tag $ref_locale avec un tagger hors noreply"
+  fi
+  if [ "$sha_distant" = "$zero" ]; then
+    if ! plage=$(git rev-list "$sha_local" --not --remotes="$distant"); then
+      refuser "$ref_locale : commits a pousser illisibles"; continue
+    fi
+  else
+    if ! git cat-file -e "$sha_distant^{commit}" 2>/dev/null \
+        || ! git merge-base --is-ancestor "$sha_distant" "$sha_local"; then
+      refuser "$ref_distante : push force ou historique distant inconnu (recuperer d'abord ; jamais de push force)"
+      continue
+    fi
+    if ! plage=$(git rev-list "$sha_distant..$sha_local"); then
+      refuser "$ref_locale : commits a pousser illisibles"; continue
+    fi
+  fi
   for c in $plage; do
     ae=$(git log -1 --format=%ae "$c"); ce=$(git log -1 --format=%ce "$c")
     if [ "$ae" != "$attendu" ] || [ "$ce" != "$attendu" ]; then
-      echo "pre-push : commit $(git log -1 --format=%h "$c") avec auteur ou committer hors noreply" >&2
-      fautifs=$((fautifs + 1))
+      refuser "commit $(git log -1 --format=%h "$c") avec auteur ou committer hors noreply"
     fi
     n=$((n + 1))
-    git log -1 --format=%B "$c" > "$tmp/message-$n.txt"
-    git diff-tree --root --no-commit-id --name-only -r --diff-filter=d "$c" >> "$tmp/fichiers"
+    git log -1 --format='%an%n%cn%n%B' "$c" > "$tmp/message-$n.txt"
+    # Chaque fichier ajoute ou modifie, tel qu'il part (un merge : contre chacun de ses parents).
+    git diff-tree --root -r -m --no-commit-id --diff-filter=d "$c" > "$tmp/arbre"
+    while IFS=$'\t' read -r meta chemin; do
+      [ -n "$chemin" ] || continue
+      blob=$(echo "$meta" | awk '{print $4}')
+      cible="$tmp/contenus/$n/$chemin"
+      mkdir -p "$(dirname "$cible")"
+      git cat-file blob "$blob" > "$cible" 2>/dev/null || refuser "contenu illisible dans le commit : $chemin"
+    done < "$tmp/arbre"
   done
 done
 if [ ! -s "$racine/garde.local.txt" ]; then
-  echo "pre-push : garde.local.txt absent ou vide : push refuse" >&2
-  fautifs=$((fautifs + 1))
+  refuser "garde.local.txt absent ou vide : push refuse"
 elif ! python3 "$racine/outils/garde.py"; then
-  echo "pre-push : la garde a trouve un identifiant reel" >&2
-  fautifs=$((fautifs + 1))
+  refuser "la garde a trouve un identifiant reel dans un fichier suivi"
 fi
 liste=()
-while IFS= read -r f; do [ -f "$racine/$f" ] && liste+=("$racine/$f"); done < <(sort -u "$tmp/fichiers")
+while IFS= read -r f; do liste+=("$f"); done < <(find "$tmp/contenus" -type f | sort)
 for m in "$tmp"/message-*.txt; do [ -f "$m" ] && liste+=("$m"); done
 controler() {  # $1 : nom du controle, $2 : script, $3 : table
   if [ ! -f "$2" ] || [ ! -f "$3" ]; then
