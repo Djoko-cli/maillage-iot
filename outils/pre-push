@@ -1,0 +1,60 @@
+#!/bin/bash
+# Barriere avant tout push de Maillage IoT (depot public ; spec, section 5.1). Installation :
+#   cp outils/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+#  1. auteur ET committer de chaque commit pousse = l'adresse noreply ;
+#  2. garde.local.txt present et non vide, puis garde des vrais identifiants sur les fichiers suivis (outils/garde.py) ;
+#  3. les deux controles d'anonymisation prives (celui de Maillage Thread, celui de Maillage Zigbee) sur les
+#     fichiers changes, commit racine compris (--root), et sur les messages des commits pousses.
+# Chaque controle est lance seul et son code de sortie teste : jamais de tube. Jamais de --no-verify.
+set -u
+attendu="12185352+Djoko-cli@users.noreply.github.com"
+zero=0000000000000000000000000000000000000000
+racine=$(git rev-parse --show-toplevel)
+anon="$racine/.superpowers/anonymisation"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+fautifs=0
+: > "$tmp/fichiers"
+n=0
+while read -r ref_locale sha_local ref_distante sha_distant; do
+  [ "$sha_local" = "$zero" ] && continue   # suppression d'une branche
+  if [ "$sha_distant" = "$zero" ]; then plage=$(git rev-list "$sha_local" --not --remotes)
+  else plage=$(git rev-list "$sha_distant..$sha_local"); fi
+  for c in $plage; do
+    ae=$(git log -1 --format=%ae "$c"); ce=$(git log -1 --format=%ce "$c")
+    if [ "$ae" != "$attendu" ] || [ "$ce" != "$attendu" ]; then
+      echo "pre-push : commit $(git log -1 --format=%h "$c") avec auteur ou committer hors noreply" >&2
+      fautifs=$((fautifs + 1))
+    fi
+    n=$((n + 1))
+    git log -1 --format=%B "$c" > "$tmp/message-$n.txt"
+    git diff-tree --root --no-commit-id --name-only -r --diff-filter=d "$c" >> "$tmp/fichiers"
+  done
+done
+if [ ! -s "$racine/garde.local.txt" ]; then
+  echo "pre-push : garde.local.txt absent ou vide : push refuse" >&2
+  fautifs=$((fautifs + 1))
+elif ! python3 "$racine/outils/garde.py"; then
+  echo "pre-push : la garde a trouve un identifiant reel" >&2
+  fautifs=$((fautifs + 1))
+fi
+liste=()
+while IFS= read -r f; do [ -f "$racine/$f" ] && liste+=("$racine/$f"); done < <(sort -u "$tmp/fichiers")
+for m in "$tmp"/message-*.txt; do [ -f "$m" ] && liste+=("$m"); done
+controler() {  # $1 : nom du controle, $2 : script, $3 : table
+  if [ ! -f "$2" ] || [ ! -f "$3" ]; then
+    echo "pre-push : controle d'anonymisation $1 introuvable : push refuse" >&2
+    return 1
+  fi
+  [ ${#liste[@]} -eq 0 ] && return 0
+  python3 "$2" fichiers --table "$3" "${liste[@]}" > "$tmp/sortie-$1" 2>&1
+  code=$?
+  tail -1 "$tmp/sortie-$1" >&2
+  if [ $code -ne 0 ]; then
+    echo "pre-push : le controle $1 a trouve un identifiant" >&2
+    return 1
+  fi
+}
+controler thread "$anon/thread/outils/controles.py" "$anon/thread/table.json" || fautifs=$((fautifs + 1))
+controler zigbee "$anon/zigbee/controles.py" "$anon/zigbee/table.json" || fautifs=$((fautifs + 1))
+[ "$fautifs" -eq 0 ] || { echo "pre-push : push refuse ($fautifs probleme(s))." >&2; exit 1; }

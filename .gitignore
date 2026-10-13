@@ -1,0 +1,30 @@
+# Projet genere par xcodegen (project.yml fait foi)
+*.xcodeproj/
+*.xcworkspace/
+# Produits de compilation
+build/
+DerivedData/
+.build/
+*.xcresult
+*.dmg
+# Fichiers propres a l'utilisateur
+xcuserdata/
+*.xcuserstate
+.swiftpm/
+.DS_Store
+__pycache__/
+# Espace de travail prive : etats des lieux, anonymisation, essais, suivi d'execution, maquettes
+.superpowers/
+# Signature propre au poste, jamais commitee
+Local.xcconfig
+# Garde : les vrais identifiants des reseaux de Djoko et son prenom reel, jamais dans le depot
+garde.local.txt
+# Sondes : secrets et reglages locaux (cle_hue.local.h, sonde.local.json...)
+*.local.*
+.pio/
+# Essais de banc, releves et captures reels
+essais/
+# Noms de Maison ecrits par le demon : jamais dans le depot
+noms.json
+passeur-demande.json
+releve-maison.json

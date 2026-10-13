@@ -1,0 +1,7 @@
+# Maillage IoT, projet XcodeGen : ce fichier fait foi (le .xcodeproj est genere, jamais commite).
+# Etape 0 : le projet est vide ; les cibles arrivent a l'etape 1 (spec, section 1.1).
+name: MaillageIoT
+options:
+  bundleIdPrefix: fr.djoko.maillage.iot
+  deploymentTarget:
+    macOS: "26.0"
