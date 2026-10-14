@@ -46,7 +46,7 @@ struct MiseEnAvantTests {
         let ab = MiseEnAvant.cle(idt("A"), idt("B")), bc = MiseEnAvant.cle(idt("B"), idt("C"))
         let c = MiseEnAvant.cibles(m, noeuds: [idt("A"), idt("B"), idt("C")], liens: [ab, bc])
         #expect(c.noeuds == [idt("C"): 1] && c.liens == [bc: 1])
-        #expect(MiseEnAvant.cibles(nil, noeuds: [idt("A")], liens: ["A|B"]).noeuds.isEmpty)
+        #expect(MiseEnAvant.cibles(nil, noeuds: [idt("A")], liens: [MiseEnAvant.cle(idt("A"), idt("B"))]).noeuds.isEmpty)
         // Vers l'estompement, puis le retour.
         var e: [IdNoeud: Double] = [:]
         for _ in 0..<3 { e = MiseEnAvant.tendre(e, vers: c.noeuds, k: 0.3) }

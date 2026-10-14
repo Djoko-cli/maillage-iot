@@ -60,3 +60,11 @@ public struct IdNoeud: Hashable, Sendable, Comparable, Codable, CodingKeyReprese
         init?(intValue: Int) { nil }
     }
 }
+
+/// Garde de compilation : un `IdNoeud` ne s'interpole pas (il n'est pas `CustomStringConvertible`). `unavailable` ne marche pas
+/// ici (la surcharge generique `appendInterpolation<T>` l'emporte et compile) ; `deprecated` si, et « avertissements = erreurs »
+/// fait de chaque interpolation d'un `IdNoeud` une erreur de compilation. Interpoler `id.cle` ou `id.texte`.
+extension DefaultStringInterpolation {
+    @available(*, deprecated, message: "Un IdNoeud ne s'affiche pas : interpoler id.cle (libelle de repli) ou id.texte (cle interne)")
+    public mutating func appendInterpolation(_ id: IdNoeud) { appendLiteral(id.texte) }
+}

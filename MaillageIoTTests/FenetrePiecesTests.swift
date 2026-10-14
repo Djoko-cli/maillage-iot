@@ -229,7 +229,7 @@ struct FenetrePiecesTests {
             for id in [idt("Apple TV 4K"), idt("3A5DFAFCAB581AAF")] {
                 moteur.selection = id
                 try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil }
-                try await auDessusDeLaPile(moteur, taille, "legende \(repliee ? "repliee" : "ouverte"), fiche de \(id)")
+                try await auDessusDeLaPile(moteur, taille, "legende \(repliee ? "repliee" : "ouverte"), fiche de \(id.cle)")
             }
         }
         // Une fiche avec les courbes de l'historique, dans une grande fenetre (la legende y reste ouverte).

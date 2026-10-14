@@ -76,6 +76,22 @@ struct SceneNeutreTests {
         #expect(idt("Z") < idt("A", .zigbee) && idt("A") < idt("B"))
     }
 
+    /// Maison sans pieces : deux routeurs de meme cle de deux protocoles ont la meme cle de piece `routeur:<cle>` ; leur ordre
+    /// ne depend ni de l'ordre d'entree ni de l'iteration d'un `Set` : Thread d'abord, puis Zigbee (dernier critere du tri).
+    @Test func cartesDeRouteursDeMemeCleOrdreStable() {
+        let cles = ["A", "B", "C", "D", "E", "F", "G", "H"]
+        for tour in 0..<24 {
+            var noeuds = cles.flatMap { [idt($0), idt($0, .zigbee)] }
+            if tour % 2 == 1 { noeuds.reverse() }
+            noeuds.rotate(by: tour)
+            let s = Self.scene(noeuds.map { Self.noeud($0, genre: .centre, routeur: true) }, piecesMaison: false)
+            let ordre: [IdNoeud] = s.pieces.compactMap { p in
+                if case .routeur(let id) = p.nom { id } else { nil }
+            }
+            #expect(ordre == cles.flatMap { [idt($0), idt($0, .zigbee)] }, "tour \(tour)")
+        }
+    }
+
     /// La cle d'un lien dans le mode focus et dans les poses : sans ordre, mais propre a chaque protocole.
     @Test func clesDeLienParProtocole() {
         #expect(MiseEnAvant.cle(idt("A"), idt("B")) == MiseEnAvant.cle(idt("B"), idt("A")))
@@ -88,5 +104,13 @@ struct SceneNeutreTests {
         var m = MiseEnAvant()
         m.ajouter(lien: idt("A"), idt("B"))
         #expect(m.contient(lien: l) && !m.contient(lien: lz) && m.noeuds == [idt("A"), idt("B")])
+    }
+}
+
+private extension Array {
+    mutating func rotate(by n: Int) {
+        guard !isEmpty else { return }
+        let k = n % count
+        self = Array(self[k...] + self[..<k])
     }
 }

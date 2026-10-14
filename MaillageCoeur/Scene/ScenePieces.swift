@@ -213,10 +213,15 @@ public struct ScenePieces: Hashable, Sendable {
             case .sansPiece: Self.nomSansPiece
             }
         }
+        // Dernier critere de tri : deux routeurs de meme cle de deux protocoles ont la meme cle de piece ; sans lui, leur ordre
+        // suivrait l'iteration d'un `Set`.
+        func rangProtocole(_ p: NomPiece) -> Int {
+            if case .routeur(let id) = p { Protocole.allCases.firstIndex(of: id.protocole)! } else { 0 }
+        }
         // Pieces, etage par etage, par nom ; teintes.
         let distinctes = Set(nomPiece.values)
         for e in etages.indices {
-            let ici = distinctes.filter { etage($0) == e }.sorted { (nomTri($0), $0.cle) < (nomTri($1), $1.cle) }
+            let ici = distinctes.filter { etage($0) == e }.sorted { (nomTri($0), $0.cle, rangProtocole($0)) < (nomTri($1), $1.cle, rangProtocole($1)) }
             var prises = Set<Int>()
             for p in ici {
                 var t = Int(Self.fnv1a(nomTri(p)) % 8)
