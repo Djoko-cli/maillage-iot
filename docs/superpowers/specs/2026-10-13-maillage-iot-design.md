@@ -559,3 +559,5 @@ L'étape 2 reste un seul plan.
 - Fusion des deux firmwares de sonde, si un jour une carte porte les deux radios.
 - Icône de l'app (Dock et barre des menus) : retirer le badge « T » hérité de Maillage Thread, à l'étape 3 avec
   l'interface à deux protocoles (banc de l'étape 1, 14/10).
+- Fiche d'un nœud Zigbee : renommer le bouton « Identifier » (clignotement par le pont Hue) en « Identifier par
+  Hue », pour faire la paire avec « Identifier par Maison » ; « Identification… » suit (banc de l'étape 2, 14/10).
