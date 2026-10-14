@@ -276,11 +276,11 @@ D'après `inventaire-zigbee-app.md` §5-6.
 - Create: `MaillageIoTZigbeeTests/` (recopie de `Z:MaillageZigbeeTests/` à `be6fadf`, 35 fichiers), `docs/rejeu/zigbee-demo.json` (recopié de `be6fadf`, jamais régénéré), cible `MaillageIoTZigbeeTests` (hôte : `Maillage IoT Zigbee.app`)
 - Modify: `project.yml` (la cible de tests ajoutée au schéma `MaillageIoT`, pour que `outils/tester.sh` lance tout), `MaillageCoeurTests/CataloguesTests.swift` (paramétré par app : `MaillageIoT` et `MaillageIoTZigbee`, catalogues et `.stringsdata` de chacune ; le test `rienDeThread` de Zigbee n'est pas repris), `outils/synchroniser-textes.sh` (paramètre d'app)
 
-- [ ] **Step 1: Recopier et adapter** — `@testable import MaillageIoTZigbee`, `import ProtocoleZigbee` ; attentes d'identité changées pour la nouvelle (identifiant, services, titre, `NSBonjourServices`, mach-lookup absents sans Sparkle, `MisesAJourTests` adapté à l'absence de Sparkle) ; aucune autre attente ne change.
-- [ ] **Step 2: Rejeu Zigbee** — `ReferenceRejeuTests` de Zigbee (recopié) compare la scène de la démo à `docs/rejeu/zigbee-demo.json` : il doit passer **sans régénérer** la référence.
-- [ ] **Step 3: Catalogues** — `CataloguesTests` vérifie les deux apps ; `synchroniser-textes.sh <App>` ; les deux catalogues restent séparés jusqu'à l'étape 3 (les 7 traductions divergentes y seront arbitrées).
-- [ ] **Step 4: Vérifier** — `outils/tester.sh` (code 0 ; effectifs par cible notés : cœur, ProtocoleThread, ProtocoleZigbee, app Thread, app Zigbee, démon ; rejeu Thread et rejeu Zigbee exacts) ; `bash outils/verifier-noms-publics.sh` ; `bash outils/tester-coeur.sh`.
-- [ ] **Step 5: Commit** — « App de transition Zigbee : tests, rejeu exact de la demo Zigbee ».
+- [x] **Step 1: Recopier et adapter** — `@testable import MaillageIoTZigbee`, `import ProtocoleZigbee` ; attentes d'identité changées pour la nouvelle (identifiant, services, titre, `NSBonjourServices`, mach-lookup absents sans Sparkle, `MisesAJourTests` adapté à l'absence de Sparkle) ; aucune autre attente ne change.
+- [x] **Step 2: Rejeu Zigbee** — `ReferenceRejeuTests` de Zigbee (recopié) compare la scène de la démo à `docs/rejeu/zigbee-demo.json` : il doit passer **sans régénérer** la référence.
+- [x] **Step 3: Catalogues** — `CataloguesTests` vérifie les deux apps ; `synchroniser-textes.sh <App>` ; les deux catalogues restent séparés jusqu'à l'étape 3 (les 7 traductions divergentes y seront arbitrées).
+- [x] **Step 4: Vérifier** — `outils/tester.sh` (code 0 ; effectifs par cible notés : cœur, ProtocoleThread, ProtocoleZigbee, app Thread, app Zigbee, démon ; rejeu Thread et rejeu Zigbee exacts) ; `bash outils/verifier-noms-publics.sh` ; `bash outils/tester-coeur.sh`.
+- [x] **Step 5: Commit** — « App de transition Zigbee : tests, rejeu exact de la demo Zigbee ».
 
 ---
 

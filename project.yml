@@ -304,6 +304,24 @@ targets:
         # Le produit s'appelle "Maillage IoT" (avec une espace), pas comme la cible.
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Maillage IoT.app/Contents/MacOS/Maillage IoT"
         BUNDLE_LOADER: "$(TEST_HOST)"
+  # Les tests de l app de transition Zigbee (recopie de ceux de Maillage Zigbee) ; leur
+  # hote est "Maillage IoT Zigbee.app". Cible temporaire, comme l app (etape 3 : fusion des deux).
+  MaillageIoTZigbeeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: MaillageIoTZigbeeTests
+    dependencies:
+      - target: MaillageIoTZigbee
+      - target: MaillageCoeur
+      - target: ProtocoleZigbee
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.banc-zigbee.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # Le produit s'appelle "Maillage IoT Zigbee" (avec des espaces), pas comme la cible.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Maillage IoT Zigbee.app/Contents/MacOS/Maillage IoT Zigbee"
+        BUNDLE_LOADER: "$(TEST_HOST)"
   # Le coeur du demon Passeur Noms (Passeur/Logique), sans HomeKit ni UIKit, teste sur macOS. Il compile les fichiers
   # communs lui-meme, comme la cible Passeur : pas de dependance a MaillageCoeur (les types seraient en double).
   PasseurTests:
@@ -324,6 +342,7 @@ schemes:
     build:
       targets:
         MaillageIoT: all
+        MaillageIoTZigbee: all
         MaillageCoeur: all
         ProtocoleThread: all
         ProtocoleZigbee: all
@@ -331,6 +350,7 @@ schemes:
         ProtocoleThreadTests: [test]
         ProtocoleZigbeeTests: [test]
         MaillageIoTTests: [test]
+        MaillageIoTZigbeeTests: [test]
         PasseurTests: [test]
     run:
       config: Debug
@@ -341,6 +361,7 @@ schemes:
         - ProtocoleThreadTests
         - ProtocoleZigbeeTests
         - MaillageIoTTests
+        - MaillageIoTZigbeeTests
         - PasseurTests
     archive:
       config: Release
