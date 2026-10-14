@@ -28,7 +28,13 @@ struct MisesAJourTests {
     @Test func droitsMachLookup() throws {
         let tache = try #require(SecTaskCreateFromSelf(nil))
         let cle = "com.apple.security.temporary-exception.mach-lookup.global-name" as CFString
-        let valeur = SecTaskCopyValueForEntitlement(tache, cle, nil) as? [String] ?? []
+        // Un droit absent rend nil sans erreur ; une erreur de lecture, ou une valeur d'un autre type, fait echouer le
+        // test au lieu de passer pour « aucune exception ».
+        var erreur: Unmanaged<CFError>?
+        let brute = SecTaskCopyValueForEntitlement(tache, cle, &erreur)
+        if let erreur { Issue.record("droits illisibles : \(erreur.takeRetainedValue())") }
+        if let brute { #expect(brute is [String], "le droit mach-lookup n'est pas une liste de noms") }
+        let valeur = brute as? [String] ?? []
         // Sous les tests, Xcode ajoute ceux de ses outils (com.apple…) a la compilation Debug.
         #expect(valeur.filter { !$0.hasPrefix("com.apple.") } == ["fr.djoko.maillage.iot-spks", "fr.djoko.maillage.iot-spki"])
         let bac = SecTaskCopyValueForEntitlement(tache, "com.apple.security.app-sandbox" as CFString, nil) as? Bool

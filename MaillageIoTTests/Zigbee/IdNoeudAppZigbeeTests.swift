@@ -3,7 +3,7 @@ import Foundation
 import Testing
 @testable import MaillageIoT
 
-/// Les identifiants de noeud dans l'app de transition Zigbee (etape 3a, conception B) : la scene, ses libelles et ses
+/// Les identifiants de noeud dans l'app unique, cote Zigbee (etape 3a, conception B) : la scene, ses libelles et ses
 /// apparences sont indexes par `IdNoeud` Zigbee ; l'argument de lancement `-selection` prend la forme texte ; un noeud
 /// d'un autre protocole n'a ni menu de piece, ni couronne.
 @MainActor

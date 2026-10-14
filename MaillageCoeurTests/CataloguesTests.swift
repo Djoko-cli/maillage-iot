@@ -51,20 +51,16 @@ struct AppCatalogue: Sendable, CustomTestStringConvertible {
 enum CasCatalogue: Equatable {
     case verifier
     case sauter(String)
-    case echouer(String)
 }
 
 extension AppCatalogue {
-    /// Le cas de l'app d'apres le nombre de ses `.stringsdata` et la configuration des produits :
+    /// Le cas de l'app d'apres le nombre de ses `.stringsdata` :
     /// - elle en a : on verifie ;
-    /// - elle n'en a pas, en Release (mesure du schema du coeur seul, outils/mesurer.sh : rien n'est compile) : on saute ;
-    /// - elle n'en a pas, hors Release : on echoue, car le produit de l'app manque (le test ne doit jamais passer a vide).
-    static func cas(_ app: String, nombres: [String: Int], configuration: String) -> CasCatalogue {
+    /// - elle n'en a pas : on saute. Le coeur se teste seul (outils/tester-coeur.sh, DerivedData neuf) sans compiler
+    ///   l'app ; la porte complete (outils/tester.sh) compile l'app avant, donc n'y saute jamais.
+    static func cas(_ app: String, nombres: [String: Int]) -> CasCatalogue {
         if nombres[app, default: 0] > 0 { return .verifier }
-        if configuration == "Release" {
-            return .sauter("produits de compilation introuvables : \(app) (mesure en Release, rien n'est compile)")
-        }
-        return .echouer("produits de compilation introuvables pour \(app) (\(configuration)) : compiler l'app avant (outils/tester.sh)")
+        return .sauter("produits de compilation introuvables : \(app) (l'app n'est pas compilee ; la porte complete outils/tester.sh la compile avant)")
     }
 }
 
@@ -141,17 +137,13 @@ struct CataloguesTests {
 
     /// Le code et le catalogue vont ensemble : aucune cle du code ne manque, aucune cle du catalogue n'est morte
     /// (apres un changement de texte : `outils/synchroniser-textes.sh` puis outils/traduire.py). Sans les produits de
-    /// compilation de l'app, le test echoue, sauf en Release (mesure du coeur seul, qui ne les compile pas) : il y est
-    /// saute (`AppCatalogue.cas`).
+    /// compilation de l'app (coeur teste seul, app non compilee), le test est saute (`AppCatalogue.cas`).
     @Test(arguments: AppCatalogue.toutes)
     func codeEtCatalogueAlignes(_ app: AppCatalogue) throws {
         let nombres = Dictionary(uniqueKeysWithValues: AppCatalogue.toutes.map { ($0.nom, $0.stringsdata.count) })
-        switch AppCatalogue.cas(app.nom, nombres: nombres, configuration: Catalogues.produits.lastPathComponent) {
+        switch AppCatalogue.cas(app.nom, nombres: nombres) {
         case .verifier: break
         case .sauter(let raison): try Test.cancel(Comment(rawValue: raison))
-        case .echouer(let raison):
-            Issue.record(Comment(rawValue: raison))
-            return
         }
         let extraites = try app.clesExtraites()
         let catalogue = Set(try Catalogues.entrees(app.textes).cles.keys)
@@ -160,29 +152,15 @@ struct CataloguesTests {
         #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees dans le catalogue de \(app.nom)")
     }
 
-    /// La selection des cas, sans produits reels : verifie si l'app a ses `.stringsdata` ; sans eux, echoue hors Release
-    /// (Debug, ou toute autre configuration) et saute seulement en Release.
+    /// La selection des cas, sans produits reels : verifie si l'app a ses `.stringsdata`, saute sinon.
     @Test func selectionDesCas() {
-        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3], configuration: "Debug") == .verifier)
-        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3], configuration: "Release") == .verifier)
-        guard case .echouer = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0], configuration: "Debug") else {
-            Issue.record("sans produits, hors Release : doit echouer")
+        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3]) == .verifier)
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0]) else {
+            Issue.record("sans produits : doit sauter")
             return
         }
-        guard case .echouer = AppCatalogue.cas("MaillageIoT", nombres: [:], configuration: "Debug") else {
-            Issue.record("aucun decompte, hors Release : doit echouer")
-            return
-        }
-        guard case .echouer = AppCatalogue.cas("MaillageIoT", nombres: [:], configuration: "Autre") else {
-            Issue.record("une configuration inconnue n'est pas une mesure Release : doit echouer")
-            return
-        }
-        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0], configuration: "Release") else {
-            Issue.record("sans produits, en Release : doit sauter")
-            return
-        }
-        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:], configuration: "Release") else {
-            Issue.record("aucun decompte, en Release : doit sauter")
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:]) else {
+            Issue.record("aucun decompte : doit sauter")
             return
         }
     }

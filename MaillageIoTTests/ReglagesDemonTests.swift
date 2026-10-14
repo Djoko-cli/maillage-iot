@@ -19,6 +19,7 @@ struct ReglagesDemonTests {
         #expect(NomsPasseur.texteDemon(connecte: true, etat: Self.etat())
                 == String(localized: "connecté · version \("2.0") · \(String(localized: "accès à Maison autorisé"))"))
         #expect(NomsPasseur.texteDemon(connecte: true, etat: Self.etat(acces: .refuse)).contains(String(localized: "accès à Maison refusé")))
+        #expect(NomsPasseur.texteDemon(connecte: true, etat: Self.etat(acces: .attente)).contains(String(localized: "accès à Maison en attente")))
     }
 
     /// Avertissement 30 jours avant l'expiration du profil, et apres.
