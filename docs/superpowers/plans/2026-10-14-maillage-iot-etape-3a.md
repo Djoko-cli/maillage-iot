@@ -270,6 +270,8 @@ D'après `inventaire-etape3-fusion-apps.md` §5 (25 homologues, 11 Zigbee seuls,
 
 ### Task 10: Réglages à six onglets
 
+**Tests à restaurer** : ceux marqués T10 dans l'annexe « Tests Zigbee en attente », en fin de plan ; leur compte figure au rapport.
+
 D'après `inventaire-etape3-interface.md` §3.3 ; spec 3.3, 6.6 (décision 10).
 
 **Files:**
@@ -319,6 +321,8 @@ D'après `inventaire-etape3-interface.md` §3.4 ; spec 3.4.
 
 ### Task 13: Journal unique, notifications et menu à deux protocoles
 
+**Tests à restaurer** : ceux marqués T13 dans l'annexe « Tests Zigbee en attente », en fin de plan ; leur compte figure au rapport.
+
 Le minimum de l'étape 3a ; les filtres et marques du journal, les catégories par protocole et l'icône « pire des deux » sont à l'étape 3b.
 
 Ajout (relecture de la tâche 8, I1) : dans la scène réunie, la barre du haut (`BandeauPieces`, `HautPieces`) montre aussi les commandes de Zigbee (« Liens » chemins/tous, voisins, ligne de tournée) à côté de celles de Thread, en remplaçant le paramètre transitoire `zigbeeSeul` ; la barre définitive avec les interrupteurs de vue est à l'étape 3b. Tests ajoutés : `sceneReunieEstLUnionDesDeux` compare aussi la pièce de chaque nœud ; un test qui échoue si l'on retire la garde de protocole de `LibellesNoeudsZigbee` ou des candidats de `LegendePieces`.
@@ -341,3 +345,40 @@ Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctif
 - [ ] **Step 1: Préparer** — compiler `MaillageIoT` (Debug). Le conteneur de développement de `fr.djoko.maillage.iot` n'est pas migré (spec 6.6, décision 8) : avec l'accord de Djoko, mettre de côté son dossier `Application Support/Maillage IoT/` avant le lancement. Les clés du trousseau sont reprises de Thread 1.3.0 et de Zigbee 1.1.1 par les invites de macOS (Zigbee) ou par la remise en service (Thread, la reprise des clés de Thread est à l'étape 4).
 - [ ] **Step 2: Comparer** — les deux réseaux réels ensemble dans la vue par pièces (dessin actuel), à côté de Thread 1.3.0 et de Zigbee 1.1.1 ; les deux sondes en USB en même temps (aucune carte de l'autre dans les listes) ; « Activer ce protocole » éteint puis rallumé pour chacun ; le journal et le menu.
 - [ ] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
+
+---
+
+## Annexe : tests Zigbee en attente (relecture de la tâche 9)
+
+À la tâche 9, ces tests de l'app temporaire n'ont pas pu rejoindre `MaillageIoTTests` : leur vue n'existe pas encore dans `MaillageIoT`. Les tâches 10 et 13 les restaurent, à l'identique, quand elles reprennent la vue. Source : `git show 6b25e5d:MaillageIoTZigbeeTests/<fichier>.swift` ; vues supprimées : `git show 8790645:MaillageIoTZigbee/Vues/…`.
+
+Tests entiers (13), a restaurer :
+
+| Fichier (a `6b25e5d`) | @Test | Cible manquante | Tache |
+|---|---|---|---|
+| `AffichageSondeTests.swift` | `reseauDeLaSonde` | `FenetreReglages.texteReseau` (Zigbee) | T10 |
+| | `texteInjoignable` | `FenetreReglages.texteEtatSonde(.injoignable…)` | T10 |
+| | `texteReseauSonde` | `FenetreReglages.texteReseauSonde` | T10 |
+| | `motDePasseEnregistre` | `FenetreReglages.motDePasseEnregistre` | T10 |
+| | `succesDeLaMiseEnService` | `SuiviSuccesReseau` | T10 |
+| | `nomDuWifiAffiche` | `FenetreReglages.nomWifiAffiche` | T10 |
+| | `saisieOublieeALaFermeture` | `SaisieWifi` | T10 |
+| | `fermetureDeLaFenetreDesReglages` | `FenetreReglages.estFenetreDesReglages` (+ aide `ReglagesHauteurTests.fenetreSonde`) | T10 |
+| | `titreDuMenu` | `MenuBarre.titre(resume:alerte:)` | T13 |
+| `JournalVueTests.swift` | `filtreDuJournal` | familles du journal de Zigbee (`FamilleEvenement.surveillance`, `.maillage` avec `cheminChange`) | T13 |
+| `ReglagesHauteurTests.swift` (fichier supprime, 1 test + aides `fenetreSonde`, `mesurer`, `attendreAjustement`) | `lAjustementSuitLaPage` | `ControleurReglages(…sonde:)`, onglet Sonde de Zigbee | T10 (a couvrir les six onglets) |
+| `NomsPasseurTests.swift` (suite `NomsPasseurTests`) | `textesDesReglages` | `ReglagesMaison.texteEtat/texteBilan/texteReleve` (sa premiere assertion `texteZones` est deja dans `zonesDansLesReglages`) | T10 |
+| | `pageDesReglages` | `ReglagesMaison` | T10 |
+
+Assertions retirees de tests **gardes** (le reste du test tourne), a restaurer aussi :
+
+| Test garde | Assertions retirees | Tache |
+|---|---|---|
+| `Zigbee/AffichageSondeZigbeeTests.menuEtReglages` | 9 × `MenuBarre.ligneSonde(SondeMaillageZigbee.Etat…)` ; 5 × `FenetreReglages.texteEtatSonde(SondeMaillageZigbee.Etat…)` (reste : `nomAffiche` ×2) | T13 / T10 |
+| `Zigbee/AffichageSondeZigbeeTests.accesReseau` | 3 × `FenetreReglages.titreBoutonAcces(empreinte:envoiWifi:)` (reste : `texteAccesReseau` ×2) | T10 |
+| `Zigbee/TourneeSondeTests.textesDesReglages` | `texteRole` ×2, `texteReseau`, `texteBilan` ×4 (reste : `texteLacune`, `texteEmpechement`) | T10 |
+| `Zigbee/TourneeSondeTests.textes` | 2 × `MenuBarre.ligneSonde(…passe:)` ; 1 × `texteBilan` (reste : `heure`, `menuPasse`) | T13 / T10 |
+| `Zigbee/TourneeSondeTests.textesDifferee` | 3 × `MenuBarre.ligneSonde(…differee:)` | T13 |
+| `Zigbee/NomsPontTests.textes` | 3 × `MenuBarre.lignePont` | T13 |
+
+Les tests de T10/T13 sur ces sujets devront, une fois les vues reprises, remettre ces assertions (leur cible Zigbee est `ReglagesPont` deja present pour le reste).
