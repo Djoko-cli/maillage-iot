@@ -131,10 +131,10 @@ public struct IdNoeud: Hashable, Sendable, Comparable, Codable, CodingKeyReprese
 }
 ```
 
-- [ ] **Step 1: RED** — `IdNoeudTests` : aller-retour texte (`thread:0000000000000001`, `zigbee:00000000000000A1`) ; coupure au premier `:` (`thread:instance:Pièce 1` → cle `instance:Pièce 1`, `thread:rloc:0400`) ; refus de `zigbee:`, `wifi:x`, `sans-deux-points` ; même EUI-64 des deux côtés : deux `IdNoeud` distincts dans un `Set` ; ordre (`thread` avant `zigbee`, puis la clé) ; un `[IdNoeud: Int]` encodé en JSON donne un **objet** `{"thread:0000000000000001":1}` (et non un tableau), et se relit. Lancer `outils/tester.sh MaillageCoeurTests/IdNoeudTests` : échec de compilation attendu.
-- [ ] **Step 2: GREEN** — créer `IdNoeud.swift` avec le code ci-dessus.
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0), `bash outils/tester-coeur.sh`, `bash outils/verifier-noms-publics.sh`.
-- [ ] **Step 4: Commit** — « Coeur : Protocole et IdNoeud (forme texte, cle de dictionnaire JSON) ».
+- [x] **Step 1: RED** — `IdNoeudTests` : aller-retour texte (`thread:0000000000000001`, `zigbee:00000000000000A1`) ; coupure au premier `:` (`thread:instance:Pièce 1` → cle `instance:Pièce 1`, `thread:rloc:0400`) ; refus de `zigbee:`, `wifi:x`, `sans-deux-points` ; même EUI-64 des deux côtés : deux `IdNoeud` distincts dans un `Set` ; ordre (`thread` avant `zigbee`, puis la clé) ; un `[IdNoeud: Int]` encodé en JSON donne un **objet** `{"thread:0000000000000001":1}` (et non un tableau), et se relit. Lancer `outils/tester.sh MaillageCoeurTests/IdNoeudTests` : échec de compilation attendu.
+- [x] **Step 2: GREEN** — créer `IdNoeud.swift` avec le code ci-dessus.
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0), `bash outils/tester-coeur.sh`, `bash outils/verifier-noms-publics.sh`.
+- [x] **Step 4: Commit** — « Coeur : Protocole et IdNoeud (forme texte, cle de dictionnaire JSON) ».
 
 ---
 
