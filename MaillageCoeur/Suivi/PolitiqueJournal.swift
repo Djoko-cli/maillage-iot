@@ -16,9 +16,14 @@ public protocol PolitiqueJournal: Sendable {
     func categorie(_ e: Evenement) -> CategorieAlerte?
     /// Noeud dont l'evenement est un changement de parent (regroupe par noeud sur une heure) ; nil sinon.
     func cleParent(_ e: Evenement) -> String?
+    /// Evenement qui est un changement de chemin (un routeur change de prochain saut), regroupe comme un changement de
+    /// parent mais sur sa propre ligne ; `cleParent` donne alors le routeur. Faux par defaut.
+    func estChemin(_ e: Evenement) -> Bool
 }
 
 public extension PolitiqueJournal {
+    func estChemin(_ e: Evenement) -> Bool { false }
+
     /// Les types par nom, tels que `CodingUserInfoKey.typesEvenement` les attend.
     var typesParNom: [String: TypeEvenement] {
         Dictionary(types.map { ($0.rawValue, $0) }, uniquingKeysWith: { premier, _ in premier })

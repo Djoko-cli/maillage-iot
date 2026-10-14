@@ -1,7 +1,7 @@
 import Foundation
 
-/// Ligne du journal affiche : un evenement, des pertes regroupees, ou les changements de parent
-/// repetes d'un meme noeud.
+/// Ligne du journal affiche : un evenement, des pertes regroupees, les changements de parent
+/// repetes d'un meme noeud, ou les changements de chemin repetes d'un meme routeur.
 public enum LigneJournal: Hashable, Sendable, Identifiable {
     case evenement(Evenement)
     /// Au moins 2 pertes dans une meme fenetre de 10 min, de la plus ancienne a la plus recente.
@@ -9,12 +9,15 @@ public enum LigneJournal: Hashable, Sendable, Identifiable {
     /// Au moins 2 changements de parent d'un meme noeud dans une fenetre de 1 h, du plus ancien
     /// au plus recent.
     case parents([Evenement])
+    /// Au moins 2 changements de chemin d'un meme routeur dans une fenetre de 1 h, du plus ancien au plus recent.
+    case chemins([Evenement])
 
     public var id: String {
         switch self {
         case .evenement(let e): e.id
         case .pertes(let l): "pertes-" + (l.first?.id ?? "")
         case .parents(let l): "parents-" + (l.first?.id ?? "")
+        case .chemins(let l): "chemins-" + (l.first?.id ?? "")
         }
     }
 
@@ -22,22 +25,22 @@ public enum LigneJournal: Hashable, Sendable, Identifiable {
     public var date: Date {
         switch self {
         case .evenement(let e): e.date
-        case .pertes(let l), .parents(let l): l.last?.date ?? .distantPast
+        case .pertes(let l), .parents(let l), .chemins(let l): l.last?.date ?? .distantPast
         }
     }
 
     public var evenements: [Evenement] {
         switch self {
         case .evenement(let e): [e]
-        case .pertes(let l), .parents(let l): l
+        case .pertes(let l), .parents(let l), .chemins(let l): l
         }
     }
 
     public var gravite: Gravite { evenements.map(\.gravite).max() ?? .info }
 }
 
-/// Regroupement des pertes et des changements de parent pour l'affichage (le journal garde
-/// chaque evenement).
+/// Regroupement des pertes, des changements de parent et des changements de chemin pour l'affichage (le journal
+/// garde chaque evenement).
 public enum Regroupement {
     /// Fenetre de regroupement, comptee depuis la premiere perte.
     public static let fenetre: TimeInterval = 600
@@ -47,14 +50,15 @@ public enum Regroupement {
 
     /// Lignes du journal, les plus recentes d'abord : les pertes survenues dans
     /// une meme fenetre de 10 min forment une seule ligne ; les changements de parent d'un meme
-    /// noeud dans une fenetre de 1 h aussi.
+    /// noeud dans une fenetre de 1 h aussi, comme les changements de chemin d'un meme routeur.
     public static func lignes(_ evenements: [Evenement],
                               politique: any PolitiqueJournal) -> [LigneJournal] {
         let tries = evenements.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
             .map(\.element)
         var lignes: [LigneJournal] = []
         var groupe: [Evenement] = []
-        // Changements de parent en cours de regroupement, par noeud (`politique.cleParent`).
+        // Changements de parent (ou de chemin) en cours de regroupement, par genre et par noeud
+        // (« parent| » ou « chemin| » + `politique.cleParent`).
         var parents: [String: [Evenement]] = [:]
         func fermer() {
             if groupe.count >= 2 {
@@ -67,7 +71,7 @@ public enum Regroupement {
         func fermerParents(_ noeud: String) {
             guard let g = parents.removeValue(forKey: noeud) else { return }
             if g.count >= 2 {
-                lignes.append(.parents(g))
+                lignes.append(noeud.hasPrefix("chemin|") ? .chemins(g) : .parents(g))
             } else if let e = g.first {
                 lignes.append(.evenement(e))
             }
@@ -76,7 +80,8 @@ public enum Regroupement {
             if politique.estPerte(e) {
                 if let premiere = groupe.first, e.date.timeIntervalSince(premiere.date) >= fenetre { fermer() }
                 groupe.append(e)
-            } else if let noeud = politique.cleParent(e) {
+            } else if let cle = politique.cleParent(e) {
+                let noeud = (politique.estChemin(e) ? "chemin|" : "parent|") + cle
                 if let premier = parents[noeud]?.first, e.date.timeIntervalSince(premier.date) >= fenetreParents {
                     fermerParents(noeud)
                 }

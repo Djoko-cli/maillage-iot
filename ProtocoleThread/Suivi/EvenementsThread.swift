@@ -1,7 +1,9 @@
 import Foundation
 import MaillageCoeur
 
-/// Types d'evenements du protocole Thread, avec leur gravite par defaut.
+/// Types d'evenements du protocole Thread, avec leur gravite par defaut. Sept types sont communs a tous les protocoles
+/// et declares au coeur (`TypeEvenement+Reseau.swift`) : routeurApparu, routeurDisparu, appareilNouveau,
+/// appareilDisparu, appareilRevenu, parentChange, sansParent.
 public extension TypeEvenement {
     // Reseau
     static let reseauScinde = TypeEvenement("reseauScinde", gravite: .alerte)
@@ -10,23 +12,15 @@ public extension TypeEvenement {
     static let bbrPrimaireChange = TypeEvenement("bbrPrimaireChange")
     static let jeuActifChange = TypeEvenement("jeuActifChange", gravite: .attention)
     // Routeurs de bordure
-    static let routeurApparu = TypeEvenement("routeurApparu")
-    static let routeurDisparu = TypeEvenement("routeurDisparu", gravite: .alerte)
     static let routeurRoleChange = TypeEvenement("routeurRoleChange")
     static let routeurNouvelleAdresseLien = TypeEvenement("routeurNouvelleAdresseLien", gravite: .attention)
     // Prefixes OMR
     static let prefixeNouveau = TypeEvenement("prefixeNouveau")
     static let prefixeRetire = TypeEvenement("prefixeRetire", gravite: .attention)
     // Appareils
-    static let appareilNouveau = TypeEvenement("appareilNouveau")
-    static let appareilDisparu = TypeEvenement("appareilDisparu", gravite: .attention)
-    static let appareilRevenu = TypeEvenement("appareilRevenu")
     static let appareilSansAdresse = TypeEvenement("appareilSansAdresse", gravite: .attention)
     static let appareilChangePartition = TypeEvenement("appareilChangePartition", gravite: .attention)
-    // Maillage de la sonde : un enfant change de parent ou n'en a plus ; un routeur Thread (hors
-    // routeurs de bordure) entre dans la liste des routeurs ou en sort
-    static let parentChange = TypeEvenement("parentChange")
-    static let sansParent = TypeEvenement("sansParent", gravite: .attention)
+    // Maillage de la sonde : un routeur Thread (hors routeurs de bordure) entre dans la liste des routeurs ou en sort
     static let routeurThreadApparu = TypeEvenement("routeurThreadApparu")
     static let routeurThreadDisparu = TypeEvenement("routeurThreadDisparu", gravite: .attention)
 

@@ -106,10 +106,10 @@ D'après `inventaire-zigbee-coeur.md` §1.2 (CourbesNoeud, Regroupement), §2.4 
 **Interfaces:**
 - Produces: `PointCourbe.lqi: Double?` (défaut `nil`) ; `CourbesNoeud.chemins: [ChangementParent]` (défaut `[]` dans l'init public) ; une surcharge publique de `CourbesNoeud.reduire` qui porte une valeur d'origine (`(Date, Double, Double?)`) ; `LigneJournal.chemins([Evenement])` ; dans `PolitiqueJournal`, `func estChemin(_ e: Evenement) -> Bool` avec **implémentation par défaut `false`** (extension du protocole) ; `Regroupement` : clé `"chemin|"` ou `"parent|"` + `cleParent`, ligne `.chemins` si `estChemin` ; les 7 types communs déclarés **une seule fois au cœur** dans `TypeEvenement+Reseau.swift` : `routeurApparu` (info), `routeurDisparu` (alerte), `appareilNouveau` (info), `appareilDisparu` (attention), `appareilRevenu` (info), `parentChange` (info), `sansParent` (attention) — mêmes `rawValue` et gravités ; `EvenementsThread.swift` retire ces 7 déclarations et garde `PolitiqueJournalThread.types` **dans le même ordre**.
 
-- [ ] **Step 1: RED** — tests : `PolitiqueEssai` gagne un type `essaiChemin` et `estChemin` ; `cheminsRegroupes` (générique, `PolitiqueEssai`) ; `politiqueSansCheminInchangee` (une politique qui ne définit pas `estChemin` regroupe comme avant) ; `pointAvecLqi` et `reduireGardeLaValeurDOrigine`. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter, d'après `Z:Maillage/CourbesNoeud.swift` et `Z:Suivi/Regroupement.swift` ; les `switch` de l'app Thread sur `LigneJournal` gagnent `.chemins` (Thread n'en produit jamais) ; vérifier que `EvenementsThreadTests` passe sans changement d'attente (mêmes 22 noms, mêmes gravités, même ordre).
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh`.
-- [ ] **Step 4: Commit** — « Coeur : courbes a LQI, regroupement des chemins, types d'evenements communs declares une fois ».
+- [x] **Step 1: RED** — tests : `PolitiqueEssai` gagne un type `essaiChemin` et `estChemin` ; `cheminsRegroupes` (générique, `PolitiqueEssai`) ; `politiqueSansCheminInchangee` (une politique qui ne définit pas `estChemin` regroupe comme avant) ; `pointAvecLqi` et `reduireGardeLaValeurDOrigine`. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter, d'après `Z:Maillage/CourbesNoeud.swift` et `Z:Suivi/Regroupement.swift` ; les `switch` de l'app Thread sur `LigneJournal` gagnent `.chemins` (Thread n'en produit jamais) ; vérifier que `EvenementsThreadTests` passe sans changement d'attente (mêmes 22 noms, mêmes gravités, même ordre).
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh`.
+- [x] **Step 4: Commit** — « Coeur : courbes a LQI, regroupement des chemins, types d'evenements communs declares une fois ».
 
 ---
 

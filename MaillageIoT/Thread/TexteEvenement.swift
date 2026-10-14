@@ -23,7 +23,7 @@ enum TexteEvenement {
         switch l {
         case .evenement(let e): quand(e)
         case .pertes(let g): g.first.map(quand) ?? ""
-        case .parents(let g): g.last.map(quand) ?? ""
+        case .parents(let g), .chemins(let g): g.last.map(quand) ?? ""
         }
     }
 
@@ -105,7 +105,8 @@ enum TexteEvenement {
             let debut = heure(p.first?.date ?? .distantPast)
             let fin = heure(p.last?.date ?? .distantPast)
             return String(localized: "\(p.count) appareils perdus entre \(debut) et \(fin)")
-        case .parents(let p):
+        case .parents(let p), .chemins(let p):
+            // Thread ne produit pas de `.chemins` (protocole Zigbee) : texte des changements de parent, sans cle neuve.
             // Le dernier nom connu : le nom d'un noeud peut changer d'un changement a l'autre.
             let nom = p.last?.sujet?.nom ?? ""
             return String(localized: "\(nom) a changé \(p.count) fois de parent en 1 h")
@@ -130,7 +131,7 @@ enum TexteEvenement {
     /// de parent ». Vide pour les autres lignes.
     static func changements(_ l: LigneJournal) -> String {
         switch l {
-        case .parents(let p): String(localized: "a changé \(p.count) fois de parent")
+        case .parents(let p), .chemins(let p): String(localized: "a changé \(p.count) fois de parent")
         case .evenement, .pertes: ""
         }
     }
