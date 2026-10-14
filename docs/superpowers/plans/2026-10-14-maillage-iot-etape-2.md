@@ -47,13 +47,13 @@ Points reportés par la relecture finale de l'étape 1 (`.superpowers/fusion/reg
 - Modify: `MaillageCoeur/Systeme/FichiersGardes.swift`, `MaillageIoTTests/MisesAJourTests.swift`, `outils/passeur.sh`, `MaillageCoeur/Suivi/Alertes.swift`, `ProtocoleThreadTests/EvenementsThreadTests.swift`, `outils/tests/test_garde.py`
 - Create: `outils/tester-coeur.sh`
 
-- [ ] **Step 1: Visibilités** — `FichiersGardes.Etat`, `examiner`, `mettreDeCote` redeviennent `internal` s'ils n'ont aucun utilisateur hors du module `MaillageCoeur` (les tests passent par `@testable`). Vérifier par compilation.
-- [ ] **Step 2: Sparkle** — dans `MisesAJourTests`, ajouter `#expect(info["CFBundleVersion"] as? String == "1")` (une compilation locale porte toujours le numéro 1).
-- [ ] **Step 3: passeur.sh** — l'usage cite `--comparer-versions` ; l'en-tête énonce la règle « toute modification de `Passeur/` monte `MARKETING_VERSION` » ; la comparaison départage deux `CFBundleShortVersionString` égaux par `CFBundleVersion` (test ajouté à `outils/tests/test_passeur_version.py` si le mode de comparaison change de signature).
-- [ ] **Step 4: Cœur seul** — `outils/tester-coeur.sh` : lance le schéma `MaillageCoeur` en test avec `ENABLE_TESTABILITY=YES` et le DerivedData du dépôt, journal dans `${TMPDIR:-/tmp}/maillage-iot-coeur.log`, code de sortie de xcodebuild.
-- [ ] **Step 5: Tests** — dans `EvenementsThreadTests`, une ligne Thread `appareilDisparu` **sans** `gravite`, relue avec la politique Thread, vaut `.attention` ; dans `test_garde.py`, `FF:1A:2B:CC` trouvé (identifiant court entre deux séparateurs) et un identifiant court impair trouvé isolé.
-- [ ] **Step 6: Commentaire** — `Alertes.swift`, commentaire « sans politique » remplacé par « avec la politique neutre ».
-- [ ] **Step 7: Vérifier et commiter** — `outils/tester.sh` (code 0), `bash outils/tester-coeur.sh` (code 0), `python3 -m unittest discover -s outils/tests -q` (OK), `controler-index` 0 ; commit « Dette de l'etape 1 : visibilites, Sparkle, passeur.sh, coeur seul, tests ».
+- [x] **Step 1: Visibilités** — `FichiersGardes.Etat`, `examiner`, `mettreDeCote` redeviennent `internal` s'ils n'ont aucun utilisateur hors du module `MaillageCoeur` (les tests passent par `@testable`). Vérifier par compilation.
+- [x] **Step 2: Sparkle** — dans `MisesAJourTests`, ajouter `#expect(info["CFBundleVersion"] as? String == "1")` (une compilation locale porte toujours le numéro 1).
+- [x] **Step 3: passeur.sh** — l'usage cite `--comparer-versions` ; l'en-tête énonce la règle « toute modification de `Passeur/` monte `MARKETING_VERSION` » ; la comparaison départage deux `CFBundleShortVersionString` égaux par `CFBundleVersion` (test ajouté à `outils/tests/test_passeur_version.py` si le mode de comparaison change de signature).
+- [x] **Step 4: Cœur seul** — `outils/tester-coeur.sh` : lance le schéma `MaillageCoeur` en test avec `ENABLE_TESTABILITY=YES` et le DerivedData du dépôt, journal dans `${TMPDIR:-/tmp}/maillage-iot-coeur.log`, code de sortie de xcodebuild.
+- [x] **Step 5: Tests** — dans `EvenementsThreadTests`, une ligne Thread `appareilDisparu` **sans** `gravite`, relue avec la politique Thread, vaut `.attention` ; dans `test_garde.py`, `FF:1A:2B:CC` trouvé (identifiant court entre deux séparateurs) et un identifiant court impair trouvé isolé.
+- [x] **Step 6: Commentaire** — `Alertes.swift`, commentaire « sans politique » remplacé par « avec la politique neutre ».
+- [x] **Step 7: Vérifier et commiter** — `outils/tester.sh` (code 0), `bash outils/tester-coeur.sh` (code 0), `python3 -m unittest discover -s outils/tests -q` (OK), `controler-index` 0 ; commit « Dette de l'etape 1 : visibilites, Sparkle, passeur.sh, coeur seul, tests ».
 
 ---
 

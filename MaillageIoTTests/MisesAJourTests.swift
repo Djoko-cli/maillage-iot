@@ -12,6 +12,7 @@ struct MisesAJourTests {
         let info = try #require(Bundle.main.infoDictionary)
         #expect(info["CFBundleShortVersionString"] as? String == "1.0.0")
         #expect(Int(info["CFBundleVersion"] as? String ?? "") != nil, "un nombre, que compare Sparkle")
+        #expect(info["CFBundleVersion"] as? String == "1", "une compilation locale porte toujours le numero 1")
         #expect(info["SUFeedURL"] as? String
                 == "https://raw.githubusercontent.com/Djoko-cli/maillage-iot/main/appcast.xml")
         let cle = try #require(info["SUPublicEDKey"] as? String)

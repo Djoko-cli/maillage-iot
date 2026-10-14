@@ -71,6 +71,16 @@ struct EvenementsThreadTests {
         #expect(String(decoding: try CodageJSON.encodeur().encode(attendu), as: UTF8.self) == json)
     }
 
+    /// Une ligne sans `gravite` prend celle que la politique Thread donne au type (appareilDisparu : attention).
+    @Test func ligneSansGraviteRelueParLaPolitiqueThread() throws {
+        let json = #"{"constate":false,"date":"2026-09-21T14:13:20.000Z","details":{},"sujet":{"id":"A1","nom":"Prise 1"},"type":"appareilDisparu"}"#
+        let decodeur = CodageJSON.decodeur()
+        decodeur.userInfo[.typesEvenement] = PolitiqueJournalThread().typesParNom
+        let lu = try decodeur.decode(Evenement.self, from: Data(json.utf8))
+        #expect(lu.type == .appareilDisparu)
+        #expect(lu.gravite == .attention)
+    }
+
     @Test func journalSurDisqueRelitUneLigneDeThread130() throws {
         let dossier = FileManager.default.temporaryDirectory.appendingPathComponent("journal-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dossier) }

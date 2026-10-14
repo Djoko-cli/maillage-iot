@@ -13,7 +13,7 @@ import os
 /// L'etat du fichier est relu avant chaque ecriture : rien n'est retenu d'une lecture a l'autre.
 public enum FichiersGardes {
     /// Ce qu'est le fichier sur le disque.
-    public enum Etat: Equatable {
+    enum Etat: Equatable {
         case absent, lisible, plusRecent, illisible
     }
 
@@ -30,7 +30,7 @@ public enum FichiersGardes {
 
     /// L'etat du fichier, et son contenu s'il est lisible. `version` : la plus recente que l'app sait
     /// lire ; nil pour un fichier sans version.
-    public static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?) -> (etat: Etat, contenu: T?) {
+    static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?) -> (etat: Etat, contenu: T?) {
         guard FileManager.default.fileExists(atPath: url.path) else { return (.absent, nil) }
         guard let d = try? Data(contentsOf: url) else { return (.illisible, nil) }
         if let version {
@@ -70,7 +70,7 @@ public enum FichiersGardes {
     /// le note au journal ; rend son nouveau chemin. Un fichier deja la sous ce nom n'est pas remplace :
     /// le renommage echoue.
     @discardableResult
-    public static func mettreDeCote(_ url: URL, maintenant: Date = Date()) throws -> URL {
+    static func mettreDeCote(_ url: URL, maintenant: Date = Date()) throws -> URL {
         var calendrier = Calendar(identifier: .gregorian)
         calendrier.timeZone = .current
         let c = calendrier.dateComponents([.year, .month, .day, .hour, .minute, .second], from: maintenant)
