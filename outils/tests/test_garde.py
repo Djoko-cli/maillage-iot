@@ -1,6 +1,6 @@
 """Tests de outils/garde.py : un depot git temporaire, des identifiants inventes.
 
-  python3 -m unittest discover -s outils/test
+  python3 -m unittest discover -s outils/tests
 """
 import contextlib
 import io

@@ -242,10 +242,10 @@ D'après `inventaire-zigbee-outils.md` (§1-6).
 - Modify: `flasher.py` (cible `sonde-zigbee/`), fichiers locaux renommés `sonde-zigbee.local.json` et `cle-zigbee.local` (code et tests), `outils/tests/test_gitignore.py`, renvois de `sonde-zigbee/` vers `docs/superpowers/…` de Zigbee (vers la spec de Maillage IoT)
 - Ne pas recopier : `garde.py`, `mesurer.sh`, `synchroniser-textes.sh`, `tester-app.sh`, `traduire.py`, `publication.py`, `publier.sh`, `test_garde.py`, `test_publication.py`, `essais/`, fichiers locaux.
 
-- [ ] **Step 1: Recopier** par `git archive be6fadf`, puis `mv sonde sonde-zigbee` ; ne jamais lire les fichiers `*.local*`.
-- [ ] **Step 2: Adapter** les chemins et les fichiers locaux ; le service Bonjour et le port restent.
-- [ ] **Step 3: Vérifier** — `python3 -m unittest discover -s outils/tests -q` (OK) ; `sh sonde-zigbee/test/lancer.sh` (code 0) ; `sh sonde-thread/test/lancer.sh` (code 0) ; `bash outils/tester-sondes.sh` (code 0).
-- [ ] **Step 4: Commit** — « Sonde Zigbee : firmware sonde-zigbee, outils de flash et de banc, tests ».
+- [x] **Step 1: Recopier** par `git archive be6fadf`, puis `mv sonde sonde-zigbee` ; ne jamais lire les fichiers `*.local*`.
+- [x] **Step 2: Adapter** les chemins et les fichiers locaux ; le service Bonjour et le port restent.
+- [x] **Step 3: Vérifier** — `python3 -m unittest discover -s outils/tests -q` (OK) ; `sh sonde-zigbee/test/lancer.sh` (code 0) ; `sh sonde-thread/test/lancer.sh` (code 0) ; `bash outils/tester-sondes.sh` (code 0).
+- [x] **Step 4: Commit** — « Sonde Zigbee : firmware sonde-zigbee, outils de flash et de banc, tests ».
 
 ---
 
