@@ -44,7 +44,9 @@ struct MaillageIoTZigbeeApp: App {
         // Inerte en demo et sous tests : aucun port ouvert ; sous les tests, jamais le vrai trousseau.
         let sm = SondeMaillage(actif: !Self.demo && !Surveillance.sousTests,
                                trousseau: Surveillance.sousTests ? TrousseauMemoire()
-                                   : CheminSonde.trousseau())
+                                   : TrousseauRepris(actuel: CheminSonde.trousseau(),
+                                                     ancien: TrousseauSysteme(service: TrousseauRepris.serviceSondeAncien),
+                                                     reprises: .preferences(cle: "zigbee.repriseTrousseauSonde")))
         _sonde = State(initialValue: sm)
         // Les mises a jour : ni en demo, ni sous les tests (aucune recherche, aucun reseau), ni dans une
         // compilation de travail.

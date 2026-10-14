@@ -288,6 +288,6 @@ D'après `inventaire-zigbee-app.md` §5-6.
 
 Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctifs.
 
-- [ ] **Step 1: Compiler et lancer** — `xcodebuild -scheme MaillageIoTZigbee -configuration Debug … build`, puis ouvrir « Maillage IoT Zigbee.app » à côté de Maillage Zigbee 1.1.1.
+- [x] **Step 1: Compiler et lancer** — `xcodebuild -scheme MaillageIoTZigbee -configuration Debug … build`, puis ouvrir « Maillage IoT Zigbee.app » à côté de Maillage Zigbee 1.1.1.
 - [ ] **Step 2: Comparer** — vue par pièces 2D et 3D (nœuds, liens, chemins, voisins, pièces, étages) ; noms (le pont Hue se réappaire dans l'app de transition : appui sur le bouton du pont, nouveau service de trousseau) ; relevé de Maison par le démon commun ; journal. Sonde **en USB seulement**, débranchée de l'une avant de la brancher sur l'autre (une mise en service réseau changerait la clé de la sonde et couperait Zigbee 1.1.1 de sa sonde Wi-Fi).
 - [ ] **Step 3: Verdict** — noté dans le registre ; ce plan coché ; fusion dans `main` et push avec l'accord de Djoko.

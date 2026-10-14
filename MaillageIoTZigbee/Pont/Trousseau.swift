@@ -115,3 +115,66 @@ final class TrousseauMemoire: TrousseauCles {
     /// Les identifiants qui ont une cle (tests).
     var identifiants: [String] { cles.withLock { $0.keys.sorted() } }
 }
+
+/// Les cles de Maillage Zigbee 1.1.1 reprises sans nouvel appairage (spec, 4.4) : la cle se lit d'abord dans le
+/// trousseau de l'app ; absente, elle est demandee une seule fois a l'ancien service (macOS demande alors l'accord de
+/// l'utilisateur, l'element appartenant a l'ancienne app), puis recopiee sous le service de l'app. L'ancien element
+/// n'est jamais modifie ni efface : l'ancienne app continue de marcher. Un refus, une cle absente ou un oubli ne
+/// redemandent plus rien (une tentative par identifiant, notee dans `reprises`).
+struct TrousseauRepris: TrousseauCles {
+    static let servicePontAncien = "fr.djoko.maillage.zigbee.pont"
+    static let serviceSondeAncien = "fr.djoko.maillage.zigbee.sonde"
+
+    let actuel: any TrousseauCles
+    let ancien: any TrousseauCles
+    let reprises: MemoireReprises
+
+    func lire(identifiant: String) throws(ErreurTrousseau) -> String {
+        do {
+            return try actuel.lire(identifiant: identifiant)
+        } catch {
+            guard case .absente = error, !reprises.tentee(identifiant) else { throw error }
+            reprises.noter(identifiant)
+            guard let cle = try? ancien.lire(identifiant: identifiant) else { throw .absente(identifiant) }
+            try? actuel.ranger(identifiant: identifiant, cle: cle)
+            return cle
+        }
+    }
+
+    func ranger(identifiant: String, cle: String) throws(ErreurTrousseau) {
+        try actuel.ranger(identifiant: identifiant, cle: cle)
+    }
+
+    /// N'efface que la cle de l'app, et ne reprend plus celle de l'ancienne app.
+    func oublier(identifiant: String) throws(ErreurTrousseau) {
+        reprises.noter(identifiant)
+        try actuel.oublier(identifiant: identifiant)
+    }
+}
+
+/// Les identifiants dont la reprise a deja ete tentee.
+struct MemoireReprises: Sendable {
+    let tentee: @Sendable (String) -> Bool
+    let noter: @Sendable (String) -> Void
+
+    /// Dans les preferences de l'app, sous `cle` (une liste d'identifiants).
+    static func preferences(cle: String) -> MemoireReprises {
+        MemoireReprises(tentee: { UserDefaults.standard.stringArray(forKey: cle)?.contains($0) == true },
+                        noter: { id in
+                            var ids = UserDefaults.standard.stringArray(forKey: cle) ?? []
+                            if !ids.contains(id) { ids.append(id) }
+                            UserDefaults.standard.set(ids, forKey: cle)
+                        })
+    }
+
+    /// En memoire : celle des tests.
+    static func memoire() -> MemoireReprises {
+        let partage = Partage()
+        return MemoireReprises(tentee: { id in partage.ids.withLock { $0.contains(id) } },
+                               noter: { id in _ = partage.ids.withLock { $0.insert(id) } })
+    }
+
+    private final class Partage: Sendable {
+        let ids = Mutex<Set<String>>([])
+    }
+}
