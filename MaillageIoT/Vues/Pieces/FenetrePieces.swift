@@ -10,6 +10,8 @@ import SwiftUI
 /// clair (precision 15 du plan 4b).
 struct FenetrePieces: View {
     @Environment(Surveillance.self) private var surveillance
+    /// La sonde de Zigbee : « Maillage incomplet » et sa passe complementaire. nil dans les vues de test sans elle.
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(\.accessibilityReduceMotion) private var reduire
     /// Le mode 2D ou 3D, garde d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleMode) private var troisD = false
@@ -69,6 +71,14 @@ struct FenetrePieces: View {
             : String(localized: "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer")
     }
 
+    /// « Maillage incomplet » de Zigbee (avec l'heure de la passe complementaire programmee) : le maillage affiche est
+    /// marque incomplet, et aucune tournee de la sonde de Zigbee ne tourne ; nil sinon.
+    static func texteIncomplet(_ zigbee: SurveillanceZigbee, sonde: SondeMaillageZigbee?) -> String? {
+        TexteTourneeZigbee.texteIncomplet(passe: sonde?.passeComplementaire,
+                                          incomplet: zigbee.maillageIncomplet && zigbee.maillageAffiche != nil,
+                                          tourneeEnCours: sonde?.debutTournee != nil)
+    }
+
     /// Taille minimale de la fenetre (polissage B, section 3) : avec la fiche et ses courbes, la scene
     /// garde environ 230 pt de haut (88 pour 820 x 560, tri du sous-projet A, n° 11 ; 234 mesures, ligne de niveau
     /// comprise, sur le jeu de l'historique). 820 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
@@ -86,7 +96,7 @@ struct FenetrePieces: View {
     /// `pieces-noeuds.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
     /// fichier, celles de depart, en memoire (la demo : `NomsDemo.places()`).
     /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran). Forme texte d'un `IdNoeud`
-    /// (`thread:<cle>`) ; une cle brute, sans protocole reconnu, est une cle de Thread.
+    /// (`thread:<cle>` ou `zigbee:<cle>`) ; une cle brute, sans protocole reconnu, est une cle de Thread.
     static func selection(argument: String?) -> IdNoeud? {
         guard let argument, !argument.isEmpty else { return nil }
         return IdNoeud(texte: argument) ?? IdNoeud(.thread, argument)
@@ -96,7 +106,9 @@ struct FenetrePieces: View {
         _moteur = State(initialValue: MoteurPieces(troisD: UserDefaults.standard.bool(forKey: Self.cleMode),
                                                    fichierPlaces: fichierPlaces,
                                                    selection: Self.selection(argument: UserDefaults.standard.string(forKey: "selection")),
-                                                   places: places))
+                                                   places: places,
+                                                   liens: Self.modeLiens(UserDefaults.standard.string(forKey: Self.cleLiens)),
+                                                   voisins: Self.voisinsMontres(UserDefaults.standard.object(forKey: Self.cleVoisins))))
         _piecesChoisies = State(initialValue: PiecesChoisies(fichier: fichierPieces))
     }
 
@@ -170,9 +182,10 @@ struct FenetrePieces: View {
         // fiche la recoit (`instant`) : sinon SwiftUI la sauterait, ses entrees n'ayant pas change. La
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
-            let entree = surveillance.thread.reseau.map {
-                EntreeScene(surveillance: surveillance, reseau: $0, places: moteur.places, choix: piecesChoisies.choix)
-            }
+            // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
+            let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
+                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix) : nil
+            let zigbeeSeul = entree?.protocoles == [.zigbee]
             let fiche = moteur.selection != nil
             // Sous une fiche, la legende se replie d'elle-meme si la place manque, sauf si Djoko l'a rouverte.
             let repliDePlace = fiche && !legendeRouverte && hauteurVue.map {
@@ -194,7 +207,9 @@ struct FenetrePieces: View {
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
-                           ancien: surveillance.thread.maillageAncien, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           ancien: surveillance.modeles.contains(where: \.maillageAncien),
+                           texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
+                           zigbeeSeul: zigbeeSeul, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()

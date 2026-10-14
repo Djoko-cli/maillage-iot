@@ -39,10 +39,10 @@ enum DessinNoeud {
     /// routeur que seule la sonde connait, pastille pour un appareil, anneau pour un appareil disparu, avec un cercle
     /// s'il route (Thread). `etat` : celui de l'appareil ; `principale` : la partition du noeud est la principale
     /// (Zigbee n'a qu'une partition : ses routeurs sont toujours de la couleur de la principale, et n'ont ni cercle ni
-    /// anneau). La legende reprend les memes (`apparenceRouteur`, `apparenceAppareil`).
+    /// anneau). Sans valeur par defaut : un oubli ferait d'un routeur Thread d'une autre partition un routeur de la principale. La legende reprend les memes (`apparenceRouteur`, `apparenceAppareil`).
     /// `sonde` : le noeud est la sonde elle-meme (ses ondes) ; `verifie` : l'appareil est joignable parce que la
     /// sonde l'a trouve (son anneau).
-    static func apparence(_ n: ScenePieces.Noeud, etat: EtatAffiche?, principale: Bool = true, sonde: Bool = false,
+    static func apparence(_ n: ScenePieces.Noeud, etat: EtatAffiche?, principale: Bool, sonde: Bool = false,
                           verifie: Bool = false) -> Apparence {
         let zigbee = n.id.protocole == .zigbee
         var a = switch n.genre {

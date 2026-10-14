@@ -61,7 +61,7 @@ struct FusionVuesTests {
     @Test func apparenceSelonLeProtocole() throws {
         let (scene, _, _) = try Self.sceneZigbee()
         for n in scene.noeuds {
-            let sans = DessinNoeud.apparence(n, etat: .joignable)
+            let sans = DessinNoeud.apparence(n, etat: .joignable, principale: true)
             let autre = DessinNoeud.apparence(n, etat: .joignable, principale: false, verifie: true)
             #expect(sans == autre, "Zigbee : ni partition, ni verification")
             #expect(!sans.cercle && !sans.verifie)

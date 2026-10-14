@@ -240,6 +240,44 @@ struct SceneProjeteeTests {
         #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])
     }
 
+    /// Le mode des liens ne vaut que pour les protocoles qui ne l'ignorent pas (`EtatAnime.protocolesSansMode`) : un
+    /// protocole sans mode montre ses liens radio comme en mode « tous » (jamais masques, ni en voisins), ses chemins
+    /// restent caches ; sans cette liste, `liens` vaut pour tous, comme avant. Chaque lien projete porte son protocole.
+    @Test func modeDesLiensParProtocole() throws {
+        let (_, c, d, g) = try Self.scene()
+        let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2)]
+        let graphe = try ScenePiecesTests.graphe(sonde: true)
+        let gc = GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins)
+        let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
+                      idt("E000000000000003"): "Bureau", idt("E000000000000004"): "Salon", idt("E000000000000005"): "Salon"]
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
+        let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
+                            chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
+        func projeter(_ mode: ModeLiens, sansMode: Set<Protocole>, selection: IdNoeud? = idt("HomePod")) -> SceneProjetee {
+            let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode,
+                              protocolesSansMode: sansMode)
+            return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
+                                 orbite: CameraScene.canonique(g, aspect: 1.5, u: 0), cadre: Self.cadre)
+        }
+        let radios = projeter(.tous, sansMode: [], selection: nil).liensRouteurs.filter { $0.genre == .radio }.count
+        try #require(radios == 2)
+        // Sans liste : le mode vaut pour tous.
+        #expect(projeter(.chemins, sansMode: []).liensRouteurs.filter { $0.genre == .radio && !$0.voisin }.isEmpty)
+        // Thread sans mode : ses liens radio sont toujours la, normaux, quel que soit le mode ; aucun chemin.
+        for mode in ModeLiens.allCases {
+            let p = projeter(mode, sansMode: [.thread], selection: nil)
+            #expect(p.liensRouteurs.filter { $0.genre == .radio && !$0.voisin }.count == radios, "\(mode.rawValue)")
+            #expect(p.liensRouteurs.filter { $0.genre == .chemin }.isEmpty)
+            #expect(p.liensRouteurs.allSatisfy { $0.protocole == .thread })
+        }
+        #expect(projeter(.chemins, sansMode: [.thread]).liensRouteurs.map(\.genre) == projeter(.tous, sansMode: []).liensRouteurs.map(\.genre))
+        // Un autre protocole sans mode ne change pas Thread.
+        #expect(projeter(.chemins, sansMode: [.zigbee], selection: nil).liensRouteurs.map(\.genre) == [.chemin])
+        let etat = EtatAnime(fk: [], liens: .chemins, protocolesSansMode: [.thread])
+        #expect(etat.mode(de: GrapheReseau.Lien(de: idt("a"), vers: idt("b"), genre: .radio)) == .tous)
+        #expect(etat.mode(de: GrapheReseau.Lien(de: idz("a"), vers: idz("b"), genre: .radio)) == .chemins)
+    }
+
     /// La scene projetee estompe les pastilles (sans changer ce qui se clique) et les liens qui ne sont pas mis en avant,
     /// et donne le facteur des noms (repris de Maillage Zigbee, `FocusEtFicheTests`).
     @Test func projectionEstompee() throws {

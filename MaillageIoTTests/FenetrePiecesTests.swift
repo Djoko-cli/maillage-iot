@@ -235,7 +235,7 @@ struct FenetrePiecesTests {
         // Une fiche avec les courbes de l'historique, dans une grande fenetre (la legende y reste ouverte).
         p.set(false, forKey: LegendePieces.cleRepliee)
         let historique = try CourbesFicheTests.surveillance()
-        #expect(FicheNoeud.courbesVisibles(dans: historique))
+        #expect(FicheNoeud.courbesVisibles(de: idt("rloc:0400"), dans: historique))
         let grande = CGSize(width: 1400, height: 1100)
         let (autre, m) = try Self.fenetre(historique, taille: grande, preferences: p)
         defer { Self.fermer(autre) }
@@ -755,14 +755,14 @@ struct FenetrePiecesTests {
     /// fenetre (1100 pt, `MaillageIoTApp`) comme a sa largeur minimale : posee a la largeur d'une colonne
     /// (`ColonnesFiche`), plus etroite qu'elle, elle garde la hauteur d'une ligne et ne deborde pas.
     @Test func pastilleDuChefSurUneLigne() {
-        let pastille = NSHostingView(rootView: PastilleChef()).fittingSize
+        let pastille = NSHostingView(rootView: PastilleChef(protocole: .thread)).fittingSize
         // 926 pt : la plus etroite des fenetres a quatre colonnes, de 190 pt.
         for fenetre in [1100, 926, FenetrePieces.tailleMinimale.width] {
             // La fiche : le bord de chaque cote, ses marges de 16 pt, la place du bouton de fermeture (30 pt).
             let largeur = fenetre - 2 * FenetrePieces.bord - 32 - 30
             let c = ColonnesFiche.colonnes(largeur: largeur, nombre: 4)
             let colonne = (largeur - CGFloat(c - 1) * 24) / CGFloat(c)
-            let posee = NSHostingView(rootView: PastilleChef().frame(width: colonne, alignment: .leading)).fittingSize
+            let posee = NSHostingView(rootView: PastilleChef(protocole: .thread).frame(width: colonne, alignment: .leading)).fittingSize
             // Une ligne, au texte un peu reduit si la colonne est plus etroite qu'elle : pas plus haute, pas deux fois.
             #expect(posee.height <= pastille.height && posee.height > 0.7 * pastille.height,
                     "fenetre de \(Int(fenetre)) pt, colonne de \(Int(colonne)) pt : \(posee.height) pt de haut")
@@ -1300,7 +1300,7 @@ struct FenetrePiecesTests {
         s.thread.oublierMaillage()
         #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e)?.cle == .appareil(idt("E0000000000000FF")))
         let suivante = try #require(Self.entree(s))
-        #expect(suivante.maillage == nil && suivante.graphe.noeud(idt("rloc:041F")) == nil)
+        #expect(suivante.maillageThread == nil && suivante.graphe.noeud(idt("rloc:041F")) == nil)
         #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: suivante) == nil)
     }
 

@@ -108,8 +108,8 @@ final class MoteurPieces {
     var selection: IdNoeud? {
         didSet { if selection != oldValue { majMiseEnAvant() } }
     }
-    /// Les liens montres : tous les liens radio (par defaut : Thread n'a pas de chemin vers un pont), ou les chemins vers
-    /// le pont (Zigbee, le bouton « Liens » du haut).
+    /// Les liens montres de Zigbee : les chemins vers le pont, ou tous les liens radio (le bouton « Liens » du haut). Les
+    /// liens de Thread n'en dependent pas (`protocolesSansMode`).
     var liens = ModeLiens.tous {
         didSet {
             if liens != oldValue {
@@ -127,6 +127,11 @@ final class MoteurPieces {
                 reveiller()
             }
         }
+    }
+    /// Les protocoles dont les liens ignorent `liens` et `voisins` : ceux de la scene dont le modele ne suit pas le mode des
+    /// liens (`ModeleProtocole.suitModeLiens`, Thread : ses liens radio sont toujours montres).
+    var protocolesSansMode: Set<Protocole> {
+        Set((entree?.modeles ?? []).filter { !$0.suitModeLiens }.map(\.protocole))
     }
     var ligneNiveau = LigneNiveau.lisibles
     var cibleMenu = CibleMenu.aucune
@@ -369,7 +374,7 @@ final class MoteurPieces {
     /// protocole) : a chaque selection, scene installee, et changement des liens ou des voisins montres. L'estompement
     /// suit en douceur ; une capture (`fige`) le prend tout de suite.
     func majMiseEnAvant() {
-        let m = selection.flatMap { entree?.miseEnAvant(de: $0, voisins: liens == .tous || voisins) }
+        let m = selection.flatMap { entree?.miseEnAvant(de: $0, liens: liens, voisins: voisins) }
         miseEnAvant = m
         ciblesFocus = scene.map {
             MiseEnAvant.cibles(m, noeuds: $0.noeuds.map(\.id), liens: $0.liens.map(MiseEnAvant.cle))

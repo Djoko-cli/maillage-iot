@@ -400,6 +400,9 @@ final class SurveillanceZigbee: ModeleProtocole {
 
     var echelle: EchelleSignal { .lqi }
 
+    /// Zigbee montre les chemins vers le pont ou tous les liens radio (`ModeLiens`), et ses voisins entendus a la selection.
+    var suitModeLiens: Bool { true }
+
     var classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) { ScenePieces.classementZigbee }
 
     /// Le focus de Zigbee lit `voisins` (les voisins entendus du noeud choisi) et ignore `chefs` (le coordinateur n'a pas

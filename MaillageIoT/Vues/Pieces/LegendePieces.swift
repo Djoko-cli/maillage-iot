@@ -337,7 +337,9 @@ extension LegendePieces.Lecture {
             .map(\.id))
         piles = Set(ids.filter { e.libelles[$0]?.pastille != nil })
         candidats = Set(ids.filter { id in
-            e.maillage?.noeud(id.cle).map { $0.genre == .routeur && !$0.candidats.isEmpty } == true
+            // Les candidats sont ceux d'un routeur de bordure du maillage de Thread, par cle de Thread.
+            id.protocole == .thread
+                && e.maillageThread?.noeud(id.cle).map { $0.genre == .routeur && !$0.candidats.isEmpty } == true
         })
         liens = e.scene.liens
         self.ailleurs = ailleurs

@@ -80,8 +80,10 @@ enum LibellesNoeuds {
         var libelles: [IdNoeud: Libelle] = [:]
         for n in graphe.noeuds {
             let a = appareils[n.id]
-            // Les etats de Thread (noms de routeurs, maillage) sont indexes par cle ; le repli est la cle, jamais le texte.
-            let nom = a?.nom ?? nomsRouteurs[n.id.cle] ?? maillage?.noeud(n.id.cle).map(inconnu) ?? n.id.cle
+            // Les etats de Thread (noms de routeurs, maillage) sont indexes par cle de Thread : un noeud d'un autre protocole
+            // de meme cle ne les lit pas ; le repli est la cle, jamais le texte.
+            let thread = n.id.protocole == .thread
+            let nom = a?.nom ?? (thread ? nomsRouteurs[n.id.cle] ?? maillage?.noeud(n.id.cle).map(inconnu) : nil) ?? n.id.cle
             let coupe = CartesPieces.couper(nom)
             let texte = CartesPieces.texte(coupe, chef: chefs.contains(n.id), endormi: endormi(a, routeur: n.routeur),
                                            alerte: a?.etat == .sansAdresse || a?.etat == .disparu)

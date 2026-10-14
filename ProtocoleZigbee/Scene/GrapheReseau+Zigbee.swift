@@ -11,6 +11,8 @@ public extension GrapheReseau {
 
     /// Le graphe d'un maillage (nil : pas de maillage, ou perime) et des appareils du pont (`id` : adresse longue).
     init(maillage m: MaillageZigbee?, appareils: [AppareilAffiche]) {
+        // Les appareils d'un autre protocole ne sont pas des noeuds de Zigbee : leur cle y serait prise pour une adresse longue.
+        let appareils = appareils.filter { $0.id.protocole == .zigbee }
         var noeuds: [Noeud] = []
         var liens: [Lien] = []
         let connus = Set(appareils.map { $0.id.cle.uppercased() })

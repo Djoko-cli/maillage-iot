@@ -16,6 +16,24 @@ struct DemarrageTests {
         #expect(Set(attendus).count == 6, "six types, aucun en double")
     }
 
+    /// Les arguments de lancement des demos : `-demo` rejoue Thread, `-demo-zigbee` Zigbee, chacune seule ; rien hors demo.
+    /// Chaque demo fait tourner un seul modele, l'autre muet (`ModulesApp(demo:)`).
+    @MainActor
+    @Test func argumentsDeLaDemo() {
+        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT"]) == nil)
+        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo"]) == .thread)
+        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo-zigbee"]) == .zigbee)
+        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo", "-captures", "x"]) == .thread)
+        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo", "-demo-zigbee"]) == .zigbee)
+        for protocole in Protocole.allCases {
+            let m = ModulesApp(demo: protocole, sousTests: true)
+            m.surveillance.demarrer()
+            let scene = EntreeScene(surveillance: m.surveillance, places: PlacesGardees())
+            #expect(scene.protocoles == [protocole], "la demo de \(protocole.rawValue), seule")
+            #expect(m.surveillance.modeles.filter { $0.graphe.noeuds.isEmpty }.map(\.protocole) == Protocole.allCases.filter { $0 != protocole })
+        }
+    }
+
     /// Sous les tests, l'app porte les deux modeles de protocole, et rien n'est ouvert : aucun port, aucune ecoute
     /// Bonjour, aucun trousseau du Mac (un trousseau en memoire a la place), aucun fichier de l'app.
     @MainActor

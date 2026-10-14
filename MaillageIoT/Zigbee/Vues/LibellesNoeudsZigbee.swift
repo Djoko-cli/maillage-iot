@@ -22,7 +22,8 @@ extension LibellesNoeuds {
         for n in graphe.noeuds {
             let a = appareils[n.id]
             // `nom` lit le pont par adresse longue (la cle) ; sans nom, le repli est la cle, jamais le texte.
-            let coupe = CartesPieces.couper(a?.nom ?? nom(n.id.cle))
+            // Un noeud d'un autre protocole de meme cle n'est pas lu sur le pont.
+            let coupe = CartesPieces.couper(a?.nom ?? (n.id.protocole == .zigbee ? nom(n.id.cle) : n.id.cle))
             let texte = CartesPieces.texte(coupe, chef: chefs.contains(n.id), endormi: endormi(a, routeur: n.routeur),
                                            alerte: a?.etat == .injoignable || a?.etat == .disparu)
             libelles[n.id] = Libelle(texte: texte, pastille: pastilleBatterie(a?.batterie), nom: coupe)

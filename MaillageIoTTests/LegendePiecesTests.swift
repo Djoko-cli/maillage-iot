@@ -90,7 +90,7 @@ struct LegendePiecesTests {
         #expect(LegendePieces.entrees(Lecture(e, ailleurs: true)).contains(.ailleurs))
         s.thread.oublierMaillage()
         let sans = try #require(FenetrePiecesTests.entree(s))
-        #expect(sans.maillage == nil)
+        #expect(sans.maillageThread == nil)
         let rubriques = LegendePieces.rubriques(Lecture(sans, ailleurs: false))
         #expect(rubriques.map(\.groupe) == [.routeurs, .appareils, .autres])
         #expect(rubriques.last?.entrees == [.rattachement])

@@ -14,6 +14,7 @@ struct NoeudChoisi: Identifiable {
 struct BarreOutils: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(SondeMaillageThread.self) private var sonde
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(\.openWindow) private var openWindow
     @State private var appareilsIP = false
@@ -64,6 +65,8 @@ struct BarreOutils: View {
             Button {
                 surveillance.thread.rafraichir()
                 sonde.rafraichir()
+                // Une scene qui montre aussi Zigbee : sa sonde fait sa tournee de meme.
+                if surveillance.zigbee.aUnReseau { sondeZigbee?.rafraichir() }
                 if Self.lancePasseur(mode: surveillance.mode) {
                     nomsMaison.relire()
                 }

@@ -65,6 +65,22 @@
         }
       }
     },
+    "%@ : LQI %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: LQI %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : LQI %2$lld"
+          }
+        }
+      }
+    },
     "%@ : absente" : {
       "localizations" : {
         "en" : {
@@ -497,6 +513,22 @@
         }
       }
     },
+    "%@ · endormi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · asleep"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · endormi"
+          }
+        }
+      }
+    },
     "%@ · partitions : %lld" : {
       "localizations" : {
         "en" : {
@@ -753,6 +785,38 @@
         }
       }
     },
+    "%lld routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routeurs"
+          }
+        }
+      }
+    },
+    "%lld routeurs lui parlent directement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routers talk to it directly"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routeurs lui parlent directement"
+          }
+        }
+      }
+    },
     "%lld voisins" : {
       "localizations" : {
         "en" : {
@@ -893,6 +957,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 nom masqué faute de place : rapprochez-vous (molette)"
+          }
+        }
+      }
+    },
+    "1 routeur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 routeur"
+          }
+        }
+      }
+    },
+    "1 routeur lui parle directement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 router talks to it directly"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 routeur lui parle directement"
           }
         }
       }
@@ -1261,6 +1357,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Appareil final" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End device"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil final"
           }
         }
       }
@@ -1825,6 +1937,22 @@
         }
       }
     },
+    "Chemin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chemin"
+          }
+        }
+      }
+    },
     "Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite." : {
       "localizations" : {
         "en" : {
@@ -2001,6 +2129,22 @@
         }
       }
     },
+    "Coordinateur (le pont)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coordinator (the bridge)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coordinateur (le pont)"
+          }
+        }
+      }
+    },
     "Coupée par « Réduire les animations »" : {
       "localizations" : {
         "en" : {
@@ -2173,6 +2317,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dissocier"
+          }
+        }
+      }
+    },
+    "Dépendants" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dependents"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dépendants"
           }
         }
       }
@@ -2369,6 +2529,38 @@
         }
       }
     },
+    "Fait clignoter l'appareil, par Maison (Passeur Noms), pour le repérer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Makes the device blink, through Home (Passeur Noms), so you can spot it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fait clignoter l'appareil, par Maison (Passeur Noms), pour le repérer"
+          }
+        }
+      }
+    },
+    "Fait clignoter l'appareil, par le pont Hue, pour le repérer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Makes the device blink, through the Hue bridge, so you can spot it"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fait clignoter l'appareil, par le pont Hue, pour le repérer"
+          }
+        }
+      }
+    },
     "Famille" : {
       "localizations" : {
         "en" : {
@@ -2561,6 +2753,22 @@
         }
       }
     },
+    "Identification…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifying…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification…"
+          }
+        }
+      }
+    },
     "Identifier" : {
       "localizations" : {
         "en" : {
@@ -2573,6 +2781,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Identifier"
+          }
+        }
+      }
+    },
+    "Identifier par Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identify via Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifier par Maison"
           }
         }
       }
@@ -2669,6 +2893,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L'autoriser dans Réglages Système, Général, Ouverture et extensions."
+          }
+        }
+      }
+    },
+    "LQI %@ / %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LQI %1$@ / %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "LQI %1$@ / %2$@"
           }
         }
       }
@@ -4593,6 +4833,22 @@
         }
       }
     },
+    "Routeur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur"
+          }
+        }
+      }
+    },
     "Routeur Thread apparu : %@" : {
       "localizations" : {
         "en" : {
@@ -5121,6 +5377,22 @@
         }
       }
     },
+    "Rôle inconnu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown role"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rôle inconnu"
+          }
+        }
+      }
+    },
     "Sans effet avec « Liens : tous » : tous les liens radio sont montrés" : {
       "localizations" : {
         "en" : {
@@ -5217,18 +5489,18 @@
         }
       }
     },
-    "Signal vu par la sonde (dBm)" : {
+    "Signal vu par la sonde (%@)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Signal seen by the probe (dBm)"
+            "value" : "Signal seen by the probe (%@)"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Signal vu par la sonde (dBm)"
+            "value" : "Signal vu par la sonde (%@)"
           }
         }
       }
@@ -5681,6 +5953,22 @@
         }
       }
     },
+    "Voisins entendus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neighbors heard"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voisins entendus"
+          }
+        }
+      }
+    },
     "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer" : {
       "localizations" : {
         "en" : {
@@ -6033,6 +6321,22 @@
         }
       }
     },
+    "adresse courte %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "short address %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "adresse courte %@"
+          }
+        }
+      }
+    },
     "adresse non annoncée" : {
       "localizations" : {
         "en" : {
@@ -6081,6 +6385,22 @@
         }
       }
     },
+    "aucun chemin connu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no known path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun chemin connu"
+          }
+        }
+      }
+    },
     "aucun pont trouvé" : {
       "localizations" : {
         "en" : {
@@ -6093,6 +6413,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "aucun pont trouvé"
+          }
+        }
+      }
+    },
+    "aucun routeur ne lui parle directement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no router talks to it directly"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun routeur ne lui parle directement"
           }
         }
       }
@@ -6273,6 +6609,22 @@
         }
       }
     },
+    "chemin lu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "path read %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemin lu %@"
+          }
+        }
+      }
+    },
     "chemin supposé" : {
       "localizations" : {
         "en" : {
@@ -6285,6 +6637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "chemin supposé"
+          }
+        }
+      }
+    },
+    "chemin supposé (aucune route active vers le pont)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "assumed path (no active route to the bridge)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemin supposé (aucune route active vers le pont)"
           }
         }
       }
@@ -6881,6 +7249,22 @@
         }
       }
     },
+    "la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde"
+          }
+        }
+      }
+    },
     "la sonde du réseau n'est pas la sonde retenue" : {
       "localizations" : {
         "en" : {
@@ -7169,6 +7553,38 @@
         }
       }
     },
+    "muet : sans réponse à deux tournées de suite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "silent: no answer in two rounds in a row"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "muet : sans réponse à deux tournées de suite"
+          }
+        }
+      }
+    },
+    "nom de l'app Hue (pas trouvé dans Maison)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue app name (not found in Home)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nom de l'app Hue (pas trouvé dans Maison)"
+          }
+        }
+      }
+    },
     "non autorisé" : {
       "localizations" : {
         "en" : {
@@ -7261,6 +7677,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "parent %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "parent %@, %@%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@, %2$@%3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@, %2$@%3$@"
+          }
+        }
+      }
+    },
+    "parent connu %@ : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent known %1$@: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent connu %1$@ : %2$@"
           }
         }
       }
@@ -7469,6 +7917,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "qualité inconnue"
+          }
+        }
+      }
+    },
+    "qualités du %@ à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qualities from %1$@ at %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qualités du %1$@ à %2$@"
           }
         }
       }
@@ -7697,6 +8161,22 @@
         }
       }
     },
+    "table non lue : liens vus seulement par ses voisins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "table not read: links seen only by its neighbors"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "table non lue : liens vus seulement par ses voisins"
+          }
+        }
+      }
+    },
     "tous" : {
       "localizations" : {
         "en" : {
@@ -7789,6 +8269,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "un enfant ne parle qu'à son parent"
+          }
+        }
+      }
+    },
+    "vers le pont : direct" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to the bridge: direct"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vers le pont : direct"
+          }
+        }
+      }
+    },
+    "vers le pont : via %@ · %lld sauts" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to the bridge: via %1$@ · %2$lld hops"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vers le pont : via %1$@ · %2$lld sauts"
+          }
+        }
+      }
+    },
+    "vers le pont : via %@ · chemin incomplet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to the bridge: via %@ · incomplete path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vers le pont : via %@ · chemin incomplet"
           }
         }
       }
@@ -8033,6 +8561,22 @@
         }
       }
     },
+    "état inconnu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown state"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "état inconnu"
+          }
+        }
+      }
+    },
     "—" : {
       "localizations" : {
         "en" : {
@@ -8093,6 +8637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "👑 Chef du réseau Thread, élu automatiquement"
+          }
+        }
+      }
+    },
+    "👑 Coordinateur du réseau Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👑 Zigbee network coordinator"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👑 Coordinateur du réseau Zigbee"
           }
         }
       }

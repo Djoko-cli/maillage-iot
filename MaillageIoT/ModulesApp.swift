@@ -21,6 +21,13 @@ struct ModulesApp {
     let demo: Protocole?
     let sousTests: Bool
 
+    /// Le protocole dont la demo est rejouee d'apres les arguments de lancement : `-demo-zigbee` (le faux reseau Hue),
+    /// `-demo` (la panne de Thread) ; nil hors demo. Une demo a la fois (la demo combinee est a l'etape 3b) ; si les deux
+    /// sont donnes, celle de Zigbee, la plus precise.
+    static func protocoleDeLaDemo(arguments: [String]) -> Protocole? {
+        arguments.contains("-demo-zigbee") ? .zigbee : arguments.contains("-demo") ? .thread : nil
+    }
+
     /// `demo` : le protocole dont la demo est rejouee ; nil hors demo. `sousTests` : lance par les tests, qui ne touchent
     /// jamais aux fichiers de l'app, au trousseau ni au reseau.
     init(demo: Protocole?, sousTests: Bool = Surveillance.sousTests) {

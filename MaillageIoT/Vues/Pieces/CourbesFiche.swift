@@ -1,13 +1,16 @@
 import Charts
 import MaillageCoeur
 import ProtocoleThread
+import ProtocoleZigbee
 import SwiftUI
 
-/// Courbes de l'historique dans la fiche (spec de la sonde, section 6 ; bande large reprise de Maillage Zigbee, 09/10),
+/// Courbes de l'historique dans la fiche (spec de la sonde, section 6 ; bande large reprise de Maillage Zigbee, 09/10), de
+/// l'historique du protocole du noeud (`ModeleProtocole.courbes`), le signal en dBm pour Thread et en LQI pour Zigbee,
 /// sur 24 h, 7 j ou 30 j, en une bande large sous les colonnes de la fiche : la qualite des liens du noeud (au plus six
 /// courbes par defaut, ses liens radio puis ses enfants, `ChoixCourbes` ; la case « tous les liens » montre le reste),
 /// leur legende en pastilles (un clic met une courbe en avant, un second rend les autres), un axe nomme « bonne /
-/// moyenne / faible », l'heure et la qualite au survol, des reperes aux changements de parent (de simples traits, sans
+/// moyenne / faible », l'heure et la qualite (le LQI pour Zigbee) au survol, des reperes aux changements de parent, et de
+/// chemin vers le pont pour Zigbee (de simples traits, sans
 /// texte ; la bulle d'un repere donne l'heure et le nouveau parent, et des reperes proches se fondent en un seul,
 /// `ReperesCourbe`) ; et, pour un routeur, le signal que la sonde en recoit, avec les changements de parent de la sonde
 /// marques de meme (ce signal depend d'abord de l'endroit ou elle est posee). Le signal a toujours une echelle, et sa
@@ -16,14 +19,25 @@ struct CourbesFiche: View {
     @Environment(Surveillance.self) private var surveillance
     /// Une capture ne rend pas les controles d'AppKit (le choix de la periode, la case) : elle les dessine.
     @Environment(\.capturePieces) private var capture
-    let id: String
+    /// Le noeud : son protocole choisit l'historique, l'echelle du signal et ce que les courbes marquent.
+    let id: IdNoeud
     /// Fin des courbes : l'heure de la fiche (`FicheNoeud.instant`), qui avance chaque minute.
     let instant: Date
     @State private var periodeChoisie: PeriodeCourbes = .jour
+    /// La periode imposee a une capture (qui ne rend pas le choix de la periode) ; nil, celle du choix.
+    @Environment(\.periodeCapture) private var periodeCapture
     /// La case « tous les liens » : toutes les courbes, et non les six premieres (`CourbesNoeud.prioritaires`).
     @State private var tous = false
 
-    private var periode: PeriodeCourbes { periodeChoisie }
+    private var periode: PeriodeCourbes { periodeCapture ?? periodeChoisie }
+
+    /// L'echelle du signal d'un protocole : dBm pour Thread, LQI pour Zigbee (celle de son modele, `ModeleProtocole.echelle`).
+    static func echelle(de protocole: Protocole) -> EchelleSignal {
+        switch protocole {
+        case .thread: .dbm
+        case .zigbee: .lqi
+        }
+    }
 
     /// Hauteur des graphes de la bande (pt).
     static let hauteur: CGFloat = 170
@@ -31,9 +45,12 @@ struct CourbesFiche: View {
     static let largeurSignal: CGFloat = 300
 
     var body: some View {
-        let courbes = surveillance.thread.courbes(noeud: id, periode: periode, fin: instant)
+        // L'historique et les noms sont ceux du modele du protocole du noeud, lus par la cle de ce protocole.
+        let modele = surveillance.modele(pour: id.protocole)
+        let echelle = Self.echelle(de: id.protocole)
+        let courbes = modele?.courbes(noeud: id.cle, periode: periode, fin: instant)
         let noms = courbes.map { c in
-            surveillance.thread.nomsHistorique(Set(c.liens.map(\.id) + (c.parents + c.parentsSonde).map(\.parent)))
+            modele?.nomsHistorique(Set(c.liens.map(\.id) + (c.parents + c.chemins + c.parentsSonde).map(\.parent))) ?? [:]
         } ?? [:]
         let cachees = courbes.map { ChoixCourbes.cachees(cles: $0.liens.map(\.id), prioritaires: $0.prioritaires) } ?? 0
         VStack(alignment: .leading, spacing: 8) {
@@ -78,7 +95,7 @@ struct CourbesFiche: View {
                             .id(Self.identiteGraphe(id: id, tous: tous, periode: periode))
                     }
                     if !c.signal.isEmpty {
-                        GrapheSignal(c: c, noms: noms, periode: periode)
+                        GrapheSignal(c: c, noms: noms, periode: periode, echelle: echelle)
                             .frame(width: montrees.isEmpty ? nil : Self.largeurSignal)
                     }
                 }
@@ -93,8 +110,8 @@ struct CourbesFiche: View {
     /// L'identite du graphe de qualite : un autre noeud, la case « tous les liens » ou une autre periode le refont, et la
     /// courbe mise en avant (l'etat du graphe) s'efface (repris de Maillage Zigbee, 09/10). Cliquer une pastille ne change
     /// que cet etat : seul le graphe se recalcule, non l'historique de la periode.
-    static func identiteGraphe(id: String, tous: Bool, periode: PeriodeCourbes) -> String {
-        "\(id)|\(tous)|\(periode.rawValue)"
+    static func identiteGraphe(id: IdNoeud, tous: Bool, periode: PeriodeCourbes) -> String {
+        "\(id.texte)|\(tous)|\(periode.rawValue)"
     }
 
     static func titre(_ p: PeriodeCourbes) -> String {
@@ -159,9 +176,10 @@ struct CourbesFiche: View {
         Set(Dictionary(grouping: points, by: \.troncon).filter { $0.value.count == 1 }.keys)
     }
 
-    /// Les reperes du graphe de qualite : les changements de parent d'un enfant, par date.
+    /// Les reperes du graphe de qualite : les changements de parent (enfant, appareil final) et de prochain saut vers le pont
+    /// (routeur de Zigbee), par date.
     static func reperes(_ c: CourbesNoeud) -> [ChangementParent] {
-        c.parents.sorted { $0.date < $1.date }
+        (c.parents + c.chemins).sorted { $0.date < $1.date }
     }
 
     /// Les graduations de l'heure, espacees : toutes les 3 h sur 24 h, chaque jour sur 7 j, tous les 5 jours sur 30 j.
@@ -173,10 +191,10 @@ struct CourbesFiche: View {
         }
     }
 
-    /// L'echelle du signal (polissage D, section 4.3) : son domaine, des dizaines de dBm autour de ses valeurs, et ses
-    /// graduations ; sans valeur, de -100 a -40 dBm.
-    static func echelle(_ c: CourbesNoeud) -> (domaine: ClosedRange<Double>, graduations: [Double]) {
-        let e = EchelleSignal.dbm
+    /// L'echelle du signal (polissage D, section 4.3) : son domaine, des multiples du pas de l'echelle du protocole autour
+    /// de ses valeurs (des dizaines de dBm pour Thread, de 50 de LQI pour Zigbee), et ses graduations ; sans valeur,
+    /// son domaine par defaut (-100 a -40 dBm, 0 a 255 de LQI).
+    static func echelle(_ c: CourbesNoeud, _ e: EchelleSignal) -> (domaine: ClosedRange<Double>, graduations: [Double]) {
         let d = e.domaine(c.signal.map(\.valeur)) ?? e.domaineParDefaut
         return (d, e.graduations(d))
     }
@@ -226,10 +244,11 @@ struct GrapheQualite: View {
         }
     }
 
-    /// Une ligne du survol : « HomePod salon : moyenne » (Thread ne donne pas de LQI ; sur 7 j et 30 j, la moyenne du
-    /// pas, au niveau le plus proche).
+    /// Une ligne du survol : « Lampe bureau : LQI 182 » (Zigbee) ; sans LQI, le nom de sa qualite : « HomePod salon :
+    /// moyenne » (Thread ne donne pas de LQI ; sur 7 j et 30 j, la moyenne du pas, au niveau le plus proche).
     static func ligneSurvol(_ nom: String, _ p: PointCourbe) -> String {
-        String(localized: "\(nom) : \(CourbesFiche.nomQualite(p.valeur))")
+        if let lqi = p.lqi { return String(localized: "\(nom) : LQI \(Int(lqi.rounded()))") }
+        return String(localized: "\(nom) : \(CourbesFiche.nomQualite(p.valeur))")
     }
 
     /// La courbe mise en avant, si elle est montree (relecture de l'etape 5, I1) ; nil, aucune.
@@ -373,6 +392,8 @@ struct GrapheSignal: View {
     let c: CourbesNoeud
     let noms: [String: String]
     let periode: PeriodeCourbes
+    /// L'echelle du signal du protocole du noeud (dBm, LQI).
+    let echelle: EchelleSignal
     /// L'heure du releve sous le pointeur ; nil, ailleurs. L'etat disparait avec le graphe, et se remet a zero quand la
     /// periode change.
     @State private var survole: Date?
@@ -390,8 +411,8 @@ struct GrapheSignal: View {
         let alignement: Alignment
     }
 
-    static func affichage(_ c: CourbesNoeud, survole: Date?, periode: PeriodeCourbes) -> Affichage {
-        let echelle = CourbesFiche.echelle(c)
+    static func affichage(_ c: CourbesNoeud, survole: Date?, periode: PeriodeCourbes, echelle e: EchelleSignal) -> Affichage {
+        let echelle = CourbesFiche.echelle(c, e)
         let releve = survole.flatMap { EchelleSignal.plusProche(c.signal, de: $0, periode: periode) }
         let aGauche = releve.map { EchelleSignal.aGauche($0.date, debut: c.debut, fin: c.fin) } ?? false
         return Affichage(domaine: echelle.domaine, graduations: echelle.graduations, releve: releve,
@@ -411,9 +432,9 @@ struct GrapheSignal: View {
     }
 
     var body: some View {
-        let a = Self.affichage(c, survole: survole, periode: periode)
+        let a = Self.affichage(c, survole: survole, periode: periode, echelle: echelle)
         VStack(alignment: .leading, spacing: 2) {
-            Text("Signal vu par la sonde (dBm)").font(.caption).foregroundStyle(.secondary)
+            Text("Signal vu par la sonde (\(echelle.unite))").font(.caption).foregroundStyle(.secondary)
             Chart {
                 let seuls = CourbesFiche.tronconsSeuls(c.signal)
                 ForEach(c.signal, id: \.date) { p in
@@ -471,7 +492,7 @@ struct GrapheSignal: View {
                     // sinon. Posee ici et non en `annotation` : sous le verre de la fiche, les annotations du graphe ne
                     // se dessinent pas (verification du 05/10).
                     if let r = a.releve, let cadre = proxy.plotFrame, let x = proxy.position(forX: r.date) {
-                        Text(verbatim: EchelleSignal.dbm.etiquette(r, periode: periode, locale: langue, fuseau: .current))
+                        Text(verbatim: echelle.etiquette(r, periode: periode, locale: langue, fuseau: .current))
                             .font(.caption2.monospacedDigit())
                             .padding(.horizontal, 4)
                             .background(.background.opacity(0.85), in: RoundedRectangle(cornerRadius: 3))

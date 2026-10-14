@@ -110,11 +110,11 @@ struct CourbesFicheTests {
     @Test func echelleDuSignal() throws {
         let s = try Self.surveillance()
         let r = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
-        let e = CourbesFiche.echelle(r)
+        let e = CourbesFiche.echelle(r, .dbm)
         #expect(e.domaine == -70 ... -50 && e.graduations == [-70, -60, -50])
         let vide = try #require(s.thread.courbes(noeud: JournalMaillageTests.appareil, periode: .jour, fin: Date()))
-        #expect(vide.signal.isEmpty && CourbesFiche.echelle(vide).domaine == -100 ... -40)
-        #expect(CourbesFiche.echelle(vide).graduations == [-100, -90, -80, -70, -60, -50, -40])
+        #expect(vide.signal.isEmpty && CourbesFiche.echelle(vide, .dbm).domaine == -100 ... -40)
+        #expect(CourbesFiche.echelle(vide, .dbm).graduations == [-100, -90, -80, -70, -60, -50, -40])
     }
 
     /// Ce que le graphe du signal affiche, decide sans fenetre (`GrapheSignal.affichage`, lu par la vue) : le domaine
@@ -130,14 +130,14 @@ struct CourbesFicheTests {
         let tard = maintenant.addingTimeInterval(21 * 3600)
         let gauche = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: tard))
         let p0 = try #require(droite.signal.first), q0 = try #require(gauche.signal.first)
-        let a = GrapheSignal.affichage(droite, survole: p0.date.addingTimeInterval(60), periode: .jour)
+        let a = GrapheSignal.affichage(droite, survole: p0.date.addingTimeInterval(60), periode: .jour, echelle: .dbm)
         #expect(a.domaine == -70 ... -50 && a.graduations == [-70, -60, -50])
         #expect(a.releve == p0 && a.alignement == .trailing)
-        let b = GrapheSignal.affichage(gauche, survole: q0.date, periode: .jour)
+        let b = GrapheSignal.affichage(gauche, survole: q0.date, periode: .jour, echelle: .dbm)
         #expect(b.releve == q0 && b.alignement == .leading)
         #expect(b.domaine == a.domaine && b.graduations == a.graduations)
-        #expect(GrapheSignal.affichage(droite, survole: nil, periode: .jour).releve == nil)
-        #expect(GrapheSignal.affichage(droite, survole: droite.debut, periode: .jour).releve == nil, "dans un trou")
+        #expect(GrapheSignal.affichage(droite, survole: nil, periode: .jour, echelle: .dbm).releve == nil)
+        #expect(GrapheSignal.affichage(droite, survole: droite.debut, periode: .jour, echelle: .dbm).releve == nil, "dans un trou")
     }
 
     /// Le pointeur : l'heure du releve le plus proche de sa position dans la zone de trace, la meme tant que ce releve
@@ -165,10 +165,10 @@ struct CourbesFicheTests {
     /// remplace les 190 et 360 pt fixes) ; pour un noeud sans historique, une ligne de texte.
     @Test func ficheEtMarge() throws {
         let s = try Self.surveillance()
-        #expect(FicheNoeud.courbesVisibles(dans: s))
+        #expect(FicheNoeud.courbesVisibles(de: idt("rloc:0400"), dans: s))
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        #expect(!FicheNoeud.courbesVisibles(dans: demo))
+        #expect(!FicheNoeud.courbesVisibles(de: idt("rloc:0400"), dans: demo))
         let entree = FenetrePiecesTests.entree(s)
         func pile(_ id: String) -> CGFloat {
             let v = VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
@@ -181,8 +181,8 @@ struct CourbesFicheTests {
         let sansCourbes = pile("instance:inconnue")
         #expect(FenetrePieces.margeBas(pile: avecCourbes) > FenetrePieces.margeBas(pile: sansCourbes) + 100,
                 "\(avecCourbes) \(sansCourbes)")
-        let avec = NSHostingView(rootView: CourbesFiche(id: JournalMaillageTests.appareil, instant: Date()).environment(s)).fittingSize
-        let sans = NSHostingView(rootView: CourbesFiche(id: "instance:inconnue", instant: Date()).environment(s)).fittingSize
+        let avec = NSHostingView(rootView: CourbesFiche(id: idt(JournalMaillageTests.appareil), instant: Date()).environment(s)).fittingSize
+        let sans = NSHostingView(rootView: CourbesFiche(id: idt("instance:inconnue"), instant: Date()).environment(s)).fittingSize
         #expect(avec.height > sans.height + 100, "\(avec) \(sans)")
     }
 

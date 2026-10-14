@@ -14,10 +14,12 @@ struct ResumeMenu: Equatable {
 /// 1.2), dans l'app et non dans le coeur (le coeur ne connait aucun modele). `SurveillanceThread` et `SurveillanceZigbee`
 /// s'y conforment ; l'identifiant de chaque noeud rendu est un `IdNoeud` de leur protocole.
 ///
-/// Ne porte que ce que les vues lisent aujourd'hui. Ce que les prochaines taches y ajoutent : `actif` (tache 11, arret
-/// reel du module) ; la scene reunie (tache 8) lira `graphe`, `appareils`, `classement` et `miseEnAvant` de chaque modele
-/// actif, et les libelles, apparences et chefs de la scene (`EntreeScene`) y deviendront des crochets de plus, avec la
-/// fiche d'un noeud.
+/// Ne porte que ce que les vues lisent sans connaitre le protocole : la scene reunie (`EntreeScene`) lit `graphe`,
+/// `appareils`, `classement`, `miseEnAvant` et `suitModeLiens` de chaque modele. Les libelles, les pieces, les chefs et
+/// l'apparence des noeuds, qui lisent les types propres a chaque protocole (reseau, maillage et noms de Maison pour
+/// Thread ; maillage et noms du pont pour Zigbee), restent des fonctions de chaque protocole (`LibellesNoeuds`,
+/// `LibellesNoeudsZigbee`) que `EntreeScene` appelle sur le sous-graphe du protocole. Ce que la tache 11 y ajoute : `actif`
+/// (arret reel du module).
 @MainActor
 protocol ModeleProtocole: AnyObject {
     var protocole: Protocole { get }
@@ -32,6 +34,10 @@ protocol ModeleProtocole: AnyObject {
     var echelle: EchelleSignal { get }
     /// Rang et rayon d'un noeud de ce protocole dans la scene (`ScenePieces(classement:)`).
     var classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) { get }
+    /// Le mode des liens montres (`ModeLiens` : chemins vers le pont, ou tous les liens radio) et le choix des voisins
+    /// entendus valent pour les liens de ce protocole (Zigbee, dont la carte est celle des chemins vers le pont) ; faux :
+    /// ses liens radio sont toujours montres, et sa mise en avant montre toujours ses voisins (Thread, sans chemin vers un pont).
+    var suitModeLiens: Bool { get }
     /// Mode focus : ce qui reste net a la selection de `id`, sur le graphe `graphe` de la scene. `chefs` : les noeuds
     /// couronnes (Thread les lit, Zigbee non) ; `voisins` : montrer aussi les voisins entendus (Zigbee le lit, Thread
     /// le montre toujours aujourd'hui). nil si `id` n'est pas de ce protocole.

@@ -244,10 +244,10 @@ D'après `inventaire-etape3-fusion-apps.md` §2.5 (points 2, 3), `inventaire-eta
 - Consumes: `ModeleProtocole` (tâches 6, 7), `IdNoeud`.
 - Produces: une scène qui réunit Thread et Zigbee avec le dessin actuel ; les deux rejeux exacts dans `MaillageIoTTests`.
 
-- [ ] **Step 1: RED** — `sceneReunieEstLUnionDesDeux` (nœuds et liens de la scène réunie = union de ceux des deux scènes seules ; aucun lien entre protocoles ; liens radio Thread visibles quel que soit `ModeLiens`) ; `ReferenceRejeuZigbeeTests` dans `MaillageIoTTests`. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter la jonction et les crochets.
-- [ ] **Step 3: Vérifier** — porte de la tâche (les deux rejeux exacts dans `MaillageIoTTests`, et encore dans `MaillageIoTZigbeeTests`).
-- [ ] **Step 4: Commit** — « Scene : les deux reseaux reunis, crochets par protocole, rejeu Zigbee dans l'app unique ».
+- [x] **Step 1: RED** — `sceneReunieEstLUnionDesDeux` (nœuds et liens de la scène réunie = union de ceux des deux scènes seules ; aucun lien entre protocoles ; liens radio Thread visibles quel que soit `ModeLiens`) ; `ReferenceRejeuZigbeeTests` dans `MaillageIoTTests`. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter la jonction et les crochets.
+- [x] **Step 3: Vérifier** — porte de la tâche (les deux rejeux exacts dans `MaillageIoTTests`, et encore dans `MaillageIoTZigbeeTests`).
+- [x] **Step 4: Commit** — « Scene : les deux reseaux reunis, crochets par protocole, rejeu Zigbee dans l'app unique ».
 
 ---
 

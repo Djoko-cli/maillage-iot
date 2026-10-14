@@ -272,6 +272,8 @@ struct BandeFenetre: View {
 struct HautPieces: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(SondeMaillageThread.self) private var sonde
+    /// La sonde de Zigbee : sa tournee, quand la scene n'a que Zigbee. nil dans les vues de test sans elle.
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(\.accessibilityReduceMotion) private var reduire
     let moteur: MoteurPieces
     @Binding var troisD: Bool
@@ -282,6 +284,9 @@ struct HautPieces: View {
     /// « Maillage incomplet » (avec l'heure de la passe complementaire programmee, `TexteTourneeZigbee.texteIncomplet`) :
     /// il prend la place de la ligne de la tournee quand aucune ne tourne ; nil : aucun.
     var texteIncomplet: String?
+    /// La scene n'a que des noeuds Zigbee : sa barre d'outils, sa ligne de tournee et son bandeau sans pieces, ceux de
+    /// Zigbee. Avec des noeuds Thread (ou sans reseau), ceux de Thread.
+    var zigbeeSeul = false
     var feux = CadreFeux.defaut
     /// Le bas du haut de la fenetre, dans l'espace de la vue, la place d'une ligne de tournee absente comprise.
     var surBas: (CGFloat) -> Void = { _ in }
@@ -300,7 +305,8 @@ struct HautPieces: View {
     }
 
     var body: some View {
-        let tournee = LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee)
+        let tournee = zigbeeSeul ? LigneTournee.place(serie: sondeZigbee?.serie, debut: sondeZigbee?.debutTournee)
+            : LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee)
         // Hors tournee, une sonde retenue : la marge du haut compte la ligne absente et son espacement.
         // L'indicateur du maillage incomplet prend cette place (de la meme hauteur) : rien ne saute.
         let reserve = tournee == .comptee && texteIncomplet == nil ? (hauteurTournee ?? 0) + FenetrePieces.espacement : 0
@@ -308,9 +314,11 @@ struct HautPieces: View {
             // Chaque capsule garde la largeur de son contenu (`fixedSize`) : la bande vide prend la place qui
             // reste. Sans cela, les trois se la partagent et la capsule du reseau tronque ses boutons.
             HStack(spacing: 0) {
-                BarreOutils()
-                    .capsuleDeVerre()
-                    .fixedSize()
+                Group {
+                    if zigbeeSeul { BarreOutilsZigbee() } else { BarreOutils() }
+                }
+                .capsuleDeVerre()
+                .fixedSize()
                 BandeFenetre()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 CommandesVue(moteur: moteur, troisD: $troisD)
@@ -328,8 +336,10 @@ struct HautPieces: View {
             VStack(alignment: .leading, spacing: FenetrePieces.espacementNiveau) {
                 VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                     if tournee == .montree {
-                        LigneTournee()
-                            .transition(apparition.transitionAnimee)
+                        Group {
+                            if zigbeeSeul { LigneTourneeZigbee() } else { LigneTournee() }
+                        }
+                        .transition(apparition.transitionAnimee)
                     }
                     if let r = surveillance.thread.reseau, r.estScinde {
                         BandeauScission(reseau: r)
@@ -340,8 +350,10 @@ struct HautPieces: View {
                             .transition(apparition.transitionAnimee)
                     }
                     if sansPieces {
-                        BandeauSansPieces()
-                            .transition(apparition.transitionAnimee)
+                        Group {
+                            if zigbeeSeul { BandeauSansPiecesZigbee() } else { BandeauSansPieces() }
+                        }
+                        .transition(apparition.transitionAnimee)
                     }
                     FilPieces(moteur: moteur)
                 }
@@ -355,9 +367,11 @@ struct HautPieces: View {
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: ancien)
             .background(alignment: .topLeading) {
                 if tournee != .aucune {
-                    LigneTournee.gabarit
-                        .fixedSize()
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hauteurTournee = $0 }
+                    Group {
+                        if zigbeeSeul { LigneTourneeZigbee.gabarit } else { LigneTournee.gabarit }
+                    }
+                    .fixedSize()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hauteurTournee = $0 }
                 }
             }
             .padding(.leading, FenetrePieces.bord)

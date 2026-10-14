@@ -32,6 +32,18 @@ struct GrapheReseauTests {
         #expect(g.parent(de: idt("56B1E064401F74EF")) == nil, "sans sonde : pas de parent connu")
     }
 
+    /// Un appareil d'un autre protocole n'est pas un noeud de Thread : sa cle y serait prise pour une cle de Thread (la
+    /// liste d'appareils de la scene reunie porte ceux des deux protocoles).
+    @Test func ignoreLesAppareilsDUnAutreProtocole() throws {
+        let r = try #require(Self.instantane.reseaux.first)
+        let apps = Self.affiches(Self.instantane)
+        let intrus = AppareilAffiche(id: idz(apps[0].id.cle), nom: "Intrus", partition: apps[0].partition, etat: .joignable)
+        let seul = GrapheReseau(reseau: r, appareils: apps)
+        let mixte = GrapheReseau(reseau: r, appareils: apps + [intrus, AppareilAffiche(id: idz("A0000000000000EE"), nom: "Autre", etat: .joignable)])
+        #expect(mixte == seul)
+        #expect(mixte.noeuds.allSatisfy { $0.id.protocole == .thread })
+    }
+
     /// L'ordre d'arrivee des appareils ne compte pas ; un appareil disparu reste un noeud.
     @Test func stable() throws {
         let r = try #require(Self.instantane.reseaux.first)

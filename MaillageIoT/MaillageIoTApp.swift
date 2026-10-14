@@ -1,10 +1,12 @@
 import MaillageCoeur
 import ProtocoleThread
+import ProtocoleZigbee
 import SwiftUI
 
 /// App de la barre des menus : ecoute le reseau local en permanence, tient
 /// le journal, notifie ; graphe et journal dans leurs fenetres.
-/// `--args -demo` : rejoue la panne du 27/09, sans rien ecrire ni notifier.
+/// `--args -demo` : rejoue la panne du 27/09 de Thread ; `--args -demo-zigbee` : le faux reseau Hue de Zigbee ; chaque demo
+/// tourne seule, l'autre protocole eteint (la demo combinee est a l'etape 3b) ; sans rien ecrire ni notifier.
 @main
 struct MaillageIoTApp: App {
     @State private var surveillance: Surveillance
@@ -18,15 +20,18 @@ struct MaillageIoTApp: App {
     private let notifications = Notifications()
     /// Bonjour `_hue._tcp` (le pont de Zigbee), demarre hors demo et hors tests : le seul de l'app.
     private let decouverte: DecouvertePont
-    private static let demo = CommandLine.arguments.contains("-demo")
+    /// Le protocole dont la demo est rejouee (`-demo`, `-demo-zigbee`) ; nil hors demo.
+    private static let protocoleDemo = ModulesApp.protocoleDeLaDemo(arguments: CommandLine.arguments)
+    private static let demo = protocoleDemo != nil
     /// Le graphe s'ouvre au lancement en mode demo et au tout premier lancement
     /// (jamais a l'ouverture de session ensuite).
     private let ouvrirGraphe: Bool
     static let clePremierGraphe = "grapheDejaOuvert"
 
     init() {
-        // `-demo` rejoue la panne de Thread (la demo de Zigbee et la demo combinee viennent avec la scene reunie).
-        let m = ModulesApp(demo: Self.demo ? .thread : nil)
+        // `-demo` rejoue la panne de Thread, `-demo-zigbee` le reseau Hue de Zigbee : une demo a la fois, l'autre protocole
+        // eteint (la demo combinee est a l'etape 3b).
+        let m = ModulesApp(demo: Self.protocoleDemo)
         let s = m.surveillance
         let o = m.ouverture
         _surveillance = State(initialValue: s)
@@ -55,9 +60,20 @@ struct MaillageIoTApp: App {
         }
         s.demarrer()
         // `--args -demo -captures <dossier>` : images de la vue par pieces, puis l'app quitte.
-        if Self.demo, let dossier = UserDefaults.standard.string(forKey: "captures") {
-            CapturesPieces.ecrire(dans: dossier, surveillance: s, sonde: m.sondeThread, nomsMaison: m.nomsMaison)
+        if let protocole = Self.protocoleDemo, let dossier = UserDefaults.standard.string(forKey: "captures") {
+            CapturesPieces.ecrire(dans: dossier, surveillance: s, protocole: protocole, sonde: m.sondeThread,
+                                  sondeZigbee: m.sondeZigbee, nomsMaison: m.nomsMaison, nomsPont: m.nomsPont)
             exit(0)
+        }
+    }
+
+    /// Les places de la maison de la demo, en memoire : le jardin au niveau du rez-de-chaussee, hors de la maison ; celles de
+    /// la demo de Zigbee sont sur ses etages ; nil hors demo.
+    private static var placesDeLaDemo: PlacesGardees? {
+        switch protocoleDemo {
+        case .thread?: NomsDemo.places()
+        case .zigbee?: NomsDemo.placesEtagees()
+        case nil: nil
         }
     }
 
@@ -96,7 +112,7 @@ struct MaillageIoTApp: App {
             // En demo, le jardin au niveau du rez-de-chaussee, hors de la maison (polissage C, section 7), en memoire.
             FenetrePieces(fichierPlaces: FenetrePieces.fichierPlaces(demo: Self.demo, sousTests: Surveillance.sousTests),
                           fichierPieces: PiecesChoisies.fichier(demo: Self.demo, sousTests: Surveillance.sousTests),
-                          places: Self.demo ? NomsDemo.places() : nil)
+                          places: Self.placesDeLaDemo)
                 .environment(surveillance)
                 .environment(nomsMaison)
                 .environment(nomsPont)

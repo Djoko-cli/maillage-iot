@@ -67,7 +67,7 @@ struct AffichageSondeTests {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
         #expect(FicheNoeud.selection(candidat: "HomePod Avant", dans: s) == "HomePod Avant")
-        #expect(FicheNoeud.renommable("HomePod Avant", dans: s), "sa fiche : « Renommer… »")
+        #expect(FicheNoeud.renommable(idt("HomePod Avant"), dans: s, entree: nil), "sa fiche : « Renommer… »")
         #expect(FicheNoeud.selection(candidat: "Annonce disparue", dans: s) == nil)
     }
 
@@ -204,11 +204,11 @@ struct AffichageSondeTests {
         #expect(m.noeud(inconnu.id) != nil, "connu de la sonde")
         #expect(s.thread.instantane?.appareil(disparu) == nil && s.thread.instantane?.routeur(disparu) == nil,
                 "le disparu n'est plus dans l'instantane : seul le suivi le connait")
-        #expect(FicheNoeud.renommable(routeur.instance, dans: s))
-        #expect(FicheNoeud.renommable(appareil.id, dans: s))
-        #expect(FicheNoeud.renommable(disparu, dans: s), "appareil disparu : sa fiche garde « Renommer… »")
-        #expect(!FicheNoeud.renommable(inconnu.id, dans: s))
-        #expect(!FicheNoeud.renommable("rloc:5000", dans: s), "ni la sonde ni l'instantane : « Ce nœud n'est plus visible. »")
+        #expect(FicheNoeud.renommable(idt(routeur.instance), dans: s, entree: nil))
+        #expect(FicheNoeud.renommable(idt(appareil.id), dans: s, entree: nil))
+        #expect(FicheNoeud.renommable(idt(disparu), dans: s, entree: nil), "appareil disparu : sa fiche garde « Renommer… »")
+        #expect(!FicheNoeud.renommable(idt(inconnu.id), dans: s, entree: nil))
+        #expect(!FicheNoeud.renommable(idt("rloc:5000"), dans: s, entree: nil), "ni la sonde ni l'instantane : « Ce nœud n'est plus visible. »")
     }
 
     /// Ligne du menu : le nom de la sonde a la place de « Sonde » quand il est donne (celui de la

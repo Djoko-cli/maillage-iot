@@ -36,6 +36,19 @@ struct GrapheReseauZigbeeTests {
         #expect(g.noeuds.count == 23)
     }
 
+    /// Un appareil d'un autre protocole n'est pas un noeud de Zigbee : sa cle y serait prise pour une adresse longue (la
+    /// liste d'appareils de la scene reunie porte ceux des deux protocoles).
+    @Test func ignoreLesAppareilsDUnAutreProtocole() {
+        let m = MaillageDemoZigbee.maillage
+        let apps = Self.affiches(m)
+        let intrus = [AppareilAffiche(id: idt("HomePod salon"), nom: "Intrus", etat: .joignable),
+                      AppareilAffiche(id: idt(I.lampeBureau), nom: "Meme cle", etat: .joignable)]
+        let g = GrapheReseau(maillage: m, appareils: apps + intrus)
+        #expect(g == GrapheReseau(maillage: m, appareils: apps))
+        #expect(g.noeuds.allSatisfy { $0.id.protocole == .zigbee })
+        #expect(GrapheReseau(maillage: nil, appareils: intrus).noeuds.isEmpty)
+    }
+
     /// Les liens : radio entre routeurs (un par paire, la moins bonne des deux qualites, `QualiteLien`), et de chaque
     /// appareil final vers son parent, a la qualite que le parent mesure.
     @Test func liens() throws {

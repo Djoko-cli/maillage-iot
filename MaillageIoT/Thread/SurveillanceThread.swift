@@ -757,6 +757,9 @@ final class SurveillanceThread: ModeleProtocole {
 
     var echelle: EchelleSignal { .dbm }
 
+    /// Thread n'a pas de chemin vers un pont : sa carte est radio, ses liens ne suivent pas `ModeLiens`.
+    var suitModeLiens: Bool { false }
+
     var classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) { classementThread }
 
     func miseEnAvant(de id: IdNoeud, graphe: GrapheReseau, chefs: Set<IdNoeud>, voisins: Bool) -> MiseEnAvant? {

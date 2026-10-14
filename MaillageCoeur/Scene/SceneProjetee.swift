@@ -50,6 +50,9 @@ public struct EtatAnime: Hashable, Sendable {
     public var liens: ModeLiens
     /// En mode « chemins », les voisins entendus d'un noeud selectionne sont montres (vrai) ou masques (faux).
     public var voisins: Bool
+    /// Les protocoles dont les liens ignorent `liens` : ils sont toujours montres comme en mode « tous » (un protocole sans
+    /// chemin vers un pont, dont la carte est faite de liens radio, n'a rien a masquer). Vide : `liens` vaut pour tous.
+    public var protocolesSansMode: Set<Protocole>
     /// Mode focus (etape 5, section 1) : l'estompement de chaque noeud, par identifiant, et de chaque lien, par paire
     /// (`MiseEnAvant.cle`), de 0 (net) a 1 (estompe) ; absent : net.
     public var noeudsEstompes: [IdNoeud: Double]
@@ -57,8 +60,8 @@ public struct EtatAnime: Hashable, Sendable {
 
     public init(t: Double = 0, s: Double = 0, fk: [Double], focus: Int? = nil, survol: IdNoeud? = nil,
                 selection: IdNoeud? = nil, se: Double = 0, ek: [Double] = [], survolEtage: Int? = nil,
-                liens: ModeLiens = .tous, voisins: Bool = true, noeudsEstompes: [IdNoeud: Double] = [:],
-                liensEstompes: [String: Double] = [:]) {
+                liens: ModeLiens = .tous, voisins: Bool = true, protocolesSansMode: Set<Protocole> = [],
+                noeudsEstompes: [IdNoeud: Double] = [:], liensEstompes: [String: Double] = [:]) {
         self.t = t
         self.s = s
         self.fk = fk
@@ -70,8 +73,15 @@ public struct EtatAnime: Hashable, Sendable {
         self.survolEtage = survolEtage
         self.liens = liens
         self.voisins = voisins
+        self.protocolesSansMode = protocolesSansMode
         self.noeudsEstompes = noeudsEstompes
         self.liensEstompes = liensEstompes
+    }
+
+    /// Le mode des liens qui vaut pour `l` : `liens`, sauf pour un lien d'un protocole qui l'ignore (`protocolesSansMode`),
+    /// toujours montre comme en mode « tous ». Un lien relie deux noeuds du meme protocole : celui de son premier bout.
+    public func mode(de l: GrapheReseau.Lien) -> ModeLiens {
+        protocolesSansMode.contains(l.de.protocole) ? .tous : liens
     }
 }
 
@@ -142,6 +152,8 @@ public struct SceneProjetee: Sendable {
         public var a, b: CGPoint
         public var genre: GrapheReseau.Lien.Genre
         public var qualite: Int?
+        /// Le protocole du lien (celui de ses deux bouts) : la couleur de sa qualite est celle de ce protocole.
+        public var protocole: Protocole
         public var opacite: Double
         public var eclaire: Bool
         /// Chemin suppose, ou lien vers le parent d'avant : en pointilles.
@@ -160,10 +172,10 @@ public struct SceneProjetee: Sendable {
         switch l.genre {
         case .radio, .chemin:
             let base = trace == .voisin ? opaciteVoisin : opaciteLienRadio
-            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite, opacite: base * poids * fondu, eclaire: eclaire,
-                        suppose: l.suppose, voisin: trace == .voisin)
+            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite, protocole: l.de.protocole,
+                        opacite: base * poids * fondu, eclaire: eclaire, suppose: l.suppose, voisin: trace == .voisin)
         case .parent, .rattachement:
-            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite,
+            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite, protocole: l.de.protocole,
                         opacite: (eclaire ? 0.85 : opaciteLienEnfant * poids) * fondu, eclaire: eclaire,
                         suppose: l.suppose)
         }
@@ -444,7 +456,7 @@ public struct SceneProjetee: Sendable {
         // etage ; eclaires au survol (ou a la selection) d'un bout ; en mode focus, estompes s'ils ne sont pas mis en
         // avant.
         for l in scene.liens {
-            guard let trace = Self.trace(l, mode: etat.liens, selection: etat.selection, voisins: etat.voisins),
+            guard let trace = Self.trace(l, mode: etat.mode(de: l), selection: etat.selection, voisins: etat.voisins),
                   let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b),
                   let na = scene.noeud(l.de), let nb = scene.noeud(l.vers) else { continue }
             let poids = min(1 - 0.85 * (1 - max(voiles[na.piece], voiles[nb.piece])),
@@ -468,7 +480,7 @@ public struct SceneProjetee: Sendable {
         }
         let presents = poses.liens.isEmpty ? Set<String>() : Set(scene.liens.map(PosesScene.cle))
         for (k, l) in poses.liens.sorted(by: { $0.key < $1.key }) where !presents.contains(k) {
-            guard let trace = Self.trace(l.graphe, mode: etat.liens, selection: etat.selection, voisins: etat.voisins),
+            guard let trace = Self.trace(l.graphe, mode: etat.mode(de: l.graphe), selection: etat.selection, voisins: etat.voisins),
                   let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b) else { continue }
             let va = voilesBout(l.de), vb = voilesBout(l.vers)
             let poids = min(1 - 0.85 * (1 - max(va.piece, vb.piece)), max(va.etage, vb.etage))

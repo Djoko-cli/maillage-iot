@@ -391,7 +391,7 @@ struct NomsSceneTests {
         let candidats = ["HomePod Avant", "HomePod Palier"].formatted(.list(type: .or))
         for n in inconnus {
             #expect(e.scene.pieces[n.piece].nom == .maison("Salon"), "\(n.id)")
-            let rloc = String(format: "%04X", try #require(e.maillage?.noeud(n.id.cle)).rloc16)
+            let rloc = String(format: "%04X", try #require(e.maillageThread?.noeud(n.id.cle)).rloc16)
             #expect(e.libelles[n.id]?.texte == String(localized: "\(candidats) · \(rloc)"), "\(n.id)")
             // Pas de « Placer dans une piece… » : un routeur de bordure que la sonde seule connait (precision 25).
             #expect(PiecesChoisies.placement(n.id, dans: s, entree: e) == nil)
@@ -441,7 +441,7 @@ struct NomsSceneTests {
     @Test func constructionDeLaScene() throws {
         let (s, r, e) = try Self.demo()
         let m = try #require(s.thread.maillageAffiche(pour: r))
-        #expect(e.maillage == m)
+        #expect(e.maillageThread == m)
         #expect(e.graphe == GrapheReseau(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maillage: m))
         #expect(e.chefs == [idt("Apple TV 4K")])
         #expect(Set(e.libelles.filter { $0.value.texte.contains("👑") }.keys) == e.chefs, "la couronne suit les chefs")
@@ -451,7 +451,7 @@ struct NomsSceneTests {
                             routeurs: maillage.routeurs, liens: maillage.liens, enfants: maillage.enfants,
                             signaux: maillage.signaux), a: s.maintenant)
         let apres = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
-        #expect(apres.maillage?.date != e.maillage?.date)
+        #expect(apres.maillageThread?.date != e.maillageThread?.date)
         #expect(apres == e, "la meme scene")
     }
 

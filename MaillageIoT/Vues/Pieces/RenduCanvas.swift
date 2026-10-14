@@ -179,7 +179,8 @@ enum RenduCanvas {
                 dessinerChemin(&ctx, de: l.a, a: l.b, qualite: l.qualite, suppose: l.suppose, opacite: l.opacite,
                                palette: palette)
             } else {
-                dessinerLienRadio(&ctx, de: l.a, a: l.b, qualite: l.qualite, opacite: l.opacite, palette: palette)
+                dessinerLienRadio(&ctx, de: l.a, a: l.b, qualite: l.qualite, opacite: l.opacite, palette: palette,
+                                  protocole: l.protocole)
             }
         }
     }

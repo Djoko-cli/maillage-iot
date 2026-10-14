@@ -4,6 +4,8 @@ import MaillageCoeur
 /// Construction du graphe d'un reseau Thread : le coeur ne connait que `init(noeuds:liens:)`.
 public extension GrapheReseau {
     init(reseau: Reseau, appareils: [AppareilAffiche], maillage: MaillageAffiche? = nil) {
+        // Les appareils d'un autre protocole ne sont pas des noeuds de Thread : leur cle y serait prise pour une cle de Thread.
+        let appareils = appareils.filter { $0.id.protocole == .thread }
         var noeuds: [Noeud] = []
         var liens: [Lien] = []
         let connues = Set(reseau.partitions.map(\.id))

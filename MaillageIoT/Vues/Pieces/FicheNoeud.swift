@@ -3,16 +3,19 @@ import ProtocoleThread
 import SwiftUI
 
 /// Fiche du noeud choisi : carte de verre en bas de la fenetre, sur toute sa largeur, en quatre colonnes cote a cote
-/// (`ColonnesFiche`, moins dans une fenetre etroite ; reprise de Maillage Zigbee, 09/10) :
-/// 1. identite : le nom, la description, la pastille du chef, l'etat, la pile, les adresses, et les boutons
-///    « Renommer… » et « Placer dans une pièce… » ;
-/// 2. role et parent : le role (routeur de bordure) ou le genre (appareil), ce que la sonde en sait (son parent et la
-///    qualite du lien, avec sa source et son age), la partition et le prefixe ; puis le journal du noeud ;
-/// 3. enfants : en pastilles, ceux dont il est le parent ;
-/// 4. voisins radio, resumes (nombre par qualite, barre de repartition) ; un clic deplie leur liste en grille, sous
-///    les colonnes. La carte est radio seulement : les liens entre routeurs TREL n'y sont pas, une ligne le dit.
-/// Dessous, sur toute la largeur, les courbes de l'historique (`CourbesFiche`). Le contenu des colonnes est propre a
-/// Thread ; les colonnes et leurs composants sont generiques (`ComposantsFiche`).
+/// (`ColonnesFiche`, moins dans une fenetre etroite ; reprise de Maillage Zigbee, 09/10), avec dessous les courbes de
+/// l'historique (`CourbesFiche`). Le cadre est commun ; le contenu des colonnes est celui du protocole du noeud
+/// (`id.protocole`), jamais celui d'un autre :
+/// - Thread (ci-dessous) :
+///   1. identite : le nom, la description, la pastille du chef, l'etat, la pile, les adresses IPv6, et les boutons
+///      « Renommer… » et « Placer dans une pièce… » ;
+///   2. role et parent : le role (routeur de bordure) ou le genre (appareil), ce que la sonde en sait (son parent et la
+///      qualite du lien, avec sa source et son age), la partition et le prefixe ; puis le journal du noeud ;
+///   3. enfants : en pastilles, ceux dont il est le parent ;
+///   4. voisins radio, resumes (nombre par qualite, barre de repartition) ; un clic deplie leur liste en grille, sous
+///      les colonnes. La carte est radio seulement : les liens entre routeurs TREL n'y sont pas, une ligne le dit.
+/// - Zigbee : `FicheNoeudZigbee` (adresse IEEE, chemin vers le pont, dependants, voisins en LQI).
+/// Les colonnes et leurs composants sont generiques (`ComposantsFiche`).
 struct FicheNoeud: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(\.colorScheme) private var apparence
@@ -20,8 +23,8 @@ struct FicheNoeud: View {
     @Environment(\.capturePieces) private var capture
     /// Pieces choisies pour les noeuds que Maison ne place pas : la vue par pieces seule les donne.
     @Environment(PiecesChoisies.self) private var piecesChoisies: PiecesChoisies?
-    /// Le noeud choisi, au-dessus des modules ; ce qui interroge Thread (instantane, sonde, journal, courbes) le lit par
-    /// `cle`, la cle de Thread.
+    /// Le noeud choisi, au-dessus des modules ; ce qui interroge un module (instantane, sonde, journal, courbes) le lit par
+    /// `cle`, la cle de son protocole : le contenu de Thread ne s'ouvre que pour un noeud Thread.
     let id: IdNoeud
     /// La scene du meme rendu (`EntreeScene`), avec ce dont elle est faite : la fiche y lit le maillage
     /// rapproche, et « Placer dans une piece… » le graphe, sans rien reconstruire ; nil sans reseau.
@@ -32,13 +35,17 @@ struct FicheNoeud: View {
     @Binding var aRenommer: NoeudChoisi?
     /// Choisit un autre noeud (la fiche d'un candidat, d'un enfant, d'un voisin).
     var choisir: (IdNoeud) -> Void = { _ in }
+    /// La liste des voisins depliee d'office (captures) ; sinon, au clic.
+    var listeDepliee = false
+    /// Les lignes de changements regroupes du journal de Zigbee depliees d'office (captures) ; sinon, au clic.
+    var changementsDeplies = false
     var fermer: () -> Void
     /// La liste des voisins radio, depliee d'un clic ; repliee par defaut, et de nouveau a chaque autre noeud.
     @State private var voisinsDeplies = false
 
-    private var deplies: Bool { voisinsDeplies }
+    private var deplies: Bool { listeDepliee || voisinsDeplies }
 
-    /// La cle du noeud pour Thread : la fiche n'ouvre que des noeuds Thread (`id.protocole`), le reste n'a pas de fiche ici.
+    /// La cle du noeud pour Thread (le contenu de Thread n'est construit que pour un noeud Thread, `body`).
     private var cle: String { id.cle }
 
     /// Les couleurs des qualites, celles de la legende (la fenetre reste sombre).
@@ -46,24 +53,16 @@ struct FicheNoeud: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if Self.connu(cle, dans: surveillance, maillage: sonde) {
-                ColonnesFiche {
-                    colonneIdentite()
-                    colonneRole()
-                    colonneEnfants()
-                    colonneVoisins()
-                }
-                // La place du bouton de fermeture, en haut a droite.
-                .padding(.trailing, 30)
-                if deplies, let m = sonde {
-                    listeVoisins(m)
-                }
-            } else {
-                Text("Ce nœud n'est plus visible.").foregroundStyle(.secondary)
+            switch id.protocole {
+            case .thread:
+                contenuThread
+            case .zigbee:
+                FicheNoeudZigbee(id: id, entree: entree, instant: instant, aRenommer: $aRenommer, choisir: choisir,
+                                 listeDepliee: listeDepliee, changementsDeplies: changementsDeplies)
             }
-            if Self.courbesVisibles(dans: surveillance) {
+            if Self.courbesVisibles(de: id, dans: surveillance) {
                 Divider().opacity(0.5)
-                CourbesFiche(id: cle, instant: instant)
+                CourbesFiche(id: id, instant: instant)
             }
         }
         .padding(16)
@@ -82,10 +81,37 @@ struct FicheNoeud: View {
         .onChange(of: id) { voisinsDeplies = false }
     }
 
-    /// Le noeud a une fiche : un routeur de bordure de l'instantane, un appareil connu, ou un noeud que la sonde seule
-    /// connait.
-    static func connu(_ id: String, dans surveillance: Surveillance, maillage: MaillageAffiche?) -> Bool {
-        surveillance.thread.instantane?.routeur(id) != nil || surveillance.thread.appareil(id) != nil || maillage?.noeud(id) != nil
+    /// Le contenu des colonnes d'un noeud Thread, et la liste de ses voisins radio depliee.
+    @ViewBuilder
+    private var contenuThread: some View {
+        if Self.connu(id, dans: surveillance, entree: entree) {
+            ColonnesFiche {
+                colonneIdentite()
+                colonneRole()
+                colonneEnfants()
+                colonneVoisins()
+            }
+            // La place du bouton de fermeture, en haut a droite.
+            .padding(.trailing, 30)
+            if deplies, let m = sonde {
+                listeVoisins(m)
+            }
+        } else {
+            Text("Ce nœud n'est plus visible.").foregroundStyle(.secondary)
+        }
+    }
+
+    /// Le noeud a une fiche. Thread : un routeur de bordure de l'instantane, un appareil connu, ou un noeud que la sonde
+    /// seule connait ; Zigbee : un noeud du graphe de la scene. Un noeud d'un protocole n'est jamais cherche dans l'etat de
+    /// l'autre, meme a cle egale.
+    static func connu(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene?) -> Bool {
+        switch id.protocole {
+        case .thread:
+            surveillance.thread.instantane?.routeur(id.cle) != nil || surveillance.thread.appareil(id.cle) != nil
+                || entree?.maillageThread?.noeud(id.cle) != nil
+        case .zigbee:
+            entree?.graphe.noeud(id) != nil
+        }
     }
 
     // MARK: Colonne 1 : identite
@@ -110,7 +136,7 @@ struct FicheNoeud: View {
     /// accessoire de Maison (`BoutonIdentifier`), sous l'identite.
     private var boutonsIdentite: some View {
         RangeesFluides(espacement: 8, interligne: 6) {
-            if Self.renommable(cle, dans: surveillance) {
+            if Self.renommable(id, dans: surveillance, entree: entree) {
                 Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
                     .boutonDeFiche()
             }
@@ -318,17 +344,22 @@ struct FicheNoeud: View {
         entree?.chefs.contains(id) == true
     }
 
-    /// Courbes de l'historique sous les colonnes, pour tout noeud, des que l'historique de la
-    /// sonde a un releve (jamais en demo) : la fiche garde sa hauteur d'un noeud a l'autre.
-    static func courbesVisibles(dans surveillance: Surveillance) -> Bool {
-        !surveillance.thread.historique.isEmpty
+    /// Courbes de l'historique sous les colonnes, pour tout noeud, des que l'historique de la sonde de son protocole a un
+    /// releve (jamais en demo, sauf ses captures) : la fiche garde sa hauteur d'un noeud a l'autre.
+    static func courbesVisibles(de id: IdNoeud, dans surveillance: Surveillance) -> Bool {
+        surveillance.modele(pour: id.protocole)?.aHistorique == true
     }
 
-    /// « Renommer… » : le surnom est indexe par l'instance d'un routeur de l'instantane ou
-    /// par l'id d'un appareil connu. Un noeud que la sonde seule connait n'a qu'un RLOC16,
-    /// volatil : rien ne lirait son surnom.
-    static func renommable(_ id: String, dans surveillance: Surveillance) -> Bool {
-        surveillance.thread.instantane?.routeur(id) != nil || surveillance.thread.appareil(id) != nil
+    /// « Renommer… » : Thread : le surnom est indexe par l'instance d'un routeur de l'instantane ou par l'id d'un appareil
+    /// connu ; un noeud que la sonde seule connait n'a qu'un RLOC16, volatil : rien ne lirait son surnom. Zigbee : tout
+    /// noeud du graphe qui a une adresse longue (`FicheNoeudZigbee.renommable`).
+    static func renommable(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene?) -> Bool {
+        switch id.protocole {
+        case .thread:
+            surveillance.thread.instantane?.routeur(id.cle) != nil || surveillance.thread.appareil(id.cle) != nil
+        case .zigbee:
+            FicheNoeudZigbee.renommable(id, entree: entree)
+        }
     }
 
     // MARK: Appareil
@@ -348,7 +379,7 @@ struct FicheNoeud: View {
             Text("associé à la main").font(.caption).foregroundStyle(.tertiary)
         }
         if Self.couronne(IdNoeud(.thread, a.id), entree: entree) {
-            PastilleChef()
+            PastilleChef(protocole: .thread)
         }
         HStack(spacing: 6) {
             PointEtat(couleur: verifie != nil ? .green : couleur(a, disparu: disparu),
@@ -448,11 +479,13 @@ struct FicheNoeud: View {
         }
     }
 
-    /// "il y a 12 secondes", "maintenant".
-    static func relatif(_ d: Date, _ reference: Date) -> String {
+    /// "il y a 12 secondes", "maintenant" ; "il y a 12 min" en unites courtes (`.short` : en francais, `.abbreviated`
+    /// donne « -12 min »).
+    static func relatif(_ d: Date, _ reference: Date,
+                        unites: RelativeDateTimeFormatter.UnitsStyle = .full) -> String {
         let f = RelativeDateTimeFormatter()
         f.dateTimeStyle = .named
-        f.unitsStyle = .full
+        f.unitsStyle = unites
         // L'heure de la fiche est un debut de minute (TimelineView de la fenetre) : une date plus
         // recente, d'un releve fait depuis, se lirait « dans 20 secondes ». Jamais dans le futur :
         // « maintenant » jusqu'a la minute suivante (la spec admet une minute de retard).
@@ -482,7 +515,7 @@ struct FicheNoeud: View {
     // MARK: Sonde
 
     /// Maillage de la sonde pour le reseau affiche : celui de la scene.
-    private var sonde: MaillageAffiche? { entree?.maillage }
+    private var sonde: MaillageAffiche? { entree?.maillageThread }
 
     /// Ce que la sonde sait du noeud : son RLOC16, son parent et la qualite du lien avec sa source et son age (enfant),
     /// ou ses nombres de voisins et d'enfants (routeur) (spec de la sonde tout-en-un, section 2.4).
@@ -498,7 +531,7 @@ struct FicheNoeud: View {
     private func identiteSonde(_ n: NoeudSonde) -> some View {
         Text(LibellesNoeuds.inconnu(n, noms: nomsRouteurs)).font(.title3.weight(.semibold))
         if Self.couronne(IdNoeud(.thread, n.id), entree: entree) {
-            PastilleChef()
+            PastilleChef(protocole: .thread)
         }
         if !n.candidats.isEmpty {
             // Chaque candidat ouvre la fiche de son annonce, pas dessinee a part.
@@ -627,7 +660,7 @@ struct FicheNoeud: View {
             Text(description).foregroundStyle(.secondary)
         }
         if Self.couronne(IdNoeud(.thread, r.instance), entree: entree) {
-            PastilleChef()
+            PastilleChef(protocole: .thread)
         }
         HStack(spacing: 6) {
             Circle().fill(.blue).frame(width: 8, height: 8)
@@ -750,14 +783,24 @@ private struct FondDeFiche: ViewModifier {
     }
 }
 
-/// « 👑 Chef du reseau Thread, elu automatiquement », sous le nom d'un noeud couronne (polissage B,
-/// section 3 ; maquette de la fiche, `.chef`) : 10,5 pt, marges de 2 x 8 pt, en capsule, sur une ligne : une colonne
-/// de la fiche plus etroite que la pastille (233 pt a la largeur par defaut de la fenetre) ne la fait pas passer a la
-/// ligne, son texte se reduit pour y tenir, jusqu'a 70 % (la plus etroite des quatre colonnes fait 190 pt ; fiche en
-/// quatre colonnes, 09/10).
+/// « 👑 Chef du réseau Thread, élu automatiquement » ou « 👑 Coordinateur du réseau Zigbee », sous le nom d'un noeud
+/// couronne, selon son protocole (polissage B, section 3 ; maquette de la fiche, `.chef`) : 10,5 pt, marges de 2 x 8 pt,
+/// en capsule, sur une ligne : une colonne de la fiche plus etroite que la pastille (233 pt a la largeur par defaut de la
+/// fenetre) ne la fait pas passer a la ligne, son texte se reduit pour y tenir, jusqu'a 70 % (la plus etroite des quatre
+/// colonnes fait 190 pt ; fiche en quatre colonnes, 09/10).
 struct PastilleChef: View {
+    let protocole: Protocole
+
+    /// Le texte de la pastille, celui du role de couronne dans le protocole.
+    static func texte(_ protocole: Protocole) -> String {
+        switch protocole {
+        case .thread: String(localized: "👑 Chef du réseau Thread, élu automatiquement")
+        case .zigbee: String(localized: "👑 Coordinateur du réseau Zigbee")
+        }
+    }
+
     var body: some View {
-        Text("👑 Chef du réseau Thread, élu automatiquement")
+        Text(Self.texte(protocole))
             .font(.system(size: 10.5))
             .foregroundStyle(Palette.texteChef)
             .lineLimit(1)
@@ -771,7 +814,7 @@ struct PastilleChef: View {
 
 /// Point d'etat de la fiche. Joignable, il pulse doucement : un halo s'elargit
 /// et s'efface toutes les 2 s, sauf si « Reduire les animations » est active.
-private struct PointEtat: View {
+struct PointEtat: View {
     let couleur: Color
     let pulse: Bool
     @Environment(\.accessibilityReduceMotion) private var reduire
