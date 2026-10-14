@@ -1,0 +1,6502 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "%@ (profil du passeur expiré ? relance outils/passeur.sh)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Passeur profile expired? Run outils/passeur.sh again)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (profil du passeur expiré ? relance outils/passeur.sh)"
+          }
+        }
+      }
+    },
+    "%@ : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "%@ : %@ %lld/%lld…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@ %3$lld/%4$lld…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$@ %3$lld/%4$lld…"
+          }
+        }
+      }
+    },
+    "%@ : %@…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$@…"
+          }
+        }
+      }
+    },
+    "%@ : absente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: absent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : absente"
+          }
+        }
+      }
+    },
+    "%@ : connectée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : connectée"
+          }
+        }
+      }
+    },
+    "%@ : connectée · relevé %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: connected · updated %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : connectée · relevé %2$@"
+          }
+        }
+      }
+    },
+    "%@ : connexion…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: connecting…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : connexion…"
+          }
+        }
+      }
+    },
+    "%@ : erreur (voir les Réglages)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: error (see Settings)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : erreur (voir les Réglages)"
+          }
+        }
+      }
+    },
+    "%@ : nouvelle adresse de lien (redémarrage probable)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: new link-local address (probable restart)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : nouvelle adresse de lien (redémarrage probable)"
+          }
+        }
+      }
+    },
+    "%@ : port occupé (pio device monitor ou une autre app le tient)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: port busy (pio device monitor or another app holds it)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : port occupé (pio device monitor ou une autre app le tient)"
+          }
+        }
+      }
+    },
+    "%@ : rôle %@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: role %2$@ → %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : rôle %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%@ a changé %lld fois de parent en 1 h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed parent %2$lld times within 1 h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a changé %2$lld fois de parent en 1 h"
+          }
+        }
+      }
+    },
+    "%@ a changé de parent : %@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed parent: %2$@ → %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a changé de parent : %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%@ a disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ a disparu"
+          }
+        }
+      }
+    },
+    "%@ a rejoint la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ joined partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a rejoint la partition %2$@"
+          }
+        }
+      }
+    },
+    "%@ est apparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ appeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est apparu"
+          }
+        }
+      }
+    },
+    "%@ est isolé dans la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ is isolated in partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est isolé dans la partition %2$@"
+          }
+        }
+      }
+    },
+    "%@ est revenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est revenu"
+          }
+        }
+      }
+    },
+    "%@ n'a plus de parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ has no parent anymore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'a plus de parent"
+          }
+        }
+      }
+    },
+    "%@ n'annonce plus d'adresse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no longer advertises an address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'annonce plus d'adresse"
+          }
+        }
+      }
+    },
+    "%@ n'est pas une sonde (« %@ »)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ is not a probe (“%2$@”)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ n'est pas une sonde (« %2$@ »)"
+          }
+        }
+      }
+    },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld/%3$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld/%3$lld"
+          }
+        }
+      }
+    },
+    "%@ · depuis %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · running for %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · depuis %2$@"
+          }
+        }
+      }
+    },
+    "%@ · partitions : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · partitions: %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · partitions : %2$lld"
+          }
+        }
+      }
+    },
+    "%@ — partition à part : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — separate partition: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ — partition à part : %2$@"
+          }
+        }
+      }
+    },
+    "%@.local n'est pas une sonde (« %@ »)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@.local is not a probe (“%2$@”)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@.local n'est pas une sonde (« %2$@ »)"
+          }
+        }
+      }
+    },
+    "%@ ? · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@? · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ? · %2$@"
+          }
+        }
+      }
+    },
+    "%lld accessoires · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld accessories · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld accessoires · %2$@"
+          }
+        }
+      }
+    },
+    "%lld appareils" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld devices"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld appareils"
+          }
+        }
+      }
+    },
+    "%lld appareils Thread perdus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Thread devices lost"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld appareils Thread perdus"
+          }
+        }
+      }
+    },
+    "%lld appareils perdus entre %@ et %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld devices lost between %2$@ and %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld appareils perdus entre %2$@ et %3$@"
+          }
+        }
+      }
+    },
+    "%lld bons" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld bons"
+          }
+        }
+      }
+    },
+    "%lld enfants" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld children"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld enfants"
+          }
+        }
+      }
+    },
+    "%lld faibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld low"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld faibles"
+          }
+        }
+      }
+    },
+    "%lld inconnus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld unknown"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld inconnus"
+          }
+        }
+      }
+    },
+    "%lld moyens" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld moyens"
+          }
+        }
+      }
+    },
+    "%lld noms masqués faute de place : rapprochez-vous (molette)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld names hidden for lack of room: zoom in (scroll)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld noms masqués faute de place : rapprochez-vous (molette)"
+          }
+        }
+      }
+    },
+    "%lld voisins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld neighbors"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld voisins"
+          }
+        }
+      }
+    },
+    "%lld %%" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%%"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld %%"
+          }
+        }
+      }
+    },
+    "1 appareil" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 device"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 appareil"
+          }
+        }
+      }
+    },
+    "1 bon" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 bon"
+          }
+        }
+      }
+    },
+    "1 enfant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 child"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 enfant"
+          }
+        }
+      }
+    },
+    "1 faible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 low"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 faible"
+          }
+        }
+      }
+    },
+    "1 inconnu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 unknown"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 inconnu"
+          }
+        }
+      }
+    },
+    "1 moyen" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 moyen"
+          }
+        }
+      }
+    },
+    "1 nom masqué faute de place : rapprochez-vous (molette)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 name hidden for lack of room: zoom in (scroll)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 nom masqué faute de place : rapprochez-vous (molette)"
+          }
+        }
+      }
+    },
+    "1 voisin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 neighbor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 voisin"
+          }
+        }
+      }
+    },
+    "24 h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "24 h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "24 h"
+          }
+        }
+      }
+    },
+    "2D" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2D"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2D"
+          }
+        }
+      }
+    },
+    "30 j" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 d"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 j"
+          }
+        }
+      }
+    },
+    "3D" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3D"
+          }
+        }
+      }
+    },
+    "7 j" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 d"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 j"
+          }
+        }
+      }
+    },
+    "Absent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absent"
+          }
+        }
+      }
+    },
+    "Accepte Passeur Noms dans Réglages Système › Général › Ouverture." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow Passeur Noms in System Settings › General › Login Items."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accepte Passeur Noms dans Réglages Système › Général › Ouverture."
+          }
+        }
+      }
+    },
+    "Accessoire introuvable dans Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessory not found in Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessoire introuvable dans Maison"
+          }
+        }
+      }
+    },
+    "Accès au réseau local refusé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local network access denied"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès au réseau local refusé"
+          }
+        }
+      }
+    },
+    "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local network access denied: System Settings › Privacy & Security › Local Network › Maillage IoT."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès au réseau local refusé : Réglages Système › Confidentialité et sécurité › Réseau local › Maillage IoT."
+          }
+        }
+      }
+    },
+    "Accès réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network access"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès réseau"
+          }
+        }
+      }
+    },
+    "Accès à Maison refusé au passeur : Réglages Système › Confidentialité et sécurité › Maison." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms was denied access to Home: System Settings › Privacy & Security › Home."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès à Maison refusé au passeur : Réglages Système › Confidentialité et sécurité › Maison."
+          }
+        }
+      }
+    },
+    "Actif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actif"
+          }
+        }
+      }
+    },
+    "Afficher la liste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show list"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher la liste"
+          }
+        }
+      }
+    },
+    "Afficher le journal dans le Finder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Log in Finder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le journal dans le Finder"
+          }
+        }
+      }
+    },
+    "Alerte dans l'heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alert in the last hour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte dans l'heure"
+          }
+        }
+      }
+    },
+    "Alertes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerts"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alertes"
+          }
+        }
+      }
+    },
+    "Annuler" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Appareils" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Devices"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils"
+          }
+        }
+      }
+    },
+    "Appareils IP · %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IP devices · %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils IP · %lld"
+          }
+        }
+      }
+    },
+    "Appareils du réseau local (hors Thread)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local network devices (not Thread)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils du réseau local (hors Thread)"
+          }
+        }
+      }
+    },
+    "Approuver dans Réglages Système…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approve in System Settings…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver dans Réglages Système…"
+          }
+        }
+      }
+    },
+    "Associer à un accessoire de Maison…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link to a Home accessory…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Associer à un accessoire de Maison…"
+          }
+        }
+      }
+    },
+    "Attention et alertes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warnings and alerts"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attention et alertes"
+          }
+        }
+      }
+    },
+    "Au moins 3 appareils perdus en 10 min (une notification groupée)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At least 3 devices lost within 10 min (one grouped notification)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au moins 3 appareils perdus en 10 min (une notification groupée)"
+          }
+        }
+      }
+    },
+    "Au même niveau que" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On the same level as"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au même niveau que"
+          }
+        }
+      }
+    },
+    "Aucun" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
+          }
+        }
+      }
+    },
+    "Aucun accessoire de Maison à associer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Home accessory to link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun accessoire de Maison à associer"
+          }
+        }
+      }
+    },
+    "Aucun réseau Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Thread network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réseau Thread"
+          }
+        }
+      }
+    },
+    "Aucun réseau Thread visible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Thread network visible"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réseau Thread visible"
+          }
+        }
+      }
+    },
+    "Aucun réseau Thread visible sur ce réseau local" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Thread network visible on this local network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réseau Thread visible sur ce réseau local"
+          }
+        }
+      }
+    },
+    "Aucun événement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No events"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun événement"
+          }
+        }
+      }
+    },
+    "Autoriser l'accès réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow Network Access"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser l'accès réseau"
+          }
+        }
+      }
+    },
+    "Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow Maillage IoT in System Settings › Privacy & Security › Local Network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local."
+          }
+        }
+      }
+    },
+    "Autres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres"
+          }
+        }
+      }
+    },
+    "Autres changements" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other changes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres changements"
+          }
+        }
+      }
+    },
+    "Autres pièces" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other rooms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres pièces"
+          }
+        }
+      }
+    },
+    "BBR actif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "active BBR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BBR actif"
+          }
+        }
+      }
+    },
+    "BBR primaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "primary BBR"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BBR primaire"
+          }
+        }
+      }
+    },
+    "Candidats :" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Candidates:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Candidats :"
+          }
+        }
+      }
+    },
+    "Capture enregistrée : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture saved: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture enregistrée : %@"
+          }
+        }
+      }
+    },
+    "Ce nœud n'est plus visible." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This node is no longer visible."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce nœud n'est plus visible."
+          }
+        }
+      }
+    },
+    "Celle du Mac" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Same as the Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Celle du Mac"
+          }
+        }
+      }
+    },
+    "Cet accessoire ne sait pas s'identifier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This accessory cannot identify itself"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet accessoire ne sait pas s'identifier"
+          }
+        }
+      }
+    },
+    "Clé absente de ce Mac pour %@.local : brancher la sonde en USB, puis « Autoriser l'accès réseau »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No key on this Mac for %@.local: plug the probe in over USB, then “Allow Network Access”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé absente de ce Mac pour %@.local : brancher la sonde en USB, puis « Autoriser l'accès réseau »."
+          }
+        }
+      }
+    },
+    "Clé de %@.local non retirée du trousseau : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key for %1$@.local not removed from the keychain: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé de %1$@.local non retirée du trousseau : %2$@"
+          }
+        }
+      }
+    },
+    "Clé rangée ; l'ancienne clé de %@.local n'a pas pu être retirée du trousseau : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key stored; the old key for %1$@.local could not be removed from the keychain: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé rangée ; l'ancienne clé de %1$@.local n'a pas pu être retirée du trousseau : %2$@"
+          }
+        }
+      }
+    },
+    "Code Matter de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe's Matter code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code Matter de la sonde"
+          }
+        }
+      }
+    },
+    "Compteurs des enfants" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Child counters"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compteurs des enfants"
+          }
+        }
+      }
+    },
+    "Connexion avec Passeur Noms coupée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connection with Passeur Noms lost."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion avec Passeur Noms coupée."
+          }
+        }
+      }
+    },
+    "Connexion de Passeur Noms refusée : jeton faux." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms connection refused: wrong token."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion de Passeur Noms refusée : jeton faux."
+          }
+        }
+      }
+    },
+    "Connexion réseau perdue : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network connection lost: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connexion réseau perdue : %@"
+          }
+        }
+      }
+    },
+    "Coupée par « Réduire les animations »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turned off by “Reduce motion”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coupée par « Réduire les animations »"
+          }
+        }
+      }
+    },
+    "Couverture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coverage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couverture"
+          }
+        }
+      }
+    },
+    "D'après son nom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From its name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D'après son nom"
+          }
+        }
+      }
+    },
+    "DTR et RTS à 0 (TIOCMSET)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DTR and RTS to 0 (TIOCMSET)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DTR et RTS à 0 (TIOCMSET)"
+          }
+        }
+      }
+    },
+    "Dans Maison : + › Ajouter un accessoire › Plus d'options, puis ce code." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Home: + › Add Accessory › More options, then this code."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans Maison : + › Ajouter un accessoire › Plus d'options, puis ce code."
+          }
+        }
+      }
+    },
+    "Dernier relevé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last survey"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier relevé"
+          }
+        }
+      }
+    },
+    "Dernière perte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last disconnection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière perte"
+          }
+        }
+      }
+    },
+    "Descendre d'un étage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move down one floor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Descendre d'un étage"
+          }
+        }
+      }
+    },
+    "Diagnostic" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostic"
+          }
+        }
+      }
+    },
+    "Dissocier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unlink"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dissocier"
+          }
+        }
+      }
+    },
+    "Désactivé dans Réglages Système" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turned off in System Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé dans Réglages Système"
+          }
+        }
+      }
+    },
+    "Empreinte incohérente avec la clé reçue : clé non rangée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fingerprint does not match the received key: key not stored."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empreinte incohérente avec la clé reçue : clé non rangée."
+          }
+        }
+      }
+    },
+    "En grille" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In a grid"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En grille"
+          }
+        }
+      }
+    },
+    "En rangée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In a row"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En rangée"
+          }
+        }
+      }
+    },
+    "Enfants" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Children"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfants"
+          }
+        }
+      }
+    },
+    "Enregistrer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "Enregistrer une capture…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save a Capture…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer une capture…"
+          }
+        }
+      }
+    },
+    "Entre %@ et %@ : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Between %1$@ and %2$@: %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entre %1$@ et %2$@ : %3$@"
+          }
+        }
+      }
+    },
+    "Erreur réseau : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network error: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur réseau : %@"
+          }
+        }
+      }
+    },
+    "Fabriques : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fabrics: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fabriques : %lld"
+          }
+        }
+      }
+    },
+    "Famille" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Category"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Famille"
+          }
+        }
+      }
+    },
+    "Fermer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
+          }
+        }
+      }
+    },
+    "Firmware" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firmware"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Firmware"
+          }
+        }
+      }
+    },
+    "Gravité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Severity"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gravité"
+          }
+        }
+      }
+    },
+    "Général" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Général"
+          }
+        }
+      }
+    },
+    "Heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heure"
+          }
+        }
+      }
+    },
+    "Historique de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe history"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique de la sonde"
+          }
+        }
+      }
+    },
+    "HomeKit indisponible pour le passeur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HomeKit is unavailable to Passeur Noms."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HomeKit indisponible pour le passeur."
+          }
+        }
+      }
+    },
+    "Hors de la maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outside the house"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hors de la maison"
+          }
+        }
+      }
+    },
+    "Identification demandée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification requested"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification demandée"
+          }
+        }
+      }
+    },
+    "Identification impossible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification failed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification impossible"
+          }
+        }
+      }
+    },
+    "Identification impossible : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identification impossible : %@"
+          }
+        }
+      }
+    },
+    "Identifier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identify"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifier"
+          }
+        }
+      }
+    },
+    "Identité des enfants" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Child identities"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identité des enfants"
+          }
+        }
+      }
+    },
+    "Installer automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Install updates automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installer automatiquement"
+          }
+        }
+      }
+    },
+    "Journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal"
+          }
+        }
+      }
+    },
+    "Journal…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal…"
+          }
+        }
+      }
+    },
+    "L'autoriser dans Réglages Système, Général, Ouverture et extensions." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow it in System Settings, General, Login Items & Extensions."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'autoriser dans Réglages Système, Général, Ouverture et extensions."
+          }
+        }
+      }
+    },
+    "La clé passe par l'USB, sonde branchée, et reste dans le trousseau de ce Mac. Avec la liaison « Réseau Thread », la sonde peut être débranchée et alimentée ailleurs." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The key goes over USB, with the probe plugged in, and stays in this Mac's keychain. With the “Thread Network” link, the probe can be unplugged and powered elsewhere."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La clé passe par l'USB, sonde branchée, et reste dans le trousseau de ce Mac. Avec la liaison « Réseau Thread », la sonde peut être débranchée et alimentée ailleurs."
+          }
+        }
+      }
+    },
+    "La langue change au prochain lancement." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The language changes at the next launch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La langue change au prochain lancement."
+          }
+        }
+      }
+    },
+    "La sonde n'a pas encore de nom d'hôte (Matter ne l'a pas encore enregistré) : réessayer dans une minute." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe has no host name yet (Matter has not registered it yet): try again in a minute."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde n'a pas encore de nom d'hôte (Matter ne l'a pas encore enregistré) : réessayer dans une minute."
+          }
+        }
+      }
+    },
+    "La sonde ne répond pas : éteinte, pas encore dans le réseau Thread, ou clé différente de celle de ce Mac (la brancher en USB, puis « Régénérer une clé »)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe does not answer: powered off, not yet in the Thread network, or a key different from this Mac's (plug it in over USB, then “Regenerate Key”)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde ne répond pas : éteinte, pas encore dans le réseau Thread, ou clé différente de celle de ce Mac (la brancher en USB, puis « Régénérer une clé »)."
+          }
+        }
+      }
+    },
+    "La sonde refuse l'accès réseau : la brancher en USB, puis « Régénérer une clé »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe refuses network access: plug it in over USB, then “Regenerate Key”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde refuse l'accès réseau : la brancher en USB, puis « Régénérer une clé »."
+          }
+        }
+      }
+    },
+    "Langue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Langue"
+          }
+        }
+      }
+    },
+    "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Matter code is not sent over the network: plug the probe in over USB to show it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher."
+          }
+        }
+      }
+    },
+    "Le passeur a échoué : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le passeur a échoué : %@"
+          }
+        }
+      }
+    },
+    "Le passeur a échoué." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms failed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le passeur a échoué."
+          }
+        }
+      }
+    },
+    "Le profil de Passeur Noms expire le %@ : relance outils/passeur.sh." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Passeur Noms profile expires on %@: run outils/passeur.sh again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le profil de Passeur Noms expire le %@ : relance outils/passeur.sh."
+          }
+        }
+      }
+    },
+    "Le surnom reste sur ce Mac et passe avant le nom de Maison." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The nickname stays on this Mac and takes precedence over the Home name."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le surnom reste sur ce Mac et passe avant le nom de Maison."
+          }
+        }
+      }
+    },
+    "Liaison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liaison"
+          }
+        }
+      }
+    },
+    "Liens radio (qualité)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio links (quality)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens radio (qualité)"
+          }
+        }
+      }
+    },
+    "Liste des routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router list"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liste des routeurs"
+          }
+        }
+      }
+    },
+    "Légende" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legend"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Légende"
+          }
+        }
+      }
+    },
+    "Mac en veille" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac asleep"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac en veille"
+          }
+        }
+      }
+    },
+    "Mac en veille de %@ à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac asleep from %1$@ to %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac en veille de %1$@ à %2$@"
+          }
+        }
+      }
+    },
+    "Maillage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesh"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage"
+          }
+        }
+      }
+    },
+    "Maillage IoT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT"
+          }
+        }
+      }
+    },
+    "Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maison"
+          }
+        }
+      }
+    },
+    "Message illisible de Passeur Noms : connexion fermée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unreadable message from Passeur Noms: connection closed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Message illisible de Passeur Noms : connexion fermée."
+          }
+        }
+      }
+    },
+    "Met la courbe en avant ; un second clic rend les autres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Highlights this curve; click again to bring the others back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Met la courbe en avant ; un second clic rend les autres"
+          }
+        }
+      }
+    },
+    "Mi-distance : les pièces et les routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mid-distance: rooms and routers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi-distance : les pièces et les routeurs"
+          }
+        }
+      }
+    },
+    "Mises à jour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updates"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mises à jour"
+          }
+        }
+      }
+    },
+    "Mode démo : panne du 27/09 rejouée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo mode: replay of the September 27 outage"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : panne du 27/09 rejouée"
+          }
+        }
+      }
+    },
+    "Mode démo : pas de sonde." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo mode: no probe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : pas de sonde."
+          }
+        }
+      }
+    },
+    "Monter d'un étage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move up one floor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monter d'un étage"
+          }
+        }
+      }
+    },
+    "Nom d'hôte" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Host name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom d'hôte"
+          }
+        }
+      }
+    },
+    "Noms de Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home names"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noms de Maison"
+          }
+        }
+      }
+    },
+    "Noms lus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Names read"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noms lus"
+          }
+        }
+      }
+    },
+    "Non identifié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidentified"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non identifié"
+          }
+        }
+      }
+    },
+    "Non identifié · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unidentified · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non identifié · %@"
+          }
+        }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Nouveau BBR primaire : %@ (avant : %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New primary BBR: %1$@ (previously %2$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau BBR primaire : %1$@ (avant : %2$@)"
+          }
+        }
+      }
+    },
+    "Nouveau chef : %@ (avant : %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New leader: %1$@ (previously %2$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau chef : %1$@ (avant : %2$@)"
+          }
+        }
+      }
+    },
+    "Nouveau préfixe %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New prefix %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveau préfixe %@"
+          }
+        }
+      }
+    },
+    "Oublier la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forget the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier la sonde"
+          }
+        }
+      }
+    },
+    "Ouverture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startup"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouverture"
+          }
+        }
+      }
+    },
+    "Ouvrir Passeur Noms à l'ouverture de session" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Passeur Noms at login"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Passeur Noms à l'ouverture de session"
+          }
+        }
+      }
+    },
+    "Ouvrir Réglages Système…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open System Settings…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Réglages Système…"
+          }
+        }
+      }
+    },
+    "Ouvrir le graphe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Graph"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le graphe"
+          }
+        }
+      }
+    },
+    "Ouvrir les Réglages Système" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open System Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les Réglages Système"
+          }
+        }
+      }
+    },
+    "Ouvrir à la connexion" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open at Login"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir à la connexion"
+          }
+        }
+      }
+    },
+    "Parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parent"
+          }
+        }
+      }
+    },
+    "Partition" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition"
+          }
+        }
+      }
+    },
+    "Partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition %@"
+          }
+        }
+      }
+    },
+    "Partition %@ (incertaine : préfixe partagé)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition %@ (uncertain: shared prefix)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partition %@ (incertaine : préfixe partagé)"
+          }
+        }
+      }
+    },
+    "Pas de route IPv6 vers le réseau Thread : ce Mac n'a pas de route vers le préfixe OMR, où est l'adresse de la sonde. Voir « Route vers le réseau Thread » dans README.fr.md." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No IPv6 route to the Thread network: this Mac has no route to the OMR prefix, where the probe's address is. See “Route to the Thread network” in README.md."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de route IPv6 vers le réseau Thread : ce Mac n'a pas de route vers le préfixe OMR, où est l'adresse de la sonde. Voir « Route vers le réseau Thread » dans README.fr.md."
+          }
+        }
+      }
+    },
+    "Pas encore d'historique de la sonde pour ce nœud sur cette période." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No probe history for this node over this period yet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore d'historique de la sonde pour ce nœud sur cette période."
+          }
+        }
+      }
+    },
+    "Pas encore de pièces de Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Home rooms yet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de pièces de Maison"
+          }
+        }
+      }
+    },
+    "Passeur Noms" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms"
+          }
+        }
+      }
+    },
+    "Passeur Noms est l'ancienne version : relance outils/passeur.sh." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms is the old version: run outils/passeur.sh again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms est l'ancienne version : relance outils/passeur.sh."
+          }
+        }
+      }
+    },
+    "Passeur Noms introuvable : lance outils/passeur.sh." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms not found: run outils/passeur.sh."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms introuvable : lance outils/passeur.sh."
+          }
+        }
+      }
+    },
+    "Passeur Noms n'a pas répondu à la demande de relevé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms did not answer the reading request."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms n'a pas répondu à la demande de relevé."
+          }
+        }
+      }
+    },
+    "Passeur Noms ne démarre pas : relance outils/passeur.sh." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms does not start: run outils/passeur.sh again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms ne démarre pas : relance outils/passeur.sh."
+          }
+        }
+      }
+    },
+    "Passeur Noms ne s'est pas connecté en 2 minutes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms did not connect within 2 minutes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms ne s'est pas connecté en 2 minutes."
+          }
+        }
+      }
+    },
+    "Passeur Noms s'est déconnecté." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms disconnected."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms s'est déconnecté."
+          }
+        }
+      }
+    },
+    "Pile et Network Data" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stack and Network Data"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pile et Network Data"
+          }
+        }
+      }
+    },
+    "Pièce isolée : %@ · clic sur une autre pièce pour y aller, clic à côté ou Échap pour revenir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isolated room: %@ · click another room to go there, click outside or press Esc to come back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pièce isolée : %@ · clic sur une autre pièce pour y aller, clic à côté ou Échap pour revenir"
+          }
+        }
+      }
+    },
+    "Placer dans une pièce…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place in a room…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer dans une pièce…"
+          }
+        }
+      }
+    },
+    "Port" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Port"
+          }
+        }
+      }
+    },
+    "Pour l'installer : sh outils/thread-route/installer.sh (mot de passe administrateur)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To install it: sh outils/thread-route/installer.sh (administrator password)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour l'installer : sh outils/thread-route/installer.sh (mot de passe administrateur)."
+          }
+        }
+      }
+    },
+    "Pour le remplacer : sh outils/thread-route/installer.sh (mot de passe administrateur)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To replace it: sh outils/thread-route/installer.sh (administrator password)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour le remplacer : sh outils/thread-route/installer.sh (mot de passe administrateur)."
+          }
+        }
+      }
+    },
+    "Préfixe %@ retiré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefix %@ withdrawn"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préfixe %@ retiré"
+          }
+        }
+      }
+    },
+    "Préfixes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prefixes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préfixes"
+          }
+        }
+      }
+    },
+    "Préfixes du Mac" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mac prefixes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Préfixes du Mac"
+          }
+        }
+      }
+    },
+    "Période" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Period"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Période"
+          }
+        }
+      }
+    },
+    "Qualité" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quality"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualité"
+          }
+        }
+      }
+    },
+    "Qualité des liens" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link quality"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualité des liens"
+          }
+        }
+      }
+    },
+    "Qualité du lien vers le parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link quality to the parent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qualité du lien vers le parent"
+          }
+        }
+      }
+    },
+    "Quitter Maillage IoT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit Maillage IoT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter Maillage IoT"
+          }
+        }
+      }
+    },
+    "RLOC16 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %@"
+          }
+        }
+      }
+    },
+    "RLOC16 %@ · parent %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %1$@ · parent %2$@, %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %1$@ · parent %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "RLOC16 %@ · voisins : %lld · enfants : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %1$@ · neighbors: %2$lld · children: %3$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RLOC16 %1$@ · voisins : %2$lld · enfants : %3$lld"
+          }
+        }
+      }
+    },
+    "Rafraîchir : réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : réseau"
+          }
+        }
+      }
+    },
+    "Rafraîchir : réseau et noms de Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: network and Home names"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : réseau et noms de Maison"
+          }
+        }
+      }
+    },
+    "Rafraîchir : réseau et tournée de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: network and probe tour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : réseau et tournée de la sonde"
+          }
+        }
+      }
+    },
+    "Rafraîchir : réseau, tournée de la sonde et noms de Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: network, probe tour and Home names"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : réseau, tournée de la sonde et noms de Maison"
+          }
+        }
+      }
+    },
+    "Rafraîchir depuis Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh from Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir depuis Maison"
+          }
+        }
+      }
+    },
+    "Rechercher automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check for updates automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher automatiquement"
+          }
+        }
+      }
+    },
+    "Rechercher les mises à jour…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check for Updates…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher les mises à jour…"
+          }
+        }
+      }
+    },
+    "Reconnu par élimination : seul routeur de bordure sans identité, seule annonce restante." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recognized by elimination: the only border router without an identity, and the only announcement left."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reconnu par élimination : seul routeur de bordure sans identité, seule annonce restante."
+          }
+        }
+      }
+    },
+    "Relancer maintenant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relaunch now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relancer maintenant"
+          }
+        }
+      }
+    },
+    "Relevé de Maison illisible : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unreadable Home reading: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relevé de Maison illisible : %@"
+          }
+        }
+      }
+    },
+    "Relevé de la sonde ancien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe survey is old"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relevé de la sonde ancien"
+          }
+        }
+      }
+    },
+    "Renommer « %@ »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer « %@ »"
+          }
+        }
+      }
+    },
+    "Renommer…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renommer…"
+          }
+        }
+      }
+    },
+    "Replacer les pièces automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrange rooms automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replacer les pièces automatiquement"
+          }
+        }
+      }
+    },
+    "Replier la liste" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collapse list"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replier la liste"
+          }
+        }
+      }
+    },
+    "Retirer le surnom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Nickname"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer le surnom"
+          }
+        }
+      }
+    },
+    "Rien de visible sur le réseau local depuis %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing visible on the local network since %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien de visible sur le réseau local depuis %@"
+          }
+        }
+      }
+    },
+    "Rotation lente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slow rotation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotation lente"
+          }
+        }
+      }
+    },
+    "Routeur Thread apparu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread router appeared: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur Thread apparu : %@"
+          }
+        }
+      }
+    },
+    "Routeur Thread disparu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread router disappeared: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur Thread disparu : %@"
+          }
+        }
+      }
+    },
+    "Routeur de bordure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Border router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur de bordure"
+          }
+        }
+      }
+    },
+    "Routeur de bordure disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Border router disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur de bordure disparu"
+          }
+        }
+      }
+    },
+    "Routeur de bordure · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Border router · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur de bordure · %@"
+          }
+        }
+      }
+    },
+    "Routeur · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur · %@"
+          }
+        }
+      }
+    },
+    "Routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeurs"
+          }
+        }
+      }
+    },
+    "Routeurs : %lld · appareils : %lld · injoignables : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routers: %1$lld · devices: %2$lld · unreachable: %3$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeurs : %1$lld · appareils : %2$lld · injoignables : %3$lld"
+          }
+        }
+      }
+    },
+    "Réglages…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages…"
+          }
+        }
+      }
+    },
+    "Régénérer une clé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regenerate Key"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régénérer une clé"
+          }
+        }
+      }
+    },
+    "Réponse sans clé lisible (64 hexa majuscules attendus) : clé non rangée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reply without a readable key (64 uppercase hex digits expected): key not stored."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse sans clé lisible (64 hexa majuscules attendus) : clé non rangée."
+          }
+        }
+      }
+    },
+    "Réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau"
+          }
+        }
+      }
+    },
+    "Réseau %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau %@"
+          }
+        }
+      }
+    },
+    "Réseau %@ : nouveau jeu de paramètres actif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network %@: new active dataset"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau %@ : nouveau jeu de paramètres actif"
+          }
+        }
+      }
+    },
+    "Réseau %@ réuni" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network %@ rejoined"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau %@ réuni"
+          }
+        }
+      }
+    },
+    "Réseau %@ scindé en %@ partitions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network %1$@ split into %2$@ partitions"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau %1$@ scindé en %2$@ partitions"
+          }
+        }
+      }
+    },
+    "Réseau %@ trouvé scindé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network %@ found split"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau %@ trouvé scindé"
+          }
+        }
+      }
+    },
+    "Réseau Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread Network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau Thread"
+          }
+        }
+      }
+    },
+    "Réseau Thread normal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread network OK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau Thread normal"
+          }
+        }
+      }
+    },
+    "Réseau Thread scindé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread network split"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau Thread scindé"
+          }
+        }
+      }
+    },
+    "Réseau scindé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network split"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau scindé"
+          }
+        }
+      }
+    },
+    "Réseau scindé en %lld partitions depuis le %@ · à part : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network split into %1$lld partitions since %2$@ · separate: %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau scindé en %1$lld partitions depuis le %2$@ · à part : %3$@"
+          }
+        }
+      }
+    },
+    "Réseau scindé en %lld partitions · à part : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network split into %1$lld partitions · separate: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau scindé en %1$lld partitions · à part : %2$@"
+          }
+        }
+      }
+    },
+    "Réseau scindé en %lld partitions, constaté le %@ · à part : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network split into %1$lld partitions, found on %2$@ · separate: %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau scindé en %1$lld partitions, constaté le %2$@ · à part : %3$@"
+          }
+        }
+      }
+    },
+    "Résolution des parents" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parent resolution"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résolution des parents"
+          }
+        }
+      }
+    },
+    "Rôle et parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Role and parent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rôle et parent"
+          }
+        }
+      }
+    },
+    "Sans pièce" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No room"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans pièce"
+          }
+        }
+      }
+    },
+    "Services vus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services seen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Services vus"
+          }
+        }
+      }
+    },
+    "Seul le port choisi est ouvert. Un autre ESP32-C6 branché n'est jamais ouvert : ne le choisissez pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the chosen port is opened. Another plugged-in ESP32-C6 is never opened: don't choose it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seul le port choisi est ouvert. Un autre ESP32-C6 branché n'est jamais ouvert : ne le choisissez pas."
+          }
+        }
+      }
+    },
+    "Signal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signal"
+          }
+        }
+      }
+    },
+    "Signal vu par la sonde (dBm)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signal seen by the probe (dBm)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signal vu par la sonde (dBm)"
+          }
+        }
+      }
+    },
+    "Sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonde"
+          }
+        }
+      }
+    },
+    "Sonde introuvable (%@) : éteinte, hors du réseau Thread, ou routeurs de bordure injoignables." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe not found (%@): powered off, outside the Thread network, or border routers unreachable."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonde introuvable (%@) : éteinte, hors du réseau Thread, ou routeurs de bordure injoignables."
+          }
+        }
+      }
+    },
+    "Sonde suspendue dans Maison (interrupteur « Sonde maillage » éteint) : pas de relevé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe suspended in Home (“Sonde maillage” switch off): no survey."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonde suspendue dans Maison (interrupteur « Sonde maillage » éteint) : pas de relevé."
+          }
+        }
+      }
+    },
+    "Sur son propre niveau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On its own level"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sur son propre niveau"
+          }
+        }
+      }
+    },
+    "Surnom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nickname"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surnom"
+          }
+        }
+      }
+    },
+    "Surveillance du réseau %@ démarrée (routeurs : %@, appareils : %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitoring of network %1$@ started (routers: %2$@, devices: %3$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveillance du réseau %1$@ démarrée (routeurs : %2$@, appareils : %3$@)"
+          }
+        }
+      }
+    },
+    "Surveillance démarrée (routeurs : %@, appareils : %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitoring started (routers: %1$@, devices: %2$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveillance démarrée (routeurs : %1$@, appareils : %2$@)"
+          }
+        }
+      }
+    },
+    "Table de routage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routing table"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Table de routage"
+          }
+        }
+      }
+    },
+    "Thread Route" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread Route"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread Route"
+          }
+        }
+      }
+    },
+    "Tournée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée"
+          }
+        }
+      }
+    },
+    "Tous" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous"
+          }
+        }
+      }
+    },
+    "Tous les noms sont lisibles" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All names are readable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les noms sont lisibles"
+          }
+        }
+      }
+    },
+    "Tout" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout"
+          }
+        }
+      }
+    },
+    "Trait vertical : la sonde change de parent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vertical line: the probe changes parent."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trait vertical : la sonde change de parent."
+          }
+        }
+      }
+    },
+    "Tronçon" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Segment"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tronçon"
+          }
+        }
+      }
+    },
+    "Trousseau : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keychain: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trousseau : %@"
+          }
+        }
+      }
+    },
+    "USB" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "USB"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "USB"
+          }
+        }
+      }
+    },
+    "Voisins radio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radio neighbors"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voisins radio"
+          }
+        }
+      }
+    },
+    "Vu par la sonde : son ExtMac ne correspond à aucun appareil annoncé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seen by the probe: its ExtMac matches no announced device."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vu par la sonde : son ExtMac ne correspond à aucun appareil annoncé."
+          }
+        }
+      }
+    },
+    "Vu par la sonde sans son identité : sans doute l'une de ces annonces du réseau local, qu'aucun nœud ne reprend." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seen by the probe without its identity: probably one of these local network announcements, which no node claims."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vu par la sonde sans son identité : sans doute l'une de ces annonces du réseau local, qu'aucun nœud ne reprend."
+          }
+        }
+      }
+    },
+    "Vu par la sonde, sans annonce reconnue sur le réseau local." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seen by the probe, with no recognized announcement on the local network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vu par la sonde, sans annonce reconnue sur le réseau local."
+          }
+        }
+      }
+    },
+    "Vue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vue"
+          }
+        }
+      }
+    },
+    "Vue d'ensemble : les pièces" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overview: rooms"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vue d'ensemble : les pièces"
+          }
+        }
+      }
+    },
+    "Vue par pièces" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Room view"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vue par pièces"
+          }
+        }
+      }
+    },
+    "Zones" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zones"
+          }
+        }
+      }
+    },
+    "a changé %lld fois de parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "changed parent %lld times"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a changé %lld fois de parent"
+          }
+        }
+      }
+    },
+    "absente (débranchée ?)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "absent (unplugged?)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "absente (débranchée ?)"
+          }
+        }
+      }
+    },
+    "accès au canal refusés : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "channel access refused: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès au canal refusés : %@"
+          }
+        }
+      }
+    },
+    "accès au réseau local refusé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "local network access denied"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès au réseau local refusé"
+          }
+        }
+      }
+    },
+    "accès exclusif (TIOCEXCL)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "exclusive access (TIOCEXCL)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès exclusif (TIOCEXCL)"
+          }
+        }
+      }
+    },
+    "accès à Maison autorisé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home access allowed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès à Maison autorisé"
+          }
+        }
+      }
+    },
+    "accès à Maison en attente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home access pending"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès à Maison en attente"
+          }
+        }
+      }
+    },
+    "accès à Maison refusé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home access denied"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "accès à Maison refusé"
+          }
+        }
+      }
+    },
+    "active" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "active"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "active"
+          }
+        }
+      }
+    },
+    "adresse non annoncée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "address not advertised"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "adresse non annoncée"
+          }
+        }
+      }
+    },
+    "associé à la main" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linked by hand"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "associé à la main"
+          }
+        }
+      }
+    },
+    "aucun" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun"
+          }
+        }
+      }
+    },
+    "aucune sonde choisie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no probe chosen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucune sonde choisie"
+          }
+        }
+      }
+    },
+    "aucune zone dans Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no zones in Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucune zone dans Maison"
+          }
+        }
+      }
+    },
+    "autorisé · clé %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "allowed · key %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "autorisé · clé %@"
+          }
+        }
+      }
+    },
+    "batterie OK" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "battery OK"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "batterie OK"
+          }
+        }
+      }
+    },
+    "batterie faible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low battery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "batterie faible"
+          }
+        }
+      }
+    },
+    "bonne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bonne"
+          }
+        }
+      }
+    },
+    "canal réseau déjà ouvert" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "network channel already open"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "canal réseau déjà ouvert"
+          }
+        }
+      }
+    },
+    "candidats" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "candidates"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "candidats"
+          }
+        }
+      }
+    },
+    "chef" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "leader"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chef"
+          }
+        }
+      }
+    },
+    "chef du réseau Thread, élu automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread network leader, elected automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chef du réseau Thread, élu automatiquement"
+          }
+        }
+      }
+    },
+    "chemin %@ : /dev/cu.* attendu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "path %@: /dev/cu.* expected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemin %@ : /dev/cu.* attendu"
+          }
+        }
+      }
+    },
+    "connecté · version %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connected · version %1$@ · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connecté · version %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "connectée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connectée"
+          }
+        }
+      }
+    },
+    "connexion…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connecting…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connexion…"
+          }
+        }
+      }
+    },
+    "connu seulement avec la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "known only with the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connu seulement avec la sonde"
+          }
+        }
+      }
+    },
+    "diagnostic" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "diagnostics"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "diagnostic"
+          }
+        }
+      }
+    },
+    "disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disparu"
+          }
+        }
+      }
+    },
+    "donné par la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "given by the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "donné par la sonde"
+          }
+        }
+      }
+    },
+    "débit (cfsetspeed)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "speed (cfsetspeed)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "débit (cfsetspeed)"
+          }
+        }
+      }
+    },
+    "démarrage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "starting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "démarrage"
+          }
+        }
+      }
+    },
+    "déplié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "expanded"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "déplié"
+          }
+        }
+      }
+    },
+    "détaché" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "detached"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "détaché"
+          }
+        }
+      }
+    },
+    "en charge" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "charging"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "en charge"
+          }
+        }
+      }
+    },
+    "endormi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sleepy"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "endormi"
+          }
+        }
+      }
+    },
+    "endormi (réveil %lld s)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sleepy (wakes every %lld s)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "endormi (réveil %lld s)"
+          }
+        }
+      }
+    },
+    "enfant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "child"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "enfant"
+          }
+        }
+      }
+    },
+    "entendu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heard %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entendu %@"
+          }
+        }
+      }
+    },
+    "entre %@ et %@ (Mac en veille)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "between %1$@ and %2$@ (Mac asleep)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "entre %1$@ et %2$@ (Mac en veille)"
+          }
+        }
+      }
+    },
+    "erreur : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "error: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "erreur : %@"
+          }
+        }
+      }
+    },
+    "et %lld autres" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "and %lld more"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "et %lld autres"
+          }
+        }
+      }
+    },
+    "et 1 autre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "and 1 more"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "et 1 autre"
+          }
+        }
+      }
+    },
+    "faible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "faible"
+          }
+        }
+      }
+    },
+    "finit sur %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ends on %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "finit sur %@"
+          }
+        }
+      }
+    },
+    "firmware %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "firmware %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "firmware %@"
+          }
+        }
+      }
+    },
+    "halo-routes, son ancien nom, est encore installé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "halo-routes, its former name, is still installed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "halo-routes, son ancien nom, est encore installé"
+          }
+        }
+      }
+    },
+    "illisible : préfixes tirés des adresses" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unreadable: prefixes taken from addresses"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "illisible : préfixes tirés des adresses"
+          }
+        }
+      }
+    },
+    "inconnu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inconnu"
+          }
+        }
+      }
+    },
+    "inconnue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inconnue"
+          }
+        }
+      }
+    },
+    "isolé (partition coupée)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "isolated (split partition)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "isolé (partition coupée)"
+          }
+        }
+      }
+    },
+    "jamais entendu par la sonde ; liens vus seulement par ses voisins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "never heard by the probe; links seen only by its neighbors"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "jamais entendu par la sonde ; liens vus seulement par ses voisins"
+          }
+        }
+      }
+    },
+    "joignable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reachable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "joignable"
+          }
+        }
+      }
+    },
+    "joignable, adresse plus annoncée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reachable, address no longer advertised"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "joignable, adresse plus annoncée"
+          }
+        }
+      }
+    },
+    "la sonde est occupée et n'a pas répondu à « %@ »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe is busy and did not answer “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde est occupée et n'a pas répondu à « %@ »"
+          }
+        }
+      }
+    },
+    "la sonde ne répond pas à « %@ »" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe does not answer “%@”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde ne répond pas à « %@ »"
+          }
+        }
+      }
+    },
+    "la sonde ne répond plus (débranchée, redémarrée ou hors de portée ?)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe no longer answers (unplugged, restarted, or out of range?)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde ne répond plus (débranchée, redémarrée ou hors de portée ?)"
+          }
+        }
+      }
+    },
+    "la sonde refuse : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe refuses: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde refuse : %@"
+          }
+        }
+      }
+    },
+    "lecture de DTR et RTS (TIOCMGET)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reading DTR and RTS (TIOCMGET)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lecture de DTR et RTS (TIOCMGET)"
+          }
+        }
+      }
+    },
+    "lecture des réglages (tcgetattr)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reading settings (tcgetattr)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lecture des réglages (tcgetattr)"
+          }
+        }
+      }
+    },
+    "lecture impossible : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cannot read: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lecture impossible : %@"
+          }
+        }
+      }
+    },
+    "liaison avec la sonde fermée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "link with the probe closed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "liaison avec la sonde fermée"
+          }
+        }
+      }
+    },
+    "liaison réseau perdue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "network link lost"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "liaison réseau perdue"
+          }
+        }
+      }
+    },
+    "liens par le réseau local (TREL) non montrés : la carte est radio seulement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "links over the local network (TREL) not shown: the map is radio only"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "liens par le réseau local (TREL) non montrés : la carte est radio seulement"
+          }
+        }
+      }
+    },
+    "lue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "read"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lue"
+          }
+        }
+      }
+    },
+    "mode démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "demo mode"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mode démo"
+          }
+        }
+      }
+    },
+    "moyenne" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "medium"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "moyenne"
+          }
+        }
+      }
+    },
+    "non autorisé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not allowed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "non autorisé"
+          }
+        }
+      }
+    },
+    "non connecté" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "non connecté"
+          }
+        }
+      }
+    },
+    "non identifié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unidentified"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "non identifié"
+          }
+        }
+      }
+    },
+    "non rechargeable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not rechargeable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "non rechargeable"
+          }
+        }
+      }
+    },
+    "ouverture de %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "opening %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ouverture de %@"
+          }
+        }
+      }
+    },
+    "parent %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@, %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "parent dans une autre pièce" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent in another room"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent dans une autre pièce"
+          }
+        }
+      }
+    },
+    "partition coupée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "split partition"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "partition coupée"
+          }
+        }
+      }
+    },
+    "partition inconnue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown partition"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "partition inconnue"
+          }
+        }
+      }
+    },
+    "pas vu par la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not seen by the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pas vu par la sonde"
+          }
+        }
+      }
+    },
+    "pile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "battery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pile"
+          }
+        }
+      }
+    },
+    "port fermé (EOF) : la sonde a peut-être redémarré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "port closed (EOF): the probe may have restarted"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "port fermé (EOF) : la sonde a peut-être redémarré"
+          }
+        }
+      }
+    },
+    "port fermé par l'app" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "port closed by the app"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "port fermé par l'app"
+          }
+        }
+      }
+    },
+    "port inconnu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown port"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "port inconnu"
+          }
+        }
+      }
+    },
+    "qualité %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "quality %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qualité %lld"
+          }
+        }
+      }
+    },
+    "qualité du lien : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "link quality: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qualité du lien : %@"
+          }
+        }
+      }
+    },
+    "qualité inconnue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown quality"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "qualité inconnue"
+          }
+        }
+      }
+    },
+    "rattachement supposé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "assumed attachment"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rattachement supposé"
+          }
+        }
+      }
+    },
+    "refusée : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "refused: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "refusée : %@"
+          }
+        }
+      }
+    },
+    "replié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "collapsed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "replié"
+          }
+        }
+      }
+    },
+    "routeur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur"
+          }
+        }
+      }
+    },
+    "routeur de bordure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "border router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur de bordure"
+          }
+        }
+      }
+    },
+    "routeur de bordure d'une autre partition" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "border router in another partition"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur de bordure d'une autre partition"
+          }
+        }
+      }
+    },
+    "routeurs entendus : %lld sur %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routers heard: %1$lld of %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeurs entendus : %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "réglages (tcsetattr)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "settings (tcsetattr)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "réglages (tcsetattr)"
+          }
+        }
+      }
+    },
+    "résolu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "resolved %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "résolu %@"
+          }
+        }
+      }
+    },
+    "rôle inconnu (Thread %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown role (Thread %@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rôle inconnu (Thread %@)"
+          }
+        }
+      }
+    },
+    "session réseau fermée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "network session closed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "session réseau fermée"
+          }
+        }
+      }
+    },
+    "session réseau fermée par l'app" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "network session closed by the app"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "session réseau fermée par l'app"
+          }
+        }
+      }
+    },
+    "sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sonde"
+          }
+        }
+      }
+    },
+    "sur batterie" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "on battery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sur batterie"
+          }
+        }
+      }
+    },
+    "tous les liens" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "all links"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tous les liens"
+          }
+        }
+      }
+    },
+    "tous les liens (+%lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "all links (+%lld)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tous les liens (+%lld)"
+          }
+        }
+      }
+    },
+    "très faible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "very low"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "très faible"
+          }
+        }
+      }
+    },
+    "un enfant ne parle qu'à son parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a child only talks to its parent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un enfant ne parle qu'à son parent"
+          }
+        }
+      }
+    },
+    "vers son parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to its parent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vers son parent"
+          }
+        }
+      }
+    },
+    "vérifié par la sonde %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "checked by the probe %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "vérifié par la sonde %@"
+          }
+        }
+      }
+    },
+    "· %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· %@"
+          }
+        }
+      }
+    },
+    "· relevé %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· updated %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· relevé %@"
+          }
+        }
+      }
+    },
+    "· vu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· seen %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "· vu %@"
+          }
+        }
+      }
+    },
+    "Écoute" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute"
+          }
+        }
+      }
+    },
+    "Écoute de Passeur Noms impossible : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cannot listen for Passeur Noms: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute de Passeur Noms impossible : %@"
+          }
+        }
+      }
+    },
+    "Écoute du réseau local…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listening to the local network…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écoute du réseau local…"
+          }
+        }
+      }
+    },
+    "Étage isolé : %@ · clic sur une pièce ou un autre étage pour y aller, clic à côté ou Échap pour revenir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Isolated floor: %@ · click a room or another floor to go there, click outside or press Esc to come back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étage isolé : %@ · clic sur une pièce ou un autre étage pour y aller, clic à côté ou Échap pour revenir"
+          }
+        }
+      }
+    },
+    "Étages en 2D" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Floors in 2D"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étages en 2D"
+          }
+        }
+      }
+    },
+    "État" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Status"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État"
+          }
+        }
+      }
+    },
+    "État de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe state"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "État de la sonde"
+          }
+        }
+      }
+    },
+    "écriture impossible : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cannot write: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "écriture impossible : %@"
+          }
+        }
+      }
+    },
+    "—" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "—"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "—"
+          }
+        }
+      }
+    },
+    "→ Salon" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "→ Living room"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "→ Salon"
+          }
+        }
+      }
+    },
+    "⌂ Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌂ Home"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌂ Maison"
+          }
+        }
+      }
+    },
+    "👑 Chef du réseau Thread, élu automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👑 Thread network leader, elected automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "👑 Chef du réseau Thread, élu automatiquement"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

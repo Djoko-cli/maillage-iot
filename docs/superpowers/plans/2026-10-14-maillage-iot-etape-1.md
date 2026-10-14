@@ -47,7 +47,7 @@
 **Interfaces:**
 - Produces: le projet `MaillageIoT.xcodeproj` (généré), schémas `MaillageIoT`, `MaillageCoeur`, `Passeur` ; module de l'app `MaillageIoT` (`@testable import MaillageIoT`) ; `struct MaillageIoTApp` ; `bash outils/controler-index.sh` (code 0 si l'index est propre).
 
-- [ ] **Step 1: Recopier les fichiers suivis de `15a499a`**
+- [x] **Step 1: Recopier les fichiers suivis de `15a499a`**
 
 ```bash
 cd ~/Dev/maillage-merge
@@ -63,7 +63,7 @@ git status --short | head -20
 ```
 Expected: les dossiers recopiés apparaissent non suivis ; `project.yml` apparaît modifié (celui de Thread a remplacé celui de l'étape 0).
 
-- [ ] **Step 2: Écrire `outils/controler-index.sh`**
+- [x] **Step 2: Écrire `outils/controler-index.sh`**
 
 ```bash
 #!/bin/bash
@@ -89,7 +89,7 @@ echo "controler-index : ${#liste[@]} fichier(s) indexe(s), $fautes defaut(s)"
 ```
 Puis `chmod +x outils/controler-index.sh`.
 
-- [ ] **Step 3: Adapter `project.yml`**
+- [x] **Step 3: Adapter `project.yml`**
 
 Sur la copie de Thread (numéros de ligne : `inventaire-app.md` §1 et §2), changer exactement :
 - `name: MaillageThread` → `name: MaillageIoT` ; `bundleIdPrefix: fr.djoko.maillage` → `fr.djoko.maillage.iot` ;
@@ -101,7 +101,7 @@ Sur la copie de Thread (numéros de ligne : `inventaire-app.md` §1 et §2), cha
 - cibles `Passeur`, `Masqueur`, `PasseurTests`, schémas `Passeur` et `MaillageCoeur` : **aucun changement** ;
 - en tête, remplacer le commentaire de Thread par : `# Maillage IoT, projet XcodeGen : ce fichier fait foi (le .xcodeproj est genere, jamais commite).`
 
-- [ ] **Step 4: Renommer le module et l'app dans le code et les tests**
+- [x] **Step 4: Renommer le module et l'app dans le code et les tests**
 
 ```bash
 grep -rl "@testable import MaillageThread" MaillageIoTTests | xargs sed -i '' 's/@testable import MaillageThread$/@testable import MaillageIoT/'
@@ -115,7 +115,7 @@ Puis, à la main :
 - `MaillageIoTTests/DemarrageTests.swift:8` : identifiant attendu `fr.djoko.maillage.iot` ;
 - `MaillageIoTTests/MisesAJourTests.swift` : version attendue `1.0.0` (l. 15), flux `https://raw.githubusercontent.com/Djoko-cli/maillage-iot/main/appcast.xml` (l. 16), services `["fr.djoko.maillage.iot-spks", "fr.djoko.maillage.iot-spki"]` (l. 32).
 
-- [ ] **Step 5: Adapter les scripts**
+- [x] **Step 5: Adapter les scripts**
 
 - `outils/tester.sh` : `DD` par défaut `$HOME/Library/Developer/Xcode/DerivedData/maillage-iot`, journal `${TMPDIR:-/tmp}/maillage-iot-tests.log`, `-project MaillageIoT.xcodeproj -scheme MaillageIoT`, exemple d'en-tête `MaillageIoTTests`.
 - `outils/mesurer.sh` : `DD` par défaut `.../DerivedData/maillage-iot`, journal `maillage-iot-mesures.log`, `-project MaillageIoT.xcodeproj` (schéma `MaillageCoeur` inchangé).
@@ -123,7 +123,7 @@ Puis, à la main :
 
 Puis : `grep -rn "MaillageThread\|DerivedData/maillage\"\|DerivedData/maillage$" outils/*.sh | wc -l` → `0`.
 
-- [ ] **Step 6: `.gitignore` des Info.plist générés**
+- [x] **Step 6: `.gitignore` des Info.plist générés**
 
 Ajouter à `.gitignore`, sous le bloc XcodeGen :
 ```gitignore
@@ -133,12 +133,12 @@ Passeur/Info.plist
 Masqueur/Info.plist
 ```
 
-- [ ] **Step 7: Lancer toute la suite**
+- [x] **Step 7: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t1.log 2>&1; echo "code=$?"; tail -5 .superpowers/sdd/etape1-t1.log`
 Expected: `code=0`, `** TEST SUCCEEDED **` ; environ 1 024 tests Swift (MaillageCoeurTests, MaillageIoTTests, PasseurTests), `ReferenceRejeuTests` compris.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -168,7 +168,7 @@ Expected: `controler-index : … 0 defaut(s)`, puis le commit.
 - Consumes: le projet de la tâche 1.
 - Produces: `Surveillance.dossierParDefaut` se termine par `Maillage IoT` ; `Trousseau()` sert `fr.djoko.maillage.iot.sonde-thread` ; clés UserDefaults `thread.scissionsNotifiees`, `thread.sondeSerieUSB`, `thread.sondeNom`, `thread.sondeHote`, `thread.sondeLiaison`.
 
-- [ ] **Step 1: Écrire les attentes (RED)**
+- [x] **Step 1: Écrire les attentes (RED)**
 
 `MaillageIoTTests/DossierDonneesTests.swift` :
 ```swift
@@ -195,12 +195,12 @@ Si `SondeMaillage` n'expose pas encore ses clés en une liste `cles` ni `Surveil
 
 Changer les attentes existantes : `CleReseauTests.swift:114` attend le service `fr.djoko.maillage.iot.sonde-thread` ; `FenetrePiecesTests.swift` l. 754, 800, 816, 818 attendent le titre « Maillage IoT » ; `CarteSimulee.swift:23` → `fr.djoko.maillage.iot.tests.connexion` ; `SondeTests.swift:685` → `fr.djoko.maillage.iot.tests.sonde.` ; `SurveillanceTests.swift` l. 150-160 lit la clé `thread.scissionsNotifiees`.
 
-- [ ] **Step 2: Vérifier l'échec**
+- [x] **Step 2: Vérifier l'échec**
 
 Run: `outils/tester.sh MaillageIoTTests/DossierDonneesTests MaillageIoTTests/CleReseauTests MaillageIoTTests/FenetrePiecesTests > .superpowers/sdd/etape1-t2-red.log 2>&1; echo "code=$?"; grep -E "✘|error:" .superpowers/sdd/etape1-t2-red.log | head`
 Expected: échecs (ou erreurs de compilation sur `cles` et `cleScissionsNotifiees`) : le dossier vaut encore « Maillage Thread », etc.
 
-- [ ] **Step 3: Changer l'identité dans le code**
+- [x] **Step 3: Changer l'identité dans le code**
 
 - `Surveillance.swift:136` : `.appendingPathComponent("Maillage IoT")` (et le commentaire l. 133) ; l. 124 : clé `thread.scissionsNotifiees`, exposée en `static let cleScissionsNotifiees` ;
 - `SondeMaillage.swift` l. 42-48 : clés `thread.sondeSerieUSB`, `thread.sondeNom`, `thread.sondeHote`, `thread.sondeLiaison`, exposées en `static let cles: [String]` ;
@@ -213,7 +213,7 @@ Expected: échecs (ou erreurs de compilation sur `cles` et `cleScissionsNotifiee
 
 Puis : `grep -rn "Maillage Thread" MaillageIoT MaillageCoeur project.yml | grep -v "^.*//" | wc -l` → `0` (les commentaires seuls peuvent rester).
 
-- [ ] **Step 4: Resynchroniser les textes**
+- [x] **Step 4: Resynchroniser les textes**
 
 ```bash
 outils/tester.sh MaillageIoTTests/DemarrageTests > /dev/null 2>&1   # compile, produit les .stringsdata
@@ -226,12 +226,12 @@ python3 outils/traduire.py MaillageIoT/Ressources/Localizable.xcstrings outils/t
 ```
 Expected: aucune clé « stale » restante ; les quatre clés du catalogue qui contenaient le nom sont remplacées.
 
-- [ ] **Step 5: Lancer toute la suite**
+- [x] **Step 5: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t2.log 2>&1; echo "code=$?"; tail -3 .superpowers/sdd/etape1-t2.log`
 Expected: `code=0` ; `CataloguesTests` passe (catalogue et code alignés) ; `DossierDonneesTests` passe.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -254,7 +254,7 @@ EOF
 - Consumes: le projet de la tâche 1 (schéma `Passeur`).
 - Produces: `outils/passeur.sh --comparer-versions INSTALLEE CONSTRUITE` (code 0 si `CONSTRUITE` ≥ `INSTALLEE`, code 1 et message sinon) ; l'installation refuse de remplacer un démon installé plus récent.
 
-- [ ] **Step 1: Recopier**
+- [x] **Step 1: Recopier**
 
 ```bash
 cd ~/Dev/maillage-merge
@@ -266,7 +266,7 @@ python3 -m unittest discover -s outils/tests -q 2>&1 | tail -2
 ```
 Expected: `OK` (garde, pre-push, gitignore, vérificateur du démon, empreinte de Thread Route).
 
-- [ ] **Step 2: Écrire le test de version (RED)**
+- [x] **Step 2: Écrire le test de version (RED)**
 
 `outils/tests/test_passeur_version.py` :
 ```python
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 Run: `python3 -m unittest outils/tests/test_passeur_version.py 2>&1 | tail -3`
 Expected: `FAILED` (l'option `--comparer-versions` n'existe pas encore).
 
-- [ ] **Step 3: Implémenter le refus dans `outils/passeur.sh`**
+- [x] **Step 3: Implémenter le refus dans `outils/passeur.sh`**
 
 Ajouter, juste après le traitement des options existantes (avant toute compilation) :
 ```bash
@@ -330,12 +330,12 @@ Et, après la compilation, avant d'arrêter le démon en place : lire `CFBundleS
 
 Adapter aussi : `DD` par défaut `$HOME/Library/Developer/Xcode/DerivedData/maillage-iot-passeur` (l. 32) ; `-project MaillageIoT.xcodeproj` (l. 81) ; le commentaire l. 2 renvoie à `docs/superpowers/specs/2026-10-13-maillage-iot-design.md` (section 5.3).
 
-- [ ] **Step 4: Vérifier le passage**
+- [x] **Step 4: Vérifier le passage**
 
 Run: `python3 -m unittest discover -s outils/tests -q 2>&1 | tail -2`
 Expected: `OK`.
 
-- [ ] **Step 5: Firmware et sonde**
+- [x] **Step 5: Firmware et sonde**
 
 - `sonde-thread/sonde_essai.py` l. 27 et 36, et `sonde-thread/README.md:296` : service de trousseau `fr.djoko.maillage.iot.sonde-thread`.
 - `sonde-thread/README.md` l. 23-24 et `sonde-thread/platformio.ini` l. 2 et 6 : les renvois à `docs/superpowers/…` de Thread deviennent un renvoi à `docs/superpowers/specs/2026-10-13-maillage-iot-design.md`.
@@ -349,7 +349,7 @@ sh outils/thread-route/tests.sh > .superpowers/sdd/etape1-t3-route.log 2>&1; ech
 ```
 Expected: `OK` (146 tests), `c++ code=0`, `route code=0`. Si un test de `sonde_essai` attend l'ancien service, changer cette attente seulement.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -371,7 +371,7 @@ EOF
 **Interfaces:**
 - Produces: `public init(noeuds: [GrapheReseau.Noeud], liens: [GrapheReseau.Lien])` ; `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` construits sans aucun type Thread ; `AidesThread.fichierPieces()` et `AidesThread.calendrier` pour les tests Thread.
 
-- [ ] **Step 1: Test du graphe manuel (RED)**
+- [x] **Step 1: Test du graphe manuel (RED)**
 
 `MaillageCoeurTests/GrapheManuelTests.swift` :
 ```swift
@@ -394,7 +394,7 @@ struct GrapheManuelTests {
 Run: `outils/tester.sh MaillageCoeurTests/GrapheManuelTests > .superpowers/sdd/etape1-t4-red.log 2>&1; echo "code=$?"`
 Expected: échec de compilation (`init(noeuds:liens:)` absent).
 
-- [ ] **Step 2: Ajouter l'init**
+- [x] **Step 2: Ajouter l'init**
 
 Dans `GrapheReseau` (le type reste au cœur) :
 ```swift
@@ -407,14 +407,14 @@ Dans `GrapheReseau` (le type reste au cœur) :
 ```
 L'init Thread existant (l. 111) se termine désormais par un appel à cet init, sans autre changement.
 
-- [ ] **Step 3: Fixtures neutres et équivalences**
+- [x] **Step 3: Fixtures neutres et équivalences**
 
 - Dans `FixturesThreadTests.swift`, déplacer **tel quel** le code actuel qui bâtit `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` avec `Banc`, `Instantane`, `ConstructionMaillage` et `MaillageAffiche`, en fonctions `MaisonInventeeThread…` et `grapheThread(sonde:)`.
 - Récrire `MaisonInventee` et `ScenePiecesTests.graphe(sonde:)` avec `GrapheReseau(noeuds:liens:)` et des littéraux : mêmes nœuds, mêmes liens, même ordre. Pour les obtenir, afficher une fois le graphe produit par la version Thread (`dump`) et le recopier.
 - Dans `FixturesThreadTests.swift`, un test par fixture : `#expect(versionManuelle == versionThread)` (les deux `GrapheReseau` sont `Hashable`).
 - Copier `PiecesRouteursTests.fichier()` et `JournalTests.calendrier` dans `AidesThreadTests.swift` (`enum AidesThread`), et faire lire ces copies par `PiecesAppareilsTests` (l. 155, 197) et `HistoriqueTests` (l. 109, 131, 143).
 
-- [ ] **Step 4: Vérifier**
+- [x] **Step 4: Vérifier**
 
 Run:
 ```bash
@@ -424,7 +424,7 @@ grep -ln "Banc\|Instantane\|ConstructionMaillage\|MaillageAffiche" MaillageCoeur
 ```
 Expected: `code=0`, `mesures code=0`, `3`, puis `0`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -450,7 +450,7 @@ EOF
   - dans `EvenementsThread.swift` : les 18 constantes Thread (`extension TypeEvenement`), avec les gravités d'aujourd'hui, `TypeEvenement.thread: [TypeEvenement]`, et `public struct PolitiqueJournalThread: PolitiqueJournal` ;
   - `CodingUserInfoKey.typesEvenement` : le décodeur du journal retrouve un type connu, gravité comprise, par son nom.
 
-- [ ] **Step 1: Tests de compatibilité (RED)**
+- [x] **Step 1: Tests de compatibilité (RED)**
 
 `MaillageCoeurTests/TypeEvenementTests.swift` :
 ```swift
@@ -500,7 +500,7 @@ Adapter la stratégie de date du décodeur à celle de `CodageJSON` si elle diff
 Run: `outils/tester.sh MaillageCoeurTests/TypeEvenementTests MaillageCoeurTests/EvenementsThreadTests > .superpowers/sdd/etape1-t5-red.log 2>&1; echo "code=$?"`
 Expected: échec de compilation (`TypeEvenement("…", gravite:)`, `.typesEvenement` absents).
 
-- [ ] **Step 2: Implémenter le type ouvert**
+- [x] **Step 2: Implémenter le type ouvert**
 
 Dans `Evenement.swift`, remplacer l'`enum TypeEvenement` par :
 ```swift
@@ -547,14 +547,14 @@ public extension CodingUserInfoKey {
 ```
 `Evenement.init(from:)` garde sa lecture tolérante : une `gravite` absente prend `type.gravite`, qui est désormais celle du type connu.
 
-- [ ] **Step 3: Déclarer les types Thread et la politique**
+- [x] **Step 3: Déclarer les types Thread et la politique**
 
 - `MaillageCoeur/Suivi/EvenementsThread.swift` : `public extension TypeEvenement` avec les 18 constantes (`static let reseauScinde = TypeEvenement("reseauScinde", gravite: .alerte)`, etc., mêmes noms et gravités qu'aujourd'hui) et `static let thread: [TypeEvenement]` (les 18 dans l'ordre de l'enum actuel) ; `public struct PolitiqueJournalThread: PolitiqueJournal` dont `types` vaut `[.surveillanceDemarree, .veille] + TypeEvenement.thread`.
 - `MaillageCoeur/Suivi/PolitiqueJournal.swift` : le protocole et `PolitiqueJournalNeutre` (`types` = les deux types neutres ; aucune perte, aucune catégorie, aucun parent). Les membres du protocole sont tirés de la lecture d'`Alertes.swift` (l. 8, 68, 74, 78-79) et de `Regroupement.swift` (l. 52-53, 89) : un membre par décision qui nomme aujourd'hui un type Thread ou une clé de `details` propre à Thread (`coupee`, `extMac`).
 - `Alertes` et `Regroupement` prennent la politique en paramètre (valeur par défaut : aucune) et n'en nomment plus aucun type Thread. `JournalFichiers` reçoit la politique et pose `userInfo[.typesEvenement]` sur son décodeur.
 - App : `Surveillance` crée et passe `PolitiqueJournalThread()` ; `FenetreJournal.swift:21` remplace `TypeEvenement.allCases` par `[.surveillanceDemarree, .veille] + TypeEvenement.thread` ; les `switch` sur un type d'événement (`TexteEvenement.swift` et autres) gagnent un `default:` qui rend le texte générique actuel du cas le plus proche, ou le nom brut pour un type inconnu.
 
-- [ ] **Step 4: Vérifier**
+- [x] **Step 4: Vérifier**
 
 Run:
 ```bash
@@ -566,7 +566,7 @@ for t in reseauScinde reseauReuni chefChange bbrPrimaireChange jeuActifChange ro
 ```
 Expected: `code=0` ; le compte vaut `0` (aucun fichier du cœur, hors `EvenementsThread.swift`, ne nomme un type Thread).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -592,7 +592,7 @@ EOF
 - Consumes: `GrapheReseau.init(noeuds:liens:)` (tâche 4).
 - Produces: dans le cœur, plus aucun fichier hors `*+Thread.swift`, `*Thread.swift`, `EvenementsThread.swift` et les 30 fichiers Thread de l'inventaire ne référence un type Thread ; `public init(debut:fin:liens:parents:signal:parentsSonde:prioritaires:)` de `CourbesNoeud` ; `CourbesNoeud.reduire(_:pas:)` public ; `FichiersGardes` public (`lire`, `ecrire`, `mettreDeCote`, `examiner`, `Etat`).
 
-- [ ] **Step 1: Couper sans rien changer au comportement**
+- [x] **Step 1: Couper sans rien changer au comportement**
 
 Suivre `inventaire-coeur.md` §3, ligne à ligne :
 - `GrapheReseau+Thread.swift` : `public extension GrapheReseau` avec `init(reseau:appareils:maillage:)` (l. 111-160 actuelles, qui finit par `self.init(noeuds:liens:)`) et `static func extMac(hote:)` (l. 166-168) ;
@@ -603,7 +603,7 @@ Suivre `inventaire-coeur.md` §3, ligne à ligne :
 
 Ruling déjà pris : `ChampsTXT.swift` **reste au cœur** (spec 1.3 : identique dans les deux dépôts, analyse TXT de DNS-SD sans protocole radio).
 
-- [ ] **Step 2: Scinder les quatre tests mixtes**
+- [x] **Step 2: Scinder les quatre tests mixtes**
 
 D'après `inventaire-coeur.md` §4 : les assertions qui ne touchent que des types du cœur restent dans le fichier d'origine ; celles qui touchent `ResolveurNoms`, `Instantane`, `Releve20260928`, `NomsDemo.maison`, `CourbesNoeud(cle:releves:)`, `ClesHistorique`, `ReleveMaillage`, `IdentitesGardees` ou `Banc` partent dans `NomsThreadTests.swift`, `CourbesNoeudThreadTests.swift`, `AssociationsThreadTests.swift`, `FichiersGardesThreadTests.swift`. Aucun test n'est supprimé : le nombre total de `@Test` du dossier est le même avant et après.
 
@@ -612,12 +612,12 @@ grep -rc "@Test" MaillageCoeurTests | awk -F: '{s+=$2} END {print s}'
 ```
 Expected: le même total qu'avant l'étape (le noter à l'étape 1).
 
-- [ ] **Step 3: Vérifier**
+- [x] **Step 3: Vérifier**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t6.log 2>&1; echo "code=$?"`
 Expected: `code=0`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -641,18 +641,18 @@ EOF
 - Consumes: les coupes des tâches 4 à 6.
 - Produces: module `ProtocoleThread` (`import ProtocoleThread`) ; `MaillageCoeur` sans aucune dépendance de protocole ; l'app dépend des deux frameworks.
 
-- [ ] **Step 1: Noter les effectifs**
+- [x] **Step 1: Noter les effectifs**
 
 ```bash
 for d in MaillageCoeurTests MaillageIoTTests PasseurTests; do printf '%s %s\n' "$d" "$(grep -rc '@Test' $d | awk -F: '{s+=$2} END {print s}')"; done
 ```
 Noter les trois nombres dans le registre : la somme des `@Test` doit être la même après le déplacement (cœur + ProtocoleThread + app + démon).
 
-- [ ] **Step 2: Déplacer les fichiers**
+- [x] **Step 2: Déplacer les fichiers**
 
 Avec `git mv`, liste exacte ci-dessus (préserve l'historique). Vérifier : `ls ProtocoleThread/Demo/releve-2026-09-28.json` existe, et `MaillageCoeur/Noms/NomsMaison.swift`, `MaillageCoeur/Noms/ProtocolePasseur.swift`, `MaillageCoeur/Annonces/CodageJSON.swift` sont toujours en place.
 
-- [ ] **Step 3: Déclarer les cibles**
+- [x] **Step 3: Déclarer les cibles**
 
 Dans `project.yml`, sur le modèle exact des cibles `MaillageCoeur` et `MaillageCoeurTests` :
 ```yaml
@@ -687,19 +687,19 @@ Dans `project.yml`, sur le modèle exact des cibles `MaillageCoeur` et `Maillage
 ```
 Ajouter `- target: ProtocoleThread` aux dépendances de `MaillageIoT` et de `MaillageIoTTests` ; ajouter `ProtocoleThread` (build) et `ProtocoleThreadTests` (test) au schéma `MaillageIoT`. Le schéma `MaillageCoeur` ne change pas : il ne doit contenir que le cœur et ses tests.
 
-- [ ] **Step 4: Imports et visibilités**
+- [x] **Step 4: Imports et visibilités**
 
 - Fichiers de `ProtocoleThread/` : `import MaillageCoeur` en tête de chacun.
 - Tests de `ProtocoleThreadTests/` : `@testable import ProtocoleThread` et `@testable import MaillageCoeur`.
 - App et ses tests : ajouter `import ProtocoleThread` (ou `@testable import ProtocoleThread` dans les tests qui touchent un interne, par exemple `NomsSceneTests.swift:59` et `MaillageDemo.maillage(…sansIdentite:)`) partout où le compilateur le demande.
 - Tout symbole interne du cœur que `ProtocoleThread` utilise devient `public` ; tout symbole interne de `ProtocoleThread` que l'app utilise devient `public`. Lister chaque symbole rendu public dans le registre (`Task 7: public : …`).
 
-- [ ] **Step 5: Lancer toute la suite**
+- [x] **Step 5: Lancer toute la suite**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t7.log 2>&1; echo "code=$?"; tail -3 .superpowers/sdd/etape1-t7.log`
 Expected: `code=0`, `ReferenceRejeuTests` compris.
 
-- [ ] **Step 6: Le cœur seul**
+- [x] **Step 6: Le cœur seul**
 
 Run:
 ```bash
@@ -710,14 +710,14 @@ xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageCoeur -destination 'pl
 ```
 Expected: `0`, `mesures code=0`, `3`, `coeur seul code=0`.
 
-- [ ] **Step 7: Conservation des tests**
+- [x] **Step 7: Conservation des tests**
 
 ```bash
 for d in MaillageCoeurTests ProtocoleThreadTests MaillageIoTTests PasseurTests; do printf '%s %s\n' "$d" "$(grep -rc '@Test' $d | awk -F: '{s+=$2} END {print s}')"; done
 ```
 Expected: la somme est égale à celle de l'étape 1 de cette tâche.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -738,16 +738,16 @@ EOF
 **Interfaces:**
 - Produces: même cible, même module ; seul le rangement change. Les vues de la scène liées au modèle Thread (`FicheNoeud`, `LegendePieces`, `SigneLegende`, `DessinNoeud`, `LibellesNoeuds`, `PiecesChoisies`) restent où elles sont : elles seront séparées à l'étape 3, avec la scène à deux protocoles.
 
-- [ ] **Step 1: Déplacer**
+- [x] **Step 1: Déplacer**
 
 Les `git mv` de la liste ci-dessus, puis `xcodegen generate --quiet`.
 
-- [ ] **Step 2: Vérifier**
+- [x] **Step 2: Vérifier**
 
 Run: `outils/tester.sh > .superpowers/sdd/etape1-t8.log 2>&1; echo "code=$?"`
 Expected: `code=0` ; `CataloguesTests` passe (même cible, mêmes `.stringsdata`).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && bash outils/controler-index.sh && git commit -q -F - <<'EOF'
@@ -763,7 +763,7 @@ EOF
 
 Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctifs.
 
-- [ ] **Step 1: Compiler et lancer Maillage IoT**
+- [x] **Step 1: Compiler et lancer Maillage IoT**
 
 ```bash
 xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageIoT -configuration Debug \
@@ -771,7 +771,7 @@ xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageIoT -configuration Deb
 open ~/Library/Developer/Xcode/DerivedData/maillage-iot/Build/Products/Debug/"Maillage IoT.app"
 ```
 
-- [ ] **Step 2: Comparer côte à côte**
+- [x] **Step 2: Comparer côte à côte**
 
 Avec Djoko, Maillage Thread 1.3.0 et Maillage IoT ouverts ensemble :
 - même vue par pièces (nœuds, liens, pièces, étages), en 2D et en 3D ;
@@ -779,6 +779,6 @@ Avec Djoko, Maillage Thread 1.3.0 et Maillage IoT ouverts ensemble :
 - sonde **en USB seulement**, branchée sur l'une puis sur l'autre (pas de mise en service réseau : elle remplacerait la clé de la sonde et couperait Maillage Thread de sa sonde réseau, spec 4.4) ;
 - journal et notifications de Maillage IoT : écrits dans `Application Support/Maillage IoT/`.
 
-- [ ] **Step 3: Verdict**
+- [x] **Step 3: Verdict**
 
 Noter le verdict de Djoko dans le registre ; cocher ce plan ; l'orchestrateur pousse `main` (garde pre-push).

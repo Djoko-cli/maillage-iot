@@ -1,0 +1,64 @@
+{"appairee": false, "code": null, "heure": "2026-09-28T23:44:56", "mac": "A00000000001", "produit": "sonde-maillage", "qr": null, "t": "bonjour", "v": 1, "version": "0.1.0-essai"}
+{"appairee": false, "code": null, "heure": "2026-09-28T23:44:59", "mac": "A00000000001", "produit": "sonde-maillage", "qr": null, "t": "bonjour", "v": 1, "version": "0.1.0-essai"}
+{"canal": 11, "chef": null, "heure": "2026-09-28T23:44:59", "mode": "rn", "parent": null, "partition": null, "prefixeMaille": "FD00333344440000", "rloc16": "FFFE", "role": "disabled", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 11, "chef": null, "heure": "2026-09-28T23:45:41", "mode": "rn", "parent": null, "partition": null, "prefixeMaille": "FD00333344440000", "rloc16": "FFFE", "role": "disabled", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 11, "chef": null, "heure": "2026-09-28T23:45:46", "mode": "rn", "parent": null, "partition": null, "prefixeMaille": "FD00333344440000", "rloc16": "FFFE", "role": "disabled", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 11, "chef": null, "heure": "2026-09-28T23:45:51", "mode": "rn", "parent": null, "partition": null, "prefixeMaille": "FD00333344440000", "rloc16": "FFFE", "role": "disabled", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 11, "chef": null, "heure": "2026-09-28T23:45:56", "mode": "rn", "parent": null, "partition": null, "prefixeMaille": "FD00333344440000", "rloc16": "FFFE", "role": "disabled", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 25, "chef": 24, "heure": "2026-09-28T23:46:21", "mode": "rn", "parent": {"age": 12, "ext": "E000000000000001", "lqIn": 3, "lqOut": 3, "rloc16": "E400", "rssi": -76, "rssiDernier": -77}, "partition": "46CBEBCD", "prefixeMaille": "FD00111122220C87", "rloc16": "E401", "role": "child", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"canal": 25, "chef": 24, "heure": "2026-09-28T23:46:31", "mode": "rn", "parent": {"age": 23, "ext": "E000000000000001", "lqIn": 3, "lqOut": 3, "rloc16": "E400", "rssi": -76, "rssiDernier": -77}, "partition": "46CBEBCD", "prefixeMaille": "FD00111122220C87", "rloc16": "E401", "role": "child", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"cible": "6000", "code": "2.04", "heure": "2026-09-28T23:46:34", "id": 101, "ms": 2782, "ok": true, "t": "diag", "tlv": "0510B44000088000141040A2F10103A25303060846CBEBCD406CBA18", "v": 1}
+{"cible": "0400", "erreur": "delai", "heure": "2026-09-28T23:47:07", "id": 102, "ms": 32944, "ok": false, "t": "diag", "v": 1}
+{"cible": "0400", "erreur": "delai", "heure": "2026-09-28T23:47:37", "id": 103, "ms": 30139, "ok": false, "t": "diag", "v": 1}
+{"cible": "5000", "code": "2.04", "heure": "2026-09-28T23:47:37", "id": 104, "ms": 73, "ok": true, "t": "diag", "tlv": "0008E000000000000002010250000510BA4000088000141040A201F103A2630310066404046601040840FD005555666600000A00000000000001FD00111122220C87000000FFFE005000FD00111122220C870A00000000000002FE80000000000000E20000000000000218020005", "v": 1}
+{"cible": "5000", "code": "2.04", "heure": "2026-09-28T23:47:37", "id": 105, "ms": 64, "ok": true, "t": "diag", "tlv": "19001A001B001C40534C2D4F50454E5448524541442F322E352E312E305F4769744875622D3166636562323235623B2045465233323B2053657020313820323032342031393A3339", "v": 1}
+{"cible": "6000", "code": "2.04", "heure": "2026-09-28T23:47:38", "id": 106, "ms": 122, "ok": true, "t": "diag", "tlv": "0008E000000000000003010260000510BA4000088000141040A2F10103A25303100C6403046206046202046605040850FD005555666600000A00000000000003FD00111122220C87000000FFFE00FC00FD00111122220C87000000FFFE006000FD00111122220C870A00000000000004FE80000000000000E20000000000000318020005", "v": 1}
+{"cible": "6000", "code": "2.04", "heure": "2026-09-28T23:47:38", "id": 107, "ms": 99, "ok": true, "t": "diag", "tlv": "19001A001B001C40534C2D4F50454E5448524541442F322E352E312E305F4769744875622D3166636562323235623B2045465233323B2053657020313820323032342031393A3339", "v": 1}
+{"cible": "AC00", "erreur": "delai", "heure": "2026-09-28T23:48:20", "id": 108, "ms": 42379, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC00", "erreur": "delai", "heure": "2026-09-28T23:48:54", "id": 109, "ms": 34100, "ok": false, "t": "diag", "v": 1}
+{"cible": "B400", "erreur": "delai", "heure": "2026-09-28T23:49:35", "id": 110, "ms": 41330, "ok": false, "t": "diag", "v": 1}
+{"cible": "B400", "erreur": "delai", "heure": "2026-09-28T23:50:13", "id": 111, "ms": 37009, "ok": false, "t": "diag", "v": 1}
+{"cible": "CC00", "erreur": "delai", "heure": "2026-09-28T23:50:55", "id": 112, "ms": 42769, "ok": false, "t": "diag", "v": 1}
+{"cible": "CC00", "erreur": "delai", "heure": "2026-09-28T23:51:40", "id": 113, "ms": 44209, "ok": false, "t": "diag", "v": 1}
+{"cible": "E400", "erreur": "delai", "heure": "2026-09-28T23:52:19", "id": 114, "ms": 39065, "ok": false, "t": "diag", "v": 1}
+{"cible": "E400", "erreur": "delai", "heure": "2026-09-28T23:53:03", "id": 115, "ms": 44555, "ok": false, "t": "diag", "v": 1}
+{"cible": "5004", "code": "2.04", "heure": "2026-09-28T23:53:04", "id": 116, "ms": 795, "ok": true, "t": "diag", "tlv": "0008E0000000000000040840FD005555666600000A00000000000005FD00111122220C87000000FFFE005004FD00111122220C870A00000000000006FE80000000000000E20000000000000402010419001A001B001C2D4F50454E5448524541442F312E302E303B2045465233323B204D617920313520323032362030373A30393A3235", "v": 1}
+{"cible": "5001", "code": "2.04", "heure": "2026-09-28T23:53:04", "id": 117, "ms": 203, "ok": true, "t": "diag", "tlv": "0008E0000000000000050840FD005555666600000A00000000000007FD00111122220C87000000FFFE005001FD00111122220C870A00000000000008FE80000000000000E200000000000005020104", "v": 1}
+{"cible": "6003", "code": "2.04", "heure": "2026-09-28T23:53:04", "id": 118, "ms": 286, "ok": true, "t": "diag", "tlv": "0008E0000000000000060840FD005555666600000A00000000000009FD00111122220C87000000FFFE006003FD00111122220C870A0000000000000AFE80000000000000E20000000000000602010419001A001B001C2D4F50454E5448524541442F312E302E303B2045465233323B204D617920313520323032362030373A30393A3235", "v": 1}
+{"cible": "6000", "erreur": "delai", "heure": "2026-09-28T23:55:00", "id": 201, "ms": 30636, "ok": false, "t": "diag", "v": 1}
+{"cible": "E400", "erreur": "delai", "heure": "2026-09-28T23:55:32", "id": 202, "ms": 32254, "ok": false, "t": "diag", "v": 1}
+{"cible": "fe80::e200:0:0:1", "erreur": "delai", "heure": "2026-09-28T23:56:09", "id": 203, "ms": 36949, "ok": false, "t": "diag", "v": 1}
+{"canal": 25, "chef": 24, "heure": "2026-09-28T23:56:21", "mode": "rn", "parent": {"age": 12, "ext": "E000000000000007", "lqIn": 3, "lqOut": 3, "rloc16": "AC00", "rssi": -89, "rssiDernier": -90}, "partition": "46CBEBCD", "prefixeMaille": "FD00111122220C87", "rloc16": "AC09", "role": "child", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"cible": "6000", "code": "2.04", "heure": "2026-09-28T23:56:21", "id": 204, "ms": 51, "ok": true, "t": "diag", "tlv": "0510EC4000088000141040A2F10103A25303060846CBEBCD406CBA18", "v": 1}
+{"cible": "5000", "code": "2.04", "heure": "2026-09-28T23:56:21", "id": 205, "ms": 60, "ok": true, "t": "diag", "tlv": "0008E000000000000002", "v": 1}
+{"cible": "5000", "code": "2.04", "heure": "2026-09-28T23:56:24", "id": 206, "ms": 2947, "ok": true, "t": "diag", "tlv": "078C08040B02D2FF0B0E8001010D09B40057000500000E1003140007FC010FB40000CC0000040000AC0000E4000003130060FD0055556666FFFF000000000103B400F003140040FD005555666600000504B400F300070211400B1881025CC50D02B4000D02CC000D0204000D02AC000D02E4000B1982015D0D14B400FD005555666600000A0000000000000BC84E", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::c", "erreur": "delai", "heure": "2026-09-28T23:58:47", "id": 301, "ms": 38344, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::d", "erreur": "delai", "heure": "2026-09-28T23:59:19", "id": 302, "ms": 31954, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::3", "erreur": "delai", "heure": "2026-09-28T23:59:49", "id": 303, "ms": 30424, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::e", "erreur": "delai", "heure": "2026-09-29T00:00:30", "id": 304, "ms": 40910, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::f", "erreur": "delai", "heure": "2026-09-29T00:01:06", "id": 305, "ms": 35704, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::10", "erreur": "delai", "heure": "2026-09-29T00:01:44", "id": 306, "ms": 37624, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::11", "erreur": "delai", "heure": "2026-09-29T00:02:17", "id": 307, "ms": 33831, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::12", "erreur": "delai", "heure": "2026-09-29T00:02:49", "id": 308, "ms": 31280, "ok": false, "t": "diag", "v": 1}
+{"canal": 25, "chef": 24, "heure": "2026-09-29T00:03:09", "mode": "rn", "parent": {"age": 61, "ext": "E000000000000007", "lqIn": 3, "lqOut": 3, "rloc16": "AC00", "rssi": -89, "rssiDernier": -92}, "partition": "46CBEBCD", "prefixeMaille": "FD00111122220C87", "rloc16": "AC09", "role": "child", "suspendue": false, "t": "etat", "v": 1, "xp": "A0A1A2A3A4A5A6A7"}
+{"cible": "AC01", "erreur": "occupee", "heure": "2026-09-29T00:03:09", "id": 401, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC02", "erreur": "occupee", "heure": "2026-09-29T00:03:09", "id": 402, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC03", "erreur": "occupee", "heure": "2026-09-29T00:03:09", "id": 403, "ok": false, "t": "diag", "v": 1}
+{"cible": "fd00:5555:6666:0:a00::5", "erreur": "delai", "heure": "2026-09-29T00:04:10", "id": 309, "ms": 32555, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC02", "erreur": "occupee", "heure": "2026-09-29T00:04:10", "id": 412, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC03", "erreur": "occupee", "heure": "2026-09-29T00:04:10", "id": 413, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC04", "erreur": "occupee", "heure": "2026-09-29T00:04:10", "id": 414, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC01", "code": "2.04", "heure": "2026-09-29T00:04:41", "id": 411, "ms": 3393, "ok": true, "t": "diag", "tlv": "0008E0000000000000080102AC01020104", "v": 1}
+{"cible": "AC01", "code": "2.04", "heure": "2026-09-29T00:04:43", "id": 51, "ms": 2093, "ok": true, "t": "diag", "tlv": "0008E0000000000000080102AC01020104", "v": 1}
+{"cible": "AC02", "erreur": "delai", "heure": "2026-09-29T00:05:42", "id": 52, "ms": 44539, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC01", "erreur": "delai", "heure": "2026-09-29T00:06:17", "id": 501, "ms": 34984, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC02", "erreur": "delai", "heure": "2026-09-29T00:07:00", "id": 502, "ms": 42274, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC03", "code": "2.04", "heure": "2026-09-29T00:07:04", "id": 503, "ms": 4129, "ok": true, "t": "diag", "tlv": "0008E0000000000000090102AC03020104", "v": 1}
+{"cible": "AC04", "code": "2.04", "heure": "2026-09-29T00:07:09", "id": 504, "ms": 5078, "ok": true, "t": "diag", "tlv": "0008E00000000000000A0102AC04020104", "v": 1}
+{"cible": "AC05", "code": "2.04", "heure": "2026-09-29T00:07:14", "id": 505, "ms": 4844, "ok": true, "t": "diag", "tlv": "0008E00000000000000B0102AC05020104", "v": 1}
+{"cible": "AC06", "code": "2.04", "heure": "2026-09-29T00:07:17", "id": 506, "ms": 3586, "ok": true, "t": "diag", "tlv": "0008E00000000000000C0102AC06020104", "v": 1}
+{"cible": "AC07", "code": "2.04", "heure": "2026-09-29T00:07:19", "id": 507, "ms": 1460, "ok": true, "t": "diag", "tlv": "0008E00000000000000D0102AC07020104", "v": 1}
+{"cible": "AC08", "code": "2.04", "heure": "2026-09-29T00:07:21", "id": 508, "ms": 1926, "ok": true, "t": "diag", "tlv": "0008E00000000000000E0102AC08020104", "v": 1}
+{"cible": "AC0A", "erreur": "delai", "heure": "2026-09-29T00:07:55", "id": 510, "ms": 34745, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC0B", "erreur": "delai", "heure": "2026-09-29T00:08:31", "id": 511, "ms": 35016, "ok": false, "t": "diag", "v": 1}
+{"cible": "AC0C", "erreur": "delai", "heure": "2026-09-29T00:09:08", "id": 512, "ms": 37581, "ok": false, "t": "diag", "v": 1}
