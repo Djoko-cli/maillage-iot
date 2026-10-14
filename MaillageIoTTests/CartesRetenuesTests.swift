@@ -355,4 +355,68 @@ struct DeuxSondesTests {
         #expect(cartes.serie(de: .zigbee) == carteInconnue.serie)
         #expect(await attendreActivation { b.ouvertsThread.ouverts == 0 }, "sa liaison est refermee")
     }
+
+    // MARK: Une sonde n'est jamais bloquee en « connexion » (relecture finale, m1)
+
+    /// Thread : l'autre module retient la carte entre `choisir` (qui passe en `.connexion`) et le depart de la tache : la sonde
+    /// passe en `.refusee`, au lieu de rester en « connexion… » jusqu'au prochain evenement ; rien n'est ouvert.
+    @Test func threadRefuseeSiLaCarteEstRetenueEntreLeChoixEtLeDepart() async throws {
+        let b = try Self.banc(threadRetient: false, zigbeeRetient: false, branches: [carteInconnue])
+        defer { b.nettoyer() }
+        b.thread.demarrer()
+        b.thread.choisir(carteInconnue)
+        #expect(b.thread.etat == .connexion)
+        b.cartes.retenir(carteInconnue.serie, par: .zigbee)
+        #expect(await attendreActivation { b.thread.etat != .connexion }, "jamais bloquee en connexion")
+        #expect(b.thread.etat == .refusee(CartesRetenues.texteRefus(retenuePar: .zigbee)))
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(b.ouvertsThread.chemins.isEmpty && b.thread.serie == nil, "rien d'ouvert, rien de retenu")
+        #expect(b.thread.tachesPlanifiees == 0)
+    }
+
+    /// Zigbee : le meme cas.
+    @Test func zigbeeRefuseeSiLaCarteEstRetenueEntreLeChoixEtLeDepart() async throws {
+        let b = try Self.banc(threadRetient: false, zigbeeRetient: false, branches: [carteInconnue])
+        defer { b.nettoyer() }
+        b.zigbee.demarrer()
+        b.zigbee.choisir(carteInconnue)
+        #expect(b.zigbee.etat == .connexion)
+        b.cartes.retenir(carteInconnue.serie, par: .thread)
+        #expect(await attendreActivation { b.zigbee.etat != .connexion }, "jamais bloquee en connexion")
+        #expect(b.zigbee.etat == .refusee(CartesRetenues.texteRefus(retenuePar: .thread)))
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(b.ouvertsZigbee.chemins.isEmpty && b.zigbee.serie == nil, "rien d'ouvert, rien de retenu")
+    }
+
+    /// Thread : la carte est retenue par l'autre module pendant l'attente de la fermeture de la liaison en place (apres la
+    /// premiere garde de `connecter`) : `ouvrable` est reverifiee juste avant d'ouvrir le canal. Rien n'est ouvert.
+    @Test func threadReverifieAvantOuvrir() async throws {
+        let b = try Self.banc(branches: [carteThread, carteInconnue])
+        defer { b.nettoyer() }
+        b.thread.demarrer()
+        #expect(await attendreActivation { SondeMaillageTests.connectee(b.thread) })
+        let ouvertures = b.ouvertsThread.chemins.count
+        // `connecter` ferme la liaison en place (une tache) et l'attend : l'autre module retient la carte pendant ce temps.
+        let t = Task { await b.thread.connecter(carteInconnue, choisi: true) }
+        await Task.yield()
+        b.cartes.retenir(carteInconnue.serie, par: .zigbee)
+        await t.value
+        #expect(b.ouvertsThread.chemins.count == ouvertures, "la carte de l'autre n'est pas ouverte : \(b.ouvertsThread.chemins)")
+        #expect(b.thread.etat == .refusee(CartesRetenues.texteRefus(retenuePar: .zigbee)))
+    }
+
+    /// Zigbee : le meme cas.
+    @Test func zigbeeReverifieAvantOuvrir() async throws {
+        let b = try Self.banc(branches: [carteZigbee, carteInconnue])
+        defer { b.nettoyer() }
+        b.zigbee.demarrer()
+        #expect(await attendreActivation { SondeMaillageZigbeeTests.connectee(b.zigbee) })
+        let ouvertures = b.ouvertsZigbee.chemins.count
+        let t = Task { await b.zigbee.connecter(carteInconnue, choisi: true) }
+        await Task.yield()
+        b.cartes.retenir(carteInconnue.serie, par: .thread)
+        await t.value
+        #expect(b.ouvertsZigbee.chemins.count == ouvertures, "la carte de l'autre n'est pas ouverte : \(b.ouvertsZigbee.chemins)")
+        #expect(b.zigbee.etat == .refusee(CartesRetenues.texteRefus(retenuePar: .thread)))
+    }
 }

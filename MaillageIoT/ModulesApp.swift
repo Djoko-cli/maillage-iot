@@ -97,7 +97,9 @@ struct ModulesApp {
         s.thread.surActivite = { [weak st] actif in
             if actif { st?.demarrer() } else { st?.arreter() }
         }
-        if s.thread.actif { st.demarrer() }
+        // Eteint au lancement : arrete comme par l'interrupteur (`actif` faux), sinon un choix des Reglages (« Liaison »)
+        // ouvrirait une session et armerait des tournees, Thread eteint.
+        if s.thread.actif { st.demarrer() } else { st.arreter() }
     }
 
     /// Zigbee : les noms du pont et le releve de Maison vont au modele, qui les reunit (`FusionNoms`) ; Bonjour trouve le
@@ -132,6 +134,11 @@ struct ModulesApp {
             nomsPont.demarrer()
             b.demarrer()
             sz.demarrer()
+        } else {
+            // Eteint au lancement : arrete comme par l'interrupteur, sinon « Utiliser cette adresse » lirait le pont, Zigbee eteint.
+            sz.arreter()
+            b.arreter()
+            nomsPont.arreter()
         }
     }
 }

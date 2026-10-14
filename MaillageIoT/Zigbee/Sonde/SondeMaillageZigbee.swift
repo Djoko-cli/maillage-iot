@@ -880,12 +880,20 @@ final class SondeMaillageZigbee {
     /// et sort sans toucher a l'etat, a la sonde, ni au numero de serie retenu. Automatique (`choisi` faux) et en echec,
     /// elle est refaite, de plus en plus espacee, tant que le port reste liste (`planifierNouvelEssai`).
     func connecter(_ port: PortUSB, choisi: Bool) async {
-        guard ouvrable(port, choisi: choisi) else { return }
+        guard ouvrable(port, choisi: choisi) else {
+            refuserConnexionEnCours(port)
+            return
+        }
         deconnecter(.connexion, port: port)
         let n = essai
         // Tant que l'ancienne liaison tient le port, TIOCEXCL refuse de le rouvrir.
         await fermetures?.value
         guard n == essai else { return }
+        // L'autre module a pu retenir la carte pendant l'attente : rien n'est ouvert, la sonde ne reste pas en « connexion ».
+        guard ouvrable(port, choisi: choisi) else {
+            refuserConnexionEnCours(port)
+            return
+        }
         let s = Sonde(canal: ouvrirCanal(port.chemin), delaiTable: delaiTable)
         enConnexion = s
         do {
@@ -962,6 +970,15 @@ final class SondeMaillageZigbee {
             guard s === sonde else { return }
             erreurTournee = Self.texteErreur(error)
         }
+    }
+
+    /// `connecter` refuse ce port (l'autre module retient sa carte) alors que `lancerConnexion` a deja passe la sonde en
+    /// `.connexion` pour lui : elle passe en `.refusee` au lieu de rester bloquee (`portsChanges` ne relance pas une sonde en
+    /// connexion). Sans effet si la sonde n'attend pas ce port (appel direct, autre connexion en cours).
+    private func refuserConnexionEnCours(_ port: PortUSB) {
+        guard case .connexion = etat, enConnexion == nil, sonde == nil, serieEtat == port.serie,
+              let autre = cartes.retenuePar(port.serie, hors: .zigbee) else { return }
+        etat = .refusee(CartesRetenues.texteRefus(retenuePar: autre))
     }
 
     /// Connexion lancee sans l'attendre (Reglages, ports) : la liaison en place est fermee et `etat` passe a

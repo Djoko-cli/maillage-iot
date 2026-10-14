@@ -81,13 +81,15 @@ extension MoteurPieces {
     private func retenir(_ d: DispositionPieces, scene: ScenePieces, cartes: [CartesPieces.Carte],
                          cle: EntreeScene.CleDisposition) {
         guard let e = enCalcul, e.cleDisposition == cle else { return }
+        // Par `nom` et non par `id` : deux cartes de routeur de meme cle de deux protocoles (maison sans pieces) ont la meme
+        // cle de piece `routeur:<cle>` (gardee brute), mais deux `NomPiece` : chacune garde sa place et sa carte.
         placesCalculees = Dictionary(uniqueKeysWithValues: scene.pieces.indices.map {
-            (scene.pieces[$0].id, d.positions[$0])
+            (scene.pieces[$0].nom, d.positions[$0])
         })
         rayonsCalcules = Dictionary(scene.etages.indices.map { (scene.etages[$0].id, d.rayons[$0]) },
                                     uniquingKeysWith: { a, _ in a })
         cartesCalculees = Dictionary(uniqueKeysWithValues: scene.pieces.indices.map {
-            (scene.pieces[$0].id, cartes[$0])
+            (scene.pieces[$0].nom, cartes[$0])
         })
         cleCalculee = cle
         enCalcul = nil
@@ -126,8 +128,8 @@ extension MoteurPieces {
             survolEtage = nil
             survolNomEtage = nil
         }
-        cartes = scene.pieces.map { cartesCalculees[$0.id] ?? CartesPieces.carte([]) }
-        positions = scene.pieces.map { placesCalculees[$0.id] ?? .zero }
+        cartes = scene.pieces.map { cartesCalculees[$0.nom] ?? CartesPieces.carte([]) }
+        positions = scene.pieces.map { placesCalculees[$0.nom] ?? .zero }
         // Une nouvelle disposition glisse (polissage D, section 1) : de la pose affichee a la nouvelle, en 0,9 s ; une
         // disposition qui ne change aucune pose laisse le glissement en cours aller a son terme, sans le relancer :
         // un releve qui ne change que la qualite d'un lien, par exemple. Ce qui change se juge comme dans
@@ -301,7 +303,7 @@ extension MoteurPieces {
               positions[i].x.isFinite, positions[i].y.isFinite else { return }
         let p = e.scene.pieces[i]
         places.garder(positions[i], piece: p.id, etage: e.scene.etages[p.etage].id, domicile: e.domicile)
-        placesCalculees[p.id] = positions[i]
+        placesCalculees[p.nom] = positions[i]
         enregistrer()
         if let c = enCalcul { calculer(c) }
     }

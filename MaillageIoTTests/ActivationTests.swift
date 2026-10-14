@@ -450,10 +450,18 @@ struct ActivationTests {
         #expect(ports.demarrages == ports.arrets && b.bonjour.demarrages == b.bonjour.arrets)
     }
 
+    /// Eteint au lancement, Thread est arrete comme par l'interrupteur (relecture finale, I1) : la sonde n'est pas « en marche »
+    /// (`actif` faux), si bien que le selecteur « Liaison » des Reglages n'ouvre aucune session reseau, n'arme aucune tournee et
+    /// n'ecrit pas `identites-routeurs.json` (m5) ; l'allumer la fait repartir.
     @Test func cablageThreadEteintAuLancement() async throws {
         let (pp, dp) = try SondeMaillageTests.preferences()
         defer { pp.removePersistentDomain(forName: dp) }
-        pp.set(SondeMaillageTests.port.serie, forKey: SondeMaillageThread.cleSerie)
+        // Une sonde retenue avec sa cle de ce Mac : le reseau se choisit (`reseauDisponible`).
+        let trousseau = try SondeReseauTests.prete(pp, liaison: .usb)
+        let reseau = ReseauFactice([.success(SondeReseauTests.sonde())])
+        let identites = FileManager.default.temporaryDirectory
+            .appendingPathComponent("identites-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: identites) }
         let registre = RegistrePorts()
         let ports = FabriquePorts()
         let b = try BancActivation(thread: false)
@@ -461,14 +469,29 @@ struct ActivationTests {
         let port = SondeMaillageTests.port
         let sonde = SondeMaillageThread(preferences: pp, actif: true,
                                         ouvrirCanal: { registre.canal($0, CanalRejoue { CanalRejoue.reseauMinimal($0) }) },
+                                        trousseau: trousseau, ouvrirReseau: { try reseau.ouvrir($0, $1) },
+                                        fichierIdentites: identites,
                                         surveillerPorts: ports.fabriquer, listerPorts: { [port] })
+        #expect(sonde.reseauDisponible)
         ModulesApp.relierThread(b.s, sonde: sonde)
         b.s.thread.demarrer()
         try await Task.sleep(for: .milliseconds(100))
         #expect(ports.crees.isEmpty && registre.chemins.isEmpty && b.bonjour.crees.isEmpty, "rien ne demarre")
+        #expect(!sonde.actif && sonde.tachesPlanifiees == 0 && ports.enMarche == 0, "la sonde est arretee, pas seulement non lancee")
+
+        // Reglages › Thread : « Liaison » › « Reseau Thread » ne fait rien tant que Thread est eteint.
+        sonde.choisirLiaison(.reseau)
+        sonde.portsChanges([port])
+        sonde.rafraichir()
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(reseau.appels.isEmpty, "aucune session UDP")
+        #expect(sonde.liaison == .usb && pp.string(forKey: SondeMaillageThread.cleLiaison) == "usb", "preference de liaison gardee")
+        #expect(sonde.tachesPlanifiees == 0 && !sonde.tourneeEnCours && registre.chemins.isEmpty, "aucune tournee")
+        #expect(!FileManager.default.fileExists(atPath: identites.path), "identites-routeurs.json non reecrit")
+
         b.s.thread.actif = true
         #expect(await attendreActivation { SondeMaillageTests.connectee(sonde) })
-        #expect(b.bonjour.enMarche == 4)
+        #expect(sonde.actif && b.bonjour.enMarche == 4)
         b.s.thread.actif = false
         #expect(await attendreActivation { registre.ouverts == 0 })
     }
@@ -515,6 +538,8 @@ struct ActivationTests {
         #expect(ecoutePont.demarrages == ecoutePont.arrets)
     }
 
+    /// Eteint au lancement, Zigbee est arrete comme par l'interrupteur (relecture finale, I1) : le pont est suspendu, si bien que
+    /// « Utiliser cette adresse » ne lit rien et n'arme aucune relecture de 5 minutes ; l'allumer fait repartir le tout.
     @Test func cablageZigbeeEteintAuLancement() async throws {
         let b = try BancActivation(zigbee: false)
         defer { b.nettoyer() }
@@ -528,10 +553,21 @@ struct ActivationTests {
         try await Task.sleep(for: .milliseconds(100))
         #expect(z.ports.crees.isEmpty && z.bonjour.crees.isEmpty && z.registre.chemins.isEmpty)
         #expect(ecoutePont.demarrages == 0 && pont.simule.appels.isEmpty, "ni Bonjour, ni pont")
+        #expect(!z.sonde.actif && z.sonde.tachesPlanifiees == 0, "la sonde est arretee")
+        #expect(pont.pont.suspendu && !decouverte.demarree, "le pont et sa decouverte sont arretes")
+
+        // Reglages › Zigbee › « Utiliser cette adresse » : l'adresse est sondee (une requete), rien ne se relit.
+        await pont.pont.utiliserAdresse("192.0.2.10")
+        let appels = pont.simule.appels.count
+        #expect(appels == 1, "la seule sonde HTTPS de l'adresse : \(appels)")
+        #expect(pont.pont.tachesPlanifiees == 0 && !pont.pont.lectureEnCours, "aucune relecture armee")
+        try await Task.sleep(for: .milliseconds(250))
+        #expect(pont.simule.appels.count == appels && pont.pont.tachesPlanifiees == 0, "le pont n'est pas lu")
+
         b.s.zigbee.actif = true
         #expect(await attendreActivation { SondeMaillageZigbeeTests.connectee(z.sonde) })
-        #expect(decouverte.demarree && ecoutePont.enMarche)
-        #expect(await attendreActivation { !pont.simule.appels.isEmpty }, "le pont est lu")
+        #expect(decouverte.demarree && ecoutePont.enMarche && !pont.pont.suspendu)
+        #expect(await attendreActivation { pont.simule.appels.count > appels + 20 }, "le pont est lu")
         b.s.zigbee.actif = false
         #expect(await attendreActivation { z.registre.ouverts == 0 && !pont.pont.lectureEnCours })
     }

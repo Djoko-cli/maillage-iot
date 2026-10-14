@@ -441,12 +441,20 @@ final class SondeMaillageThread {
     /// Automatique (`choisi` faux) et en echec, elle est refaite une fois apres
     /// `delaiNouvelEssai` ; `dernierEssai` : c'est ce nouvel essai.
     func connecter(_ port: PortUSB, choisi: Bool, dernierEssai: Bool = false) async {
-        guard ouvrable(port, choisi: choisi) else { return }
+        guard ouvrable(port, choisi: choisi) else {
+            refuserConnexionEnCours(port)
+            return
+        }
         deconnecter(.connexion, port: port)
         let n = essai
         // Tant que l'ancienne liaison tient le port, TIOCEXCL refuse de le rouvrir.
         await fermetures?.value
         guard n == essai else { return }
+        // L'autre module a pu retenir la carte pendant l'attente : rien n'est ouvert, la sonde ne reste pas en « connexion ».
+        guard ouvrable(port, choisi: choisi) else {
+            refuserConnexionEnCours(port)
+            return
+        }
         let s = SondeUSB(canal: ouvrirCanal(port.chemin))
         enConnexion = s
         do {
@@ -507,6 +515,15 @@ final class SondeMaillageThread {
             etat = choisi ? .refusee(error.localizedDescription) : .erreur(error.localizedDescription)
             if !choisi && !dernierEssai { planifierNouvelEssai(port) }
         }
+    }
+
+    /// `connecter` refuse ce port (l'autre module retient sa carte) alors que `lancerConnexion` a deja passe la sonde en
+    /// `.connexion` pour lui : elle passe en `.refusee` au lieu de rester bloquee (`portsChanges` ne relance pas une sonde en
+    /// connexion). Sans effet si la sonde n'attend pas ce port (appel direct, autre connexion en cours).
+    private func refuserConnexionEnCours(_ port: PortUSB) {
+        guard case .connexion = etat, enConnexion == nil, sonde == nil, serieEtat == port.serie,
+              let autre = cartes.retenuePar(port.serie, hors: .thread) else { return }
+        etat = .refusee(CartesRetenues.texteRefus(retenuePar: autre))
     }
 
     /// Connexion lancee sans l'attendre (Reglages, ports) : la liaison en place

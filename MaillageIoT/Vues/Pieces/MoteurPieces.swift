@@ -166,9 +166,9 @@ final class MoteurPieces {
     }
     @ObservationIgnored var calcul: Task<Void, Never>?
     @ObservationIgnored var cleCalculee: EntreeScene.CleDisposition?
-    @ObservationIgnored var placesCalculees: [String: SIMD2<Double>] = [:]
+    @ObservationIgnored var placesCalculees: [ScenePieces.NomPiece: SIMD2<Double>] = [:]
     @ObservationIgnored var rayonsCalcules: [String: Double] = [:]
-    @ObservationIgnored var cartesCalculees: [String: CartesPieces.Carte] = [:]
+    @ObservationIgnored var cartesCalculees: [ScenePieces.NomPiece: CartesPieces.Carte] = [:]
     @ObservationIgnored var cartes: [CartesPieces.Carte] = []
     @ObservationIgnored var positions: [SIMD2<Double>] = []
     /// La geometrie de l'image ; elle rejoint la geometrie visee (`geometrieVisee`) quand les plateaux glissent.

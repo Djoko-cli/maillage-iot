@@ -1094,4 +1094,28 @@ struct MoteurPiecesTests {
         #expect(RenduCanvas.couches == [.plateaux, .blocs, .liensEnfants, .liensRouteurs, .pastilles, .sphere, .traits, .noms])
         #expect(Set(RenduCanvas.couches) == Set(RenduCanvas.Couche.allCases))
     }
+
+    /// Maison sans pieces, un routeur Thread et un routeur Zigbee de meme cle (relecture finale, m2) : deux cartes (leurs
+    /// `NomPiece` different), qui ont la meme cle de piece `routeur:<cle>`, gardee brute ; le moteur ne plante pas sur la cle
+    /// en double, et chaque carte a sa place et sa mise en page.
+    @Test func deuxRouteursDeMemeCleDeDeuxProtocolesSansPieces() throws {
+        let (_, _, base) = try NomsSceneTests.demo()
+        let t = IdNoeud(.thread, "E000000000000001"), z = IdNoeud(.zigbee, "E000000000000001")
+        let noeuds = [t, z].map {
+            GrapheReseau.Noeud(id: $0, genre: .centre, partition: $0.protocole == .zigbee ? "zigbee" : "p", routeur: true,
+                               bordure: false, inconnu: false)
+        }
+        let graphe = GrapheReseau(noeuds: noeuds)
+        var e = base
+        e.graphe = graphe
+        e.scene = ScenePieces(graphe: graphe, libelles: [t: "Routeur Thread", z: "Routeur Zigbee"], piecesNoeuds: [:],
+                              zones: nil, chefs: [], piecesMaison: false,
+                              classement: { n in (n.routeur ? 2 : 3, n.routeur ? 8 : 7) })
+        #expect(e.scene.sansPiecesMaison && e.scene.pieces.count == 2)
+        #expect(e.scene.pieces.map(\.id) == ["routeur:E000000000000001", "routeur:E000000000000001"], "cle de piece brute")
+        let m = Self.moteur(e)
+        #expect(m.cartes.count == 2 && m.positions.count == 2)
+        #expect(m.positions[0] != m.positions[1], "deux cartes, deux places : \(m.positions)")
+        #expect(m.projetee?.ancresPieces.count == 2)
+    }
 }
