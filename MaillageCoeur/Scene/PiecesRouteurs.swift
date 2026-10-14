@@ -34,11 +34,12 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
     }
 
     /// `appareils` manque aux fichiers d'avant la precision 27 : aucun choix d'appareil. Mal forme, il
-    /// est ignore de meme : un champ facultatif ne doit pas faire perdre les choix des routeurs.
+    /// est ignore de meme : un champ facultatif ne doit pas faire perdre les choix des routeurs. `maisons`
+    /// manque aux fichiers de Maillage Zigbee, qui n'ont pas de routeur de bordure : aucun choix de routeur.
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = try c.decode(Int.self, forKey: .version)
-        maisons = try c.decode([String: [String: String]].self, forKey: .maisons)
+        maisons = try c.decodeIfPresent([String: [String: String]].self, forKey: .maisons) ?? [:]
         appareils = (try? c.decodeIfPresent([String: [String: String]].self, forKey: .appareils)) ?? [:]
     }
 

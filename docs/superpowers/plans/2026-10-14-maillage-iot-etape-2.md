@@ -143,10 +143,10 @@ public struct EchelleSignal: Sendable {
 ```
   `ProtocoleThread` : `public extension EchelleSignal { static let dbm = EchelleSignal(unite: "dBm", uniteAvant: false, pas: 10, marge: 5, bornes: nil, domaineParDefaut: -100 ... -40) }` ; le cœur n'a aucune instance nommée (les tests du cœur ont une instance d'essai) ; `PiecesRouteurs` lit un fichier **sans** `maisons` (`decodeIfPresent`, défaut vide).
 
-- [ ] **Step 1: RED** — `EchelleSignalTests` : les tests dBm actuels passent sur une instance d'essai aux réglages dBm (mêmes attentes, mot pour mot) ; ajouter les cas à bornes et à pas 50 de `Z:MaillageCoeurTests/EchelleSignalTests.swift` sur une instance d'essai aux réglages LQI. `PiecesRouteursTests.fichierSansMaisonsLisible`. Échec attendu.
-- [ ] **Step 2: GREEN** — passer `EchelleSignal` en struct d'après le tableau §3 de l'inventaire (un seul algorithme couvre les deux) ; l'app Thread appelle `EchelleSignal.dbm` (y compris le domaine par défaut aujourd'hui codé en dur dans `CourbesFiche.swift`) ; `PiecesRouteurs` en `decodeIfPresent`.
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh`.
-- [ ] **Step 4: Commit** — « Coeur : echelle de signal parametree (dBm pour Thread), pieces des routeurs lisibles sans maisons ».
+- [x] **Step 1: RED** — `EchelleSignalTests` : les tests dBm actuels passent sur une instance d'essai aux réglages dBm (mêmes attentes, mot pour mot) ; ajouter les cas à bornes et à pas 50 de `Z:MaillageCoeurTests/EchelleSignalTests.swift` sur une instance d'essai aux réglages LQI. `PiecesRouteursTests.fichierSansMaisonsLisible`. Échec attendu.
+- [x] **Step 2: GREEN** — passer `EchelleSignal` en struct d'après le tableau §3 de l'inventaire (un seul algorithme couvre les deux) ; l'app Thread appelle `EchelleSignal.dbm` (y compris le domaine par défaut aujourd'hui codé en dur dans `CourbesFiche.swift`) ; `PiecesRouteurs` en `decodeIfPresent`.
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh`.
+- [x] **Step 4: Commit** — « Coeur : echelle de signal parametree (dBm pour Thread), pieces des routeurs lisibles sans maisons ».
 
 ---
 

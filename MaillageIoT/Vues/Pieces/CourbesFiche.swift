@@ -1,5 +1,6 @@
 import Charts
 import MaillageCoeur
+import ProtocoleThread
 import SwiftUI
 
 /// Courbes de l'historique dans la fiche (spec de la sonde, section 6 ; bande large reprise de Maillage Zigbee, 09/10),
@@ -175,8 +176,9 @@ struct CourbesFiche: View {
     /// L'echelle du signal (polissage D, section 4.3) : son domaine, des dizaines de dBm autour de ses valeurs, et ses
     /// graduations ; sans valeur, de -100 a -40 dBm.
     static func echelle(_ c: CourbesNoeud) -> (domaine: ClosedRange<Double>, graduations: [Double]) {
-        let d = EchelleSignal.domaine(c.signal.map(\.valeur)) ?? -100 ... -40
-        return (d, EchelleSignal.graduations(d))
+        let e = EchelleSignal.dbm
+        let d = e.domaine(c.signal.map(\.valeur)) ?? e.domaineParDefaut
+        return (d, e.graduations(d))
     }
 }
 
@@ -469,7 +471,7 @@ struct GrapheSignal: View {
                     // sinon. Posee ici et non en `annotation` : sous le verre de la fiche, les annotations du graphe ne
                     // se dessinent pas (verification du 05/10).
                     if let r = a.releve, let cadre = proxy.plotFrame, let x = proxy.position(forX: r.date) {
-                        Text(verbatim: EchelleSignal.etiquette(r, periode: periode, locale: langue, fuseau: .current))
+                        Text(verbatim: EchelleSignal.dbm.etiquette(r, periode: periode, locale: langue, fuseau: .current))
                             .font(.caption2.monospacedDigit())
                             .padding(.horizontal, 4)
                             .background(.background.opacity(0.85), in: RoundedRectangle(cornerRadius: 3))

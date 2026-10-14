@@ -2,7 +2,35 @@ import Foundation
 
 /// Le signal vu par la sonde, dans la fiche (polissage D, section 4.3) : son echelle, toujours visible, meme pour un
 /// seul point ou des valeurs toutes egales ; le releve sous le pointeur et son etiquette.
-public enum EchelleSignal {
+///
+/// Une echelle par protocole (dBm pour Thread, LQI pour Zigbee) : l'unite, ou elle se place, le pas des graduations,
+/// la marge du domaine autour des valeurs, les bornes dures de la grandeur et le domaine sans valeur. Le coeur n'en
+/// nomme aucune (chaque protocole declare la sienne, `EchelleSignal.dbm` dans ProtocoleThread). Ce qui ne depend pas de
+/// l'unite (`portee`, `seuil`, `plusProche`, `heure`, `aGauche`) reste statique.
+public struct EchelleSignal: Sendable {
+    /// L'unite de l'etiquette : « dBm », « LQI ».
+    public var unite: String
+    /// Vrai : l'unite precede la valeur (« LQI 182 ») ; faux : elle la suit (« −67 dBm »).
+    public var uniteAvant: Bool
+    /// Le pas des graduations, et celui de l'arrondi des bornes du domaine : 10 (dBm), 50 (LQI).
+    public var pas: Double
+    /// Ce que le domaine ajoute de part et d'autre des valeurs, avant l'arrondi au pas : 5 (dBm), 10 (LQI).
+    public var marge: Double
+    /// Les bornes dures de la grandeur (le domaine y est coupe) ; nil : aucune (dBm), 0 a 255 (LQI).
+    public var bornes: ClosedRange<Double>?
+    /// Le domaine quand le noeud n'a aucune valeur : -100 a -40 (dBm), 0 a 255 (LQI).
+    public var domaineParDefaut: ClosedRange<Double>
+
+    public init(unite: String, uniteAvant: Bool, pas: Double, marge: Double, bornes: ClosedRange<Double>?,
+                domaineParDefaut: ClosedRange<Double>) {
+        self.unite = unite
+        self.uniteAvant = uniteAvant
+        self.pas = pas
+        self.marge = marge
+        self.bornes = bornes
+        self.domaineParDefaut = domaineParDefaut
+    }
+
     /// Un releve ne compte au survol qu'a moins de 2 % de la duree de la periode du pointeur (et d'un trou : `seuil`).
     public static let portee = 0.02
 
@@ -16,16 +44,28 @@ public enum EchelleSignal {
 
     static func seuil(duree: TimeInterval, ecart: TimeInterval) -> TimeInterval { min(portee * duree, ecart) }
 
-    /// Le domaine vertical (dBm) : du minimum moins 5 dB, arrondi a la dizaine inferieure, au maximum plus 5 dB, arrondi
-    /// a la dizaine superieure ; au moins 10 dB. Nil sans valeur.
-    public static func domaine(_ valeurs: [Double]) -> ClosedRange<Double>? {
+    /// Le domaine vertical : du minimum moins `marge`, arrondi au multiple de `pas` inferieur, au maximum plus `marge`,
+    /// arrondi au multiple de `pas` superieur, coupe aux `bornes` s'il y en a ; au moins un `pas` de haut (contre une
+    /// borne, le haut ou le bas se decale). Nil sans valeur. En dBm (marge 5, pas 10) : du minimum moins 5 dB, arrondi
+    /// a la dizaine inferieure, au maximum plus 5 dB, arrondi a la dizaine superieure ; en LQI (marge 10, pas 50) :
+    /// dans 0 a 255.
+    public func domaine(_ valeurs: [Double]) -> ClosedRange<Double>? {
         guard let bas = valeurs.min(), let haut = valeurs.max() else { return nil }
-        return ((bas - 5) / 10).rounded(.down) * 10 ... ((haut + 5) / 10).rounded(.up) * 10
+        var b = ((bas - marge) / pas).rounded(.down) * pas
+        var h = ((haut + marge) / pas).rounded(.up) * pas
+        if let bornes {
+            b = max(bornes.lowerBound, b)
+            h = min(bornes.upperBound, h)
+        }
+        if h - b < pas {
+            if let bornes, b + pas > bornes.upperBound { b = h - pas } else { h = b + pas }
+        }
+        return b ... h
     }
 
-    /// Les graduations : chaque dizaine du domaine, du bas vers le haut.
-    public static func graduations(_ d: ClosedRange<Double>) -> [Double] {
-        stride(from: (d.lowerBound / 10).rounded(.up) * 10, through: d.upperBound, by: 10).map { $0 }
+    /// Les graduations : chaque multiple de `pas` du domaine, du bas vers le haut.
+    public func graduations(_ d: ClosedRange<Double>) -> [Double] {
+        stride(from: (d.lowerBound / pas).rounded(.up) * pas, through: d.upperBound, by: pas).map { $0 }
     }
 
     /// Le releve le plus proche de `date` dans le temps (`points` du plus ancien au plus recent), a moins de
@@ -36,13 +76,15 @@ public enum EchelleSignal {
             .min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }
     }
 
-    /// L'etiquette d'un releve : sa valeur arrondie au dBm, avec le vrai signe moins, puis son heure, au format de
-    /// `locale`, dans le fuseau `fuseau`, en calendrier gregorien (celui de la machine n'y change rien) :
-    /// « −67 dBm · 14:32 » ; en 7 j et 30 j, le jour aussi.
-    public static func etiquette(_ p: PointCourbe, periode: PeriodeCourbes, locale: Locale, fuseau: TimeZone) -> String {
+    /// L'etiquette d'un releve : sa valeur arrondie, avec le vrai signe moins (U+2212) si elle est negative, et son
+    /// unite avant ou apres (`uniteAvant`), puis son heure, au format de `locale`, dans le fuseau `fuseau`, en
+    /// calendrier gregorien (celui de la machine n'y change rien) : « −67 dBm · 14:32 », « LQI 182 · 14:32 » ; en 7 j
+    /// et 30 j, le jour aussi.
+    public func etiquette(_ p: PointCourbe, periode: PeriodeCourbes, locale: Locale, fuseau: TimeZone) -> String {
         let v = Int(p.valeur.rounded())
-        let valeur = (v < 0 ? "\u{2212}" : "") + String(abs(v))
-        return valeur + " dBm · " + heure(p.date, periode: periode, locale: locale, fuseau: fuseau)
+        let nombre = (v < 0 ? "\u{2212}" : "") + String(abs(v))
+        let valeur = uniteAvant ? unite + " " + nombre : nombre + " " + unite
+        return valeur + " · " + Self.heure(p.date, periode: periode, locale: locale, fuseau: fuseau)
     }
 
     /// L'heure d'un releve, au format de `locale`, dans le fuseau `fuseau`, en calendrier gregorien : « 14:32 » ; en 7 j

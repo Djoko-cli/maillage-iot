@@ -138,4 +138,35 @@ struct PiecesRouteursTests {
         try Data("pas du json".utf8).write(to: url)
         #expect(PiecesRouteurs.lire(url) == PiecesRouteurs())
     }
+
+    /// Un fichier ecrit par Maillage Zigbee 1.1.1 n'a que `appareils` (ni `maisons`) : il se lit, avec ses choix, et
+    /// s'ecrit de nouveau sans perte. Un `maisons` mal forme n'est pas lu, comme avant ; sans `appareils`, la version
+    /// seule donne un fichier vide, mais lisible.
+    @Test func fichierSansMaisonsLisible() throws {
+        let url = Self.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let zigbee = """
+        {
+          "appareils" : {
+            "" : {
+              "0000000000000001" : "Salon"
+            },
+            "Maison" : {
+              "0000000000000002" : "Bureau"
+            }
+          },
+          "version" : 1
+        }
+        """
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(zigbee.utf8).write(to: url)
+        let lu = PiecesRouteurs.lire(url)
+        #expect(lu.maisons.isEmpty)
+        #expect(lu.choix(appareil: "0000000000000001", domicile: "") == "Salon")
+        #expect(lu.choix(appareil: "0000000000000002", domicile: "Maison") == "Bureau")
+        try lu.ecrire(dans: url)
+        #expect(PiecesRouteurs.lire(url) == lu, "ecrit puis relu : les memes choix")
+        try Data(#"{"version":1}"#.utf8).write(to: url)
+        #expect(PiecesRouteurs.lire(url) == PiecesRouteurs())
+    }
 }
