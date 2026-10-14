@@ -84,7 +84,7 @@ struct CartesPiecesTests {
     @Test func cartesDeLaScene() throws {
         let g = try ScenePiecesTests.graphe(sonde: false)
         let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: ["Apple TV": "Salon"], zones: nil,
-                            chefs: [], piecesMaison: true)
+                            chefs: [], piecesMaison: true, classement: FixturesScene.classement)
         let cartes = CartesPieces.cartes(s, largeurs: ["Apple TV": 70])
         #expect(cartes.count == s.pieces.count)
         let salon = try #require(s.pieces.firstIndex { $0.nom == .maison("Salon") })

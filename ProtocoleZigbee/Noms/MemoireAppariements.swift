@@ -23,20 +23,15 @@ public struct MemoireAppariements: Codable, Hashable, Sendable {
         dossier.appendingPathComponent(fichier)
     }
 
-    /// La memoire gardee ; vide si le fichier manque, est illisible ou d'une version plus recente (elle se refait au
-    /// releve suivant : ce n'est qu'un cache).
+    /// La memoire gardee (`FichiersGardes`) ; vide si le fichier manque, est illisible ou d'une version plus recente
+    /// (elle se refait au releve suivant : ce n'est qu'un cache).
     public static func lire(_ url: URL) -> MemoireAppariements {
-        guard let d = try? Data(contentsOf: url),
-              let m = try? JSONDecoder().decode(MemoireAppariements.self, from: d),
-              m.version <= versionActuelle else { return MemoireAppariements() }
-        return m
+        FichiersGardes.lire(MemoireAppariements.self, url, version: versionActuelle) ?? MemoireAppariements()
     }
 
-    /// Ecrit la memoire d'un bloc (fichier temporaire puis renommage), en creant le dossier au besoin.
+    /// Ecrit la memoire d'un bloc, en creant le dossier au besoin (`FichiersGardes`) : un fichier d'une version plus
+    /// recente n'est jamais ecrase (rien n'est ecrit, sans erreur), un fichier illisible est mis de cote d'abord.
     public func ecrire(dans url: URL) throws {
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let e = JSONEncoder()
-        e.outputFormatting = [.sortedKeys, .prettyPrinted]
-        try e.encode(self).write(to: url, options: .atomic)
+        try FichiersGardes.ecrire(self, dans: url, version: Self.versionActuelle)
     }
 }

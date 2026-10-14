@@ -13,7 +13,7 @@ struct ReperesCourbeZigbeeTests {
     /// passage au lampadaire 10 h avant la fin). Sur 24 h, ils se fondent deux a deux ; sur 7 j, en un seul repere
     /// dont la bulle liste six lignes et « 4 autres » (dix changements moins six), puis un repere isole.
     @Test func demoDuBureau() {
-        let c = CourbesNoeud(cle: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .jour,
+        let c = CourbesNoeud(zigbee: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .jour,
                              fin: MaillageDemoZigbee.fin)
         #expect(c.chemins.count == 11 && c.chemins.last?.parent == I.lampadaireSalon)
         #expect(zip(c.chemins, c.chemins.dropFirst()).allSatisfy { $0.parent != $1.parent }, "chaque changement change")

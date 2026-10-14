@@ -229,7 +229,7 @@ struct FocusFicheTests {
         #expect(CourbesFiche.texteTous(cachees: 0) == String(localized: "tous les liens"))
         #expect(CourbesFiche.graduations(.jour) == (.hour, 3) && CourbesFiche.graduations(.mois) == (.day, 5))
         let h = MaillageDemoZigbee.historique
-        let c = CourbesNoeud(cle: I.lampeBureau, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
+        let c = CourbesNoeud(zigbee: I.lampeBureau, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
         #expect(CourbesFiche.reperes(c).count == 11 && CourbesFiche.reperes(c).last?.parent == I.lampadaireSalon)
         let cles = ChoixCourbes.montrees(cles: c.liens.map(\.id), prioritaires: c.prioritaires, tous: false)
         let heure = MaillageDemoZigbee.fin.addingTimeInterval(-3600)
@@ -255,7 +255,7 @@ struct FocusFicheTests {
         #expect(base != CourbesFiche.identiteGraphe(id: I.lampeBureau, tous: true, periode: .jour))
         #expect(base != CourbesFiche.identiteGraphe(id: I.lampeBureau, tous: false, periode: .semaine))
         // Un appareil final : une seule courbe, vers son parent, et son changement de parent en repere.
-        let abri = CourbesNoeud(cle: I.detecteurAbri, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
+        let abri = CourbesNoeud(zigbee: I.detecteurAbri, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
         #expect(ChoixCourbes.montrees(cles: abri.liens.map(\.id), prioritaires: abri.prioritaires, tous: false)
                 == [CourbesNoeud.cleParent])
         #expect(CourbesFiche.reperes(abri).map(\.parent) == [I.priseTerrasse])

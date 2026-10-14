@@ -49,18 +49,21 @@ struct ScenePiecesZigbeeTests {
         #expect(s.liens == g.liens)
     }
 
-    /// Sans le classement de Zigbee, la regle par defaut (celle de Thread) donne le rang 2 au pont, qui n'est pas un
-    /// routeur de bordure, au lieu du rang 1 : c'est pourquoi Zigbee passe le sien. Les autres rangs sont les memes.
-    @Test func laReglePourZigbeeDiffereDeCelleParDefaut() throws {
+    /// Une regle fondee sur les routeurs de bordure (celle de Thread, copiee ici : un module ne depend pas de l'autre)
+    /// donne le rang 2 au pont, qui n'est pas un routeur de bordure, au lieu du rang 1 : c'est pourquoi Zigbee passe la
+    /// sienne. Les autres rangs sont les memes.
+    @Test func laReglePourZigbeeDiffereDeCelleDesBordures() throws {
         let g = try ScenePiecesZigbee.grapheZigbee(sonde: true)
         let tous = Dictionary(uniqueKeysWithValues: g.noeuds.map { ($0.id, "Salon") })
-        let parDefaut = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
-                                    piecesMaison: true)
+        let parBordure = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
+                                     piecesMaison: true, classement: { n in
+            (n.bordure ? 1 : n.routeur ? 2 : 3, n.genre == .centre ? 15 : n.bordure ? 13 : n.routeur ? 8 : 7)
+        })
         let zigbee = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
                                  piecesMaison: true, classement: ScenePieces.classementZigbee)
-        #expect(parDefaut.noeud("Apple TV")?.rang == 2 && zigbee.noeud("Apple TV")?.rang == 1)
+        #expect(parBordure.noeud("Apple TV")?.rang == 2 && zigbee.noeud("Apple TV")?.rang == 1)
         for id in ["HomePod", "E000000000000004", "E000000000000002"] {
-            #expect(parDefaut.noeud(id)?.rang == zigbee.noeud(id)?.rang, "\(id)")
+            #expect(parBordure.noeud(id)?.rang == zigbee.noeud(id)?.rang, "\(id)")
         }
     }
 }

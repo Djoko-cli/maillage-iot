@@ -9,7 +9,7 @@ import Observation
 /// `maillage-passeur://abonner?port=<port>&jeton=<jeton>`, ouverte sans activation. Le demon envoie `etat` et `releve`
 /// a la connexion, puis a chaque changement dans Maison ; l'app lui envoie `relire`, `identifier` et
 /// `ouvertureSession`. Connexion perdue, ou aucun demon dans le delai : nouvel abonnement apres 5 s, 10 s, 30 s, puis
-/// toutes les minutes. Repris de `NomsInternes` de Maillage Thread 1.3.0 (spec du demon, 12/10/2026, section 4.2).
+/// toutes les minutes. Repris de `NomsInternes` de l'app Thread (1.3.0) (spec du demon, 12/10/2026, section 4.2).
 /// Le dernier releve reussi est garde : un echec ne l'efface jamais, il se dit dans `probleme`. Sans demon, l'app
 /// marche avec les seuls noms du pont Hue.
 @MainActor
@@ -56,7 +56,7 @@ final class NomsPasseur {
     nonisolated static let preavisProfil: TimeInterval = 30 * 24 * 3600
     /// Duree d'affichage du resultat d'une identification.
     nonisolated static let dureeIdentification: Duration = .seconds(4)
-    /// Pause apres le lancement sans URL du demon : le temps que HomeKit se stabilise (banc de Maillage Thread du
+    /// Pause apres le lancement sans URL du demon : le temps que HomeKit se stabilise (banc de l'app Thread du
     /// 13/10 : maisons livrees en 0,2 s).
     nonisolated static let attenteDemarrage: Duration = .milliseconds(1500)
     /// Attente du demarrage du demon, lance sans URL : 100 essais de 100 ms.
@@ -291,7 +291,7 @@ final class NomsPasseur {
     /// sable.
     static func lancerPasseurDuMac(_ cible: EnvoiPasseur.Cible) async -> EchecLancement? {
         // Le demon se trouve par son schema `schemaProtocole`, jamais en lisant son paquet (le bac a sable l'interdit)
-        // ni par son identifiant seul (LaunchServices garde des copies perimees) : banc de Maillage Thread du 13/10.
+        // ni par son identifiant seul (LaunchServices garde des copies perimees) : banc de l'app Thread du 13/10.
         let marque = URL(string: "\(EnvoiPasseur.schemaProtocole):")
         guard let url = marque.flatMap({ NSWorkspace.shared.urlForApplication(toOpen: $0) }) else {
             return .introuvable(ancien: NSWorkspace.shared.urlForApplication(withBundleIdentifier: idPasseur) != nil)

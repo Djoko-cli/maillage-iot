@@ -31,12 +31,12 @@ public extension GrapheReseau {
             case .final, .inconnu: .appareil
             }
             // Une cle provisoire (sans adresse longue) n'est pas une adresse longue : ni choix de piece, ni menu.
-            noeuds.append(Noeud(id: n.ieee, genre: genre, routeur: n.route,
+            noeuds.append(Noeud(zigbee: n.ieee, genre: genre, routeur: n.route,
                                 inconnu: !connus.contains(n.ieee.uppercased()) && n.ieee != m?.sonde,
                                 extMac: n.ieeeConnue ? n.ieee : nil))
         }
         for a in appareils.sorted(by: { $0.id < $1.id }) where presents.insert(a.id).inserted {
-            noeuds.append(Noeud(id: a.id, genre: .appareil, routeur: false, inconnu: false,
+            noeuds.append(Noeud(zigbee: a.id, genre: .appareil, routeur: false, inconnu: false,
                                 extMac: a.id.uppercased()))
         }
         if let m {
@@ -58,7 +58,7 @@ public extension GrapheReseau {
 
 public extension GrapheReseau.Noeud {
     /// Un noeud Zigbee : de la partition unique (`GrapheReseau.partitionUnique`), jamais routeur de bordure.
-    init(id: String, genre: GrapheReseau.Genre, routeur: Bool, inconnu: Bool, extMac: String? = nil) {
+    init(zigbee id: String, genre: GrapheReseau.Genre, routeur: Bool, inconnu: Bool, extMac: String? = nil) {
         self.init(id: id, genre: genre, partition: GrapheReseau.partitionUnique, routeur: routeur, bordure: false,
                   inconnu: inconnu, extMac: extMac)
     }

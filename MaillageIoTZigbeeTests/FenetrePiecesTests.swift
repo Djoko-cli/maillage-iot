@@ -735,7 +735,7 @@ struct FenetrePiecesTests {
     }
 
     /// La pastille du coordinateur tient sur une ligne dans la fiche du pont couronne, a la largeur par defaut de la
-    /// fenetre (1100 pt, `MaillageZigbeeApp`) comme a sa largeur minimale : les colonnes de la fiche se serrent, et une
+    /// fenetre (1100 pt, `MaillageIoTZigbeeApp`) comme a sa largeur minimale : les colonnes de la fiche se serrent, et une
     /// pastille qui prend la largeur qu'on lui laisse passait a la ligne. Mesure sur la fiche du pont, a pile, avec les
     /// courbes de l'historique (comme avec une sonde), ou la colonne
     /// de la couronne est la plus haute : la couronne y ajoute sa pastille et son espacement, `uneLigne`

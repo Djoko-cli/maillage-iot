@@ -122,22 +122,17 @@ public struct ScenePieces: Hashable, Sendable {
     public private(set) var sansPiecesMaison: Bool
     private var indices: [String: Int] = [:]
 
-    /// Le classement des noeuds quand le protocole n'en fournit pas (la regle de Thread) : rang dans sa carte (1 routeur
-    /// de bordure, 2 autre routeur, 3 autre noeud) et rayon naturel de sa pastille (15 px pour le centre, 13 pour un
-    /// routeur de bordure, 8 pour un routeur, 7 sinon).
-    public static let classementParDefaut: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = { n in
-        (n.bordure ? 1 : n.routeur ? 2 : 3, n.genre == .centre ? 15 : n.bordure ? 13 : n.routeur ? 8 : 7)
-    }
-
     /// `libelles` : nom de chaque noeud, sans ses badges (son id a defaut) ; `piecesNoeuds` : piece de Maison
     /// de chaque noeud qui en a une ; `zones` : celles de Maison (nil : fichier d'avant les zones) ;
     /// `chefs` : noeuds couronnes ; `piecesMaison` : Maison a au moins une piece ; `ordreEtages` :
     /// cles des etages dans l'ordre garde, du bas vers le haut ; `aCote` : les choix de niveau gardes ; `piles` : les
-    /// noeuds dont la pile est connue ; `classement` : le rang et le rayon de chaque noeud (par defaut, la regle de Thread).
+    /// noeuds dont la pile est connue ; `classement` : le rang dans sa carte (1 a 3) et le rayon naturel de la
+    /// pastille de chaque noeud, la regle de son protocole (`classementThread`, `ScenePieces.classementZigbee`) : le coeur
+    /// n'en a pas de par defaut.
     public init(graphe: GrapheReseau, libelles: [String: String], piecesNoeuds: [String: String],
                 zones: [ZoneMaison]?, chefs: Set<String>, piecesMaison: Bool, ordreEtages: [String] = [],
                 aCote: [String: PlacesGardees.ACote] = [:], piles: Set<String> = [],
-                classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = ScenePieces.classementParDefaut) {
+                classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double)) {
         sansPiecesMaison = !piecesMaison
         func libelle(_ id: String) -> String { libelles[id] ?? id }
         // Piece de chaque noeud.

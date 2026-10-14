@@ -83,8 +83,8 @@ struct GrapheReseauZigbeeTests {
 
     /// Des noeuds et des liens deja faits : un lien dont un bout manque est ignore.
     @Test func noeudsDejaFaits() {
-        let n = [GrapheReseau.Noeud(id: "a", genre: .centre, routeur: true, inconnu: false),
-                 GrapheReseau.Noeud(id: "b", genre: .appareil, routeur: false, inconnu: false)]
+        let n = [GrapheReseau.Noeud(zigbee: "a", genre: .centre, routeur: true, inconnu: false),
+                 GrapheReseau.Noeud(zigbee: "b", genre: .appareil, routeur: false, inconnu: false)]
         let g = GrapheReseau(noeuds: n, liens: [GrapheReseau.Lien(de: "b", vers: "a", genre: .parent, qualite: 2),
                                                  GrapheReseau.Lien(de: "c", vers: "a", genre: .parent)])
         #expect(g.liens.count == 1 && g.parent(de: "b") == "a" && g.parent(de: "a") == nil)

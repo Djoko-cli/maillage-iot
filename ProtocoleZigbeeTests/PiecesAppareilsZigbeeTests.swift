@@ -68,7 +68,7 @@ struct PiecesAppareilsZigbeeTests {
 
     /// Un noeud sans adresse longue connue n'a ni cle, ni choix.
     @Test func sansAdresseLongueNiChoix() throws {
-        let g = GrapheReseau(noeuds: [GrapheReseau.Noeud(id: "x", genre: .appareil, routeur: false, inconnu: true)])
+        let g = GrapheReseau(noeuds: [GrapheReseau.Noeud(zigbee: "x", genre: .appareil, routeur: false, inconnu: true)])
         let n = try #require(g.noeud("x"))
         #expect(PiecesRouteurs.cle(n) == nil)
         var p = PiecesRouteurs()

@@ -69,8 +69,8 @@ struct ReperesFicheTests {
     /// Les graphes n'ecrivent plus de texte au-dessus de la courbe et ne gardent aucun trait pointille : la couche des
     /// reperes se rend sans geste (aucun test de survol de fenetre) sur 24 h et sur 7 j, avec les changements de la demo.
     @Test func coucheRendue() throws {
-        let c24 = CourbesNoeud(cle: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .jour, fin: MaillageDemoZigbee.fin)
-        let c7 = CourbesNoeud(cle: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .semaine, fin: MaillageDemoZigbee.fin)
+        let c24 = CourbesNoeud(zigbee: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .jour, fin: MaillageDemoZigbee.fin)
+        let c7 = CourbesNoeud(zigbee: I.lampeBureau, releves: MaillageDemoZigbee.historique, periode: .semaine, fin: MaillageDemoZigbee.fin)
         // Sur 24 h, les dix changements rapproches se fondent deux a deux ; sur 7 j (le trace est plus large que 600 pt), en un seul.
         let jour = ReperesFiche.regrouper(c24.chemins, debut: c24.debut, fin: c24.fin, largeur: 700)
         let semaine = ReperesFiche.regrouper(c7.chemins, debut: c7.debut, fin: c7.fin, largeur: 700)

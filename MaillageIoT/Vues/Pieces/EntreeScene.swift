@@ -47,7 +47,8 @@ struct EntreeScene: Equatable {
                                 zones: maison?.zones, chefs: chefs,
                                 piecesMaison: maison?.accessoires.contains { $0.piece?.isEmpty == false } == true,
                                 ordreEtages: places.maison(domicile).ordreEtages, aCote: places.maison(domicile).aCote,
-                                piles: Set(parId.filter { $0.value.batterie != nil }.keys))
+                                piles: Set(parId.filter { $0.value.batterie != nil }.keys),
+                                classement: classementThread)
         let principale = r.partitions.first(where: \.estPrincipale)?.id
         self.scene = scene
         self.libelles = libelles

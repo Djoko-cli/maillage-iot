@@ -17,7 +17,7 @@ struct SceneProjeteeTests {
                       "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
-                            piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true)
+                            piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         let c = CartesPieces.cartes(s, largeurs: [:])
         let d = DispositionPieces(scene: s, cartes: c)
         return (s, c, d, GeometrieMaison(rayons: d.rayons))
@@ -136,7 +136,7 @@ struct SceneProjeteeTests {
                      ZoneMaison(nom: "Jardin", pieces: ["Terrasse"])]
         for aCote in [["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)], [:]] {
             let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
-                                piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true, aCote: aCote)
+                                piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true, aCote: aCote, classement: FixturesScene.classement)
             let terrasse = try Self.indice(s, "Terrasse")
             let sens = SceneProjetee.reperes(s, focus: terrasse).sorted { $0.enfant < $1.enfant }.map(\.sens)
             #expect(sens == (aCote.isEmpty ? [.dessous, .dessous] : [.memeNiveau, .dessus]), "\(aCote)")
@@ -176,7 +176,7 @@ struct SceneProjeteeTests {
                       "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
-                            chefs: ["Apple TV"], piecesMaison: true)
+                            chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         #expect(DispositionPieces(scene: s, cartes: c).positions == d.positions && s0.pieces.count == s.pieces.count)
         func projeter(_ mode: ModeLiens, selection: String? = nil) -> SceneProjetee {
             let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode)
@@ -213,7 +213,7 @@ struct SceneProjeteeTests {
                       "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
-                            chefs: ["Apple TV"], piecesMaison: true)
+                            chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         func projeter(_ mode: ModeLiens, voisins: Bool, selection: String? = "HomePod") -> SceneProjetee {
             let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode,
                               voisins: voisins)

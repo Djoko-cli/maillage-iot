@@ -5,6 +5,14 @@ import Foundation
 enum FixturesScene {
     static let partition = "46CBEBCD"
 
+    /// La regle de classement des tests du coeur, qui ne depend d'aucun protocole : rang dans sa carte (1 routeur de
+    /// bordure, 2 autre routeur, 3 autre noeud) et rayon de pastille (15 le centre, 13 un routeur de bordure, 8 un
+    /// routeur, 7 sinon). Meme formule que `classementThread` (ProtocoleThread), copiee ici : les attentes des tests de la
+    /// scene sont ecrites avec ces rangs.
+    static let classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = { n in
+        (n.bordure ? 1 : n.routeur ? 2 : 3, n.genre == .centre ? 15 : n.bordure ? 13 : n.routeur ? 8 : 7)
+    }
+
     /// Petit reseau : l'Apple TV (chef, BBR primaire) et le HomePod, routeurs de bordure ; quatre
     /// appareils. Avec la sonde : le routeur 3 est l'appareil E...04 (un appareil qui route), E...02
     /// est l'enfant de l'Apple TV, E...03 celui du HomePod ; E...05 n'a pas de parent connu.

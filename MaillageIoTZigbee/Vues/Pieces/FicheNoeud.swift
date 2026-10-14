@@ -576,7 +576,7 @@ struct FicheNoeud: View {
 
 extension FicheNoeud {
     /// « Identifier par Maison » est offert (grise s'il n'y a pas d'`id` ou de demon) pour tout appareil que le pont
-    /// connait, comme dans Maillage Thread ; pas pour un noeud que le pont ne connait pas.
+    /// connait, comme dans l'app Thread ; pas pour un noeud que le pont ne connait pas.
     static func proposeIdentifierParMaison(_ a: AppareilPont?) -> Bool {
         a != nil
     }

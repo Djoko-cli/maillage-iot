@@ -28,7 +28,7 @@ struct ScenePiecesTests {
                      ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"]),
                      ZoneMaison(nom: "Grenier", pieces: ["Débarras"])]
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(s.etages.map(\.nom) == [.zone("Rez-de-chaussée"), .zone("Étage"), .autresPieces])
         #expect(Self.noms(s, etage: 0) == [.maison("Chambre"), .maison("Salon")], "Chambre : la premiere zone")
         #expect(Self.noms(s, etage: 1) == [.maison("Bureau")])
@@ -49,7 +49,7 @@ struct ScenePiecesTests {
                      ZoneMaison(nom: "Étage", pieces: ["Chambre"])]
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
                             piecesMaison: true,
-                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)])
+                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)], classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Jardin", "zone:Étage"])
         #expect(s.etages.map(\.niveau) == [0, 0, 1] && s.etages.map(\.principal) == [true, false, true])
         #expect(s.etages.map(\.dehors) == [false, true, false])
@@ -57,7 +57,7 @@ struct ScenePiecesTests {
         #expect(Self.noms(s, etage: 0) == [.maison("Salon"), .sansPiece], "« Sans piece » sur le plateau du bas")
         #expect(Self.noms(s, etage: 1) == [.maison("Terrasse")])
         let sans = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                               piecesMaison: true)
+                               piecesMaison: true, classement: FixturesScene.classement)
         #expect(sans.etages.map(\.id) == ["zone:Jardin", "zone:Rez-de-chaussée", "zone:Étage"])
         #expect(sans.etages.map(\.niveau) == [0, 1, 2] && sans.etages.allSatisfy(\.principal))
     }
@@ -71,14 +71,14 @@ struct ScenePiecesTests {
                      ZoneMaison(nom: "Étage", pieces: ["Chambre"]),
                      ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Bureau", "Salon"])]
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Étage"])
         #expect(Self.noms(s, etage: 0) == [.maison("Bureau"), .maison("Salon"), .sansPiece])
         #expect(Self.noms(s, etage: 1) == [.maison("Chambre")])
         let vide = [ZoneMaison(nom: "Étage", pieces: ["Grenier"]), ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]),
                     ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let t = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: vide, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(t.etages.map(\.id) == ["zone:Étage", "zone:Rez-de-chaussée"])
         #expect(Self.noms(t, etage: 0) == [.maison("Bureau"), .maison("Chambre"), .sansPiece])
     }
@@ -89,7 +89,7 @@ struct ScenePiecesTests {
         let pieces = ["Apple TV": "Salon", "HomePod": "Chambre"]
         for zones in [nil, []] as [[ZoneMaison]?] {
             let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                                piecesMaison: true)
+                                piecesMaison: true, classement: FixturesScene.classement)
             #expect(s.etages.map(\.nom) == [.maison])
             #expect(Self.noms(s, etage: 0) == [.maison("Chambre"), .maison("Salon"), .sansPiece])
         }
@@ -99,7 +99,7 @@ struct ScenePiecesTests {
         let n = try NomsMaison.lire(Data(ancien.utf8))
         #expect(n.zones == nil)
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: n.zones, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(s.etages.map(\.nom) == [.maison])
     }
 
@@ -110,12 +110,12 @@ struct ScenePiecesTests {
         let pieces = ["Apple TV": "Salon", "HomePod": "Chambre"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre"])]
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(Self.noms(s, etage: 0) == [.maison("Salon"), .sansPiece])
         #expect(try Self.piece(s, .sansPiece).noeuds == ["E000000000000005", "E000000000000003", "E000000000000002",
                                                           "E000000000000004"], "par libelle")
         let inverse = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                                  piecesMaison: true, ordreEtages: ["zone:Étage", "inconnu", "zone:Rez-de-chaussée"])
+                                  piecesMaison: true, ordreEtages: ["zone:Étage", "inconnu", "zone:Rez-de-chaussée"], classement: FixturesScene.classement)
         #expect(inverse.etages.map(\.nom) == [.zone("Étage"), .zone("Rez-de-chaussée")])
         #expect(Self.noms(inverse, etage: 0) == [.maison("Chambre"), .sansPiece])
         #expect(try Self.piece(inverse, .sansPiece).etage == 0)
@@ -126,7 +126,7 @@ struct ScenePiecesTests {
     /// routeur seul dans sa carte.
     @Test func groupementParRouteur() throws {
         let s = ScenePieces(graphe: try Self.graphe(sonde: true), libelles: Self.libelles, piecesNoeuds: [:], zones: nil,
-                            chefs: [], piecesMaison: false)
+                            chefs: [], piecesMaison: false, classement: FixturesScene.classement)
         #expect(s.sansPiecesMaison)
         #expect(s.etages.map(\.nom) == [.maison])
         #expect(try Self.piece(s, .routeur("Apple TV")).noeuds == ["Apple TV", "E000000000000002"])
@@ -134,7 +134,7 @@ struct ScenePiecesTests {
         #expect(try Self.piece(s, .routeur("E000000000000004")).noeuds == ["E000000000000004"], "appareil qui route")
         #expect(try Self.piece(s, .sansPiece).noeuds == ["E000000000000005"])
         let sans = ScenePieces(graphe: try Self.graphe(sonde: false), libelles: Self.libelles, piecesNoeuds: [:],
-                               zones: nil, chefs: [], piecesMaison: false)
+                               zones: nil, chefs: [], piecesMaison: false, classement: FixturesScene.classement)
         #expect(try Self.piece(sans, .routeur("Apple TV")).noeuds == ["Apple TV"])
         #expect(try Self.piece(sans, .sansPiece).noeuds.count == 4)
     }
@@ -150,7 +150,7 @@ struct ScenePiecesTests {
         func scene(chefs: Set<String>, libelles: [String: String] = Self.libelles, pieces: [String: String]? = nil,
                    piles: Set<String> = []) -> ScenePieces {
             ScenePieces(graphe: g, libelles: libelles, piecesNoeuds: pieces ?? tous, zones: nil, chefs: chefs, piecesMaison: true,
-                        piles: piles)
+                        piles: piles, classement: FixturesScene.classement)
         }
         let a = scene(chefs: ["Apple TV"]), b = scene(chefs: ["HomePod"]), c = scene(chefs: [])
         #expect(a.cleDisposition == b.cleDisposition && a.cleDisposition == c.cleDisposition)
@@ -187,7 +187,7 @@ struct ScenePiecesTests {
         let g = try Self.graphe(sonde: true)
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: Dictionary(uniqueKeysWithValues: g.noeuds.map {
             ($0.id, "Salon")
-        }), zones: nil, chefs: [], piecesMaison: true)
+        }), zones: nil, chefs: [], piecesMaison: true, classement: FixturesScene.classement)
         #expect(Set(s.noeuds.map(\.rang)) == [1, 2, 3], "des noeuds de chaque rang")
         let cles = try #require(s.cleDisposition.pieces["maison"]?["piece:Salon"])
         for n in s.noeuds {
@@ -204,7 +204,7 @@ struct ScenePiecesTests {
         let g = try Self.graphe(sonde: true)
         let tous = Dictionary(uniqueKeysWithValues: g.noeuds.map { ($0.id, "Salon") })
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: ["HomePod"],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(try Self.piece(s, .maison("Salon")).noeuds
                 == ["Apple TV", "HomePod", "E000000000000004", "E000000000000005", "E000000000000003", "E000000000000002"])
         #expect(s.noeud("HomePod")?.rang == 1 && s.noeud("HomePod")?.rayon == 13 && s.noeud("HomePod")?.chef == true)
@@ -215,24 +215,17 @@ struct ScenePiecesTests {
         #expect(s.liens == g.liens)
     }
 
-    /// Le classement des noeuds (rang de carte, rayon de pastille) est un parametre ; sans lui, la regle de Thread
-    /// (`classementParDefaut`). Une regle fournie donne ses rangs et ses rayons, et les lignes d'une carte la suivent.
+    /// Le classement des noeuds (rang de carte, rayon de pastille) est un parametre obligatoire : le coeur n'a pas de
+    /// regle par defaut. Une regle fournie donne ses rangs et ses rayons, et les lignes d'une carte la suivent.
     @Test func classementFourni() throws {
         let g = try Self.graphe(sonde: true)
         let tous = Dictionary(uniqueKeysWithValues: g.noeuds.map { ($0.id, "Salon") })
-        func scene(_ classement: (@Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double))?) -> ScenePieces {
-            if let classement {
-                return ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
-                                   piecesMaison: true, classement: classement)
-            }
-            return ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
-                               piecesMaison: true)
+        func scene(_ classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double)) -> ScenePieces {
+            ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
+                        piecesMaison: true, classement: classement)
         }
-        // Par defaut : la regle de Thread (celle de `lignesEtRayons`).
-        let defaut = scene(nil)
-        let explicite = scene(ScenePieces.classementParDefaut)
-        #expect(defaut.noeuds.map(\.rang) == explicite.noeuds.map(\.rang))
-        #expect(defaut.noeuds.map(\.rayon) == explicite.noeuds.map(\.rayon))
+        // La regle des fixtures (celle de `lignesEtRayons`) : bordure 1, routeur 2, sinon 3.
+        let defaut = scene(FixturesScene.classement)
         #expect(defaut.noeud("HomePod")?.rang == 1 && defaut.noeud("HomePod")?.rayon == 13)
         #expect(defaut.noeud("Apple TV")?.rang == 1 && defaut.noeud("Apple TV")?.rayon == 15)
         #expect(defaut.noeud("E000000000000004")?.rang == 2 && defaut.noeud("E000000000000004")?.rayon == 8)
@@ -264,7 +257,7 @@ struct ScenePiecesTests {
         let zones = [ZoneMaison(nom: "Étage", pieces: ["Salle de bain", "Chambre", "Cellier"]),
                      ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"])]
         let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: pieces, zones: zones, chefs: [],
-                            piecesMaison: true)
+                            piecesMaison: true, classement: FixturesScene.classement)
         #expect(try Self.piece(s, .maison("Cellier")).teinte == 3, "premier par nom")
         #expect(try Self.piece(s, .maison("Chambre")).teinte == 4)
         #expect(try Self.piece(s, .maison("Salle de bain")).teinte == 5)
@@ -279,7 +272,7 @@ struct ScenePiecesTests {
         let g = try Self.graphe(sonde: true)
         func cartes(_ libelles: [String: String], chef: String) -> [String] {
             let s = ScenePieces(graphe: g, libelles: libelles, piecesNoeuds: [:], zones: nil, chefs: [chef],
-                                piecesMaison: false)
+                                piecesMaison: false, classement: FixturesScene.classement)
             return s.etages[0].pieces.map { "\(s.pieces[$0].id) #\(s.pieces[$0].teinte)" }
         }
         var libelles = Self.libelles

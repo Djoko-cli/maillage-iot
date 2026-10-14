@@ -48,6 +48,27 @@ struct AppCatalogue: Sendable, CustomTestStringConvertible {
     }
 }
 
+/// Ce que le test d'alignement fait d'une app, selon les `.stringsdata` trouves (voir `AppCatalogue.cas`).
+enum CasCatalogue: Equatable {
+    case verifier
+    case sauter(String)
+    case echouer(String)
+}
+
+extension AppCatalogue {
+    /// Le cas d'une app d'apres le nombre de `.stringsdata` de chaque app (`nombres`, par nom) :
+    /// - elle en a : on verifie ;
+    /// - aucune app n'en a (mesure Release, schema du coeur seul : rien n'est compile) : on saute ;
+    /// - elle n'en a pas mais une autre en a : on echoue, car le produit de cette app manque alors que les autres sont la.
+    static func cas(_ app: String, nombres: [String: Int]) -> CasCatalogue {
+        if nombres[app, default: 0] > 0 { return .verifier }
+        if nombres.values.contains(where: { $0 > 0 }) {
+            return .echouer("produits de compilation introuvables pour \(app), alors qu'une autre app a les siens")
+        }
+        return .sauter("produits de compilation introuvables : \(app)")
+    }
+}
+
 /// Un catalogue (textes ou Info.plist) d'une app.
 struct FichierCatalogue: Sendable, CustomTestStringConvertible {
     let app: AppCatalogue
@@ -121,14 +142,45 @@ struct CataloguesTests {
 
     /// Le code et le catalogue vont ensemble, pour chaque app : aucune cle du code ne manque, aucune cle du catalogue
     /// n'est morte (apres un changement de texte : `outils/synchroniser-textes.sh <App>` puis outils/traduire.py).
-    /// Sans les produits de compilation de l'app (le schema du coeur ne la compile pas), le test est saute.
+    /// Sans les produits de compilation d'aucune app (le schema du coeur ne les compile pas), le test est saute ; si
+    /// une app a les siens et l'autre non, il echoue (`AppCatalogue.cas`).
     @Test(arguments: AppCatalogue.toutes)
     func codeEtCatalogueAlignes(_ app: AppCatalogue) throws {
-        if app.stringsdata.isEmpty { try Test.cancel("produits de compilation introuvables : \(app.nom)") }
+        let nombres = Dictionary(uniqueKeysWithValues: AppCatalogue.toutes.map { ($0.nom, $0.stringsdata.count) })
+        switch AppCatalogue.cas(app.nom, nombres: nombres) {
+        case .verifier: break
+        case .sauter(let raison): try Test.cancel(Comment(rawValue: raison))
+        case .echouer(let raison):
+            Issue.record(Comment(rawValue: raison))
+            return
+        }
         let extraites = try app.clesExtraites()
         let catalogue = Set(try Catalogues.entrees(app.textes).cles.keys)
         #expect(!extraites.isEmpty)
         #expect(extraites.subtracting(catalogue).sorted() == [], "absentes du catalogue de \(app.nom)")
         #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees dans le catalogue de \(app.nom)")
+    }
+
+    /// La selection des cas, sans produits reels : echoue si une app a ses `.stringsdata` et l'autre non, saute
+    /// seulement si aucune n'en a.
+    @Test func selectionDesCas() {
+        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3, "MaillageIoTZigbee": 4]) == .verifier)
+        #expect(AppCatalogue.cas("MaillageIoTZigbee", nombres: ["MaillageIoT": 3, "MaillageIoTZigbee": 4]) == .verifier)
+        guard case .echouer = AppCatalogue.cas("MaillageIoTZigbee", nombres: ["MaillageIoT": 3, "MaillageIoTZigbee": 0]) else {
+            Issue.record("une app sans produits, l'autre avec : doit echouer")
+            return
+        }
+        guard case .echouer = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoTZigbee": 4]) else {
+            Issue.record("une app absente du decompte, l'autre avec produits : doit echouer")
+            return
+        }
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0, "MaillageIoTZigbee": 0]) else {
+            Issue.record("aucune app avec produits : doit sauter")
+            return
+        }
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:]) else {
+            Issue.record("aucun decompte : doit sauter")
+            return
+        }
     }
 }

@@ -5,8 +5,10 @@ import Testing
 import ProtocoleZigbee
 
 /// Resultat de reference du rejeu (spec de Maillage IoT, section 6.1, etape 0) : la scene de la vue par pieces en
-/// mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/zigbee-demo.json`. Maillage
-/// IoT rejoue la meme demo et compare, prefixes `zigbee:` retires. La demo ne lit pas l'horloge du Mac (dates fixes de
+/// mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/zigbee-demo.json`. Dans
+/// l'app de transition, les identifiants sont bruts et la scene se compare telle quelle ; dans l'app unique (plan de
+/// l'etape 3a, tache 9), ce test passera dans `MaillageIoTTests` et comparera la sous-scene Zigbee de la scene reunie,
+/// prefixe `zigbee:` retire (le fichier de reference, lui, ne change pas). La demo ne lit pas l'horloge du Mac (dates fixes de
 /// `MaillageDemoZigbee`, `Surveillance.maintenant` = la fin de la demo). Fichier absent : le test l'ecrit dans son dossier
 /// temporaire (bac a sable) et echoue une fois ; le copier, le controler (controle d'anonymisation), puis relancer.
 @MainActor

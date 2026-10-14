@@ -110,7 +110,7 @@ struct PlacementNomsTests {
         #expect(NiveauZoom(echelle: 0.6) == .tous)
         let g = try ScenePiecesTests.graphe(sonde: true)
         let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: ["Apple TV": "Salon"], zones: nil,
-                            chefs: ["Apple TV"], piecesMaison: true)
+                            chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         var e = s.noeuds.map { Etiquette(.noeud($0.id), taille: CGSize(width: 50, height: 15)) }
         e.append(Etiquette(.piece(0), taille: CGSize(width: 90, height: 20)))
         func voulus(_ niveau: NiveauZoom, survol: String? = nil) -> Set<String> {
@@ -148,7 +148,7 @@ struct PlacementNomsTests {
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
                             piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
                                            "E000000000000004": "Salon"],
-                            zones: zones, chefs: ["Apple TV"], piecesMaison: true)
+                            zones: zones, chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         let etage = try #require(s.etages.firstIndex { $0.nom == .zone("Étage") })
         var e = s.noeuds.map { Etiquette(.noeud($0.id), taille: CGSize(width: 50, height: 15)) }
         e += s.etages.indices.map { Etiquette(.etage($0), taille: CGSize(width: 60, height: 15)) }

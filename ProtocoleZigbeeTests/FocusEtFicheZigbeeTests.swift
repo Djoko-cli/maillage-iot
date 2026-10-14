@@ -57,9 +57,9 @@ struct FocusEtFicheZigbeeTests {
         let pontVoisins = try #require(FocusZigbee.miseEnAvant(de: I.pont, graphe: g, voisins: true))
         #expect(pontVoisins.noeuds.subtracting(pont.noeuds) == [I.lampeBureau])
         #expect(FocusZigbee.miseEnAvant(de: "A0000000000000EE", graphe: g, voisins: true) == nil)
-        let boucle = GrapheReseau(noeuds: [.init(id: "P", genre: .centre, routeur: true, inconnu: false),
-                                           .init(id: "A", genre: .routeur, routeur: true, inconnu: false),
-                                           .init(id: "B", genre: .routeur, routeur: true, inconnu: false)],
+        let boucle = GrapheReseau(noeuds: [.init(zigbee: "P", genre: .centre, routeur: true, inconnu: false),
+                                           .init(zigbee: "A", genre: .routeur, routeur: true, inconnu: false),
+                                           .init(zigbee: "B", genre: .routeur, routeur: true, inconnu: false)],
                                   liens: [.init(de: "A", vers: "B", genre: .chemin), .init(de: "B", vers: "A", genre: .chemin)])
         #expect(FocusZigbee.miseEnAvant(de: "A", graphe: boucle, voisins: true)?.noeuds == ["A", "B"])
     }
@@ -105,19 +105,19 @@ struct FocusEtFicheZigbeeTests {
         let h = MaillageDemoZigbee.historique
         #expect(h.count == 93, "97 releves moins une heure sans releve")
         let fin = MaillageDemoZigbee.fin
-        let bureau = CourbesNoeud(cle: I.lampeBureau, releves: h, periode: .jour, fin: fin)
+        let bureau = CourbesNoeud(zigbee: I.lampeBureau, releves: h, periode: .jour, fin: fin)
         #expect(bureau.chemins.map(\.parent) == Array(repeating: [I.lampadaireSalon, I.pont], count: 5).flatMap { $0 } + [I.lampadaireSalon])
         #expect(bureau.prioritaires.prefix(2) == [I.lampadaireSalon, I.pont], "le prochain saut, le plus recent d'abord")
         #expect(Set(bureau.prioritaires.dropFirst(2)) == [I.lampeChambre, I.sonde])
         #expect(bureau.liens.first { $0.id == I.lampeChambre }?.points.allSatisfy { $0.lqi != nil } == true)
         #expect(bureau.liens.first { $0.id == I.lampeChambre }?.points.map(\.troncon).max() == 1, "le trou d'une heure")
-        let pont = CourbesNoeud(cle: I.pont, releves: h, periode: .jour, fin: fin)
+        let pont = CourbesNoeud(zigbee: I.pont, releves: h, periode: .jour, fin: fin)
         let cles = pont.liens.map(\.id)
         #expect(pont.chemins.isEmpty && pont.parents.isEmpty)
         let montrees = ChoixCourbes.montrees(cles: cles, prioritaires: pont.prioritaires, tous: false)
         #expect(montrees == Array(pont.prioritaires.prefix(6)) && montrees.count <= ChoixCourbes.maximum)
         #expect(Set(pont.prioritaires).isSuperset(of: [I.plafonnierSalon, I.lampadaireSalon, I.suspensionCuisine]))
-        let abri = CourbesNoeud(cle: I.detecteurAbri, releves: h, periode: .jour, fin: fin)
+        let abri = CourbesNoeud(zigbee: I.detecteurAbri, releves: h, periode: .jour, fin: fin)
         #expect(abri.liens.map(\.id) == [CourbesNoeud.cleParent] && abri.prioritaires == [CourbesNoeud.cleParent])
         #expect(abri.parents.map(\.parent) == [I.priseTerrasse] && abri.chemins.isEmpty)
     }

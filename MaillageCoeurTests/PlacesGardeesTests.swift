@@ -10,7 +10,7 @@ struct PlacesGardeesTests {
 
     static func scene(zones: [ZoneMaison]) throws -> ScenePieces {
         ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: false), libelles: ScenePiecesTests.libelles,
-                    piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre"], zones: zones, chefs: [], piecesMaison: true)
+                    piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre"], zones: zones, chefs: [], piecesMaison: true, classement: FixturesScene.classement)
     }
 
     /// Aller-retour sur disque : places et ordre des etages, par maison ; un fichier absent ou
@@ -148,7 +148,7 @@ struct PlacesGardeesTests {
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: false), libelles: [:],
                             piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre"], zones: zones, chefs: [],
-                            piecesMaison: true, ordreEtages: p.maison("").ordreEtages)
+                            piecesMaison: true, ordreEtages: p.maison("").ordreEtages, classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Étage", "zone:Rez-de-chaussée"])
         p.replacer(domicile: "")
         #expect(p.maison("").etages.isEmpty)

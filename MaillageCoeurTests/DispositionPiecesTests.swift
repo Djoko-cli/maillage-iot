@@ -240,7 +240,7 @@ struct DispositionPiecesTests {
                      ZoneMaison(nom: "Jardin", pieces: ["Terrasse"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
                             piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true,
-                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)])
+                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)], classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Jardin", "zone:Étage"])
         let c = CartesPieces.cartes(s, largeurs: [:])
         let k = DispositionPieces.Calcul(scene: s, cartes: c, fixees: [:])
@@ -301,7 +301,7 @@ struct DispositionPiecesTests {
                              zones: zones + [ZoneMaison(nom: "Cabane", pieces: ["Abri"])], chefs: ["Apple TV"],
                              piecesMaison: true,
                              aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true),
-                                     "zone:Cabane": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée")])
+                                     "zone:Cabane": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée")], classement: FixturesScene.classement)
         #expect(s2.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Jardin", "zone:Cabane", "zone:Étage"])
         let c2 = CartesPieces.cartes(s2, largeurs: [:])
         let d2 = DispositionPieces(scene: s2, cartes: c2)
@@ -336,7 +336,7 @@ struct DispositionPiecesTests {
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         func scene(_ g: GrapheReseau) -> ScenePieces {
             ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
-                        chefs: ["Apple TV"], piecesMaison: true)
+                        chefs: ["Apple TV"], piecesMaison: true, classement: FixturesScene.classement)
         }
         let sans = scene(graphe)
         let avec = scene(GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins))

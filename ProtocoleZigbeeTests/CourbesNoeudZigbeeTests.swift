@@ -33,7 +33,7 @@ struct CourbesNoeudZigbeeTests {
     @Test func routeur() {
         let releves = [Self.releve(0, lqi: 200, signal: 180), Self.releve(15, lqi: 120, signal: 150),
                        Self.releve(30, lqi: 70, signal: 120)]
-        let c = CourbesNoeud(cle: Self.a0, releves: releves, periode: .jour, fin: Self.minutes(35))
+        let c = CourbesNoeud(zigbee: Self.a0, releves: releves, periode: .jour, fin: Self.minutes(35))
         #expect(c.courbe(Self.a1) == CourbeLien(id: Self.a1, points: [
             PointCourbe(date: Self.minutes(0), valeur: 3, troncon: 0, lqi: 200),
             PointCourbe(date: Self.minutes(15), valeur: 2, troncon: 0, lqi: 120),
@@ -44,7 +44,7 @@ struct CourbesNoeudZigbeeTests {
         #expect(c.signal.map(\.valeur) == [180, 150, 120])
         #expect(c.parents.isEmpty)
         #expect(c.debut == Self.minutes(35).addingTimeInterval(-24 * 3600))
-        #expect(CourbesNoeud(cle: Self.a1, releves: releves, periode: .jour, fin: Self.minutes(35)).signal.isEmpty,
+        #expect(CourbesNoeud(zigbee: Self.a1, releves: releves, periode: .jour, fin: Self.minutes(35)).signal.isEmpty,
                 "la sonde n'entend pas a1")
     }
 
@@ -53,19 +53,19 @@ struct CourbesNoeudZigbeeTests {
     @Test func enfant() {
         let releves = [Self.releve(0), Self.releve(15), Self.releve(30, parent: Self.a1, lqiEnfant: 120),
                        Self.releve(45, parent: Self.a1, lqiEnfant: nil)]
-        let c = CourbesNoeud(cle: Self.b1, releves: releves, periode: .jour, fin: Self.minutes(50))
+        let c = CourbesNoeud(zigbee: Self.b1, releves: releves, periode: .jour, fin: Self.minutes(50))
         #expect(c.liens.map(\.id) == [CourbesNoeud.cleParent])
         #expect(c.liens.first?.points.map(\.valeur) == [3, 3, 2])
         #expect(c.parents == [ChangementParent(date: Self.minutes(30), parent: Self.a1)])
         #expect(c.signal.isEmpty)
         #expect(!c.estVide)
-        #expect(CourbesNoeud(cle: "A0000000000000FF", releves: releves, periode: .jour, fin: Self.minutes(50)).estVide)
+        #expect(CourbesNoeud(zigbee: "A0000000000000FF", releves: releves, periode: .jour, fin: Self.minutes(50)).estVide)
     }
 
     /// Les changements de parent de la sonde, sur la courbe du signal d'un routeur.
     @Test func parentsDeLaSonde() {
         let releves = [Self.releve(0), Self.releve(15), Self.releve(30, parentSonde: Self.a1), Self.releve(45, parentSonde: Self.a1)]
-        let c = CourbesNoeud(cle: Self.a0, releves: releves, periode: .jour, fin: Self.minutes(50))
+        let c = CourbesNoeud(zigbee: Self.a0, releves: releves, periode: .jour, fin: Self.minutes(50))
         #expect(c.parentsSonde == [ChangementParent(date: Self.minutes(30), parent: Self.a1)])
     }
 
@@ -74,14 +74,14 @@ struct CourbesNoeudZigbeeTests {
     @Test func pasEtTroncons() {
         let semaine = [0.0, 5, 10, 15, 20, 25].enumerated().map { Self.releve($1, lqi: $0 < 3 ? 200 : 120) }
             + [Self.releve(210, lqi: 200)]
-        let c = CourbesNoeud(cle: Self.a0, releves: semaine, periode: .semaine, fin: Self.minutes(240))
+        let c = CourbesNoeud(zigbee: Self.a0, releves: semaine, periode: .semaine, fin: Self.minutes(240))
         #expect(c.courbe(Self.a1)?.points == [PointCourbe(date: Self.minutes(0), valeur: 2.5, troncon: 0, lqi: 160),
                                               PointCourbe(date: Self.minutes(210), valeur: 3, troncon: 1, lqi: 200)],
                 "la moyenne du pas, LQI compris")
         let jour = [Self.releve(0), Self.releve(5), Self.releve(30), Self.releve(35)]
-        let d = CourbesNoeud(cle: Self.a0, releves: jour, periode: .jour, fin: Self.minutes(40))
+        let d = CourbesNoeud(zigbee: Self.a0, releves: jour, periode: .jour, fin: Self.minutes(40))
         #expect(d.signal.map(\.troncon) == [0, 0, 1, 1])
-        let tard = CourbesNoeud(cle: Self.a0, releves: jour, periode: .jour, fin: Self.minutes(20 + 24 * 60))
+        let tard = CourbesNoeud(zigbee: Self.a0, releves: jour, periode: .jour, fin: Self.minutes(20 + 24 * 60))
         #expect(tard.signal.map(\.date) == [Self.minutes(30), Self.minutes(35)], "24 h avant la fin")
     }
 
@@ -90,33 +90,33 @@ struct CourbesNoeudZigbeeTests {
     /// coupent ; trois pas ne coupent pas, quatre oui ; chaque trou ouvre un troncon de plus), 30 j.
     @Test func bornesSeuilsEtMois() {
         let r = [Self.releve(0), Self.releve(10), Self.releve(11)]
-        #expect(CourbesNoeud(cle: Self.a0, releves: r, periode: .jour, fin: Self.minutes(10)).signal.map(\.date)
+        #expect(CourbesNoeud(zigbee: Self.a0, releves: r, periode: .jour, fin: Self.minutes(10)).signal.map(\.date)
                 == [Self.minutes(0), Self.minutes(10)], "fin comprise, plus recent exclu")
-        #expect(CourbesNoeud(cle: Self.a0, releves: r, periode: .jour, fin: Self.minutes(24 * 60)).signal.map(\.date)
+        #expect(CourbesNoeud(zigbee: Self.a0, releves: r, periode: .jour, fin: Self.minutes(24 * 60)).signal.map(\.date)
                 == [Self.minutes(0), Self.minutes(10), Self.minutes(11)], "debut compris")
         let trous = [Self.releve(0), Self.releve(20), Self.releve(40 + 1.0 / 60), Self.releve(70)]
-        #expect(CourbesNoeud(cle: Self.a0, releves: trous, periode: .jour, fin: Self.minutes(80)).signal.map(\.troncon)
+        #expect(CourbesNoeud(zigbee: Self.a0, releves: trous, periode: .jour, fin: Self.minutes(80)).signal.map(\.troncon)
                 == [0, 0, 1, 2], "seuil de 20 min")
         let pas = [Self.releve(0), Self.releve(90), Self.releve(210)]
-        #expect(CourbesNoeud(cle: Self.a0, releves: pas, periode: .semaine, fin: Self.minutes(240)).signal.map(\.troncon)
+        #expect(CourbesNoeud(zigbee: Self.a0, releves: pas, periode: .semaine, fin: Self.minutes(240)).signal.map(\.troncon)
                 == [0, 0, 1], "seuil de trois pas")
         let mois = [Self.releve(0, signal: 180), Self.releve(119, signal: 170), Self.releve(120, signal: 160)]
-        let m = CourbesNoeud(cle: Self.a0, releves: mois, periode: .mois, fin: Self.minutes(240))
+        let m = CourbesNoeud(zigbee: Self.a0, releves: mois, periode: .mois, fin: Self.minutes(240))
         #expect(m.signal == [PointCourbe(date: Self.minutes(0), valeur: 175, troncon: 0),
                              PointCourbe(date: Self.minutes(120), valeur: 160, troncon: 0)], "pas de 2 h")
         #expect(m.debut == Self.minutes(240).addingTimeInterval(-30 * 24 * 3600), "30 j")
-        #expect(CourbesNoeud(cle: Self.a0, releves: mois, periode: .semaine, fin: Self.minutes(240)).debut
+        #expect(CourbesNoeud(zigbee: Self.a0, releves: mois, periode: .semaine, fin: Self.minutes(240)).debut
                 == Self.minutes(240).addingTimeInterval(-7 * 24 * 3600), "7 j")
     }
 
     /// Un lien sans LQI des deux cotes n'a pas de point (le signal suffit a une fiche) ; un appareil au LQI inconnu n'a
     /// pas de courbe, et ses changements de parent suffisent a sa fiche.
     @Test func sansQualite() {
-        let c = CourbesNoeud(cle: Self.a0, releves: [Self.releve(0, lqi: nil).sansLienMesure], periode: .jour,
+        let c = CourbesNoeud(zigbee: Self.a0, releves: [Self.releve(0, lqi: nil).sansLienMesure], periode: .jour,
                              fin: Self.minutes(5))
         #expect(c.courbe(Self.a1) == nil, "pas de point sans qualite")
         #expect(!c.estVide, "le signal suffit")
-        let e = CourbesNoeud(cle: Self.b1, releves: [Self.releve(0, lqiEnfant: nil),
+        let e = CourbesNoeud(zigbee: Self.b1, releves: [Self.releve(0, lqiEnfant: nil),
                                                      Self.releve(15, parent: Self.a1, lqiEnfant: nil)],
                              periode: .jour, fin: Self.minutes(20))
         #expect(e.liens.isEmpty, "qualite inconnue : pas de courbe")

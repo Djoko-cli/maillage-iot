@@ -58,7 +58,7 @@ enum MaisonInventee {
         let haut = (pieces / 2..<pieces).map(nomPiece)
         let s = ScenePieces(graphe: g, libelles: libelles, piecesNoeuds: piecesNoeuds,
                             zones: unSeulPlateau ? nil : [ZoneMaison(nom: "Bas", pieces: bas), ZoneMaison(nom: "Haut", pieces: haut)],
-                            chefs: [routeur(0)], piecesMaison: true)
+                            chefs: [routeur(0)], piecesMaison: true, classement: FixturesScene.classement)
         let largeurs = libelles.mapValues { Double($0.count) * 7 + 10 }
         return (s, CartesPieces.cartes(s, largeurs: largeurs))
     }

@@ -506,6 +506,6 @@ final class Surveillance {
 
     /// Courbes d'un noeud du graphe sur une periode qui finit a `fin` ; nil sans cle.
     func courbes(noeud id: String, periode: PeriodeCourbes, fin: Date) -> CourbesNoeud? {
-        cleHistorique(noeud: id).map { CourbesNoeud(cle: $0, releves: historique, periode: periode, fin: fin) }
+        cleHistorique(noeud: id).map { CourbesNoeud(zigbee: $0, releves: historique, periode: periode, fin: fin) }
     }
 }
