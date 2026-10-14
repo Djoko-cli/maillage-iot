@@ -68,10 +68,10 @@ D'après `inventaire-zigbee-coeur.md` §1.2 (GrapheReseau) et §2.1-2.2. Additif
 **Interfaces:**
 - Produces: `EtatAffiche.injoignable` (ordre : joignable, partitionCoupee, sansAdresse, injoignable, disparu, inconnu) ; `GrapheReseau.Lien.Genre.chemin` ; `Lien.suppose: Bool` (défaut `false` dans l'init) ; `GrapheReseau.init(noeuds:liens: = [])` qui **écarte les liens dont un bout manque** ; `func chemin(de id: String) -> String?` (premier lien `.chemin` partant de `id`) ; `AppareilAffiche.init(…, partition: String? = nil, …)`.
 
-- [ ] **Step 1: RED** — dans `GrapheManuelTests`, reprendre `noeudsDejaFaits` de `Z:MaillageCoeurTests/GrapheReseauTests.swift:84` (liens à bout manquant écartés), plus un test `cheminDUnNoeud` et un test `lienSuppose`. Lancer `outils/tester.sh MaillageCoeurTests/GrapheManuelTests` : échec de compilation attendu.
-- [ ] **Step 2: GREEN** — implémenter les interfaces ci-dessus dans le cœur, d'après `Z:Scene/GrapheReseau.swift` (lignes citées par l'inventaire). Dans l'app Thread, chaque `switch` exhaustif gagne le nouveau cas, avec le rendu de Zigbee pour `injoignable` (`Z:MaillageZigbee/Vues/Pieces/Palette.swift:44-48`) et pour `.chemin` (`Z:…/LegendePieces.swift:249-252`) ; Thread ne les produit jamais.
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread compris) ; `bash outils/tester-coeur.sh` (code 0).
-- [ ] **Step 4: Commit** — « Coeur : etat injoignable, lien chemin et suppose, graphe tolerant aux liens orphelins ».
+- [x] **Step 1: RED** — dans `GrapheManuelTests`, reprendre `noeudsDejaFaits` de `Z:MaillageCoeurTests/GrapheReseauTests.swift:84` (liens à bout manquant écartés), plus un test `cheminDUnNoeud` et un test `lienSuppose`. Lancer `outils/tester.sh MaillageCoeurTests/GrapheManuelTests` : échec de compilation attendu.
+- [x] **Step 2: GREEN** — implémenter les interfaces ci-dessus dans le cœur, d'après `Z:Scene/GrapheReseau.swift` (lignes citées par l'inventaire). Dans l'app Thread, chaque `switch` exhaustif gagne le nouveau cas, avec le rendu de Zigbee pour `injoignable` (`Z:MaillageZigbee/Vues/Pieces/Palette.swift:44-48`) et pour `.chemin` (`Z:…/LegendePieces.swift:249-252`) ; Thread ne les produit jamais.
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread compris) ; `bash outils/tester-coeur.sh` (code 0).
+- [x] **Step 4: Commit** — « Coeur : etat injoignable, lien chemin et suppose, graphe tolerant aux liens orphelins ».
 
 ---
 

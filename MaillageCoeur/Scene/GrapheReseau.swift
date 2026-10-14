@@ -2,7 +2,10 @@ import Foundation
 
 /// Etat d'un appareil tel que la vue le montre.
 public enum EtatAffiche: String, Hashable, Sendable {
-    case joignable, partitionCoupee, sansAdresse, disparu, inconnu
+    case joignable, partitionCoupee, sansAdresse
+    /// Le pont (Zigbee) le dit injoignable : l'equivalent, pour un protocole a pont, de `sansAdresse`.
+    case injoignable
+    case disparu, inconnu
 }
 
 /// Appareil a dessiner : nom deja choisi, partition courante ou derniere connue.
@@ -18,7 +21,7 @@ public struct AppareilAffiche: Hashable, Sendable, Identifiable {
     /// Joignable parce que la sonde l'a trouve, alors qu'il n'annonce plus d'adresse : la carte l'entoure d'un anneau.
     public var verifie: Bool
 
-    public init(id: String, nom: String, piece: String? = nil, partition: String?, etat: EtatAffiche,
+    public init(id: String, nom: String, piece: String? = nil, partition: String? = nil, etat: EtatAffiche,
                 endormi: Bool = false, batterie: BatterieMaison? = nil, verifie: Bool = false) {
         self.id = id
         self.nom = nom
@@ -89,6 +92,8 @@ public struct GrapheReseau: Hashable, Sendable {
             case radio
             /// De l'enfant vers son parent, vu par la sonde.
             case parent
+            /// D'un routeur vers son prochain saut vers le pont (sa route « plusieurs vers un »), vu par le pont.
+            case chemin
         }
 
         public var de: String
@@ -96,12 +101,16 @@ public struct GrapheReseau: Hashable, Sendable {
         public var genre: Genre
         /// De 0 a 3 ; nil : inconnue.
         public var qualite: Int?
+        /// Suppose, faute de mieux : un chemin sans route active, ou le lien vers le parent d'avant d'un appareil
+        /// absent des dernieres tables. Le trace est en pointilles.
+        public var suppose: Bool
 
-        public init(de: String, vers: String, genre: Genre = .rattachement, qualite: Int? = nil) {
+        public init(de: String, vers: String, genre: Genre = .rattachement, qualite: Int? = nil, suppose: Bool = false) {
             self.de = de
             self.vers = vers
             self.genre = genre
             self.qualite = qualite
+            self.suppose = suppose
         }
     }
 
@@ -109,13 +118,20 @@ public struct GrapheReseau: Hashable, Sendable {
     public private(set) var liens: [Lien] = []
 
     /// Graphe donne tel quel : la construction propre a un protocole (ProtocoleThread : `init(reseau:appareils:maillage:)`)
-    /// delegue ici, et les tests du coeur s'en servent sans aucun type de protocole.
-    public init(noeuds: [Noeud], liens: [Lien]) {
+    /// delegue ici, et les tests du coeur s'en servent sans aucun type de protocole. Un lien dont un bout n'est pas
+    /// un noeud est ignore.
+    public init(noeuds: [Noeud], liens: [Lien] = []) {
         self.noeuds = noeuds
-        self.liens = liens
+        let ids = Set(noeuds.map(\.id))
+        self.liens = liens.filter { ids.contains($0.de) && ids.contains($0.vers) }
     }
 
     public func noeud(_ id: String) -> Noeud? { noeuds.first { $0.id == id } }
+
+    /// Le chemin d'un routeur vers le pont : son premier lien `chemin` (vers son prochain saut) ; nil sans chemin.
+    public func chemin(de id: String) -> Lien? {
+        liens.first { $0.genre == .chemin && $0.de == id }
+    }
 
     /// Parent d'un noeud vu par la sonde (lien enfant-parent) ; nil sinon.
     public func parent(de id: String) -> String? {

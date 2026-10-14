@@ -259,7 +259,8 @@ struct LegendePiecesTests {
                 case .appareil(.partitionCoupee): .partitionCoupee
                 case .appareil(.sansAdresse): .sansAdresse
                 case .appareil(.disparu): .disparu
-                case .appareil(.inconnu): nil
+                // `injoignable` : etat d'un pont, que la scene Thread ne produit pas.
+                case .appareil(.inconnu), .appareil(.injoignable): nil
                 }
                 guard let entree else { continue }
                 vues.insert(entree)

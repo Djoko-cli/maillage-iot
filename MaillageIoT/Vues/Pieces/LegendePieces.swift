@@ -229,6 +229,9 @@ extension LegendePieces {
             case .appareil(.joignable): r.insert(l.verifies.contains(id) ? .verifiee : .joignable)
             case .appareil(.partitionCoupee): r.insert(.partitionCoupee)
             case .appareil(.sansAdresse): r.insert(.sansAdresse)
+            // Thread n'emet pas `injoignable` (etat d'un pont) ; sa legende propre vient avec Zigbee. D'ici la, au plus
+            // proche : un appareil que l'on ne joint pas.
+            case .appareil(.injoignable): r.insert(.sansAdresse)
             case .appareil(.disparu): r.insert(.disparu)
             case .routeurInconnu, .appareil(.inconnu): break
             }
@@ -242,7 +245,8 @@ extension LegendePieces {
         if !l.candidats.isEmpty { r.insert(.candidats) }
         for lien in l.liens {
             switch lien.genre {
-            case .radio:
+            // Un chemin vers le pont (Zigbee, que Thread n'emet pas) se lit comme un lien radio : meme couleur de qualite.
+            case .radio, .chemin:
                 switch Palette.NiveauLien(lien.qualite) {
                 case .bon: r.insert(.bonne)
                 case .moyen: r.insert(.moyenne)
