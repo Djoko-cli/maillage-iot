@@ -135,6 +135,41 @@ targets:
         CLE_MISES_A_JOUR: nRIVHOXbEktqGduJ4ukxhjZzlUaiE/yqR3sgbW9Ie6E=
         CODE_SIGN_ENTITLEMENTS: MaillageIoT/Droits.entitlements
         ENABLE_HARDENED_RUNTIME: YES
+  # App de transition de l'etape 2 (spec 6.5) : le code d'app de Maillage Zigbee, sur le coeur et ProtocoleZigbee
+  # (jamais ProtocoleThread), avec l'identite definitive de Zigbee. Jamais publiee : ni Sparkle (ni paquet, ni cles
+  # SU*, ni exceptions mach-lookup), mises a jour inertes. Elle disparait a l'etape 3, quand les deux apps se fondent.
+  MaillageIoTZigbee:
+    type: application
+    platform: macOS
+    sources:
+      - path: MaillageIoTZigbee
+    dependencies:
+      - target: MaillageCoeur
+      - target: ProtocoleZigbee
+    info:
+      path: MaillageIoTZigbee/Info.plist
+      properties:
+        CFBundleDisplayName: Maillage IoT Zigbee
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+        NSLocalNetworkUsageDescription: "Maillage IoT Zigbee cherche le pont Hue et la sonde sur le réseau local, pour lire les noms et les pièces de vos appareils et interroger la sonde sans câble."
+        NSBonjourServices:
+          - _hue._tcp
+          - _maillage-zigbee._tcp
+    settings:
+      base:
+        PRODUCT_NAME: Maillage IoT Zigbee
+        PRODUCT_MODULE_NAME: MaillageIoTZigbee
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.banc-zigbee
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Jamais publiee : numero de compilation 1, celui d'une compilation de travail.
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_ENTITLEMENTS: MaillageIoTZigbee/Droits.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
   # Passeur Noms, demon de Maison (spec 2026-10-12-demon-passeur-design.md) : app Mac Catalyst sans fenetre ni Dock
   # (LSUIElement), signee en developpement par outils/passeur.sh (HomeKit est refuse au Developer ID). Masqueur.bundle
   # rend invisible, des sa creation, la fenetre de la scene que macOS impose.
@@ -309,6 +344,15 @@ schemes:
         - PasseurTests
     archive:
       config: Release
+  # L'app de transition Zigbee (etape 2), avec le coeur et ProtocoleZigbee.
+  MaillageIoTZigbee:
+    build:
+      targets:
+        MaillageIoTZigbee: all
+        MaillageCoeur: all
+        ProtocoleZigbee: all
+    run:
+      config: Debug
   Passeur:
     build:
       targets:
