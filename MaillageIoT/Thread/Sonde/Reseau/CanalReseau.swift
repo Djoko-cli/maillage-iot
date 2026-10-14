@@ -1,4 +1,5 @@
 import Foundation
+import MaillageCoeur
 import Synchronization
 
 /// Canal de la sonde par le reseau Thread (contrat 1.0.2), sur le transport UDP repris du

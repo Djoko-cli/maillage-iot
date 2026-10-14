@@ -1,14 +1,17 @@
 import CryptoKit
 import Foundation
 
-/// Enveloppe H1 de l'acces reseau, reprise telle quelle du pont Halo (benq,
-/// `HaloProtocole/Reseau/EnveloppeH1.swift`, docs/PROTOCOLE-JSON.md 10.4), code pur.
+// Repris tel quel du pont Halo (depot benq, commit 3a1ad2f). Commun aux deux sondes : un message
+// H1 est un datagramme UDP chez Thread, une ligne TCP chez Zigbee (spec sonde Wi-Fi, 3.3 ;
+// CanalReseau). Ne pas changer les regles d'ici sans changer le pont Halo et les deux firmwares.
+
+/// Enveloppe H1 du transport reseau (docs/PROTOCOLE-JSON.md 10.4), code pur.
 /// MAC = 16 premiers octets de HMAC-SHA256, ecrits en 32 hexa MAJUSCULES ;
 /// seuls les textes canoniques passent (hexa majuscule, `ctr` decimal sans
 /// zero de tete).
-enum H1 {
+public enum H1 {
     /// Hexa MAJUSCULE.
-    static func hexa<S: Sequence>(_ octets: S) -> String where S.Element == UInt8 {
+    public static func hexa<S: Sequence>(_ octets: S) -> String where S.Element == UInt8 {
         let chiffres = Array("0123456789ABCDEF".utf8)
         var s: [UInt8] = []
         for o in octets {
@@ -19,7 +22,7 @@ enum H1 {
     }
 
     /// Octets d'un texte hexa MAJUSCULE de longueur paire ; nil sinon.
-    static func octets(hexa: String) -> Data? {
+    public static func octets(hexa: String) -> Data? {
         let u = Array(hexa.utf8)
         guard u.count % 2 == 0 else { return nil }
         func valeur(_ c: UInt8) -> UInt8? {
@@ -38,12 +41,12 @@ enum H1 {
     }
 
     /// `n` octets d'un generateur cryptographique.
-    static func aleatoire(_ n: Int) -> Data {
+    public static func aleatoire(_ n: Int) -> Data {
         SymmetricKey(size: SymmetricKeySize(bitCount: n * 8)).withUnsafeBytes { Data($0) }
     }
 
-    /// `kid` : 8 premiers hexa de SHA-256(cle) ; c'est aussi l'empreinte de la cle.
-    static func kid(cle: Data) -> String {
+    /// `kid` : 8 premiers hexa de SHA-256(cle).
+    public static func kid(cle: Data) -> String {
         String(hexa(SHA256.hash(data: cle)).prefix(8))
     }
 
@@ -52,7 +55,7 @@ enum H1 {
     }
 
     /// SALUT signe (83 octets) : `H1 SALUT <kid> <na> <mac_salut>`.
-    static func salut(cle: Data, na: Data) -> Data {
+    public static func salut(cle: Data, na: Data) -> Data {
         let k = kid(cle: cle), n = hexa(na)
         let m = mac(SymmetricKey(data: cle), Data("H1|SALUT|\(k)|\(n)".utf8))
         return Data("H1 SALUT \(k) \(n) \(m)".utf8)
@@ -60,7 +63,7 @@ enum H1 {
 
     /// DEFI au MAC juste pour ce `na` : `(sid, nc)`. Sinon nil (DEFI d'un
     /// essai precedent, faux, ou autre datagramme).
-    static func verifierDefi(_ datagramme: Data, cle: Data, na: Data) -> (sid: String, nc: String)? {
+    public static func verifierDefi(_ datagramme: Data, cle: Data, na: Data) -> (sid: String, nc: String)? {
         let champs = datagramme.split(separator: 0x20, omittingEmptySubsequences: false)
         guard champs.count == 5, champs[0].elementsEqual("H1".utf8), champs[1].elementsEqual("DEFI".utf8),
               estHexa(champs[2], longueur: 8), estHexa(champs[3], longueur: 32), estHexa(champs[4], longueur: 32)
@@ -73,7 +76,7 @@ enum H1 {
     }
 
     /// Ks = HMAC-SHA256(PSK, `"H1|SESSION|" na "|" nc "|" sid`).
-    static func cleSession(cle: Data, na: Data, nc: String, sid: String) -> SymmetricKey {
+    public static func cleSession(cle: Data, na: Data, nc: String, sid: String) -> SymmetricKey {
         let code = HMAC<SHA256>.authenticationCode(for: Data("H1|SESSION|\(hexa(na))|\(nc)|\(sid)".utf8),
                                                   using: SymmetricKey(data: cle))
         return SymmetricKey(data: Data(code))
@@ -83,8 +86,7 @@ enum H1 {
         s.count == longueur && s.allSatisfy { (0x30...0x39).contains($0) || (0x41...0x46).contains($0) }
     }
 
-    /// Comparaison en temps constant (les longueurs sont publiques). CryptoKit refuse un
-    /// MAC tronque : la comparaison est ecrite a la main, comme sur la carte.
+    /// Comparaison en temps constant (les longueurs sont publiques).
     static func egaux(_ a: Data, _ b: Data) -> Bool {
         guard a.count == b.count else { return false }
         var d: UInt8 = 0
@@ -93,13 +95,15 @@ enum H1 {
     }
 }
 
-/// Fenetre anti-rejeu de 32 : `ctr` strictement croissant, desordre admis
-/// sur 32. A juger APRES le MAC : un `ctr` forge ne la pousse jamais.
-struct FenetreAntiRejeu: Sendable, Equatable {
-    private(set) var haut: UInt32 = 0
+/// Fenetre anti-rejeu de 32 (10.4) : `ctr` strictement croissant, desordre
+/// admis sur 32. A juger APRES le MAC : un `ctr` forge ne la pousse jamais.
+public struct FenetreAntiRejeu: Sendable, Equatable {
+    public private(set) var haut: UInt32 = 0
     private var bits: UInt32 = 0
 
-    mutating func accepter(_ ctr: UInt32) -> Bool {
+    public init() {}
+
+    public mutating func accepter(_ ctr: UInt32) -> Bool {
         guard ctr != 0 else { return false }
         if ctr > haut {
             let saut = ctr - haut
@@ -115,33 +119,33 @@ struct FenetreAntiRejeu: Sendable, Equatable {
     }
 }
 
-/// Session H1 etablie : scelle les charges de l'app (sens `A`), ouvre les
+/// Session H1 etablie : scelle les lignes de l'app (sens `A`), ouvre les
 /// datagrammes de la carte (sens `C`).
-struct SessionH1: Sendable {
-    let sid: String
-    /// Ks, gardee en octets (valeur `Sendable`) ; absente des dumps (`customMirror`).
+public struct SessionH1: Sendable {
+    public let sid: String
+    /// Ks, gardee en octets (valeur `Sendable`) ; absente des dumps (`customMirror`, plus bas).
     private let ks: Data
-    private(set) var ctrEmis: UInt32 = 0
+    public private(set) var ctrEmis: UInt32 = 0
     /// Datagrammes ecartes (forme, sid, MAC, rejeu) depuis l'ouverture.
-    private(set) var ecartes = 0
+    public private(set) var ecartes = 0
     private var fenetre = FenetreAntiRejeu()
 
-    init(sid: String, ks: SymmetricKey) {
+    public init(sid: String, ks: SymmetricKey) {
         self.sid = sid
         self.ks = ks.withUnsafeBytes { Data($0) }
     }
 
-    /// `H1 <sid> <ctr> <mac> <charge>`, `ctr` +1 a chaque appel (4 milliards
+    /// `H1 <sid> <ctr> <mac> <ligne>`, `ctr` +1 a chaque appel (4 milliards
     /// de messages par session : jamais atteint, la session dure 10 min sans message).
-    mutating func sceller(_ charge: Data) -> Data {
+    public mutating func sceller(_ ligne: Data) -> Data {
         ctrEmis &+= 1
-        let m = H1.mac(SymmetricKey(data: ks), Data("A|\(sid)|\(ctrEmis)|".utf8) + charge)
-        return Data("H1 \(sid) \(ctrEmis) \(m) ".utf8) + charge
+        let m = H1.mac(SymmetricKey(data: ks), Data("A|\(sid)|\(ctrEmis)|".utf8) + ligne)
+        return Data("H1 \(sid) \(ctrEmis) \(m) ".utf8) + ligne
     }
 
     /// Charge d'un message `C` valide (forme canonique, `sid`, MAC, fenetre) ;
     /// sinon nil, et `ecartes` +1.
-    mutating func ouvrir(_ datagramme: Data) -> Data? {
+    public mutating func ouvrir(_ datagramme: Data) -> Data? {
         guard let charge = verifier(datagramme) else {
             ecartes += 1
             return nil
@@ -168,8 +172,10 @@ struct SessionH1: Sendable {
     }
 }
 
+/// La cle de session Ks n'apparait dans aucun dump ni aucune description (`dump`, `Mirror`,
+/// `String(reflecting:)`) : seuls `sid`, `ctrEmis` et `ecartes` sont refletes.
 extension SessionH1: CustomReflectable {
-    var customMirror: Mirror {
+    public var customMirror: Mirror {
         Mirror(self, children: ["sid": sid, "ctrEmis": ctrEmis, "ecartes": ecartes], displayStyle: .struct)
     }
 }

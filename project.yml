@@ -216,11 +216,13 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.thread.tests
         GENERATE_INFOPLIST_FILE: YES
+  # Les tests de l'app Thread compilent aussi les vecteurs H1 du coeur (MaillageCoeurTests/VecteursH1.swift, sans test).
   MaillageIoTTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: MaillageIoTTests
+      - path: MaillageCoeurTests/VecteursH1.swift
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur

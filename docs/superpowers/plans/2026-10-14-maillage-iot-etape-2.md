@@ -159,11 +159,11 @@ D'après `inventaire-zigbee-coeur.md` §1.4.
 - Delete: `MaillageIoT/Thread/Sonde/Reseau/EnveloppeH1.swift` (copie de l'app)
 - Test: `MaillageCoeurTests/EnveloppeH1Tests.swift` (fusion de `Z:MaillageCoeurTests/EnveloppeH1Tests.swift` et du test `sessionMasquee` de `MaillageIoTTests/EnveloppeH1Tests.swift`, avec leurs vecteurs) ; retirer `MaillageIoTTests/EnveloppeH1Tests.swift` une fois ses tests repris.
 
-- [ ] **Step 1: Comparer** — `diff` entre la copie de l'app Thread et `Z:MaillageCoeur/Reseau/EnveloppeH1.swift` : noter dans le rapport chaque écart de comportement (il ne doit y en avoir aucun hors visibilité et masquage).
-- [ ] **Step 2: Déplacer** — créer le fichier du cœur, supprimer la copie de l'app, l'app Thread utilise celui du cœur (`import MaillageCoeur` déjà présent).
-- [ ] **Step 3: Tests** — fusion des tests dans `MaillageCoeurTests` ; nombre de `@Test` H1 avant (Thread + Zigbee) = après.
-- [ ] **Step 4: Vérifier** — `outils/tester.sh` (code 0) ; `bash outils/tester-coeur.sh`.
-- [ ] **Step 5: Commit** — « Coeur : enveloppe H1 commune aux deux sondes ».
+- [x] **Step 1: Comparer** — `diff` entre la copie de l'app Thread et `Z:MaillageCoeur/Reseau/EnveloppeH1.swift` : noter dans le rapport chaque écart de comportement (il ne doit y en avoir aucun hors visibilité et masquage).
+- [x] **Step 2: Déplacer** — créer le fichier du cœur, supprimer la copie de l'app, l'app Thread utilise celui du cœur (`import MaillageCoeur` déjà présent).
+- [x] **Step 3: Tests** — fusion des tests dans `MaillageCoeurTests` ; nombre de `@Test` H1 avant (Thread + Zigbee) = après.
+- [x] **Step 4: Vérifier** — `outils/tester.sh` (code 0) ; `bash outils/tester-coeur.sh`.
+- [x] **Step 5: Commit** — « Coeur : enveloppe H1 commune aux deux sondes ».
 
 ---
 

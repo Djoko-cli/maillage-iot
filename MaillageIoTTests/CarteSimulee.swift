@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 import Synchronization
+@testable import MaillageCoeur
 @testable import MaillageIoT
 
 /// Connexion de datagrammes en memoire, cote app : ce que le transport envoie va a la carte
