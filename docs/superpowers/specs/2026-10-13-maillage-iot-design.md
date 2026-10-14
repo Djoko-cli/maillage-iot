@@ -338,6 +338,14 @@ Zigbee/
   change.
 - **Idempotence** : réimporter le même export ne fait rien de plus. Son identifiant de manifeste est gardé dans
   `imports.json`.
+- **Clés du trousseau** (demande de Djoko, 14/10/2026, au banc de l'étape 2) : l'export n'en contient toujours
+  aucune ; Maillage IoT les **lit directement dans l'ancien trousseau** (`TrousseauRepris`). Une clé absente du
+  nouveau service est demandée **une seule fois** à l'ancien (Thread : `fr.djoko.maillage.sonde` et `.sonde.udp` ; Zigbee : `fr.djoko.maillage.zigbee.pont`,
+  `fr.djoko.maillage.zigbee.sonde`) : macOS demande l'accord de l'utilisateur, l'élément appartenant à l'ancienne
+  app. La clé est recopiée sous le nouveau service ; l'ancien élément n'est jamais modifié ni effacé, si bien que
+  l'ancienne app garde son pont et son accès réseau à la sonde. Un refus, une clé absente ou « Oublier » ne
+  redemandent plus rien, et l'appairage manuel (4.4) reste le secours. Déjà en place dans l'app de transition
+  Zigbee (étape 2) ; à étendre à Thread à l'étape 4, après un essai réel sous bac à sable.
 - **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Le second
   ne fait qu'ajouter ce qui manque, et le résumé dit ce qui a été ignoré. Les clés préfixées n'entrent jamais en
   collision.
@@ -347,10 +355,11 @@ Zigbee/
 
 ### 4.4 Ce qui se refait
 
-- Appairer le pont Hue (appui sur son bouton).
-- Brancher chaque sonde en USB pour sa mise en service réseau : une nouvelle clé est écrite dans la sonde et dans
-  le nouveau trousseau. **L'ancienne clé est remplacée** : l'ancienne app perd l'accès réseau à la sonde (elle la
-  voit « injoignable »). Le résumé le dit.
+- **Seulement si la reprise des clés (4.3) n'a pas abouti** (refus, clé absente, accès refusé par le bac à sable) :
+  - appairer le pont Hue (appui sur son bouton) ;
+  - brancher chaque sonde en USB pour sa mise en service réseau : une nouvelle clé est écrite dans la sonde et dans
+    le nouveau trousseau. **L'ancienne clé est remplacée** : l'ancienne app perd l'accès réseau à la sonde (elle la
+    voit « injoignable »). Le résumé le dit.
 - Accepter les autorisations de macOS : réseau local et notifications.
 - Ouverture de session : interrupteur de Maillage IoT.
 
@@ -550,3 +559,5 @@ L'étape 2 reste un seul plan.
 - Fusion des deux firmwares de sonde, si un jour une carte porte les deux radios.
 - Icône de l'app (Dock et barre des menus) : retirer le badge « T » hérité de Maillage Thread, à l'étape 3 avec
   l'interface à deux protocoles (banc de l'étape 1, 14/10).
+- Fiche d'un nœud Zigbee : renommer le bouton « Identifier » (clignotement par le pont Hue) en « Identifier par
+  Hue », pour faire la paire avec « Identifier par Maison » ; « Identification… » suit (banc de l'étape 2, 14/10).

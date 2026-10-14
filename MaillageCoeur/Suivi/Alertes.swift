@@ -49,7 +49,7 @@ public struct Alertes: Sendable {
     private var pertes: [Evenement] = []
     private let politique: any PolitiqueJournal
 
-    /// Sans politique (`PolitiqueJournalNeutre`), rien ne se notifie : c'est le protocole qui dit quoi.
+    /// Avec la politique neutre (`PolitiqueJournalNeutre`), rien ne se notifie : c'est le protocole qui dit quoi.
     public init(politique: any PolitiqueJournal) {
         self.politique = politique
     }

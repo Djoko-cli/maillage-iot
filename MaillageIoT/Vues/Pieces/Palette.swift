@@ -52,7 +52,8 @@ struct Palette {
         switch e {
         case .joignable: Color(red: 0.29, green: 0.87, blue: 0.5)
         case .partitionCoupee: .orange
-        case .sansAdresse, .disparu: Color(red: 0.97, green: 0.44, blue: 0.44)
+        // `injoignable` (le pont le dit tel) : le rouge de Zigbee, celui du disparu ; Thread ne l'emet pas.
+        case .sansAdresse, .injoignable, .disparu: Color(red: 0.97, green: 0.44, blue: 0.44)
         case .inconnu: .gray
         }
     }

@@ -1,4 +1,5 @@
 import Foundation
+import MaillageCoeur
 import Network
 import Synchronization
 

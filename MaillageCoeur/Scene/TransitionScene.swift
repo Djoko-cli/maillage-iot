@@ -61,6 +61,7 @@ public struct PosesScene: Hashable, Sendable {
         public var vers: String
         public var genre: GrapheReseau.Lien.Genre
         public var qualite: Int?
+        public var suppose: Bool
         public var opacite: Double
 
         public init(_ l: GrapheReseau.Lien, opacite: Double = 1) {
@@ -68,7 +69,13 @@ public struct PosesScene: Hashable, Sendable {
             vers = l.vers
             genre = l.genre
             qualite = l.qualite
+            suppose = l.suppose
             self.opacite = opacite
+        }
+
+        /// Le lien du graphe qu'il pose.
+        public var graphe: GrapheReseau.Lien {
+            GrapheReseau.Lien(de: de, vers: vers, genre: genre, qualite: qualite, suppose: suppose)
         }
     }
 

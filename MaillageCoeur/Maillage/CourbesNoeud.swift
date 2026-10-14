@@ -30,16 +30,20 @@ public enum PeriodeCourbes: String, CaseIterable, Hashable, Sendable, Identifiab
 }
 
 /// Point d'une courbe. `troncon` : numero du morceau de courbe ; un trou (plus de 20 min entre
-/// deux releves, ou de trois pas) en commence un autre, pour ne pas relier par-dessus le trou.
+/// deux releves, ou de trois pas) en commence un autre, pour ne pas relier par-dessus le trou. `lqi` : pour la courbe
+/// d'un lien, la valeur d'origine d'ou vient sa qualite (le LQI, le moins bon des deux sens), lue au survol ; nil pour
+/// une courbe sans valeur d'origine (le signal en dBm) ou sans mesure.
 public struct PointCourbe: Hashable, Sendable {
     public let date: Date
     public let valeur: Double
     public let troncon: Int
+    public let lqi: Double?
 
-    public init(date: Date, valeur: Double, troncon: Int) {
+    public init(date: Date, valeur: Double, troncon: Int, lqi: Double? = nil) {
         self.date = date
         self.valeur = valeur
         self.troncon = troncon
+        self.lqi = lqi
     }
 }
 
@@ -92,6 +96,8 @@ public struct CourbesNoeud: Hashable, Sendable {
     /// Par cle de l'autre bout.
     public let liens: [CourbeLien]
     public let parents: [ChangementParent]
+    /// Les changements de chemin d'un routeur (prochain saut vers le pont) ; vide pour un protocole sans chemins.
+    public let chemins: [ChangementParent]
     public let signal: [PointCourbe]
     public let parentsSonde: [ChangementParent]
     /// Les courbes montrees d'abord (`ChoixCourbes`) : pour un enfant, celle vers son parent ; pour un routeur, ses liens
@@ -99,12 +105,14 @@ public struct CourbesNoeud: Hashable, Sendable {
     /// d'etre surveille passe dans les six.
     public let prioritaires: [String]
 
-    public init(debut: Date, fin: Date, liens: [CourbeLien], parents: [ChangementParent], signal: [PointCourbe],
+    public init(debut: Date, fin: Date, liens: [CourbeLien], parents: [ChangementParent],
+                chemins: [ChangementParent] = [], signal: [PointCourbe],
                 parentsSonde: [ChangementParent], prioritaires: [String]) {
         self.debut = debut
         self.fin = fin
         self.liens = liens
         self.parents = parents
+        self.chemins = chemins
         self.signal = signal
         self.parentsSonde = parentsSonde
         self.prioritaires = prioritaires
@@ -115,29 +123,39 @@ public struct CourbesNoeud: Hashable, Sendable {
 
     public var estVide: Bool { liens.allSatisfy { $0.points.isEmpty } && parents.isEmpty && signal.isEmpty }
 
-    /// Points d'une courbe : la moyenne de chaque pas (datee du debut du pas), ou chaque releve
-    /// sans pas ; un ecart de plus de trois pas (20 min sans pas) entre deux points ouvre un
-    /// nouveau troncon.
+    /// Points d'une courbe de mesures sans valeur d'origine (`reduire(_:pas:)` a trois valeurs).
     public static func reduire(_ bruts: [(Date, Double)], pas: TimeInterval?) -> [PointCourbe] {
+        reduire(bruts.map { ($0.0, $0.1, nil as Double?) }, pas: pas)
+    }
+
+    /// Points d'une courbe : la moyenne de chaque pas (datee du debut du pas, valeur d'origine comprise, sur ses mesures
+    /// connues), ou chaque releve sans pas ; un ecart de plus de trois pas (20 min sans pas) entre deux points ouvre un
+    /// nouveau troncon. Troisieme valeur : la valeur d'origine de la mesure (le LQI d'un lien), si on la connait.
+    public static func reduire(_ bruts: [(Date, Double, Double?)], pas: TimeInterval?) -> [PointCourbe] {
         var points = bruts
         if let pas {
-            var groupes: [(debut: Date, valeurs: [Double])] = []
-            for (d, v) in bruts {
+            var groupes: [(debut: Date, valeurs: [Double], lqis: [Double])] = []
+            for (d, v, lqi) in bruts {
                 let debut = Date(timeIntervalSince1970: (d.timeIntervalSince1970 / pas).rounded(.down) * pas)
+                let lqis = lqi.map { [$0] } ?? []
                 if groupes.last?.debut == debut {
                     groupes[groupes.count - 1].valeurs.append(v)
+                    groupes[groupes.count - 1].lqis += lqis
                 } else {
-                    groupes.append((debut, [v]))
+                    groupes.append((debut, [v], lqis))
                 }
             }
-            points = groupes.map { ($0.debut, $0.valeurs.reduce(0, +) / Double($0.valeurs.count)) }
+            points = groupes.map { g in
+                (g.debut, g.valeurs.reduce(0, +) / Double(g.valeurs.count),
+                 g.lqis.isEmpty ? nil : g.lqis.reduce(0, +) / Double(g.lqis.count))
+            }
         }
         let ecart = ecartTroncon(pas: pas)
         var troncon = 0
         var resultat: [PointCourbe] = []
-        for (i, (d, v)) in points.enumerated() {
+        for (i, (d, v, lqi)) in points.enumerated() {
             if i > 0, d.timeIntervalSince(points[i - 1].0) > ecart { troncon += 1 }
-            resultat.append(PointCourbe(date: d, valeur: v, troncon: troncon))
+            resultat.append(PointCourbe(date: d, valeur: v, troncon: troncon, lqi: lqi))
         }
         return resultat
     }

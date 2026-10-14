@@ -227,7 +227,8 @@ public struct DispositionPieces: Hashable, Sendable {
             }
             var liens: [Lien] = []
             var lie = [[Bool]](repeating: [Bool](repeating: false, count: n), count: n)
-            for l in scene.liens {
+            // Les chemins vers le pont doublent des liens radio : la disposition ne depend pas des liens montres.
+            for l in scene.liens where l.genre != .chemin {
                 guard let a = place[l.de], let b = place[l.vers] else { continue }
                 liens.append(Lien(pa: a.piece, pb: b.piece, la: a.local, lb: b.local, na: a.indice, nb: b.indice))
                 if a.piece != b.piece {

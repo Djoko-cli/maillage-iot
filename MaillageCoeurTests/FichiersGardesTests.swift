@@ -138,4 +138,21 @@ struct FichiersGardesTests {
         #expect(PiecesRouteurs.lire(url).choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon")
         #expect(try Self.noms(d) == ["pieces-routeurs.json"])
     }
+
+    /// Un champ `appareils` mal forme est ignore : le fichier se lit sans choix, il n'est pas mis de cote, et la
+    /// premiere ecriture le remplace (repris de Maillage Zigbee, be6fadf).
+    @Test func appareilsMalFormes() throws {
+        let d = Self.dossier()
+        defer { try? FileManager.default.removeItem(at: d) }
+        try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        let url = d.appendingPathComponent("pieces-routeurs.json")
+        try Data(#"{"version": 1, "appareils": ["pas", "un", "dictionnaire"]}"#.utf8).write(to: url)
+        var p = PiecesRouteurs.lire(url)
+        #expect(p == PiecesRouteurs())
+        p.choisir("Salon", appareil: "deadbeef00000002", domicile: Self.domicile)
+        try p.ecrire(dans: url)
+        #expect(PiecesRouteurs.lire(url).choix(appareil: "DEADBEEF00000002", domicile: Self.domicile) == "Salon",
+                "cle en majuscules")
+        #expect(try Self.noms(d) == ["pieces-routeurs.json"])
+    }
 }

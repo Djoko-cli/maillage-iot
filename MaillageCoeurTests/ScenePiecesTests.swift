@@ -215,6 +215,43 @@ struct ScenePiecesTests {
         #expect(s.liens == g.liens)
     }
 
+    /// Le classement des noeuds (rang de carte, rayon de pastille) est un parametre ; sans lui, la regle de Thread
+    /// (`classementParDefaut`). Une regle fournie donne ses rangs et ses rayons, et les lignes d'une carte la suivent.
+    @Test func classementFourni() throws {
+        let g = try Self.graphe(sonde: true)
+        let tous = Dictionary(uniqueKeysWithValues: g.noeuds.map { ($0.id, "Salon") })
+        func scene(_ classement: (@Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double))?) -> ScenePieces {
+            if let classement {
+                return ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
+                                   piecesMaison: true, classement: classement)
+            }
+            return ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
+                               piecesMaison: true)
+        }
+        // Par defaut : la regle de Thread (celle de `lignesEtRayons`).
+        let defaut = scene(nil)
+        let explicite = scene(ScenePieces.classementParDefaut)
+        #expect(defaut.noeuds.map(\.rang) == explicite.noeuds.map(\.rang))
+        #expect(defaut.noeuds.map(\.rayon) == explicite.noeuds.map(\.rayon))
+        #expect(defaut.noeud("HomePod")?.rang == 1 && defaut.noeud("HomePod")?.rayon == 13)
+        #expect(defaut.noeud("Apple TV")?.rang == 1 && defaut.noeud("Apple TV")?.rayon == 15)
+        #expect(defaut.noeud("E000000000000004")?.rang == 2 && defaut.noeud("E000000000000004")?.rayon == 8)
+        #expect(defaut.noeud("E000000000000002")?.rang == 3 && defaut.noeud("E000000000000002")?.rayon == 7)
+        // Une regle inventee : le centre d'abord (rayon 20), puis les routeurs (rayon 9), puis les autres (rayon 5).
+        let regle: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = { n in
+            n.genre == .centre ? (1, 20) : n.routeur ? (2, 9) : (3, 5)
+        }
+        let s = scene(regle)
+        #expect(s.noeud("Apple TV")?.rang == 1 && s.noeud("Apple TV")?.rayon == 20)
+        #expect(s.noeud("HomePod")?.rang == 2 && s.noeud("HomePod")?.rayon == 9)
+        #expect(s.noeud("E000000000000004")?.rang == 2 && s.noeud("E000000000000004")?.rayon == 9)
+        #expect(s.noeud("E000000000000002")?.rang == 3 && s.noeud("E000000000000002")?.rayon == 5)
+        #expect(s.noeud("HomePod")?.route == true && s.noeud("E000000000000005")?.route == false)
+        #expect(try Self.piece(s, .maison("Salon")).noeuds
+                == ["Apple TV", "HomePod", "E000000000000004", "E000000000000005", "E000000000000003", "E000000000000002"],
+                "les lignes suivent le rang fourni, puis le libelle")
+    }
+
     /// Teintes : FNV-1a 32 bits du nom, modulo 8 ; dans un etage, la suivante libre si elle est prise
     /// (Chambre, Salle de bain et Cellier donnent 3) ; d'un etage a l'autre, pas de conflit.
     @Test func teintes() throws {

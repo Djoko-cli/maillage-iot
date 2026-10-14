@@ -12,6 +12,8 @@ extension TypeEvenement {
     static let essaiCoupure = TypeEvenement("essaiCoupure", gravite: .attention)
     static let essaiParent = TypeEvenement("essaiParent")
     static let essaiSansParent = TypeEvenement("essaiSansParent", gravite: .attention)
+    /// Changement de chemin d'un routeur : regroupe par noeud comme le parent, mais sur sa propre ligne.
+    static let essaiChemin = TypeEvenement("essaiChemin")
     static let essaiRelaisPerdu = TypeEvenement("essaiRelaisPerdu", gravite: .alerte)
     static let essaiRoutine = TypeEvenement("essaiRoutine")
 }
@@ -19,7 +21,7 @@ extension TypeEvenement {
 struct PolitiqueEssai: PolitiqueJournal {
     var types: [TypeEvenement] {
         [.surveillanceDemarree, .veille, .essaiScission, .essaiReunion, .essaiPerte, .essaiCoupure,
-         .essaiParent, .essaiSansParent, .essaiRelaisPerdu, .essaiRoutine]
+         .essaiParent, .essaiSansParent, .essaiChemin, .essaiRelaisPerdu, .essaiRoutine]
     }
 
     func estPerte(_ e: Evenement) -> Bool {
@@ -42,8 +44,10 @@ struct PolitiqueEssai: PolitiqueJournal {
         }
     }
 
-    /// `details["cle"]` du noeud si l'evenement la donne, sinon l'id du sujet.
+    /// `details["cle"]` du noeud si l'evenement la donne, sinon l'id du sujet (parent et chemin).
     func cleParent(_ e: Evenement) -> String? {
-        e.type == .essaiParent ? (e.details["cle"] ?? e.sujet?.id) : nil
+        e.type == .essaiParent || e.type == .essaiChemin ? (e.details["cle"] ?? e.sujet?.id) : nil
     }
+
+    func estChemin(_ e: Evenement) -> Bool { e.type == .essaiChemin }
 }

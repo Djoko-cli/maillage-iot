@@ -1,34 +1,28 @@
 import Foundation
 import Testing
 
-/// Catalogues de textes de l'app, lus dans le depot. Ces tests vivent ici (et
-/// non dans MaillageIoTTests) : les tests de l'app tournent dans l'app
-/// sandboxee, qui ne peut pas lire le depot.
-enum Catalogues {
-    static let racine = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()  // MaillageCoeurTests
-        .deletingLastPathComponent()  // racine du depot
+/// Une app et ses catalogues de textes. Deux apps, tant que l'app de transition Zigbee existe (etape 2) : leurs deux
+/// catalogues restent separes jusqu'a l'etape 3.
+struct AppCatalogue: Sendable, CustomTestStringConvertible {
+    /// Nom de la cible et de son dossier de sources (`MaillageIoT`, `MaillageIoTZigbee`).
+    let nom: String
+    var testDescription: String { nom }
 
-    static let textes = racine.appendingPathComponent("MaillageIoT/Ressources/Localizable.xcstrings")
-    static let infoPlist = racine.appendingPathComponent("MaillageIoT/Ressources/InfoPlist.xcstrings")
+    static let toutes = [AppCatalogue(nom: "MaillageIoT"), AppCatalogue(nom: "MaillageIoTZigbee")]
 
-    static func entrees(_ chemin: URL) throws -> (source: String, cles: [String: [String: Any]]) {
-        let d = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: chemin)) as? [String: Any])
-        let cles = try #require(d["strings"] as? [String: [String: Any]])
-        return (d["sourceLanguage"] as? String ?? "", cles)
-    }
+    var textes: URL { Catalogues.racine.appendingPathComponent("\(nom)/Ressources/Localizable.xcstrings") }
+    var infoPlist: URL { Catalogues.racine.appendingPathComponent("\(nom)/Ressources/InfoPlist.xcstrings") }
 
-    /// Dossier des produits (`.../Build/Products/Debug`) : celui de ce paquet de test.
-    private final class Ancre {}
-    static var produits: URL { Bundle(for: Ancre.self).bundleURL.deletingLastPathComponent() }
-
-    /// `.stringsdata` de l'app : `Build/Intermediates.noindex/MaillageIoT.build/<config>/MaillageIoT.build/Objects-normal/<arch>/`.
-    static var stringsdata: [URL] {
+    /// `.stringsdata` de l'app :
+    /// `Build/Intermediates.noindex/MaillageIoT.build/<config>/<App>.build/Objects-normal/<arch>/` (le premier
+    /// `MaillageIoT.build` est celui du projet, le second celui de la cible).
+    var stringsdata: [URL] {
+        let produits = Catalogues.produits
         let config = produits.lastPathComponent
         let objets = produits.deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("Intermediates.noindex/MaillageIoT.build")
             .appendingPathComponent(config)
-            .appendingPathComponent("MaillageIoT.build/Objects-normal")
+            .appendingPathComponent("\(nom).build/Objects-normal")
         let fm = FileManager.default
         var fichiers: [URL] = []
         for arch in (try? fm.contentsOfDirectory(at: objets, includingPropertiesForKeys: nil)) ?? [] {
@@ -40,10 +34,8 @@ enum Catalogues {
         return fichiers
     }
 
-    static var stringsdataDisponibles: Bool { !stringsdata.isEmpty }
-
     /// Cles extraites du code de l'app (table Localizable).
-    static func clesExtraites() throws -> Set<String> {
+    func clesExtraites() throws -> Set<String> {
         var cles = Set<String>()
         for f in stringsdata {
             let d = try JSONSerialization.jsonObject(with: Data(contentsOf: f)) as? [String: Any]
@@ -54,6 +46,37 @@ enum Catalogues {
         }
         return cles
     }
+}
+
+/// Un catalogue (textes ou Info.plist) d'une app.
+struct FichierCatalogue: Sendable, CustomTestStringConvertible {
+    let app: AppCatalogue
+    let chemin: URL
+    let genre: String
+    var testDescription: String { "\(app.nom) : \(genre)" }
+
+    static let tous = AppCatalogue.toutes.flatMap {
+        [FichierCatalogue(app: $0, chemin: $0.textes, genre: "Localizable"),
+         FichierCatalogue(app: $0, chemin: $0.infoPlist, genre: "InfoPlist")]
+    }
+}
+
+/// Catalogues de textes des apps, lus dans le depot. Ces tests vivent ici (et non dans les tests des apps) : les tests
+/// des apps tournent dans l'app sandboxee, qui ne peut pas lire le depot.
+enum Catalogues {
+    static let racine = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()  // MaillageCoeurTests
+        .deletingLastPathComponent()  // racine du depot
+
+    static func entrees(_ chemin: URL) throws -> (source: String, cles: [String: [String: Any]]) {
+        let d = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: chemin)) as? [String: Any])
+        let cles = try #require(d["strings"] as? [String: [String: Any]])
+        return (d["sourceLanguage"] as? String ?? "", cles)
+    }
+
+    /// Dossier des produits (`.../Build/Products/Debug`) : celui de ce paquet de test.
+    private final class Ancre {}
+    static var produits: URL { Bundle(for: Ancre.self).bundleURL.deletingLastPathComponent() }
 
     /// Specificateurs d'un format, sans leur position (`%1$@` -> `@`), dans l'ordre.
     static func specificateurs(_ s: String) -> [String] {
@@ -71,9 +94,9 @@ enum Catalogues {
 
 @Suite("Catalogues de textes (francais source, anglais complet)")
 struct CataloguesTests {
-    @Test(arguments: [Catalogues.textes, Catalogues.infoPlist])
-    func chaqueCleATraductionAnglaise(_ chemin: URL) throws {
-        let (source, cles) = try Catalogues.entrees(chemin)
+    @Test(arguments: FichierCatalogue.tous)
+    func chaqueCleATraductionAnglaise(_ fichier: FichierCatalogue) throws {
+        let (source, cles) = try Catalogues.entrees(fichier.chemin)
         #expect(source == "fr", "le francais est la langue de developpement")
         #expect(!cles.isEmpty)
         for (cle, entree) in cles {
@@ -96,15 +119,16 @@ struct CataloguesTests {
         }
     }
 
-    /// Le code et le catalogue vont ensemble : aucune cle du code ne manque,
-    /// aucune cle du catalogue n'est morte (apres un changement de texte :
-    /// outils/synchroniser-textes.sh puis outils/traduire.py).
-    @Test(.enabled(if: Catalogues.stringsdataDisponibles, "produits de compilation introuvables"))
-    func codeEtCatalogueAlignes() throws {
-        let extraites = try Catalogues.clesExtraites()
-        let catalogue = Set(try Catalogues.entrees(Catalogues.textes).cles.keys)
+    /// Le code et le catalogue vont ensemble, pour chaque app : aucune cle du code ne manque, aucune cle du catalogue
+    /// n'est morte (apres un changement de texte : `outils/synchroniser-textes.sh <App>` puis outils/traduire.py).
+    /// Sans les produits de compilation de l'app (le schema du coeur ne la compile pas), le test est saute.
+    @Test(arguments: AppCatalogue.toutes)
+    func codeEtCatalogueAlignes(_ app: AppCatalogue) throws {
+        if app.stringsdata.isEmpty { try Test.cancel("produits de compilation introuvables : \(app.nom)") }
+        let extraites = try app.clesExtraites()
+        let catalogue = Set(try Catalogues.entrees(app.textes).cles.keys)
         #expect(!extraites.isEmpty)
-        #expect(extraites.subtracting(catalogue).sorted() == [], "absentes du catalogue")
-        #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees")
+        #expect(extraites.subtracting(catalogue).sorted() == [], "absentes du catalogue de \(app.nom)")
+        #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees dans le catalogue de \(app.nom)")
     }
 }

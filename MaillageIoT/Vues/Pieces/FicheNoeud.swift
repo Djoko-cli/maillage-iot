@@ -685,7 +685,7 @@ struct FicheNoeud: View {
     @ViewBuilder
     private func ligneJournal(_ ligne: LigneJournal) -> some View {
         switch ligne {
-        case .parents(let groupe):
+        case .parents(let groupe), .chemins(let groupe):
             LigneChangements(groupe: groupe) {
                 Text("\(TexteEvenement.plage(groupe)) · \(TexteEvenement.changements(ligne))")
                     .font(.caption)

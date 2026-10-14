@@ -6,26 +6,33 @@ import Testing
 /// le pointeur, son etiquette, sans dependre de la langue ni du fuseau de la machine.
 @Suite("Courbes : echelle et survol du signal")
 struct EchelleSignalTests {
+    /// Les deux echelles d'essai : le coeur n'en nomme aucune, chaque protocole a la sienne (`.dbm` de Thread,
+    /// `.lqi` de Zigbee). Memes reglages qu'elles, pour que les attentes ci-dessous soient celles des protocoles.
+    static let dbm = EchelleSignal(unite: "dBm", uniteAvant: false, pas: 10, marge: 5, bornes: nil,
+                                   domaineParDefaut: -100 ... -40)
+    static let lqi = EchelleSignal(unite: "LQI", uniteAvant: true, pas: 50, marge: 10, bornes: 0 ... 255,
+                                   domaineParDefaut: 0 ... 255)
+
     /// Le domaine : un seul point (−67 donne −80 ... −60) ; des valeurs egales ; des valeurs etalees ; des valeurs deja
     /// sur une dizaine (−70 donne −80 ... −60, pas −70 ... −70). Toujours 10 dB au moins, et deux graduations au moins,
     /// sur les dizaines.
     @Test func domaine() throws {
-        #expect(EchelleSignal.domaine([-67]) == -80 ... -60)
-        #expect(EchelleSignal.domaine([-67, -67, -67]) == -80 ... -60)
-        #expect(EchelleSignal.domaine([-91, -58]) == -100 ... -50)
-        #expect(EchelleSignal.domaine([-70]) == -80 ... -60)
-        #expect(EchelleSignal.domaine([-75]) == -80 ... -70, "a 5 dB d'une dizaine : elle-meme")
-        #expect(EchelleSignal.domaine([-74.9]) == -80 ... -60)
-        #expect(EchelleSignal.domaine([-65.1]) == -80 ... -60 && EchelleSignal.domaine([-64.9]) == -70 ... -50)
-        #expect(EchelleSignal.domaine([]) == nil)
-        #expect(EchelleSignal.graduations(-80 ... -60) == [-80, -70, -60])
-        #expect(EchelleSignal.graduations(-100 ... -50) == [-100, -90, -80, -70, -60, -50])
-        #expect(EchelleSignal.graduations(-80 ... -70) == [-80, -70])
-        #expect(EchelleSignal.graduations(-75 ... -52) == [-70, -60], "la premiere : la dizaine au-dessus du bas")
-        #expect(EchelleSignal.graduations(-74 ... -60) == [-70, -60])
+        #expect(Self.dbm.domaine([-67]) == -80 ... -60)
+        #expect(Self.dbm.domaine([-67, -67, -67]) == -80 ... -60)
+        #expect(Self.dbm.domaine([-91, -58]) == -100 ... -50)
+        #expect(Self.dbm.domaine([-70]) == -80 ... -60)
+        #expect(Self.dbm.domaine([-75]) == -80 ... -70, "a 5 dB d'une dizaine : elle-meme")
+        #expect(Self.dbm.domaine([-74.9]) == -80 ... -60)
+        #expect(Self.dbm.domaine([-65.1]) == -80 ... -60 && Self.dbm.domaine([-64.9]) == -70 ... -50)
+        #expect(Self.dbm.domaine([]) == nil)
+        #expect(Self.dbm.graduations(-80 ... -60) == [-80, -70, -60])
+        #expect(Self.dbm.graduations(-100 ... -50) == [-100, -90, -80, -70, -60, -50])
+        #expect(Self.dbm.graduations(-80 ... -70) == [-80, -70])
+        #expect(Self.dbm.graduations(-75 ... -52) == [-70, -60], "la premiere : la dizaine au-dessus du bas")
+        #expect(Self.dbm.graduations(-74 ... -60) == [-70, -60])
         for v in stride(from: -100.0, through: -30, by: 0.7) {
-            let d = try #require(EchelleSignal.domaine([v]))
-            #expect(d.upperBound - d.lowerBound >= 10 && EchelleSignal.graduations(d).count >= 2 && d.contains(v), "\(v)")
+            let d = try #require(Self.dbm.domaine([v]))
+            #expect(d.upperBound - d.lowerBound >= 10 && Self.dbm.graduations(d).count >= 2 && d.contains(v), "\(v)")
         }
     }
 
@@ -96,11 +103,11 @@ struct EchelleSignalTests {
         let paris = TimeZone(identifier: "Europe/Paris")!
         let p = Self.point(0, -66.6)
         let fr = Locale(identifier: "fr_FR"), en = Locale(identifier: "en_US")
-        #expect(EchelleSignal.etiquette(p, periode: .jour, locale: fr, fuseau: paris) == "\u{2212}67 dBm · 16:13")
-        #expect(EchelleSignal.etiquette(p, periode: .jour, locale: en, fuseau: paris) == "\u{2212}67 dBm · 4:13\u{202F}PM")
-        #expect(EchelleSignal.etiquette(p, periode: .semaine, locale: fr, fuseau: paris) == "\u{2212}67 dBm · 21 sept. à 16:13")
-        #expect(EchelleSignal.etiquette(p, periode: .mois, locale: en, fuseau: paris) == "\u{2212}67 dBm · Sep 21 at 4:13\u{202F}PM")
-        #expect(EchelleSignal.etiquette(Self.point(0, 3), periode: .jour, locale: fr, fuseau: paris) == "3 dBm · 16:13")
+        #expect(Self.dbm.etiquette(p, periode: .jour, locale: fr, fuseau: paris) == "\u{2212}67 dBm · 16:13")
+        #expect(Self.dbm.etiquette(p, periode: .jour, locale: en, fuseau: paris) == "\u{2212}67 dBm · 4:13\u{202F}PM")
+        #expect(Self.dbm.etiquette(p, periode: .semaine, locale: fr, fuseau: paris) == "\u{2212}67 dBm · 21 sept. à 16:13")
+        #expect(Self.dbm.etiquette(p, periode: .mois, locale: en, fuseau: paris) == "\u{2212}67 dBm · Sep 21 at 4:13\u{202F}PM")
+        #expect(Self.dbm.etiquette(Self.point(0, 3), periode: .jour, locale: fr, fuseau: paris) == "3 dBm · 16:13")
         let fin = Self.t0.addingTimeInterval(100)
         #expect(EchelleSignal.aGauche(Self.t0.addingTimeInterval(51), debut: Self.t0, fin: fin))
         #expect(!EchelleSignal.aGauche(Self.t0.addingTimeInterval(50), debut: Self.t0, fin: fin))
@@ -113,7 +120,7 @@ struct EchelleSignalTests {
         let paris = TimeZone(identifier: "Europe/Paris")!
         func valeur(_ v: Double) -> String {
             let fr = Locale(identifier: "fr_FR")
-            let e = EchelleSignal.etiquette(Self.point(0, v), periode: .jour, locale: fr, fuseau: paris)
+            let e = Self.dbm.etiquette(Self.point(0, v), periode: .jour, locale: fr, fuseau: paris)
             return String(e.prefix { $0 != "·" }).trimmingCharacters(in: .whitespaces)
         }
         #expect(valeur(-66.4) == "\u{2212}66 dBm")
@@ -124,5 +131,60 @@ struct EchelleSignalTests {
         #expect(valeur(-0.5) == "\u{2212}1 dBm")
         #expect(valeur(3.4) == "3 dBm")
         #expect(valeur(3.5) == "4 dBm")
+    }
+
+    /// Le domaine, en LQI : un seul point (182 donne 150 ... 200) ; des valeurs egales ; des valeurs etalees ; des
+    /// valeurs deja sur un multiple de 50 ; toujours dans 0 ... 255. Toujours 50 de haut au moins, et deux graduations
+    /// au moins, sur les multiples de 50.
+    @Test func domaineLQI() throws {
+        let lqi = Self.lqi, bornes = try #require(lqi.bornes)
+        #expect(lqi.domaine([182]) == 150 ... 200)
+        #expect(lqi.domaine([182, 182, 182]) == 150 ... 200)
+        #expect(lqi.domaine([61, 230]) == 50 ... 250)
+        #expect(lqi.domaine([150]) == 2 * lqi.pas ... 200, "a 10 d'un multiple : au-dela")
+        #expect(lqi.domaine([5]) == 0 ... 50, "jamais sous 0")
+        #expect(lqi.domaine([250]) == 200 ... 255, "jamais au-dessus de 255")
+        #expect(lqi.domaine([]) == nil)
+        #expect(lqi.graduations(150 ... 200) == [150, 200])
+        #expect(lqi.graduations(50 ... 250) == [50, 100, 150, 200, 250])
+        #expect(lqi.graduations(0 ... 255) == [0, 50, 100, 150, 200, 250])
+        #expect(lqi.graduations(120 ... 210) == [150, 200], "la premiere : le multiple au-dessus du bas")
+        for v in stride(from: 0.0, through: 255, by: 3.7) {
+            let d = try #require(lqi.domaine([v]))
+            #expect(d.upperBound - d.lowerBound >= 50 && lqi.graduations(d).count >= 2 && d.contains(v)
+                    && bornes.contains(d.lowerBound) && bornes.contains(d.upperBound), "\(v)")
+        }
+    }
+
+    /// Les reglages d'une echelle sont ceux qu'on lui donne : le domaine sans valeur et les bornes en font partie.
+    @Test func reglagesDeLEchelle() {
+        #expect(Self.dbm.domaineParDefaut == -100 ... -40 && Self.dbm.bornes == nil && !Self.dbm.uniteAvant)
+        #expect(Self.lqi.domaineParDefaut == 0 ... 255 && Self.lqi.bornes == 0 ... 255 && Self.lqi.uniteAvant)
+    }
+
+    /// L'etiquette, en LQI, en francais et en anglais, a Paris : « LQI », la valeur arrondie, puis l'heure ; en 7 j et
+    /// 30 j, le jour aussi.
+    @Test func etiquetteLQI() {
+        let paris = TimeZone(identifier: "Europe/Paris")!
+        let p = Self.point(0, 181.6)
+        let fr = Locale(identifier: "fr_FR"), en = Locale(identifier: "en_US")
+        #expect(Self.lqi.etiquette(p, periode: .jour, locale: fr, fuseau: paris) == "LQI 182 · 16:13")
+        #expect(Self.lqi.etiquette(p, periode: .jour, locale: en, fuseau: paris) == "LQI 182 · 4:13\u{202F}PM")
+        #expect(Self.lqi.etiquette(p, periode: .semaine, locale: fr, fuseau: paris) == "LQI 182 · 21 sept. à 16:13")
+        #expect(Self.lqi.etiquette(p, periode: .mois, locale: en, fuseau: paris) == "LQI 182 · Sep 21 at 4:13\u{202F}PM")
+    }
+
+    /// L'arrondi de l'etiquette en LQI, des deux cotes de .5 : au plus proche, un demi vers le haut (une moyenne de LQI).
+    @Test func arrondiDeLEtiquetteLQI() {
+        let paris = TimeZone(identifier: "Europe/Paris")!
+        func valeur(_ v: Double) -> String {
+            let fr = Locale(identifier: "fr_FR")
+            let e = Self.lqi.etiquette(Self.point(0, v), periode: .jour, locale: fr, fuseau: paris)
+            return String(e.prefix { $0 != "·" }).trimmingCharacters(in: .whitespaces)
+        }
+        #expect(valeur(66.4) == "LQI 66")
+        #expect(valeur(66.5) == "LQI 67")
+        #expect(valeur(0.4) == "LQI 0")
+        #expect(valeur(254.6) == "LQI 255")
     }
 }

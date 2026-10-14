@@ -1,6 +1,6 @@
 """Tests de outils/garde.py : un depot git temporaire, des identifiants inventes.
 
-  python3 -m unittest discover -s outils/test
+  python3 -m unittest discover -s outils/tests
 """
 import contextlib
 import io
@@ -109,6 +109,22 @@ class TestGarde(unittest.TestCase):
         self.assertEqual(code, 1)
         for f in ("a.txt", "b.txt", "c.txt", "d.txt", "e.txt"):
             self.assertIn(f, sortie)
+
+    def test_court_entre_deux_separateurs_trouve(self):
+        # Voulu : dans une adresse a separateurs (FF:1A:2B:CC), les octets 1A:2B sont entoures de « : », donc isoles.
+        d = depot({"a.txt": "adresse FF:1A:2B:CC"}, "1A2B\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 1)
+        self.assertIn("a.txt", sortie)
+
+    def test_court_impair_isole_trouve(self):
+        # Identifiant court de chiffres impairs : le dernier chiffre reste attache a la derniere paire (1A + 2B3).
+        d = depot({"a.txt": "adresse 1A2B3", "b.txt": "adresse 1A:2B3", "c.txt": "valeur FF1A2B3"}, "1A2B3\n")
+        code, sortie = lancer(d)
+        self.assertEqual(code, 1)
+        self.assertIn("a.txt", sortie)
+        self.assertIn("b.txt", sortie)
+        self.assertNotIn("c.txt", sortie)
 
     def test_court_avec_separateurs_dans_une_suite_ignore(self):
         d = depot({"a.txt": "empreinte FF1A:2BCC", "b.txt": "empreinte FF1A2BCC", "c.txt": "nombre 91A2B3 et 91A:2B3"},

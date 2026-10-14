@@ -12,32 +12,47 @@
 # lancement demande l'acces a Maison.
 #
 #   outils/passeur.sh [--sans-lancer]
-#   outils/passeur.sh --comparer-versions INSTALLEE CONSTRUITE
+#   outils/passeur.sh --comparer-versions INSTALLEE CONSTRUITE [NUMERO_INSTALLE NUMERO_CONSTRUIT]
 #
 #   --sans-lancer  compile et installe, sans lancer.
 #   --comparer-versions  code 0 si CONSTRUITE est au moins aussi recente qu'INSTALLEE (ou si INSTALLEE est vide),
-#                  code 1 et message sinon ; ne touche a rien. L'installation applique la meme regle : elle refuse
-#                  de remplacer un demon installe plus recent que celui qui vient d'etre compile.
+#                  code 1 et message sinon ; ne touche a rien. Deux versions egales sont departagees par les numeros
+#                  de construction (CFBundleVersion) NUMERO_INSTALLE et NUMERO_CONSTRUIT, s'ils sont donnes et non
+#                  vides. L'installation applique la meme regle : elle refuse de remplacer un demon installe plus
+#                  recent que celui qui vient d'etre compile.
+#
+# Regle : toute modification de Passeur/ monte MARKETING_VERSION (project.yml, cible Passeur). Le refus compare la
+# version, pas le contenu : sans cette montee, un demon modifie passe pour le meme et n'est pas distingue de
+# l'installe (le numero de construction ne departage que par precaution, il reste 1 en compilation locale).
 #   APP=...        paquet a installer, en .app (defaut : ~/Applications/Passeur Noms.app).
 #   DD=...         produits de compilation (defaut : ~/Library/Developer/Xcode/DerivedData/maillage-iot-passeur).
 #   EQUIPE=...     equipe de signature, 10 caracteres (defaut : celle du premier certificat « Apple Development »
 #                  encore valide du trousseau, sinon celle du certificat « Developer ID Application », la meme
 #                  equipe payante : Xcode cree alors le certificat Apple Development). Jamais affichee.
 set -eu
-USAGE="usage : outils/passeur.sh [--sans-lancer]"
+USAGE="usage : outils/passeur.sh [--sans-lancer] | outils/passeur.sh --comparer-versions INSTALLEE CONSTRUITE [NUMERO_INSTALLE NUMERO_CONSTRUIT]"
 # Refus de remplacer un demon plus recent (spec de Maillage IoT, section 5.3) : version installee contre
-# version construite, comparees par `sort -V`. Sans demon installe : accepte.
-plus_ancien_que_installe() {  # $1 : installee, $2 : construite ; code 0 si la construite est plus ancienne
-  [ -n "$1" ] && [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
+# version construite, comparees par `sort -V` ; deux versions egales sont departagees par le numero de construction
+# (CFBundleVersion), quand les deux sont connus. Sans demon installe : accepte.
+plus_grand_que() {  # $1, $2 : code 0 si $1 est strictement plus grand que $2 (ordre de `sort -V`)
+  [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
 }
-refuser_si_plus_recent() {  # $1 : installee, $2 : construite
-  if plus_ancien_que_installe "$1" "$2"; then
-    echo "passeur.sh : le demon installe ($1) est plus recent que celui-ci ($2) : rien n'est remplace" >&2
+plus_ancien_que_installe() {  # $1 : installee, $2 : construite, $3 : numero installe, $4 : numero construit ; code 0 si la construite est plus ancienne
+  [ -n "$1" ] || return 1
+  if [ "$1" = "$2" ]; then
+    [ -n "${3:-}" ] && [ -n "${4:-}" ] && plus_grand_que "$3" "$4"
+  else
+    plus_grand_que "$1" "$2"
+  fi
+}
+refuser_si_plus_recent() {  # $1 : installee, $2 : construite, $3 : numero installe, $4 : numero construit
+  if plus_ancien_que_installe "$1" "$2" "${3:-}" "${4:-}"; then
+    echo "passeur.sh : le demon installe ($1${3:+, n° $3}) est plus recent que celui-ci ($2${4:+, n° $4}) : rien n'est remplace" >&2
     exit 1
   fi
 }
 if [ "${1:-}" = "--comparer-versions" ]; then
-  refuser_si_plus_recent "${2:-}" "${3:-}"
+  refuser_si_plus_recent "${2:-}" "${3:-}" "${4:-}" "${5:-}"
   exit 0
 fi
 LANCER=oui
@@ -114,7 +129,9 @@ fi
 # Refus avant d'arreter ou de remplacer quoi que ce soit : le demon installe est-il plus recent que le produit ?
 VERSION_INSTALLEE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist" 2>/dev/null || true)
 VERSION_CONSTRUITE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PRODUIT/Contents/Info.plist" 2>/dev/null || true)
-refuser_si_plus_recent "$VERSION_INSTALLEE" "$VERSION_CONSTRUITE"
+NUMERO_INSTALLE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Contents/Info.plist" 2>/dev/null || true)
+NUMERO_CONSTRUIT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PRODUIT/Contents/Info.plist" 2>/dev/null || true)
+refuser_si_plus_recent "$VERSION_INSTALLEE" "$VERSION_CONSTRUITE" "$NUMERO_INSTALLE" "$NUMERO_CONSTRUIT"
 # Le passeur qui tourne (ancienne enveloppe ou demon) : arrete par son PID avant de remplacer son paquet.
 arreter() {
   for pid in $(pgrep -f "$APP/" 2>/dev/null || true); do

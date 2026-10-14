@@ -66,6 +66,26 @@ targets:
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
+  # Le protocole Zigbee : pont Hue, sonde Zigbee, tournee du maillage, journal Zigbee. Depend du coeur seul (jamais de
+  # ProtocoleThread) ; aucun nom public de premier niveau commun avec ProtocoleThread (outils/verifier-noms-publics.sh).
+  # Optimise aussi en Debug, comme le coeur.
+  ProtocoleZigbee:
+    type: framework
+    platform: macOS
+    sources:
+      - path: ProtocoleZigbee
+    dependencies:
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.zigbee
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        SKIP_INSTALL: YES
+        DEFINES_MODULE: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
   MaillageIoT:
     type: application
     platform: macOS
@@ -114,6 +134,41 @@ targets:
         FLUX_MISES_A_JOUR: https://raw.githubusercontent.com/Djoko-cli/maillage-iot/main/appcast.xml
         CLE_MISES_A_JOUR: nRIVHOXbEktqGduJ4ukxhjZzlUaiE/yqR3sgbW9Ie6E=
         CODE_SIGN_ENTITLEMENTS: MaillageIoT/Droits.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+  # App de transition de l'etape 2 (spec 6.5) : le code d'app de Maillage Zigbee, sur le coeur et ProtocoleZigbee
+  # (jamais ProtocoleThread), avec l'identite definitive de Zigbee. Jamais publiee : ni Sparkle (ni paquet, ni cles
+  # SU*, ni exceptions mach-lookup), mises a jour inertes. Elle disparait a l'etape 3, quand les deux apps se fondent.
+  MaillageIoTZigbee:
+    type: application
+    platform: macOS
+    sources:
+      - path: MaillageIoTZigbee
+    dependencies:
+      - target: MaillageCoeur
+      - target: ProtocoleZigbee
+    info:
+      path: MaillageIoTZigbee/Info.plist
+      properties:
+        CFBundleDisplayName: Maillage IoT Zigbee
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+        NSLocalNetworkUsageDescription: "Maillage IoT Zigbee cherche le pont Hue et la sonde sur le réseau local, pour lire les noms et les pièces de vos appareils et interroger la sonde sans câble."
+        NSBonjourServices:
+          - _hue._tcp
+          - _maillage-zigbee._tcp
+    settings:
+      base:
+        PRODUCT_NAME: Maillage IoT Zigbee
+        PRODUCT_MODULE_NAME: MaillageIoTZigbee
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.banc-zigbee
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Jamais publiee : numero de compilation 1, celui d'une compilation de travail.
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        CODE_SIGN_ENTITLEMENTS: MaillageIoTZigbee/Droits.entitlements
         ENABLE_HARDENED_RUNTIME: YES
   # Passeur Noms, demon de Maison (spec 2026-10-12-demon-passeur-design.md) : app Mac Catalyst sans fenetre ni Dock
   # (LSUIElement), signee en developpement par outils/passeur.sh (HomeKit est refuse au Developer ID). Masqueur.bundle
@@ -216,11 +271,28 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.thread.tests
         GENERATE_INFOPLIST_FILE: YES
+  # Les tests Zigbee compilent aussi les deux fixtures neutres du coeur (sans test), comme ceux de Thread.
+  ProtocoleZigbeeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ProtocoleZigbeeTests
+      - path: MaillageCoeurTests/MaisonInventee.swift
+      - path: MaillageCoeurTests/FixturesScene.swift
+    dependencies:
+      - target: ProtocoleZigbee
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.zigbee.tests
+        GENERATE_INFOPLIST_FILE: YES
+  # Les tests de l'app Thread compilent aussi les vecteurs H1 du coeur (MaillageCoeurTests/VecteursH1.swift, sans test).
   MaillageIoTTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: MaillageIoTTests
+      - path: MaillageCoeurTests/VecteursH1.swift
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur
@@ -231,6 +303,24 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         # Le produit s'appelle "Maillage IoT" (avec une espace), pas comme la cible.
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Maillage IoT.app/Contents/MacOS/Maillage IoT"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+  # Les tests de l app de transition Zigbee (recopie de ceux de Maillage Zigbee) ; leur
+  # hote est "Maillage IoT Zigbee.app". Cible temporaire, comme l app (etape 3 : fusion des deux).
+  MaillageIoTZigbeeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: MaillageIoTZigbeeTests
+    dependencies:
+      - target: MaillageIoTZigbee
+      - target: MaillageCoeur
+      - target: ProtocoleZigbee
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.banc-zigbee.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # Le produit s'appelle "Maillage IoT Zigbee" (avec des espaces), pas comme la cible.
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Maillage IoT Zigbee.app/Contents/MacOS/Maillage IoT Zigbee"
         BUNDLE_LOADER: "$(TEST_HOST)"
   # Le coeur du demon Passeur Noms (Passeur/Logique), sans HomeKit ni UIKit, teste sur macOS. Il compile les fichiers
   # communs lui-meme, comme la cible Passeur : pas de dependance a MaillageCoeur (les types seraient en double).
@@ -252,11 +342,15 @@ schemes:
     build:
       targets:
         MaillageIoT: all
+        MaillageIoTZigbee: [test]
         MaillageCoeur: all
         ProtocoleThread: all
+        ProtocoleZigbee: all
         MaillageCoeurTests: [test]
         ProtocoleThreadTests: [test]
+        ProtocoleZigbeeTests: [test]
         MaillageIoTTests: [test]
+        MaillageIoTZigbeeTests: [test]
         PasseurTests: [test]
     run:
       config: Debug
@@ -265,10 +359,21 @@ schemes:
       targets:
         - MaillageCoeurTests
         - ProtocoleThreadTests
+        - ProtocoleZigbeeTests
         - MaillageIoTTests
+        - MaillageIoTZigbeeTests
         - PasseurTests
     archive:
       config: Release
+  # L'app de transition Zigbee (etape 2), avec le coeur et ProtocoleZigbee.
+  MaillageIoTZigbee:
+    build:
+      targets:
+        MaillageIoTZigbee: all
+        MaillageCoeur: all
+        ProtocoleZigbee: all
+    run:
+      config: Debug
   Passeur:
     build:
       targets:

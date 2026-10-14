@@ -31,4 +31,10 @@ struct ResumeRelaisTests {
         let rien = Regroupement.resumeRelais([])
         #expect(rien.relais.isEmpty && rien.dernier == nil)
     }
+
+    /// Un seul changement : l'ancien relais, puis le nouveau, qui est aussi le dernier (repris de Maillage Zigbee).
+    @Test func unSeulChangement() {
+        let un = Regroupement.resumeRelais([Self.change(0, "A", "B")])
+        #expect(un.relais == ["A", "B"] && un.dernier == "B" && un.alternent)
+    }
 }
