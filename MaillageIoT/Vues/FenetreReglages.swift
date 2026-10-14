@@ -75,6 +75,7 @@ struct FenetreReglages: View {
             case .maison: page { ReglagesMaison() }
             case .thread:
                 page {
+                    ActivationProtocole(protocole: .thread)
                     reglagesSonde
                     threadRoute
                 }
@@ -373,6 +374,7 @@ struct FenetreReglages: View {
         case .active: String(localized: "active")
         case .reseauLocalRefuse: String(localized: "accès au réseau local refusé")
         case .demo: String(localized: "mode démo")
+        case .eteint: String(localized: "désactivé")
         case .erreur(let m): m
         }
     }

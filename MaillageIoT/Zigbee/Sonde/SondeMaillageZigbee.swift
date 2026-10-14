@@ -154,8 +154,18 @@ final class SondeMaillageZigbee {
     @ObservationIgnored var surOubli: (() -> Void)?
 
     @ObservationIgnored private let preferences: UserDefaults
-    /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`).
-    @ObservationIgnored let actif: Bool
+    /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`). Faux aussi
+    /// entre `arreter()` (Zigbee eteint) et `demarrer()` : aucun port n'est suivi, ouvert ni rouvert (les entrees
+    /// publiques gardent `actif`).
+    private(set) var actif: Bool
+    /// Construite pour agir (`actif` vrai au depart) : seule une telle sonde s'arrete et repart ; celle de la demo et des
+    /// tests reste inerte, quoi qu'on lui demande.
+    @ObservationIgnored private let vivante: Bool
+    /// Ou les ports sont suivis, comment on les liste, et l'ecoute Bonjour des sondes du reseau (factices dans les tests :
+    /// aucun IOKit, aucun reseau).
+    @ObservationIgnored private let surveillerPorts: @MainActor () -> any SurveillantPorts
+    @ObservationIgnored private let listerPorts: @Sendable () -> [PortUSB]
+    @ObservationIgnored private let fabriqueBonjour: @MainActor (String) -> any EcouteBonjour
     @ObservationIgnored private let ouvrirCanal: (String) -> any CanalSonde
     @ObservationIgnored let trousseau: any TrousseauClesZigbee
     @ObservationIgnored private let ouvrirReseau: (String, Data) -> any CanalSonde
@@ -167,7 +177,7 @@ final class SondeMaillageZigbee {
     @ObservationIgnored private var reessaiReseau: Task<Void, Never>?
     /// Relecture periodique d'`etat` de la sonde connectee par le reseau.
     @ObservationIgnored private var entretien: Task<Void, Never>?
-    @ObservationIgnored private var navigateur: NavigateurBonjour?
+    @ObservationIgnored private var navigateur: (any EcouteBonjour)?
     @ObservationIgnored private let delaiNouvelEssai: Duration
     @ObservationIgnored private let plafondNouvelEssai: Duration
     @ObservationIgnored private let delaiReessaiOccupee: Duration
@@ -210,7 +220,7 @@ final class SondeMaillageZigbee {
     /// Fermetures lancees par `deconnecter`, chainees : une connexion attend qu'elles soient finies (ports vraiment
     /// fermes) avant d'ouvrir un port.
     @ObservationIgnored private var fermetures: Task<Void, Never>?
-    @ObservationIgnored private var surveillantPorts: PortsUSB?
+    @ObservationIgnored private var surveillantPorts: (any SurveillantPorts)?
 
     /// `actif` faux (mode demo, tests) : ni port, ni preferences lues. `trousseau` sans valeur par defaut : seule l'app
     /// passe le trousseau du systeme, les tests un `TrousseauMemoireZigbee` (un oubli ne compile pas : spec sonde Wi-Fi, 4.3).
@@ -232,9 +242,16 @@ final class SondeMaillageZigbee {
          delaiTable: Duration = ProtocoleSondeZigbee.echeanceTable,
          horloge: @escaping @Sendable () -> Date = { Date() },
          attendre: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
-         dormir: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }) {
+         dormir: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
+         surveillerPorts: @escaping @MainActor () -> any SurveillantPorts = { PortsUSB() },
+         listerPorts: @escaping @Sendable () -> [PortUSB] = { PortsUSB.lister() },
+         fabriqueBonjour: @escaping @MainActor (String) -> any EcouteBonjour = { NavigateurBonjour(type: $0) }) {
         self.preferences = preferences
         self.actif = actif
+        self.vivante = actif
+        self.surveillerPorts = surveillerPorts
+        self.listerPorts = listerPorts
+        self.fabriqueBonjour = fabriqueBonjour
         self.ouvrirCanal = ouvrirCanal
         self.trousseau = trousseau
         self.ouvrirReseau = ouvrirReseau
@@ -301,21 +318,54 @@ final class SondeMaillageZigbee {
         nom ?? String(localized: "Sonde")
     }
 
-    /// Suit les ports ; reprend la sonde retenue des qu'elle est branchee.
+    /// Suit les ports ; reprend la sonde retenue des qu'elle est branchee. Apres `arreter()`, repart : l'ecoute des ports et
+    /// l'ecoute Bonjour reprennent, et la sonde retenue (et elle seule : jamais un port inconnu) est rouverte si elle est
+    /// branchee, ou rejointe par le reseau si elle y est annoncee.
     func demarrer() {
-        guard actif, surveillantPorts == nil else { return }
-        let p = PortsUSB()
+        guard vivante else { return }
+        actif = true
+        guard surveillantPorts == nil else { return }
+        let p = surveillerPorts()
         p.changement = { [weak self] l in self?.portsChanges(l) }
         p.demarrer()
         surveillantPorts = p
-        portsChanges(PortsUSB.lister())
-        let n = NavigateurBonjour(type: TransportTCP.typeBonjour)
+        portsChanges(listerPorts())
+        let n = fabriqueBonjour(TransportTCP.typeBonjour)
         n.surChangement = { [weak self, weak n] in
             guard let self, let n else { return }
             self.annoncesChangees(Set(n.instances.keys))
         }
         n.demarrer()
         navigateur = n
+    }
+
+    /// Arret reel (Zigbee eteint) : le suivi des ports et l'ecoute Bonjour s'arretent, la liaison (le port serie ou la
+    /// session reseau) se ferme, la tournee et la boucle des tournees, la relecture d'`etat` (entretien), les reprises de la
+    /// liaison reseau et le nouvel essai USB planifie sont annules. Plus rien ne se connecte (`portsChanges`, `choisir`,
+    /// `reevaluer` et `connecterReseau` gardent `actif`) tant que `demarrer()` n'a pas repris. La sonde retenue, son nom et
+    /// sa cle restent. Sans effet sur une sonde inerte (demo, tests).
+    func arreter() {
+        guard vivante, actif else { return }
+        actif = false
+        surveillantPorts?.arreter()
+        surveillantPorts = nil
+        navigateur?.surChangement = nil
+        navigateur?.arreter()
+        navigateur = nil
+        annoncee = false
+        instanceAnnoncee = nil
+        nouvelEssai?.cancel()
+        nouvelEssai = nil
+        rangNouvelEssai = 0
+        tourneeRetenue = false
+        // Ferme la liaison, annule la boucle, l'entretien et la reprise du reseau (`deconnecter`).
+        deconnecter(serie == nil ? .sansSonde : .absente)
+    }
+
+    /// Des taches de fond sont encore planifiees ou en cours : la boucle des tournees, l'entretien, les reprises de la
+    /// liaison reseau, le nouvel essai USB (lu par les tests de l'arret).
+    var tachesPlanifiees: Int {
+        [boucle, entretien, reessaiReseau, nouvelEssai].filter { $0 != nil && $0?.isCancelled == false }.count
     }
 
     /// Choix d'un port dans les Reglages : retenu seulement s'il repond en sonde. Le port de la sonde deja connectee
@@ -633,7 +683,7 @@ final class SondeMaillageZigbee {
     /// Ports branches : la sonde retenue revient, ou s'en va.
     func portsChanges(_ liste: [PortUSB]) {
         ports = liste.filter(\.estEspressif)
-        guard let serie else { return }
+        guard actif, let serie else { return }
         if reglageChemin != .reseau, let p = ports.first(where: { $0.serie == serie }) {
             // `lancerConnexion` passe tout de suite a `.connexion` : un second appel n'en lance pas d'autre. Une
             // tentative par le reseau, elle, cede a l'USB (constat 6 de la relecture finale).
@@ -648,6 +698,7 @@ final class SondeMaillageZigbee {
 
     /// Les instances `_maillage-zigbee._tcp` vues sur le reseau local (navigateur Bonjour ; les tests l'appellent).
     func annoncesChangees(_ noms: Set<String>) {
+        guard actif else { return }
         instanceAnnoncee = nom.flatMap { CheminSonde.instance(de: $0, parmi: noms) }
         let vue = instanceAnnoncee != nil
         guard vue != annoncee || (vue && acces == nil && etat != .connexion) else { return }

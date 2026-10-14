@@ -73,6 +73,14 @@ final class Surveillance {
     /// Lance par les tests (heberges dans l'app) : ne rien ecouter ni ecrire.
     static var sousTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }
 
+    /// `thread.actif` et `zigbee.actif` sont-ils lus et ecrits dans `preferences` ? Toujours, sauf sous les tests avec les
+    /// preferences de l'app (`.standard`, celles de l'app hote, c'est-a-dire les vraies) : un protocole eteint pour de bon
+    /// dans l'app ne doit pas faire echouer les tests, et un test ne doit pas eteindre l'app. Un test qui verifie
+    /// l'activation donne ses propres preferences.
+    static func activationPersistee(_ preferences: UserDefaults) -> Bool {
+        !(sousTests && preferences === UserDefaults.standard)
+    }
+
     /// Dossier de l'app : Application Support/Maillage IoT (dans le conteneur du bac a sable).
     static var dossierParDefaut: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -95,8 +103,10 @@ final class Surveillance {
     /// vont sous son dossier (`Thread/` : associations, dernier maillage, adresses gardees, historique de la sonde ;
     /// `Zigbee/` : dernier maillage, appariements, historique ; nil : nulle part) ; `preferences` : les scissions deja
     /// notifiees (mode direct, une fois demarree) ; `demo` : en mode demo, le protocole dont la demo est rejouee (la demo
-    /// n'a qu'un reseau a la fois, chacune l'autre protocole eteint ; la demo combinee est a l'etape 3b).
-    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: Protocole = .thread) {
+    /// n'a qu'un reseau a la fois, chacune l'autre protocole eteint ; la demo combinee est a l'etape 3b) ; `recenseur` :
+    /// l'ecoute Bonjour de Thread (mode direct ; les tests en donnent une a navigateurs factices).
+    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: Protocole = .thread,
+         recenseur: Recenseur? = nil) {
         self.mode = mode
         var surnoms: [IdNoeud: String] = [:]
         switch mode {
@@ -113,8 +123,9 @@ final class Surveillance {
             fichierSurnoms = nil
         }
         thread = SurveillanceThread(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
-                                    rejoueLaDemo: demo == .thread)
-        zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, rejoueLaDemo: demo == .zigbee)
+                                    rejoueLaDemo: demo == .thread, recenseur: recenseur)
+        zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
+                                    rejoueLaDemo: demo == .zigbee)
         thread.coque = self
         zigbee.coque = self
     }
@@ -179,10 +190,11 @@ final class Surveillance {
         erreurJournal = message
     }
 
-    /// Veille du Mac (appele au reveil) : l'evenement de chaque protocole va au journal.
+    /// Veille du Mac (appele au reveil) : l'evenement de chaque protocole actif va au journal ; un protocole eteint n'ecrit
+    /// rien.
     func noterVeille(debut: Date, fin: Date) {
         let intervalle = DateInterval(start: debut, end: max(fin, debut))
-        for m in modeles { ajouter(m.noterVeille(intervalle), de: m.protocole) }
+        for m in modeles where m.actif { ajouter(m.noterVeille(intervalle), de: m.protocole) }
     }
 
     /// Donne (ou retire, avec nil ou "") un surnom a un noeud. L'identifiant porte son protocole : le fichier garde les
@@ -231,7 +243,8 @@ final class Surveillance {
     /// Verse au journal les evenements d'un modele : ils portent le protocole du modele des qu'ils entrent au journal,
     /// puis vont au disque, aux alertes et aux notifications.
     func ajouter(_ evenementsDuModule: [Evenement], de protocole: Protocole) {
-        guard !evenementsDuModule.isEmpty else { return }
+        // Un protocole eteint n'ecrit rien : ni journal, ni alerte, ni notification.
+        guard !evenementsDuModule.isEmpty, modele(pour: protocole)?.actif ?? true else { return }
         let nouveaux = evenementsDuModule.map { e in
             var e = e
             e.protocole = protocole
@@ -279,7 +292,10 @@ final class Surveillance {
     var alerte: Bool {
         if modeles.contains(where: { $0.alerteReseau }) { return true }
         let recent = maintenant.addingTimeInterval(-3600)
-        return evenements.reversed().prefix { $0.date >= recent }.contains { $0.gravite == .alerte }
+        // Les evenements graves d'un protocole eteint ne comptent plus.
+        return evenements.reversed().prefix { $0.date >= recent }.contains {
+            $0.gravite == .alerte && modele(pour: $0.protocole ?? SurveillanceThread.protocole)?.actif ?? true
+        }
     }
 
     var lignesJournal: [LigneJournal] { Regroupement.lignes(evenements, politique: Self.politiqueJournal) }

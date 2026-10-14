@@ -23,6 +23,7 @@ struct ReglagesZigbee: View {
 
     var body: some View {
         FenetreReglages.page {
+            ActivationProtocole(protocole: .zigbee)
             pontHue
             reglagesSonde
         }

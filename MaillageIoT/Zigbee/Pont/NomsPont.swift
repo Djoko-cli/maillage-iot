@@ -165,6 +165,9 @@ final class NomsPont {
     /// Les identifications en cours, par appareil ; annulees avec les autres taches (oubli du pont, autre adresse).
     @ObservationIgnored private var tachesIdentification: [String: (numero: Int, tache: Task<Void, Never>)] = [:]
     @ObservationIgnored private var numeroIdentification = 0
+    /// Arrete par `arreter` (Zigbee eteint) jusqu'au prochain `demarrer` : plus de lecture, de decouverte retenue ni de
+    /// releve rapporte, meme celui d'une lecture qui etait en vol a l'arret.
+    @ObservationIgnored private(set) var suspendu = false
 
     /// Inerte : les noms donnes (demo) ou aucun (tests des vues) ; ni reseau, ni trousseau, ni fichier.
     init(noms: NomsZigbee? = nil) {
@@ -197,6 +200,7 @@ final class NomsPont {
     /// Lit le cache et le pont retenu ; lit le pont s'il est lie, puis toutes les 5 minutes.
     func demarrer() {
         guard let d = dependances else { return }
+        suspendu = false
         pont = d.memoire.lire()
         if let p = pont, let cache = d.cache, let n = try? NomsZigbee.lire(Data(contentsOf: cache)),
            n.domicile?.uppercased() == p.identifiant {
@@ -228,7 +232,7 @@ final class NomsPont {
     /// Un pont vu par Bonjour. Le pont retenu, s'il change d'adresse, la prend ; sans pont retenu, le premier pont vu
     /// (avec un identifiant) est retenu. Un autre pont que celui retenu est ignore.
     func pontDecouvert(_ vu: PontDecouvert) {
-        guard dependances != nil else { return }
+        guard dependances != nil, !suspendu else { return }
         let id = vu.identifiant.flatMap(CertificatPont.identifiant)
         decouverts.removeAll { $0.adresse == vu.adresse || ($0.identifiant.flatMap(CertificatPont.identifiant) == id && id != nil) }
         decouverts.append(PontDecouvert(adresse: vu.adresse, identifiant: id, modele: vu.modele))
@@ -400,7 +404,7 @@ final class NomsPont {
     /// cours.
     @discardableResult
     func relire() -> Task<Void, Never>? {
-        guard dependances != nil, lie, !lectureEnCours else { return nil }
+        guard dependances != nil, lie, !lectureEnCours, !suspendu else { return nil }
         let t = Task { [weak self] () -> Void in await self?.lireUneFois() }
         tacheLecture = t
         return t
@@ -424,7 +428,7 @@ final class NomsPont {
     }
 
     private func lireUneFois() async {
-        guard let d = dependances, let p = pont, lie, !lectureEnCours else { return }
+        guard let d = dependances, let p = pont, lie, !lectureEnCours, !suspendu else { return }
         lectureEnCours = true
         defer { lectureEnCours = false }
         let cle: String
@@ -440,11 +444,12 @@ final class NomsPont {
         }
         do {
             let lecture = try await PontHue(transport: d.transport, adresse: p.adresse, attendu: p.identifiant).lire(cle: cle)
-            guard pont?.identifiant == p.identifiant, lie else { return }
+            guard pont?.identifiant == p.identifiant, lie, !suspendu else { return }
             appliquer(lecture)
         } catch .cleRefusee {
             // Une liaison faite pendant la lecture a range une autre cle : seule la cle refusee sort du trousseau.
-            guard pont?.identifiant == p.identifiant, (try? d.trousseau.lire(identifiant: p.identifiant)) == cle else {
+            guard !suspendu, pont?.identifiant == p.identifiant,
+                  (try? d.trousseau.lire(identifiant: p.identifiant)) == cle else {
                 return
             }
             try? d.trousseau.oublier(identifiant: p.identifiant)
@@ -452,6 +457,8 @@ final class NomsPont {
             tachePeriodique?.cancel()
             etat = .aLier
         } catch {
+            // Arrete pendant la lecture (annulee) : ni erreur montree, ni decouverte relancee.
+            guard !suspendu else { return }
             etat = .erreur(Self.message(error))
             // Faute de reseau, ou un certificat refuse a l'adresse retenue (le pont a pu changer d'adresse, et une autre
             // machine prendre l'ancienne) : la decouverte resout de nouveau le pont.
@@ -601,8 +608,18 @@ final class NomsPont {
         reprendre()
     }
 
-    /// Arrete la liaison et les lectures (fin des tests).
+    /// Des taches de fond sont encore planifiees ou en cours : la liaison, la relecture de 5 minutes, une lecture en cours,
+    /// une identification (lu par les tests de l'arret).
+    var tachesPlanifiees: Int {
+        let taches = [tacheLiaison, tachePeriodique].filter { $0 != nil && $0?.isCancelled == false }.count
+        return taches + (lectureEnCours ? 1 : 0) + tachesIdentification.count
+    }
+
+    /// Arret reel (Zigbee eteint, ou fin des tests) : la liaison, les lectures (la relecture de 5 minutes et celle en
+    /// cours) et les identifications sont annulees, et plus rien n'est lu ni rapporte jusqu'au prochain `demarrer`.
+    /// Le pont retenu, sa cle et ses noms restent : `demarrer` repart de la, comme au lancement.
     func arreter() {
+        suspendu = true
         annulerTaches()
     }
 

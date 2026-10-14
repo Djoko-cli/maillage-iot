@@ -2,10 +2,24 @@ import Foundation
 import Network
 import dnssd
 
+/// Ce que le recenseur de Thread, la decouverte du pont Hue et la sonde Zigbee demandent a une ecoute Bonjour : les tests
+/// en donnent une factice (aucun reseau), et y comptent les demarrages et les arrets.
+@MainActor
+protocol EcouteBonjour: AnyObject {
+    var type: String { get }
+    /// Instance -> TXT brut (vide si l'ecoute n'en a pas donne).
+    var instances: [String: Data] { get }
+    var etat: NavigateurBonjour.Etat { get }
+    /// Appele sur le fil principal a chaque changement d'instances ou d'etat.
+    var surChangement: (() -> Void)? { get set }
+    func demarrer()
+    func arreter()
+}
+
 /// Ecoute Bonjour d'un type de service (NWBrowser, avec les TXT) : garde la
 /// liste des instances vues et le TXT brut de chacune.
 @MainActor
-final class NavigateurBonjour {
+final class NavigateurBonjour: EcouteBonjour {
     enum Etat: Equatable, Sendable {
         case demarrage, pret, refuse
         case erreur(String)
@@ -18,12 +32,18 @@ final class NavigateurBonjour {
     /// Appele sur le fil principal a chaque changement d'instances ou d'etat.
     var surChangement: (() -> Void)?
     private var navigateur: NWBrowser?
+    /// Relance planifiee apres un echec du navigateur (10 s) : annulee par `arreter`.
+    private var relance: Task<Void, Never>?
 
     init(type: String) {
         self.type = type
     }
 
+    /// Lance l'ecoute ; sans effet si elle tourne deja (un seul NWBrowser a la fois).
     func demarrer() {
+        guard navigateur == nil else { return }
+        relance?.cancel()
+        relance = nil
         let n = NWBrowser(for: .bonjourWithTXTRecord(type: type, domain: "local."), using: NWParameters())
         n.stateUpdateHandler = { [weak self] etat in
             MainActor.assumeIsolated { self?.changerEtat(etat) }
@@ -35,7 +55,20 @@ final class NavigateurBonjour {
         n.start(queue: .main)
     }
 
+    /// Arret definitif de l'ecoute : le NWBrowser est annule sans plus rien rapporter, la relance planifiee aussi, et la
+    /// liste des instances est videe (un nouveau `demarrer` repart de zero et rapporte tout ce qu'il voit).
     func arreter() {
+        relance?.cancel()
+        relance = nil
+        fermer()
+        instances = [:]
+        etat = .demarrage
+    }
+
+    /// Ferme le NWBrowser, sans toucher a la liste ni a l'etat ; ses rappels ne sont plus ecoutes.
+    private func fermer() {
+        navigateur?.stateUpdateHandler = nil
+        navigateur?.browseResultsChangedHandler = nil
         navigateur?.cancel()
         navigateur = nil
     }
@@ -63,10 +96,12 @@ final class NavigateurBonjour {
         @unknown default: nouveau = .demarrage
         }
         if case .failed = e {
-            // Relance dans 10 s (le reseau revient souvent seul).
-            arreter()
-            Task { @MainActor [weak self] in
+            // Relance dans 10 s (le reseau revient souvent seul), sauf si `arreter` l'annule d'ici la.
+            fermer()
+            relance?.cancel()
+            relance = Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .seconds(10))
+                guard !Task.isCancelled else { return }
                 self?.demarrer()
             }
         }

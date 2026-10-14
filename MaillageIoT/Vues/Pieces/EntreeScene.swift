@@ -41,6 +41,8 @@ struct EntreeScene: Equatable {
     @MainActor
     init(surveillance: Surveillance, reseau r: Reseau?, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs()) {
         let thread = surveillance.thread, zigbee = surveillance.zigbee
+        // Un protocole eteint (« Activer ce protocole ») n'est pas de la scene : aucun de ses noeuds, liens, libelles ni pieces.
+        let r = thread.actif ? r : nil
         // Thread : son sous-graphe, ses chefs, ses libelles et ses pieces.
         var appareils: [IdNoeud: AppareilAffiche] = [:]
         var libelles: [IdNoeud: LibellesNoeuds.Libelle] = [:]
@@ -69,7 +71,7 @@ struct EntreeScene: Equatable {
             affiches += a
         }
         // Zigbee : de meme, a ses etiquettes pres (`LibellesNoeudsZigbee`).
-        let maillageZigbee = zigbee.maillageAffiche
+        let maillageZigbee = zigbee.actif ? zigbee.maillageAffiche : nil
         var maisonZigbee: NomsZigbee?
         if zigbee.aUnReseau {
             let a = zigbee.appareilsAffiches

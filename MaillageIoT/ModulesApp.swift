@@ -67,37 +67,65 @@ struct ModulesApp {
     }
 
     /// Branche les modules entre eux et les lance (ni en demo, ni sous les tests) : le releve de Maison aux deux
-    /// protocoles ; Bonjour et le pont a Zigbee ; chaque sonde a son modele.
+    /// protocoles ; Bonjour et le pont a Zigbee ; chaque sonde a son modele. Un protocole eteint (« Activer ce protocole »)
+    /// n'est pas lance : son module ne demarre qu'a son activation.
     func brancher() {
         let s = surveillance
         // Un seul releve de Maison, donne aux deux modeles ; le demon donne d'abord le releve garde, puis ses releves
-        // arrivent des qu'ils changent.
+        // arrivent des qu'ils changent. Il reste abonne meme si les deux protocoles sont eteints.
         nomsMaison.surReleve = { [weak s] r in s?.recevoirReleveMaison(r) }
         nomsMaison.demarrer()
-        // Les noms du pont et le releve de Maison vont au modele de Zigbee, qui les reunit (`FusionNoms`).
-        nomsPont.surNoms = { [weak s] n in s?.zigbee.nomsPont = n }
-        nomsPont.surLecture = { [weak s] n in s?.zigbee.lecturePont(n) }
-        let b = decouverte
-        b.surPont = { [weak nomsPont] p in nomsPont?.pontDecouvert(p) }
-        b.surRefus = { [weak nomsPont] refus in nomsPont?.reseauLocalRefuse = refus }
-        nomsPont.surEchecReseau = { [weak b] in b?.relancer() }
-        nomsPont.demarrer()
-        b.demarrer()
-        // Thread : la sonde donne ses maillages au modele, qui lui rend les appareils a resoudre.
-        let st = sondeThread
+        Self.relierThread(s, sonde: sondeThread)
+        Self.relierZigbee(s, sonde: sondeZigbee, nomsPont: nomsPont, decouverte: decouverte)
+    }
+
+    /// Thread : la sonde donne ses maillages au modele, qui lui rend les appareils a resoudre ; la sonde suit `actif` du
+    /// modele (eteint, elle ferme son port et annule ses tournees ; allume, elle repart) et ne demarre pas si Thread est
+    /// eteint. L'ecoute Bonjour de Thread est celle du modele (`SurveillanceThread.demarrer`).
+    static func relierThread(_ s: Surveillance, sonde st: SondeMaillageThread) {
         st.surMaillage = { [weak s] m, recu in s?.thread.recevoir(m, a: recu) }
         st.surTournee = { [weak s] enCours in s?.thread.tourneeEnCours = enCours }
         st.surOubli = { [weak s] in s?.thread.oublierMaillage() }
         st.appareilsAResoudre = { [weak s] in s?.thread.appareilsAResoudre() ?? [] }
         st.reseauConnu = { [weak s] in s?.thread.instantane != nil }
-        st.demarrer()
-        // Zigbee. Incomplet : la tournee qui vient de finir a reporte des routes (son bilan est pose avant le maillage).
-        let sz = sondeZigbee
+        s.thread.surActivite = { [weak st] actif in
+            if actif { st?.demarrer() } else { st?.arreter() }
+        }
+        if s.thread.actif { st.demarrer() }
+    }
+
+    /// Zigbee : les noms du pont et le releve de Maison vont au modele, qui les reunit (`FusionNoms`) ; Bonjour trouve le
+    /// pont, le pont se lit ; chaque tournee de la sonde va au modele. Le pont, sa decouverte Bonjour et la sonde suivent
+    /// `actif` du modele (eteint, tout s'arrete : navigateurs, relecture du pont, port, tournees ; allume, tout repart) et ne
+    /// demarrent pas si Zigbee est eteint.
+    static func relierZigbee(_ s: Surveillance, sonde sz: SondeMaillageZigbee, nomsPont: NomsPont,
+                             decouverte b: DecouvertePont) {
+        nomsPont.surNoms = { [weak s] n in s?.zigbee.nomsPont = n }
+        nomsPont.surLecture = { [weak s] n in s?.zigbee.lecturePont(n) }
+        b.surPont = { [weak nomsPont] p in nomsPont?.pontDecouvert(p) }
+        b.surRefus = { [weak nomsPont] refus in nomsPont?.reseauLocalRefuse = refus }
+        nomsPont.surEchecReseau = { [weak b] in b?.relancer() }
+        // Incomplet : la tournee qui vient de finir a reporte des routes (son bilan est pose avant le maillage).
         sz.surMaillage = { [weak s, weak sz] m, recu in
             s?.zigbee.recevoir(m, a: recu, incomplet: (sz?.bilan?.routesReportees ?? 0) > 0)
         }
         sz.surTournee = { [weak s] enCours in s?.zigbee.tourneeEnCours = enCours }
         sz.surOubli = { [weak s] in s?.zigbee.oublierMaillage() }
-        sz.demarrer()
+        s.zigbee.surActivite = { [weak nomsPont, weak b, weak sz] actif in
+            if actif {
+                nomsPont?.demarrer()
+                b?.demarrer()
+                sz?.demarrer()
+            } else {
+                sz?.arreter()
+                b?.arreter()
+                nomsPont?.arreter()
+            }
+        }
+        if s.zigbee.actif {
+            nomsPont.demarrer()
+            b.demarrer()
+            sz.demarrer()
+        }
     }
 }

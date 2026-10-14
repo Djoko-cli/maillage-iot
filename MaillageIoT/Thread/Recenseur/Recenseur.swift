@@ -30,7 +30,14 @@ final class Recenseur {
     var surReleve: ((Annonces) -> Void)?
     var surEtat: ((Etat) -> Void)?
 
-    private var navigateurs: [NavigateurBonjour] = []
+    private var navigateurs: [any EcouteBonjour] = []
+    /// Fabrique des ecoutes Bonjour, une par type (les tests en donnent de factices : aucun reseau).
+    private let fabrique: @MainActor (String) -> any EcouteBonjour
+    /// Change a chaque `arreter` : un releve commence avant l'arret ne rapporte plus rien.
+    private var epoque = 0
+    /// Temps ajoute a celui ecoule depuis le demarrage pour decider du premier releve (les tests l'avancent : `miseEnRoute`
+    /// et `attenteMax` sont de 10 et 60 s). Zero dans l'app.
+    private let avance: Duration
     /// "type|instance" -> derniere cible resolue, gardee tant que l'instance est listee.
     private var cibles: [String: ResolveurDNSSD.Cible] = [:]
     private var demarre = false
@@ -44,11 +51,23 @@ final class Recenseur {
     /// Demande de resoudre de nouveau toutes les instances listees, consommee au debut du prochain releve.
     private var toutResoudre = false
 
+    init(fabrique: @escaping @MainActor (String) -> any EcouteBonjour = { NavigateurBonjour(type: $0) },
+         avance: Duration = .zero) {
+        self.fabrique = fabrique
+        self.avance = avance
+    }
+
+    /// Des taches de fond sont encore planifiees : le releve periodique, un releve en attente de calme (lu par les tests de
+    /// l'arret).
+    var tachesPlanifiees: Int {
+        [tachePeriodique, tacheCalme].filter { $0 != nil && $0?.isCancelled == false }.count
+    }
+
     func demarrer() {
         guard !demarre else { return }
         demarre = true
         navigateurs = Self.types.map { type in
-            let n = NavigateurBonjour(type: type)
+            let n = fabrique(type)
             n.surChangement = { [weak self] in self?.changement() }
             n.demarrer()
             return n
@@ -59,7 +78,7 @@ final class Recenseur {
             while !Task.isCancelled {
                 guard let self else { return }
                 let maintenant = ContinuousClock.now
-                if Self.premierReleveDu(depuis: maintenant - debut, etat: self.etat, routeurVu: self.routeurVu,
+                if Self.premierReleveDu(depuis: maintenant - debut + self.avance, etat: self.etat, routeurVu: self.routeurVu,
                                         calmeDepuis: maintenant - (self.dernierChangement ?? debut)) { break }
                 try? await Task.sleep(for: .seconds(1))
             }
@@ -90,14 +109,27 @@ final class Recenseur {
         navigateurs.contains { $0.type == "_meshcop._udp" && !$0.instances.isEmpty }
     }
 
+    /// Arret reel : plus de releve periodique, plus de releve en attente de calme, plus aucun navigateur Bonjour ; un releve
+    /// en cours est abandonne (il ne rapporte rien). `demarrer` repart de zero, comme au lancement.
     func arreter() {
         tachePeriodique?.cancel()
+        tachePeriodique = nil
         tacheCalme?.cancel()
-        navigateurs.forEach { $0.arreter() }
+        tacheCalme = nil
+        navigateurs.forEach {
+            $0.surChangement = nil
+            $0.arreter()
+        }
         navigateurs = []
+        epoque += 1
         demarre = false
         enRoute = false
+        releveEnCours = false
+        releveEnAttente = false
+        toutResoudre = false
         dernierChangement = nil
+        cibles = [:]
+        etat = .demarrage
     }
 
     /// Releve immediat (bouton rafraichir, reveil du Mac). Au releve suivant, chaque
@@ -105,6 +137,7 @@ final class Recenseur {
     /// echec garde la precedente. Un releve en cours n'est pas interrompu : celui-ci
     /// le suit. Avant la mise en route, rien n'est lance.
     func rafraichir() {
+        guard demarre else { return }
         toutResoudre = true
         guard enRoute else { return }
         Task { @MainActor [weak self] in await self?.releve() }
@@ -149,16 +182,18 @@ final class Recenseur {
             return
         }
         releveEnCours = true
+        let e = epoque
         repeat {
             releveEnAttente = false
-            let a = await faireReleve()
+            // Arrete (ou relance) pendant le releve : il est abandonne, sans toucher a l'etat du releve suivant.
+            guard let a = await faireReleve(epoque: e) else { return }
             dernierReleve = a
             surReleve?(a)
         } while releveEnAttente
         releveEnCours = false
     }
 
-    private func faireReleve() async -> Annonces {
+    private func faireReleve(epoque e: Int) async -> Annonces? {
         // 1. Instances listees, et leur cible (hote, port) : resolue une fois par
         //    instance, et de nouveau pour toutes apres rafraichir().
         var vues: [InstanceListee] = []
@@ -177,6 +212,7 @@ final class Recenseur {
             for await (cle, cible) in groupe { if let cible { r[cle] = cible } }
             return r
         }
+        guard e == epoque else { return nil }
         cibles = Self.retenir(cibles: cibles, resolues: resolues, listees: Set(vues.map { Self.cle($0.type, $0.instance) }))
 
         // 2. Adresses de chaque hote, a chaque releve.
@@ -189,6 +225,7 @@ final class Recenseur {
             for await (hote, liste) in groupe { r[hote] = liste }
             return r
         }
+        guard e == epoque else { return nil }
 
         // 3. Routes et prefixes du Mac.
         let routes = TableRoutage.lire()

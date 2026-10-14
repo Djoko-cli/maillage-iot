@@ -1425,6 +1425,22 @@
         }
       }
     },
+    "Activer ce protocole" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable this protocol"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activer ce protocole"
+          }
+        }
+      }
+    },
     "Adresse" : {
       "localizations" : {
         "en" : {
@@ -1837,6 +1853,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun réseau Thread visible sur ce réseau local"
+          }
+        }
+      }
+    },
+    "Aucun réseau Zigbee à montrer : ni maillage de la sonde, ni appareil du pont Hue." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Zigbee network to show: no probe mesh, no Hue bridge devices."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réseau Zigbee à montrer : ni maillage de la sonde, ni appareil du pont Hue."
           }
         }
       }
@@ -7549,6 +7581,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "déplié"
+          }
+        }
+      }
+    },
+    "désactivé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "turned off"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "désactivé"
           }
         }
       }

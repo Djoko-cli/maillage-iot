@@ -296,10 +296,10 @@ D'après `inventaire-etape3-interface.md` §3.3 (aucune `SondeMaillage` n'a d'`a
 **Interfaces:**
 - Produces: `ModeleProtocole.actif: Bool { get set }`.
 
-- [ ] **Step 1: RED** — pour chaque protocole : après `actif = false`, aucun port ouvert (port factice), aucune minuterie ni tâche de tournée vivante, aucun navigateur Bonjour, aucune alerte émise par un événement de ce protocole, nœuds absents de la scène ; `actif = true` repart ; la préférence survit à un redémarrage du modèle. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Activer ce protocole : arret reel du module (sonde, Bonjour, pont, tournees, notifications) ».
+- [x] **Step 1: RED** — pour chaque protocole : après `actif = false`, aucun port ouvert (port factice), aucune minuterie ni tâche de tournée vivante, aucun navigateur Bonjour, aucune alerte émise par un événement de ce protocole, nœuds absents de la scène ; `actif = true` repart ; la préférence survit à un redémarrage du modèle. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Activer ce protocole : arret reel du module (sonde, Bonjour, pont, tournees, notifications) ».
 
 ---
 

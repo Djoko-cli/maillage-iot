@@ -18,11 +18,16 @@ struct ResumeMenu: Equatable {
 /// `appareils`, `classement`, `miseEnAvant` et `suitModeLiens` de chaque modele. Les libelles, les pieces, les chefs et
 /// l'apparence des noeuds, qui lisent les types propres a chaque protocole (reseau, maillage et noms de Maison pour
 /// Thread ; maillage et noms du pont pour Zigbee), restent des fonctions de chaque protocole (`LibellesNoeuds`,
-/// `LibellesNoeudsZigbee`) que `EntreeScene` appelle sur le sous-graphe du protocole. Ce que la tache 11 y ajoute : `actif`
-/// (arret reel du module).
+/// `LibellesNoeudsZigbee`) que `EntreeScene` appelle sur le sous-graphe du protocole.
 @MainActor
 protocol ModeleProtocole: AnyObject {
     var protocole: Protocole { get }
+
+    /// « Activer ce protocole » : faux, le module est vraiment arrete (sonde et port, Bonjour ou pont, tournees,
+    /// notifications) et le modele ne montre plus rien (ni noeud dans la scene, ni chiffre au menu, ni alerte) ni
+    /// n'ecrit rien au journal ; vrai, il repart comme au lancement. Garde dans les preferences du protocole
+    /// (`thread.actif`, `zigbee.actif`), vrai par defaut.
+    var actif: Bool { get set }
 
     // MARK: Scene
 

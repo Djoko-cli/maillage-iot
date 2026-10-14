@@ -38,6 +38,29 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// Ce modele rejoue la demo de Zigbee (le faux reseau Hue) ; faux : en demo, un modele muet (la demo n'a qu'un
     /// reseau a la fois, la demo combinee est a l'etape 3b).
     let rejoueLaDemo: Bool
+    /// « Activer ce protocole » (spec 3.3) : faux, Zigbee est vraiment arrete (sonde, Bonjour, pont Hue) et ne montre ni
+    /// n'ecrit plus rien ; l'activer le relance comme au lancement. Garde sous `zigbee.actif`, vrai par defaut ; la demo
+    /// ne le lit ni ne l'ecrit.
+    var actif: Bool {
+        didSet {
+            guard actif != oldValue else { return }
+            if persisteActif { preferences.set(actif, forKey: Self.cleActif) }
+            // Le modele n'a rien lance avant `demarrer` : il n'y a rien a arreter ni a relancer.
+            if demarre {
+                if actif { lancer() } else { eteindre() }
+            }
+            surActivite?(actif)
+        }
+    }
+    /// Cle de `actif` dans les preferences.
+    static let cleActif = "zigbee.actif"
+    /// Appele a chaque changement de `actif` : l'app y branche l'arret et le redemarrage de la sonde, de la decouverte du
+    /// pont et du pont (`ModulesApp`), que le modele ne connait pas.
+    @ObservationIgnored var surActivite: ((Bool) -> Void)?
+    @ObservationIgnored private let preferences: UserDefaults
+    @ObservationIgnored private let persisteActif: Bool
+    /// La coque a demarre ce modele (`demarrer`) et ne l'a pas arrete (`arreter`).
+    @ObservationIgnored private var demarre = false
     var noms: ResolveurNomsZigbee
     /// Les noms lus sur le pont Hue ; nil sans pont lu (le pont oublie : le suivi des connexions repart de zero).
     var nomsPont: NomsZigbee? {
@@ -98,10 +121,15 @@ final class SurveillanceZigbee: ModeleProtocole {
 
     /// `dossier` : la racine des donnees de l'app ; les fichiers de Zigbee (dernier maillage, appariements de Maison,
     /// historique de la sonde) vont sous `Zigbee/` (nil : nulle part) ; `surnoms` : ceux de `surnoms.json`, de tous les
-    /// protocoles (le resolveur de noms ne garde que ceux de Zigbee) ; `rejoueLaDemo` : en demo, le faux reseau Hue.
-    init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], rejoueLaDemo: Bool = true) {
+    /// protocoles (le resolveur de noms ne garde que ceux de Zigbee) ; `preferences` : `actif` (mode direct) ;
+    /// `rejoueLaDemo` : en demo, le faux reseau Hue.
+    init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults = .standard,
+         rejoueLaDemo: Bool = true) {
         self.mode = mode
         self.rejoueLaDemo = rejoueLaDemo
+        self.preferences = preferences
+        persisteActif = mode == .direct && Surveillance.activationPersistee(preferences)
+        actif = persisteActif ? (preferences.object(forKey: Self.cleActif) as? Bool ?? true) : true
         switch mode {
         case .direct:
             fichierMaillage = dossier.map { Surveillance.dossierZigbee($0).appendingPathComponent("dernier-maillage.json") }
@@ -136,6 +164,7 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// injoignables, ou revenus, d'apres l'etat de connexion que le pont donne, vont au journal (et aux notifications :
     /// les pertes groupees). La premiere lecture est un etat initial ; le cache relu au lancement n'arrive pas ici.
     func lecturePont(_ n: NomsZigbee) {
+        guard actif else { return }
         ajouter(suiviConnexions.integrer(n) { [noms, maillage] ieee in
             Self.nom(ieee, noms: noms, sonde: maillage?.sonde)
         })
@@ -164,12 +193,36 @@ final class SurveillanceZigbee: ModeleProtocole {
             recevoir(MaillageDemoZigbee.maillageAvant, a: MaillageDemoZigbee.debut)
             recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin)
         case .direct:
-            chargerMaillageGarde()
-            Task { [weak self] in await self?.chargerHistorique() }
+            demarre = true
+            if actif { lancer() }
         }
     }
 
-    func arreter() {}
+    /// Lance ce qui est propre a Zigbee en mode direct : le dernier maillage garde et l'historique. La sonde, la decouverte
+    /// du pont et le pont ont leurs propres minuteries (`ModulesApp`). Au lancement de l'app si Zigbee est actif, et chaque
+    /// fois qu'on l'active : un modele rallume repart comme au lancement.
+    private func lancer() {
+        chargerMaillageGarde()
+        Task { [weak self] in await self?.chargerHistorique() }
+    }
+
+    /// Eteint Zigbee : ce que le modele savait du maillage est oublie (maillage, suivi des tournees et des connexions),
+    /// comme apres un lancement ; le rallumage relit le maillage garde et ne signale pas ce qui a change pendant que Zigbee
+    /// etait eteint. Les noms (surnoms, pont, releve de Maison), l'historique et les fichiers restent.
+    private func eteindre() {
+        maillage = nil
+        maillageRecu = nil
+        maillageIncomplet = false
+        maillageRelu = false
+        tourneeEnCours = false
+        suiviMaillage = SuiviMaillageZigbee()
+        suiviConnexions = SuiviConnexions()
+    }
+
+    /// La coque arrete le modele (fin de l'app) ; `actif` ne change pas.
+    func arreter() {
+        demarre = false
+    }
 
     /// Le Mac se reveille : la sonde et le pont ont leurs minuteries, rien a faire ici.
     func auReveil() {}
@@ -177,6 +230,7 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// Verse des evenements au journal de la coque (qui les marque du protocole Zigbee, les garde et notifie). Un
     /// modele n'est jamais utilise apres la mort de sa coque : en Debug, des evenements perdus sont une erreur.
     private func ajouter(_ evenements: [Evenement]) {
+        guard actif else { return }
         assert(coque != nil || evenements.isEmpty, "SurveillanceZigbee sans coque : des evenements seraient perdus")
         coque?.ajouter(evenements, de: Self.protocole)
     }
@@ -213,6 +267,8 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// prochain lancement. `incomplet` : la tournee qui l'a produit a reporte des routes (une passe complementaire les
     /// lira).
     func recevoir(_ recu: MaillageZigbee, a date: Date, incomplet: Bool = false) {
+        // Eteint : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde, ni suivi.
+        guard actif else { return }
         // Les parents lus d'abord (ils prennent la place de ceux d'avant), puis ceux d'avant pour les appareils finaux que
         // les dernieres tables n'ont plus (mode direct seulement : la demo n'a pas d'avant).
         if mode == .direct { parentsConnus.retenir(recu) }
@@ -284,7 +340,8 @@ final class SurveillanceZigbee: ModeleProtocole {
 
     /// Veille du Mac (appele au reveil par la coque) : ses evenements vont au journal.
     func noterVeille(_ intervalle: DateInterval) -> [Evenement] {
-        suiviMaillage.noterVeille(intervalle)
+        guard actif else { return [] }
+        return suiviMaillage.noterVeille(intervalle)
     }
 
     /// Applique (ou retire) le surnom d'un noeud Zigbee au resolveur de noms ; `cle` : la cle brute du noeud.
@@ -371,7 +428,11 @@ final class SurveillanceZigbee: ModeleProtocole {
     }
 
     /// Il y a un reseau a dessiner : un maillage, ou des appareils du pont.
-    var aUnReseau: Bool { maillageAffiche != nil || !appareilsAffiches.isEmpty }
+    var aUnReseau: Bool { actif && (maillageAffiche != nil || !appareilsAffiches.isEmpty) }
+
+    /// Zigbee est actif et n'a rien a montrer : ni maillage de la sonde, ni appareil du pont. L'onglet Zigbee le dit, sans
+    /// alerte ni notification.
+    var rienTrouve: Bool { actif && !aUnReseau }
 
     /// Chiffres du reseau affiche ; nil sans rien a montrer.
     var resume: ResumeReseauZigbee? {
@@ -394,9 +455,11 @@ final class SurveillanceZigbee: ModeleProtocole {
     // MARK: - ModeleProtocole
 
     /// Noeuds et liens du reseau affiche : le graphe de la scene.
-    var graphe: GrapheReseau { GrapheReseau(maillage: maillageAffiche, appareils: appareilsAffiches) }
+    var graphe: GrapheReseau {
+        actif ? GrapheReseau(maillage: maillageAffiche, appareils: appareilsAffiches) : GrapheReseau(noeuds: [])
+    }
 
-    var appareils: [AppareilAffiche] { appareilsAffiches }
+    var appareils: [AppareilAffiche] { actif ? appareilsAffiches : [] }
 
     var echelle: EchelleSignal { .lqi }
 

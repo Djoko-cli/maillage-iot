@@ -41,6 +41,8 @@ final class SurveillanceThread: ModeleProtocole {
 
     enum EtatEcoute: Equatable {
         case demarrage, active, reseauLocalRefuse, demo
+        /// Thread est eteint (« Activer ce protocole » decoche) : rien n'est ecoute.
+        case eteint
         case erreur(String)
     }
 
@@ -48,6 +50,28 @@ final class SurveillanceThread: ModeleProtocole {
     /// Ce modele rejoue la panne du 27/09 ; faux : en demo, un modele muet (la demo n'a qu'un reseau a la fois, la demo
     /// combinee est a l'etape 3b).
     let rejoueLaDemo: Bool
+    /// « Activer ce protocole » (spec 3.3) : faux, Thread est vraiment arrete (Bonjour, sonde, tournees) et ne montre ni
+    /// n'ecrit plus rien ; l'activer le relance comme au lancement. Garde sous `thread.actif`, vrai par defaut ; la demo ne
+    /// le lit ni ne l'ecrit.
+    var actif: Bool {
+        didSet {
+            guard actif != oldValue else { return }
+            if persisteActif { preferences.set(actif, forKey: Self.cleActif) }
+            // Le modele n'a rien lance avant `demarrer` : il n'y a rien a arreter ni a relancer.
+            if demarre {
+                if actif { lancer() } else { eteindre() }
+            }
+            surActivite?(actif)
+        }
+    }
+    /// Cle de `actif` dans les preferences.
+    static let cleActif = "thread.actif"
+    /// Appele a chaque changement de `actif` : l'app y branche l'arret et le redemarrage de la sonde (`ModulesApp`), que le
+    /// modele ne connait pas.
+    @ObservationIgnored var surActivite: ((Bool) -> Void)?
+    @ObservationIgnored private let persisteActif: Bool
+    /// La coque a demarre ce modele (`demarrer`) et ne l'a pas arrete (`arreter`).
+    @ObservationIgnored private var demarre = false
     private(set) var etatEcoute: EtatEcoute
     private(set) var suivi = Suivi()
     private(set) var dernierReleve: Annonces?
@@ -112,16 +136,20 @@ final class SurveillanceThread: ModeleProtocole {
     /// `dossier` : la racine des donnees de l'app ; les fichiers de Thread (associations, dernier maillage, adresses
     /// gardees, historique de la sonde) vont sous `Thread/` (nil : nulle part) ; `surnoms` : ceux de `surnoms.json`, de
     /// tous les protocoles (le resolveur de noms ne garde que ceux de Thread) ; `preferences` : les scissions deja
-    /// notifiees (mode direct, une fois demarre) ; `rejoueLaDemo` : en demo, la panne du 27/09.
+    /// notifiees et `actif` (mode direct) ; `rejoueLaDemo` : en demo, la panne du 27/09 ; `recenseur` : l'ecoute Bonjour
+    /// (mode direct ; les tests en donnent une a navigateurs factices).
     init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults,
-         rejoueLaDemo: Bool = true) {
+         rejoueLaDemo: Bool = true, recenseur: Recenseur? = nil) {
         self.mode = mode
         self.rejoueLaDemo = rejoueLaDemo
         self.preferences = preferences
+        persisteActif = mode == .direct && Surveillance.activationPersistee(preferences)
+        let actifAuDepart = persisteActif ? (preferences.object(forKey: Self.cleActif) as? Bool ?? true) : true
+        actif = actifAuDepart
         switch mode {
         case .direct:
-            etatEcoute = .demarrage
-            recenseur = Recenseur()
+            etatEcoute = actifAuDepart ? .demarrage : .eteint
+            self.recenseur = recenseur ?? Recenseur()
             fichierAssociations = dossier.map { Surveillance.dossierThread($0).appendingPathComponent("associations.json") }
             fichierMaillage = dossier.map { Surveillance.dossierThread($0).appendingPathComponent("dernier-maillage.json") }
             fichierAdresses = dossier.map { Surveillance.dossierThread($0).appendingPathComponent("dernieres-adresses.json") }
@@ -130,7 +158,7 @@ final class SurveillanceThread: ModeleProtocole {
             fichiersHistorique = dossier.map { HistoriqueFichiers(dossier: Surveillance.dossierThread($0)) }
         case .demo:
             etatEcoute = .demo
-            recenseur = nil
+            self.recenseur = nil
             fichierAssociations = nil
             fichierMaillage = nil
             fichierAdresses = nil
@@ -148,14 +176,40 @@ final class SurveillanceThread: ModeleProtocole {
                 recevoir(m, a: maintenant)
             }
         case .direct:
-            chargerScissionsNotifiees()
-            chargerMaillageGarde()
-            chargerAdressesGardees()
-            Task { [weak self] in await self?.chargerHistorique() }
-            recenseur?.surReleve = { [weak self] a in self?.integrer(a) }
-            recenseur?.surEtat = { [weak self] e in self?.noterEtat(e) }
-            recenseur?.demarrer()
+            demarre = true
+            if actif { lancer() }
         }
+    }
+
+    /// Lance ce qui est propre a Thread en mode direct : les fichiers gardes, l'historique, l'ecoute Bonjour. Au lancement
+    /// de l'app si Thread est actif, et chaque fois qu'on l'active : un modele rallume repart comme au lancement.
+    private func lancer() {
+        etatEcoute = .demarrage
+        chargerScissionsNotifiees()
+        chargerMaillageGarde()
+        chargerAdressesGardees()
+        Task { [weak self] in await self?.chargerHistorique() }
+        recenseur?.surReleve = { [weak self] a in self?.integrer(a) }
+        recenseur?.surEtat = { [weak self] e in self?.noterEtat(e) }
+        recenseur?.demarrer()
+    }
+
+    /// Eteint Thread : l'ecoute Bonjour s'arrete (plus de navigateur, de releve ni de minuterie), et ce que le modele savait
+    /// du reseau est oublie (releve, suivi, maillage de la sonde), comme apres un lancement : le rallumage repart de zero
+    /// (il relit les fichiers gardes) et ne signale pas ce qui a change pendant que Thread etait eteint. Les noms (surnoms,
+    /// associations, releve de Maison), l'historique et les fichiers restent.
+    private func eteindre() {
+        recenseur?.arreter()
+        etatEcoute = .eteint
+        suivi = Suivi()
+        suiviMaillage = SuiviMaillage()
+        dernierReleve = nil
+        rienVuDepuis = nil
+        routesLisibles = nil
+        maillage = nil
+        maillageRecu = nil
+        maillageRelu = false
+        tourneeEnCours = false
     }
 
     /// Lit les scissions deja notifiees (au demarrage, mode direct) : un reseau
@@ -171,23 +225,29 @@ final class SurveillanceThread: ModeleProtocole {
         preferences.set(signatures.sorted(), forKey: Self.cleScissionsNotifiees)
     }
 
+    /// La coque arrete le modele (fin de l'app) : l'ecoute Bonjour s'arrete ; `actif` ne change pas.
     func arreter() {
+        demarre = false
         recenseur?.arreter()
     }
 
-    /// Le Mac se reveille : releve immediat.
+    /// Le Mac se reveille : releve immediat (rien si Thread est eteint).
     func auReveil() {
+        guard actif else { return }
         recenseur?.rafraichir()
     }
 
     /// Releve immediat.
     func rafraichir() {
+        guard actif else { return }
         recenseur?.rafraichir()
     }
 
     /// Integre un releve : evenements, journal, notifications. Un releve vide ne
     /// change pas l'instantane (voir `Suivi`) : il est seulement note (`rienVuDepuis`).
     func integrer(_ a: Annonces) {
+        // Eteint : un releve en vol a l'arret n'est pas integre.
+        guard actif else { return }
         dernierReleve = a
         routesLisibles = mode == .demo ? true : recenseur?.routesLisibles
         if !a.estVide {
@@ -203,6 +263,7 @@ final class SurveillanceThread: ModeleProtocole {
     /// Verse des evenements au journal de la coque (qui les marque du protocole Thread, les garde et notifie). Un modele
     /// n'est jamais utilise apres la mort de sa coque : en Debug, des evenements perdus sont une erreur.
     private func ajouter(_ evenements: [Evenement]) {
+        guard actif else { return }
         assert(coque != nil || evenements.isEmpty, "SurveillanceThread sans coque : des evenements seraient perdus")
         coque?.ajouter(evenements, de: Self.protocole)
     }
@@ -319,6 +380,8 @@ final class SurveillanceThread: ModeleProtocole {
     /// dans le journal du Mac ; le releve reste en memoire. Le maillage est aussi garde sur disque, pour le prochain
     /// lancement.
     func recevoir(_ m: Maillage, a date: Date) {
+        // Eteint : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde, ni suivi.
+        guard actif else { return }
         maillage = m
         maillageRecu = date
         maillageRelu = false
@@ -473,7 +536,8 @@ final class SurveillanceThread: ModeleProtocole {
 
     /// Veille du Mac (appele au reveil par la coque) : ses evenements vont au journal.
     func noterVeille(_ intervalle: DateInterval) -> [Evenement] {
-        suivi.noterVeille(intervalle)
+        guard actif else { return [] }
+        return suivi.noterVeille(intervalle)
     }
 
     /// Le releve de Maison du Passeur (le meme que celui de Zigbee) : le resolveur de noms de Thread le garde.
@@ -734,7 +798,7 @@ final class SurveillanceThread: ModeleProtocole {
 
     /// Chiffres du reseau affiche.
     var resume: ResumeReseauThread? {
-        guard let i = instantane, let r = reseau else { return nil }
+        guard actif, let i = instantane, let r = reseau else { return nil }
         let affiches = appareilsAffiches(pour: r)
         return ResumeReseauThread(nom: r.nom, partitions: r.partitions.count, routeurs: r.routeurs.count,
                             appareils: affiches.count,
@@ -751,14 +815,14 @@ final class SurveillanceThread: ModeleProtocole {
 
     /// Noeuds et liens du reseau affiche, ceux de la fenetre : le graphe de `EntreeScene`.
     var graphe: GrapheReseau {
-        reseau.map(graphe(pour:)) ?? GrapheReseau(noeuds: [])
+        actif ? reseau.map(graphe(pour:)) ?? GrapheReseau(noeuds: []) : GrapheReseau(noeuds: [])
     }
 
     func graphe(pour r: Reseau) -> GrapheReseau {
         GrapheReseau(reseau: r, appareils: appareilsAffiches(pour: r), maillage: maillageAffiche(pour: r))
     }
 
-    var appareils: [AppareilAffiche] { reseau.map(appareilsAffiches(pour:)) ?? [] }
+    var appareils: [AppareilAffiche] { actif ? reseau.map(appareilsAffiches(pour:)) ?? [] : [] }
 
     var echelle: EchelleSignal { .dbm }
 
@@ -778,7 +842,11 @@ final class SurveillanceThread: ModeleProtocole {
     }
 
     /// Un reseau scinde est une alerte.
-    var alerteReseau: Bool { instantane?.reseaux.contains(where: \.estScinde) == true }
+    var alerteReseau: Bool { actif && instantane?.reseaux.contains(where: \.estScinde) == true }
+
+    /// Thread est actif et le Mac a releve le reseau local (meme un releve vide : il n'entend rien) sans y voir de reseau
+    /// Thread : l'onglet Thread le dit, sans alerte ni notification. Avant le premier releve, rien n'est encore dit.
+    var rienTrouve: Bool { actif && dernierReleve != nil && reseau == nil }
 
     /// Un evenement concerne le noeud `id` s'il est de son protocole (sans protocole : Thread) et, par son ExtMac s'il la
     /// porte (l'id du sujet d'un enfant sans appareil change avec son parent), sinon par l'id de son sujet (la cle brute

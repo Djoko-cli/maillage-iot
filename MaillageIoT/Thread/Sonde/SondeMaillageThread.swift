@@ -114,8 +114,16 @@ final class SondeMaillageThread {
     /// Attente du premier releve Bonjour et pas de sa relecture (`attendreReseau`) ; courts dans les tests.
     @ObservationIgnored private let attenteReseau: Duration
     @ObservationIgnored private let pasAttenteReseau: Duration
-    /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`).
-    @ObservationIgnored let actif: Bool
+    /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`). Faux aussi
+    /// entre `arreter()` (Thread eteint) et `demarrer()` : aucun port n'est suivi, ouvert ni rouvert (les entrees
+    /// publiques gardent `actif`).
+    private(set) var actif: Bool
+    /// Construite pour agir (`actif` vrai au depart) : seule une telle sonde s'arrete et repart ; celle de la demo et des
+    /// tests reste inerte, quoi qu'on lui demande.
+    @ObservationIgnored private let vivante: Bool
+    /// Ou les ports sont suivis, et comment on les liste (factices dans les tests : aucun IOKit).
+    @ObservationIgnored private let surveillerPorts: @MainActor () -> any SurveillantPorts
+    @ObservationIgnored private let listerPorts: @Sendable () -> [PortUSB]
     @ObservationIgnored private let ouvrirCanal: (String) -> any CanalSonde
     /// Cles de l'acces reseau : en memoire par defaut, celui du Mac au lancement de l'app.
     @ObservationIgnored let trousseau: any TrousseauClesThread
@@ -155,7 +163,7 @@ final class SondeMaillageThread {
     @ObservationIgnored private var identitesDuFichier: IdentitesGardees?
     /// Boucle des tournees (lue par les tests).
     @ObservationIgnored private(set) var boucle: Task<Void, Never>?
-    @ObservationIgnored private var surveillantPorts: PortsUSB?
+    @ObservationIgnored private var surveillantPorts: (any SurveillantPorts)?
 
     /// `actif` faux (mode demo, tests) : ni port, ni preferences lues, ni trousseau.
     /// `trousseau` : en memoire par defaut (tests) ; l'app lui passe celui du Mac.
@@ -171,9 +179,14 @@ final class SondeMaillageThread {
          delaisReprise: [Duration] = SondeMaillageThread.delaisReprise,
          delaiNouvelEssai: Duration = SondeMaillageThread.delaiNouvelEssai,
          attenteReseau: Duration = SondeMaillageThread.attenteReseau, pasAttenteReseau: Duration = .seconds(1),
-         horloge: @escaping () -> Date = { Date() }, fichierIdentites: URL? = nil) {
+         horloge: @escaping () -> Date = { Date() }, fichierIdentites: URL? = nil,
+         surveillerPorts: @escaping @MainActor () -> any SurveillantPorts = { PortsUSB() },
+         listerPorts: @escaping @Sendable () -> [PortUSB] = { PortsUSB.lister() }) {
         self.preferences = preferences
         self.actif = actif
+        self.vivante = actif
+        self.surveillerPorts = surveillerPorts
+        self.listerPorts = listerPorts
         self.ouvrirCanal = ouvrirCanal
         self.trousseau = trousseau
         self.ouvrirReseau = ouvrirReseau
@@ -237,15 +250,42 @@ final class SondeMaillageThread {
         nom ?? String(localized: "Sonde")
     }
 
-    /// Suit les ports ; reprend la sonde retenue des qu'elle est branchee.
+    /// Suit les ports ; reprend la sonde retenue des qu'elle est branchee. Apres `arreter()`, repart : la sonde retenue
+    /// (et elle seule : jamais un port inconnu) est rouverte si elle est branchee, ou rejointe par le reseau.
     func demarrer() {
-        guard actif, surveillantPorts == nil else { return }
-        let p = PortsUSB()
+        guard vivante else { return }
+        actif = true
+        guard surveillantPorts == nil else { return }
+        let p = surveillerPorts()
         p.changement = { [weak self] l in self?.portsChanges(l) }
         p.demarrer()
         surveillantPorts = p
-        portsChanges(PortsUSB.lister())
+        portsChanges(listerPorts())
         if liaison == .reseau { lancerConnexionReseau() }
+    }
+
+    /// Arret reel (Thread eteint) : le suivi des ports s'arrete, la liaison (le port serie ou la session reseau) se ferme,
+    /// la tournee, la boucle des tournees, les reprises de la liaison reseau et le nouvel essai planifie sont annules, et
+    /// l'activite de la session reseau est rendue. Plus rien ne se connecte (`portsChanges`, `choisir`, `choisirLiaison`
+    /// et `connecterReseau` gardent `actif`) tant que `demarrer()` n'a pas repris. La sonde retenue, son nom et sa cle
+    /// restent. Sans effet sur une sonde inerte (demo, tests).
+    func arreter() {
+        guard vivante, actif else { return }
+        actif = false
+        surveillantPorts?.arreter()
+        surveillantPorts = nil
+        reprise?.cancel()
+        reprise = nil
+        nouvelEssai?.cancel()
+        nouvelEssai = nil
+        essaisReprise = 0
+        deconnecter(serie == nil ? .sansSonde : .absente)
+    }
+
+    /// Des taches de fond sont encore planifiees ou en cours : la boucle des tournees, une reprise de la liaison reseau, un
+    /// nouvel essai de connexion (lu par les tests de l'arret).
+    var tachesPlanifiees: Int {
+        [boucle, reprise, nouvelEssai].filter { $0 != nil && $0?.isCancelled == false }.count
     }
 
     /// Choix d'un port dans les Reglages : retenu seulement s'il repond en sonde.
@@ -344,7 +384,7 @@ final class SondeMaillageThread {
     /// Par le reseau, la sonde n'est jamais ouverte en USB, meme branchee.
     func portsChanges(_ liste: [PortUSB]) {
         ports = liste.filter(\.estEspressif)
-        guard liaison == .usb, let serie else { return }
+        guard actif, liaison == .usb, let serie else { return }
         if let p = ports.first(where: { $0.serie == serie }) {
             // `lancerConnexion` passe tout de suite a `.connexion` : un second appel n'en lance pas d'autre.
             if sonde == nil && etat != .connexion { lancerConnexion(p, choisi: false) }
@@ -497,7 +537,10 @@ final class SondeMaillageThread {
         do {
             guard let hote else { throw CleReseau.Erreur.sansNomDHote }
             let t = trousseau
-            let c = try await ouvrirReseau(hote, try await Self.horsActeurPrincipal { try t.lire(nom: hote) })
+            let cle = try await Self.horsActeurPrincipal { try t.lire(nom: hote) }
+            // Arretee (ou autre liaison choisie) pendant la lecture de la cle : aucune session n'est ouverte.
+            guard n == essai else { return }
+            let c = try await ouvrirReseau(hote, cle)
             canal = c
             guard n == essai else {
                 c.fermer()

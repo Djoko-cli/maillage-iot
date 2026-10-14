@@ -26,11 +26,21 @@ struct PortUSB: Identifiable, Hashable, Sendable {
     }
 }
 
+/// Ce que les sondes demandent a l'ecoute des ports : un rappel a chaque arrivee ou depart, un demarrage, un arret. Les
+/// tests en donnent une factice (aucun IOKit, aucun port reel).
+@MainActor
+protocol SurveillantPorts: AnyObject {
+    /// Appele sur la file principale a chaque arrivee ou depart d'un port.
+    var changement: (([PortUSB]) -> Void)? { get set }
+    func demarrer()
+    func arreter()
+}
+
 /// Liste des ports et notifications d'arrivee et de depart (IOKit,
 /// `IOServiceAddMatchingNotification` sur `IOSerialBSDClient`) ; repris de
 /// Halo Compagnon (benq).
 @MainActor
-final class PortsUSB {
+final class PortsUSB: SurveillantPorts {
     /// Appele sur la file principale a chaque arrivee ou depart d'un port.
     var changement: (([PortUSB]) -> Void)?
 
