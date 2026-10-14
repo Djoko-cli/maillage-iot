@@ -535,3 +535,5 @@ Validés par Djoko le 14/10, après l'inventaire du code de Thread :
 - Mineurs reportés de Zigbee : pertes de parent de la sonde non journalisées (la nuit de comparaison du plan Wi-Fi
   est restée partielle), messages neutres affichés en rouge.
 - Fusion des deux firmwares de sonde, si un jour une carte porte les deux radios.
+- Icône de l'app (Dock et barre des menus) : retirer le badge « T » hérité de Maillage Thread, à l'étape 3 avec
+  l'interface à deux protocoles (banc de l'étape 1, 14/10).

@@ -763,7 +763,7 @@ EOF
 
 Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctifs.
 
-- [ ] **Step 1: Compiler et lancer Maillage IoT**
+- [x] **Step 1: Compiler et lancer Maillage IoT**
 
 ```bash
 xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageIoT -configuration Debug \
@@ -771,7 +771,7 @@ xcodebuild -project MaillageIoT.xcodeproj -scheme MaillageIoT -configuration Deb
 open ~/Library/Developer/Xcode/DerivedData/maillage-iot/Build/Products/Debug/"Maillage IoT.app"
 ```
 
-- [ ] **Step 2: Comparer côte à côte**
+- [x] **Step 2: Comparer côte à côte**
 
 Avec Djoko, Maillage Thread 1.3.0 et Maillage IoT ouverts ensemble :
 - même vue par pièces (nœuds, liens, pièces, étages), en 2D et en 3D ;
@@ -779,6 +779,6 @@ Avec Djoko, Maillage Thread 1.3.0 et Maillage IoT ouverts ensemble :
 - sonde **en USB seulement**, branchée sur l'une puis sur l'autre (pas de mise en service réseau : elle remplacerait la clé de la sonde et couperait Maillage Thread de sa sonde réseau, spec 4.4) ;
 - journal et notifications de Maillage IoT : écrits dans `Application Support/Maillage IoT/`.
 
-- [ ] **Step 3: Verdict**
+- [x] **Step 3: Verdict**
 
 Noter le verdict de Djoko dans le registre ; cocher ce plan ; l'orchestrateur pousse `main` (garde pre-push).
