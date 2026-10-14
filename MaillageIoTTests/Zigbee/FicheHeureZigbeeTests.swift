@@ -1,0 +1,44 @@
+import AppKit
+import Foundation
+import MaillageCoeur
+import SwiftUI
+import Testing
+@testable import MaillageIoT
+import ProtocoleZigbee
+
+@MainActor
+@Suite("Fiche a l'heure de la fenetre du graphe (Zigbee)")
+struct FicheHeureZigbeeTests {
+    /// Un appareil a pile de la demo : sa fiche dit quand le pont a donne sa batterie.
+    static let appareil = NomsDemo.Ieee.interrupteurSalon
+
+    /// L'heure de la fenetre (celle de sa TimelineView), ou la fin de la demo.
+    @Test func maintenantALHeureDeLaFenetre() {
+        let t = Date(timeIntervalSince1970: 1_790_000_000)
+        let direct = Surveillance(mode: .direct, dossier: nil)
+        #expect(direct.maintenant(a: t) == t)
+        let demo = NomsSceneZigbeeTests.surveillanceDemo()
+        #expect(demo.maintenant(a: t) == demo.maintenant, "la fin de la demo, quelle que soit l'heure")
+        #expect(demo.maintenant(a: t) != t)
+    }
+
+    /// La fiche d'un appareil lit l'heure qu'on lui donne, pas l'horloge du Mac : « releve il y a … » change
+    /// avec elle (rendu de la fiche a deux heures), et deux rendus a la meme heure sont identiques.
+    @Test func ficheSuitSonHeure() throws {
+        let s = Surveillance(mode: .direct, dossier: nil)
+        s.zigbee.noms.maison = NomsDemo.maisonPont
+        s.zigbee.recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin)
+        let entree = EntreeScene(surveillance: s, places: PlacesGardees())
+        let vu = NomsDemo.maisonPont.date
+        func rendu(_ instant: Date) -> Data? {
+            let fiche = FicheNoeud(id: idz(Self.appareil), entree: entree, instant: instant, aRenommer: .constant(nil), fermer: {})
+                .environment(s)
+                .frame(width: 1000)
+            return ImageRenderer(content: fiche).nsImage?.tiffRepresentation
+        }
+        let uneMinute = try #require(rendu(vu.addingTimeInterval(60)))
+        #expect(rendu(vu.addingTimeInterval(60)) == uneMinute)
+        #expect(rendu(vu.addingTimeInterval(3 * 3600)) != uneMinute)
+    }
+
+}

@@ -260,11 +260,11 @@ D'après `inventaire-etape3-fusion-apps.md` §5 (25 homologues, 11 Zigbee seuls,
 - Delete: `MaillageIoTZigbee/`, cibles `MaillageIoTZigbee` et `MaillageIoTZigbeeTests`, schéma `MaillageIoTZigbee` ; `CataloguesTests` et `outils/synchroniser-textes.sh` reviennent à une seule app.
 - Modify: `project.yml`, `outils/tester.sh` si besoin ; `MaillageIoT/Noms/NomsPasseur.swift:347` : le message « …les noms viennent de l'app Hue » devient neutre (vrai pour Thread seul, Zigbee seul ou les deux), avec son test (relecture de la tâche 5).
 
-- [ ] **Step 1: Compter** — `@Test` de `MaillageIoTTests` et de `MaillageIoTZigbeeTests` avant ; tableau fichier par fichier au rapport.
-- [ ] **Step 2: Déplacer et fusionner** — chaque test Zigbee garde son assertion ; un test dédoublonné (même assertion des deux côtés) est justifié au rapport.
-- [ ] **Step 3: Supprimer la cible temporaire** — et ses références (`grep -rn MaillageIoTZigbee` ne trouve plus que l'historique des plans et la spec).
-- [ ] **Step 4: Vérifier** — porte de la tâche ; somme des `@Test` après = somme avant − dédoublonnés justifiés.
-- [ ] **Step 5: Commit** — « Tests Zigbee dans MaillageIoTTests, cible temporaire supprimee ».
+- [x] **Step 1: Compter** — `@Test` de `MaillageIoTTests` et de `MaillageIoTZigbeeTests` avant ; tableau fichier par fichier au rapport.
+- [x] **Step 2: Déplacer et fusionner** — chaque test Zigbee garde son assertion ; un test dédoublonné (même assertion des deux côtés) est justifié au rapport.
+- [x] **Step 3: Supprimer la cible temporaire** — et ses références (`grep -rn MaillageIoTZigbee` ne trouve plus que l'historique des plans et la spec).
+- [x] **Step 4: Vérifier** — porte de la tâche ; somme des `@Test` après = somme avant − dédoublonnés justifiés.
+- [x] **Step 5: Commit** — « Tests Zigbee dans MaillageIoTTests, cible temporaire supprimee ».
 
 ---
 
@@ -320,6 +320,8 @@ D'après `inventaire-etape3-interface.md` §3.4 ; spec 3.4.
 ### Task 13: Journal unique, notifications et menu à deux protocoles
 
 Le minimum de l'étape 3a ; les filtres et marques du journal, les catégories par protocole et l'icône « pire des deux » sont à l'étape 3b.
+
+Ajout (relecture de la tâche 8, I1) : dans la scène réunie, la barre du haut (`BandeauPieces`, `HautPieces`) montre aussi les commandes de Zigbee (« Liens » chemins/tous, voisins, ligne de tournée) à côté de celles de Thread, en remplaçant le paramètre transitoire `zigbeeSeul` ; la barre définitive avec les interrupteurs de vue est à l'étape 3b. Tests ajoutés : `sceneReunieEstLUnionDesDeux` compare aussi la pièce de chaque nœud ; un test qui échoue si l'on retire la garde de protocole de `LibellesNoeudsZigbee` ou des candidats de `LegendePieces`.
 
 **Files:**
 - Modify: `Surveillance` (un journal, `PolitiqueJournalComposee` avec Thread et Zigbee, événements des deux modèles avec leur `protocole`) ; `Notifications`/`Alertes` (alertes des deux protocoles actifs, catégories et clés actuelles communes) ; `MenuBarre` (les lignes de résumé des deux protocoles actifs, l'une sous l'autre) ; `FenetreJournal` (les deux protocoles, textes d'événements de chaque module : `TexteEvenement` Thread et Zigbee renommés à la tâche 7).

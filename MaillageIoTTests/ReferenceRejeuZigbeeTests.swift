@@ -7,7 +7,7 @@ import ProtocoleZigbee
 /// Resultat de reference du rejeu de Zigbee (spec de Maillage IoT, section 6.1, etape 0) : la scene de la vue par pieces
 /// en mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/zigbee-demo.json`. Dans
 /// l'app unique, la demo de Zigbee tourne seule (`Surveillance(demo: .zigbee)` : Thread est muet) et la scene reunie
-/// n'a que ses noeuds : elle doit redonner la reference de l'app temporaire, a l'octet. Les identifiants sont compares
+/// n'a que ses noeuds : elle doit redonner la reference de l'ancienne app de transition (celle de Zigbee 1.1.1), a l'octet. Les identifiants sont compares
 /// par leur cle (`IdNoeud.cle`), sans le protocole ; le fichier de reference ne change jamais. La demo ne lit pas
 /// l'horloge du Mac (dates fixes de `MaillageDemoZigbee`, `Surveillance.maintenant` = la fin de la demo). Fichier
 /// absent : le test l'ecrit dans son dossier temporaire (bac a sable) et echoue une fois ; le copier, le controler

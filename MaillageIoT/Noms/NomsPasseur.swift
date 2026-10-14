@@ -344,7 +344,7 @@ final class NomsPasseur {
     nonisolated static func texte(_ e: EchecLancement) -> String {
         switch e {
         case .introuvable(ancien: false):
-            String(localized: "Passeur Noms n'est pas installé sur ce Mac (outils/passeur.sh) : les noms viennent de l'app Hue.")
+            String(localized: "Passeur Noms n'est pas installé sur ce Mac (outils/passeur.sh) : les noms de Maison ne sont pas disponibles.")
         case .introuvable(ancien: true):
             String(localized: "Passeur Noms est l'ancienne version : relance outils/passeur.sh.")
         case .neDemarrePas: String(localized: "Passeur Noms ne démarre pas : relance outils/passeur.sh.")

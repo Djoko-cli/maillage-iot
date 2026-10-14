@@ -6,7 +6,7 @@ import Testing
 @testable import MaillageIoT
 
 /// Etape 3a, tache 7 : les fichiers de vue que Thread et Zigbee partagent portent les crochets des deux protocoles, sans
-/// rien changer a Thread (la scene reunie et les tests de l'app temporaire viennent aux taches 8 et 9). Ces tests posent ce
+/// rien changer a Thread (la scene reunie vient a la tache 8, les tests de l'ancienne app de transition a la tache 9). Ces tests posent ce
 /// que les fusions ajoutent : la part de Zigbee des libelles et des pieces, l'apparence et la couleur des liens par
 /// protocole, la legende des deux protocoles, les reglages par defaut du moteur.
 @MainActor

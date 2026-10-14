@@ -5,7 +5,7 @@ import Testing
 @testable import MaillageIoT
 
 /// Etape 3a, tache 7 : le modele de Zigbee (`SurveillanceZigbee`) dans la coque, a cote de celui de Thread. Les tests de
-/// l'app temporaire (`MaillageIoTZigbeeTests/SurveillanceTests`) y rejoignent a la tache 9 ; ceux-ci posent ce que la
+/// l'ancienne app de transition y ont rejoint la tache 9 (`Zigbee/SurveillanceModeleZigbeeTests`) ; ceux-ci posent ce que la
 /// fusion change : la coque porte deux modeles, la demo n'en rejoue qu'un, les fichiers vont sous `Zigbee/`, le
 /// journal d'un noeud garde le protocole.
 @MainActor
