@@ -527,6 +527,48 @@ d'app de Zigbee entre donc dans une **cible d'app temporaire**, « Maillage IoT 
 `Zigbee/`), porte le rejeu de la démo Zigbee et sert au banc. Elle disparaît à l'étape 3, quand les deux apps se fondent.
 L'étape 2 reste un seul plan.
 
+### 6.6 Ajustements du 14/10 pour l'étape 3
+
+Validés par Djoko le 14/10 :
+- **L'étape 2 bis passe après l'étape 3** : l'étape 3 déplace les deux `SondeMaillage` sans les fondre ; la découpe se
+  fait à leur place définitive, sous les tests de l'app unique.
+- **L'étape 3 se fait en deux plans, chacun avec son banc et sa relecture par Opus** :
+  - **3a, une seule app** : `IdNoeud`, fichiers communs, une `Surveillance` qui porte les deux protocoles, fusion des
+    deux cibles d'app (la cible temporaire disparaît), jonction des graphes dans la scène avec le dessin actuel,
+    Réglages à six onglets, « Activer ce protocole », deux sondes en même temps, journal unique. Sortie : tous les
+    tests passent, les deux rejeux restent exacts (chaque démo calculée avec l'autre protocole éteint) ; au banc, les
+    deux réseaux réels s'affichent ensemble et les deux sondes tournent en même temps.
+  - **3b, la vue A et le reste de l'interface** : silhouettes (hexagone de Zigbee), interrupteurs de vue, bandes de
+    qualité, légende, filtres et marques du journal, catégories de notification par protocole, menu de la barre
+    (pire des deux réseaux), démo combinée et sa référence, icône sans badge, « Identifier par Hue ». Sortie : celle
+    de l'étape 3 en 6.1 (mesures, places de la sonde Zigbee).
+
+Décisions du plan 3a, d'après les inventaires `inventaire-etape3-*.md` (proposées par l'orchestrateur avec le plan) :
+1. **`IdNoeud` est typé dès la sortie du graphe de chaque module** : `GrapheReseau.Noeud.id`, les bouts des liens,
+   `AppareilAffiche.id` et les types de la scène du cœur. Un oubli ne compile pas. Les modules gardent leurs clés
+   internes en texte brut. Forme texte `<protocole>:<clé>`, coupée au premier `:` seulement.
+2. **Restent bruts** (précise 1.2 et 4.3) : `noeudMatter` et l'`id` HomeKit (`releve-maison.json` ne change que de
+   nom), les clés d'historique, les clés de pièce et d'étage (dont `routeur:<clé>` dans `positions-pieces.json`), les
+   partitions (le protocole est porté par le nœud ; Zigbee garde sa partition `zigbee`).
+3. **Journal** : `Sujet.id` reste brut, chaque `Evenement` gagne `protocole` ; une ligne sans protocole est de Thread
+   (journaux de Maillage IoT avant 3a, et de Maillage Thread). La politique du journal est composée par protocole.
+4. **`associations.json`** reste au module Thread, clés brutes, avec un champ `version`.
+5. **Fichiers communs versionnés** : `surnoms.json` version 1 (`{version, surnoms}` par `IdNoeud`), qui lit encore
+   l'ancien format plat (clés de Thread) ; `pieces-noeuds.json` version 2. La version des JSONL est fixée à l'étape 4,
+   avec le contrat d'export.
+6. **Une seule `Surveillance`** : une coque commune (journal, surnoms, veille) et deux modèles de protocole,
+   `SurveillanceThread` et `SurveillanceZigbee` (la forme de `ProtocoleMaille`), chacun avec ses seuils de fraîcheur.
+7. **Le client du démon commun est celui de Zigbee** (`NomsPasseur`, fichier `releve-maison.json`).
+8. **Rangement** : les fichiers de Thread passent sous `Thread/` (2.2). Le conteneur de développement n'est pas migré.
+9. **Un seul catalogue de textes**, union des deux ; pour les 7 clés traduites différemment, la traduction de Thread
+   (déjà publiée), revue au banc de 3b.
+10. **Réglages** : six onglets, sans nouveau réglage (les pièces des routeurs et le budget de tournée restent sans
+    réglage visible, comme aujourd'hui).
+11. **« Activer ce protocole » arrête vraiment le module** : sonde, Bonjour ou pont, tournées, notifications. Le
+    client du démon reste abonné, même avec les deux protocoles éteints.
+12. **Reportés à 3b** : « Identifier par la sonde » pour Thread et « Associer » pour Zigbee n'existent pas
+    aujourd'hui ; 3b dira s'ils sont créés ou laissés au backlog.
+
 ## 7. Risques et parades
 
 | Risque | Parade |
