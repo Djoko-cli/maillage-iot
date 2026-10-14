@@ -189,11 +189,11 @@ D'après `inventaire-zigbee-coeur.md` §1.3, §2.4, §4 et §6.
   - `NomsDemo` : les doublons `zones` et `domicile` sont retirés (ceux du cœur servent), `maison` → `maisonPont`, `places(etagee:dehors:)` → `placesEtagees(…)` ;
   - les 7 types communs ne sont **pas** redéclarés.
 
-- [ ] **Step 1: Recopier** — `git -C ~/Dev/maillage-zigbee archive be6fadf <fichiers Z de l'inventaire §1.3>` dans `ProtocoleZigbee/`, en gardant les sous-dossiers (`Zigbee/`, `Sonde/`, `Pont/`, `Noms/`, `Maillage/`, `Suivi/`, `Demo/`) ; ne pas recopier les fichiers C= ni l'enveloppe H1.
-- [ ] **Step 2: Renommer** — les renommages imposés, dans l'ordre ci-dessus.
-- [ ] **Step 3: Crochets** — créer les extensions et la politique ; supprimer de la recopie ce que le cœur fournit désormais (enums, scène, courbes génériques, types communs).
-- [ ] **Step 4: Cibles** — dans `project.yml`, sur le modèle exact de `ProtocoleThread` / `ProtocoleThreadTests` : `ProtocoleZigbee` (framework, `fr.djoko.maillage.iot.zigbee`, dépend de `MaillageCoeur`, `-O` en Debug) ; `ProtocoleZigbeeTests` (`fr.djoko.maillage.iot.zigbee.tests`, sources `ProtocoleZigbeeTests` + `MaillageCoeurTests/MaisonInventee.swift` + `MaillageCoeurTests/FixturesScene.swift`) ; ajoutés au schéma `MaillageIoT` (build et test). Le dossier `ProtocoleZigbeeTests/` reçoit pour l'instant un seul test, `fusionAvecLeReleveDuCoeur` (Review Focus 2) : `FusionNoms.fusionner(pont:maison:memoire:)` sur un `NomsZigbee` d'essai et un `NomsMaison` du cœur d'essai donne les noms attendus.
-- [ ] **Step 5: Noms publics** — `outils/verifier-noms-publics.sh` :
+- [x] **Step 1: Recopier** — `git -C ~/Dev/maillage-zigbee archive be6fadf <fichiers Z de l'inventaire §1.3>` dans `ProtocoleZigbee/`, en gardant les sous-dossiers (`Zigbee/`, `Sonde/`, `Pont/`, `Noms/`, `Maillage/`, `Suivi/`, `Demo/`) ; ne pas recopier les fichiers C= ni l'enveloppe H1.
+- [x] **Step 2: Renommer** — les renommages imposés, dans l'ordre ci-dessus.
+- [x] **Step 3: Crochets** — créer les extensions et la politique ; supprimer de la recopie ce que le cœur fournit désormais (enums, scène, courbes génériques, types communs).
+- [x] **Step 4: Cibles** — dans `project.yml`, sur le modèle exact de `ProtocoleThread` / `ProtocoleThreadTests` : `ProtocoleZigbee` (framework, `fr.djoko.maillage.iot.zigbee`, dépend de `MaillageCoeur`, `-O` en Debug) ; `ProtocoleZigbeeTests` (`fr.djoko.maillage.iot.zigbee.tests`, sources `ProtocoleZigbeeTests` + `MaillageCoeurTests/MaisonInventee.swift` + `MaillageCoeurTests/FixturesScene.swift`) ; ajoutés au schéma `MaillageIoT` (build et test). Le dossier `ProtocoleZigbeeTests/` reçoit pour l'instant un seul test, `fusionAvecLeReleveDuCoeur` (Review Focus 2) : `FusionNoms.fusionner(pont:maison:memoire:)` sur un `NomsZigbee` d'essai et un `NomsMaison` du cœur d'essai donne les noms attendus.
+- [x] **Step 5: Noms publics** — `outils/verifier-noms-publics.sh` :
 ```bash
 #!/bin/bash
 # Refuse un nom public de premier niveau commun a ProtocoleThread et ProtocoleZigbee (spec, contraintes de l'etape 2) :
@@ -211,8 +211,8 @@ fi
 echo "verifier-noms-publics : aucun nom public commun"
 ```
   Puis `bash outils/verifier-noms-publics.sh` → code 0. Vérifier aussi qu'aucun `public static let` d'extension de `TypeEvenement` n'est déclaré dans les deux modules (`grep`).
-- [ ] **Step 6: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `grep -rlnE "^(@testable )?import ProtocoleThread" ProtocoleZigbee ProtocoleZigbeeTests | wc -l` → 0.
-- [ ] **Step 7: Commit** — « ProtocoleZigbee : framework Zigbee sur le coeur neutre, noms sans collision ».
+- [x] **Step 6: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `grep -rlnE "^(@testable )?import ProtocoleThread" ProtocoleZigbee ProtocoleZigbeeTests | wc -l` → 0.
+- [x] **Step 7: Commit** — « ProtocoleZigbee : framework Zigbee sur le coeur neutre, noms sans collision ».
 
 ---
 

@@ -66,6 +66,26 @@ targets:
       configs:
         Debug:
           SWIFT_OPTIMIZATION_LEVEL: "-O"
+  # Le protocole Zigbee : pont Hue, sonde Zigbee, tournee du maillage, journal Zigbee. Depend du coeur seul (jamais de
+  # ProtocoleThread) ; aucun nom public de premier niveau commun avec ProtocoleThread (outils/verifier-noms-publics.sh).
+  # Optimise aussi en Debug, comme le coeur.
+  ProtocoleZigbee:
+    type: framework
+    platform: macOS
+    sources:
+      - path: ProtocoleZigbee
+    dependencies:
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.zigbee
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        SKIP_INSTALL: YES
+        DEFINES_MODULE: YES
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
   MaillageIoT:
     type: application
     platform: macOS
@@ -216,6 +236,21 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.thread.tests
         GENERATE_INFOPLIST_FILE: YES
+  # Les tests Zigbee compilent aussi les deux fixtures neutres du coeur (sans test), comme ceux de Thread.
+  ProtocoleZigbeeTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: ProtocoleZigbeeTests
+      - path: MaillageCoeurTests/MaisonInventee.swift
+      - path: MaillageCoeurTests/FixturesScene.swift
+    dependencies:
+      - target: ProtocoleZigbee
+      - target: MaillageCoeur
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.zigbee.tests
+        GENERATE_INFOPLIST_FILE: YES
   # Les tests de l'app Thread compilent aussi les vecteurs H1 du coeur (MaillageCoeurTests/VecteursH1.swift, sans test).
   MaillageIoTTests:
     type: bundle.unit-test
@@ -256,8 +291,10 @@ schemes:
         MaillageIoT: all
         MaillageCoeur: all
         ProtocoleThread: all
+        ProtocoleZigbee: all
         MaillageCoeurTests: [test]
         ProtocoleThreadTests: [test]
+        ProtocoleZigbeeTests: [test]
         MaillageIoTTests: [test]
         PasseurTests: [test]
     run:
@@ -267,6 +304,7 @@ schemes:
       targets:
         - MaillageCoeurTests
         - ProtocoleThreadTests
+        - ProtocoleZigbeeTests
         - MaillageIoTTests
         - PasseurTests
     archive:
