@@ -53,7 +53,8 @@ struct JournalMaillageTests {
         #expect(e.avant == String(localized: "Routeur · \("0400")") && e.apres == String(localized: "Routeur · \("1400")"))
         #expect(try JournalFichiers(dossier: dossier.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal).lire().last == e)
         #expect(s.historique.map(\.date) == [t, t.addingTimeInterval(300)])
-        let fichier = dossier.appendingPathComponent(HistoriqueFichiers(dossier: dossier).nomFichier(t.addingTimeInterval(300)))
+        let thread = Surveillance.dossierThread(dossier)
+        let fichier = thread.appendingPathComponent(HistoriqueFichiers(dossier: thread).nomFichier(t.addingTimeInterval(300)))
         #expect(FileManager.default.fileExists(atPath: fichier.path))
         let relu = Surveillance(mode: .direct, dossier: dossier)
         await relu.chargerHistorique()
@@ -73,7 +74,7 @@ struct JournalMaillageTests {
         let tard = t.addingTimeInterval(300.0004)
         let b = Self.surveillance(dossier: dossier)
         b.recevoir(try Self.maillage(b, tard, parent: 1), a: t.addingTimeInterval(301))
-        let ancien = dossier.appendingPathComponent("maillage-2020-01.jsonl")
+        let ancien = Surveillance.dossierThread(dossier).appendingPathComponent("maillage-2020-01.jsonl")
         FileManager.default.createFile(atPath: ancien.path, contents: Data())
         await b.chargerHistorique()
         #expect(b.historique.map(\.date) == [t, tard], "relu sans doublon, sans sa copie du disque")
@@ -132,18 +133,19 @@ struct JournalMaillageTests {
     @Test func purgeEnEchecNeBloquePasLaLecture() async throws {
         let dossier = Self.dossier()
         let journalDossier = dossier.appendingPathComponent("Journal")
+        let thread = Surveillance.dossierThread(dossier)
         defer {
-            for d in [journalDossier, dossier] { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: d.path) }
+            for d in [journalDossier, thread, dossier] { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: d.path) }
             try? FileManager.default.removeItem(at: dossier)
         }
         let t = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) - 600)
         let e = Evenement(date: t, type: .veille)
         try JournalFichiers(dossier: journalDossier, politique: Surveillance.politiqueJournal).ajouter([e])
         let r = ReleveMaillage(try Self.maillage(Self.surveillance(dossier: nil), t, parent: 1))
-        try HistoriqueFichiers(dossier: dossier).ajouter(r)
+        try HistoriqueFichiers(dossier: thread).ajouter(r)
         FileManager.default.createFile(atPath: journalDossier.appendingPathComponent("journal-2020-01.jsonl").path, contents: Data())
-        FileManager.default.createFile(atPath: dossier.appendingPathComponent("maillage-2020-01.jsonl").path, contents: Data())
-        for d in [journalDossier, dossier] { try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: d.path) }
+        FileManager.default.createFile(atPath: thread.appendingPathComponent("maillage-2020-01.jsonl").path, contents: Data())
+        for d in [journalDossier, thread, dossier] { try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: d.path) }
         let s = Surveillance(mode: .direct, dossier: dossier)
         s.chargerJournal()
         #expect(s.erreurJournal == nil)
@@ -164,8 +166,9 @@ struct JournalMaillageTests {
         s.chargerJournal()
         await s.chargerHistorique()
         let anciens = [dossier.appendingPathComponent("Journal/journal-2020-01.jsonl"),
-                       dossier.appendingPathComponent("maillage-2020-01.jsonl")]
+                       Surveillance.dossierThread(dossier).appendingPathComponent("maillage-2020-01.jsonl")]
         func creer() {
+            try? FileManager.default.createDirectory(at: Surveillance.dossierThread(dossier), withIntermediateDirectories: true)
             for u in anciens { FileManager.default.createFile(atPath: u.path, contents: Data()) }
         }
         func presents() -> [Bool] { anciens.map { FileManager.default.fileExists(atPath: $0.path) } }

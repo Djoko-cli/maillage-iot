@@ -44,7 +44,7 @@ struct FenetreReglages: View {
     var surHauteur: @MainActor (CGFloat) -> Void = { _ in }
     @Environment(Surveillance.self) private var surveillance
     @Environment(OuvertureSession.self) private var ouverture
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(SondeMaillage.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
     @AppStorage(Notifications.cle(.scission)) private var scission = CategorieAlerte.scission.parDefaut
@@ -178,25 +178,25 @@ struct FenetreReglages: View {
     private var nomsDeMaison: some View {
         Group {
             Section("Passeur Noms") {
-                LabeledContent("État", value: NomsInternes.texteDemon(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
+                LabeledContent("État", value: NomsPasseur.texteDemon(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
                 Toggle("Ouvrir Passeur Noms à l'ouverture de session", isOn: Binding(
                     get: { nomsMaison.etat?.ouvertureSession == .active },
                     set: { nomsMaison.reglerOuvertureSession($0) }))
-                    .disabled(!NomsInternes.interrupteurActif(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
+                    .disabled(!NomsPasseur.interrupteurActif(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
                 if nomsMaison.connecte, nomsMaison.etat?.ouvertureSession == .aApprouver {
                     Text("Accepte Passeur Noms dans Réglages Système › Général › Ouverture.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
                 if let fin = nomsMaison.etat?.profilExpire,
-                   NomsInternes.profilBientotExpire(nomsMaison.etat, maintenant: .now) {
+                   NomsPasseur.profilBientotExpire(nomsMaison.etat, maintenant: .now) {
                     Text("Le profil de Passeur Noms expire le \(fin.formatted(date: .abbreviated, time: .omitted)) : relance outils/passeur.sh.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
             }
             Section("Noms de Maison") {
-                if let n = nomsMaison.noms {
+                if let n = nomsMaison.releve {
                     LabeledContent("Noms lus",
                                    value: String(localized: "\(n.accessoires.count) accessoires · \(n.date.formatted(date: .abbreviated, time: .shortened))"))
                     // Rien pour un releve d'avant les zones.

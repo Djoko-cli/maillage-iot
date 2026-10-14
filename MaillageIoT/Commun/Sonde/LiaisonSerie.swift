@@ -22,11 +22,14 @@ final class LiaisonSerie: Sendable {
         var raison: String?
     }
 
-    private let file = DispatchQueue(label: "fr.djoko.maillage.iot.sonde-thread", qos: .userInitiated)
+    private let file: DispatchQueue
     private let etat = Mutex(Etat())
 
-    init(chemin: String) {
+    /// `etiquette` : le libelle de la file serie, propre a la sonde qui ouvre le port (`fr.djoko.maillage.iot.sonde-thread`,
+    /// `...sonde-zigbee`) : les deux sondes partagent ce fichier.
+    init(chemin: String, etiquette: String) {
         self.chemin = chemin
+        file = DispatchQueue(label: etiquette, qos: .userInitiated)
     }
 
     /// Le flux finit une fois le descripteur ferme, juste apres `.ferme(raison)` :

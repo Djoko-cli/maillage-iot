@@ -105,8 +105,11 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
         p.maisons = v1.maisons.mapValues { choix in
             Dictionary(uniqueKeysWithValues: choix.map { (IdNoeud(protocoleParDefaut, $0.key), $0.value) })
         }
+        // Deux cles qui ne different que par la casse se rejoignent en majuscules : on garde la premiere par ordre des
+        // octets de la cle d'origine (jamais celle d'un ordre de hachage), sans planter.
         p.appareils = v1.appareils.mapValues { choix in
-            Dictionary(uniqueKeysWithValues: choix.map { (IdNoeud(protocoleParDefaut, $0.key.uppercased()), $0.value) })
+            Dictionary(choix.sorted { $0.key < $1.key }.map { (IdNoeud(protocoleParDefaut, $0.key.uppercased()), $0.value) },
+                       uniquingKeysWith: { premier, _ in premier })
         }
         return p
     }

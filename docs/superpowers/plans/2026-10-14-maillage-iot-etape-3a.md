@@ -187,10 +187,10 @@ D'après `inventaire-etape3-fusion-apps.md` §2.3, §7 (points 4, 5, 7).
 **Interfaces:**
 - Produces: `NomsPasseur` client unique du démon dans `MaillageIoT` ; dossier `Thread/` ; `MaillageIoT/Commun/`.
 
-- [ ] **Step 1: RED** — `DossierThreadTests.fichiersDeThreadSousThread` (l'historique et `dernier-maillage.json` s'écrivent sous `Thread/`) ; adapter les tests de `NomsInternes` à `NomsPasseur` (reprendre ceux de `MaillageIoTZigbeeTests` pour `NomsPasseur`). Échec attendu.
-- [ ] **Step 2: GREEN** — remplacer le client, ranger sous `Thread/`, déplacer les fichiers communs (`git mv`).
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « App Thread : client du demon commun, fichiers sous Thread/, code partage sous Commun/ ».
+- [x] **Step 1: RED** — `DossierThreadTests.fichiersDeThreadSousThread` (l'historique et `dernier-maillage.json` s'écrivent sous `Thread/`) ; adapter les tests de `NomsInternes` à `NomsPasseur` (reprendre ceux de `MaillageIoTZigbeeTests` pour `NomsPasseur`). Échec attendu.
+- [x] **Step 2: GREEN** — remplacer le client, ranger sous `Thread/`, déplacer les fichiers communs (`git mv`).
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « App Thread : client du demon commun, fichiers sous Thread/, code partage sous Commun/ ».
 
 ---
 

@@ -24,7 +24,7 @@ struct LiaisonSerieTests {
 
     /// Un port absent echoue proprement, sans descripteur laisse ouvert.
     @Test func portAbsent() {
-        let l = LiaisonSerie(chemin: "/dev/cu.maillage-inexistant")
+        let l = LiaisonSerie(chemin: "/dev/cu.maillage-inexistant", etiquette: "fr.djoko.maillage.iot.sonde-thread")
         #expect(throws: ErreurPort.self) { _ = try l.ouvrir() }
     }
 

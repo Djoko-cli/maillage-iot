@@ -145,8 +145,15 @@ final class Surveillance {
             .appendingPathComponent("Maillage IoT")
     }
 
-    /// `dossier` : ou garder le journal, les surnoms et l'historique de la sonde (nil : nulle
-    /// part) ; `preferences` : les scissions deja notifiees (mode direct, une fois demarree).
+    /// Le dossier des fichiers propres a Thread (spec 2.2) : `Thread/`, sous le dossier de l'app. Les fichiers de tous
+    /// les protocoles (`surnoms.json`, `Journal/`, pieces, releve de Maison) restent a la racine.
+    nonisolated static func dossierThread(_ dossier: URL) -> URL {
+        dossier.appendingPathComponent("Thread", isDirectory: true)
+    }
+
+    /// `dossier` : la racine des donnees de l'app, ou garder le journal et les surnoms ; les fichiers de Thread (associations,
+    /// dernier maillage, adresses gardees, historique de la sonde) vont sous `Thread/` (nil : nulle part) ;
+    /// `preferences` : les scissions deja notifiees (mode direct, une fois demarree).
     init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard) {
         self.mode = mode
         self.preferences = preferences
@@ -158,14 +165,14 @@ final class Surveillance {
                 JournalFichiers(dossier: $0.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal)
             }
             fichierSurnoms = dossier?.appendingPathComponent("surnoms.json")
-            fichierAssociations = dossier?.appendingPathComponent("associations.json")
-            fichierMaillage = dossier?.appendingPathComponent("dernier-maillage.json")
-            fichierAdresses = dossier?.appendingPathComponent("dernieres-adresses.json")
+            fichierAssociations = dossier.map { Self.dossierThread($0).appendingPathComponent("associations.json") }
+            fichierMaillage = dossier.map { Self.dossierThread($0).appendingPathComponent("dernier-maillage.json") }
+            fichierAdresses = dossier.map { Self.dossierThread($0).appendingPathComponent("dernieres-adresses.json") }
             let surnoms = fichierSurnoms.map { Surnoms.lire($0, protocoleParDefaut: Surveillance.protocole) } ?? [:]
             surnomsCommuns = surnoms
             noms = ResolveurNoms(surnoms: Surnoms.cles(de: surnoms, protocole: Surveillance.protocole),
                                  associations: fichierAssociations.map(Associations.lire) ?? [:])
-            fichiersHistorique = dossier.map { HistoriqueFichiers(dossier: $0) }
+            fichiersHistorique = dossier.map { HistoriqueFichiers(dossier: Self.dossierThread($0)) }
         case .demo:
             etatEcoute = .demo
             recenseur = nil

@@ -961,7 +961,7 @@
         }
       }
     },
-    "Accès à Maison refusé au passeur : Réglages Système › Confidentialité et sécurité › Maison." : {
+    "Accès à Maison refusé à Passeur Noms : Réglages Système › Confidentialité et sécurité › Maison." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -972,7 +972,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Accès à Maison refusé au passeur : Réglages Système › Confidentialité et sécurité › Maison."
+            "value" : "Accès à Maison refusé à Passeur Noms : Réglages Système › Confidentialité et sécurité › Maison."
           }
         }
       }
@@ -2049,22 +2049,6 @@
         }
       }
     },
-    "HomeKit indisponible pour le passeur." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HomeKit is unavailable to Passeur Noms."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HomeKit indisponible pour le passeur."
-          }
-        }
-      }
-    },
     "Hors de la maison" : {
       "localizations" : {
         "en" : {
@@ -2337,38 +2321,6 @@
         }
       }
     },
-    "Le passeur a échoué : %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passeur Noms failed: %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le passeur a échoué : %@"
-          }
-        }
-      }
-    },
-    "Le passeur a échoué." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passeur Noms failed."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Le passeur a échoué."
-          }
-        }
-      }
-    },
     "Le profil de Passeur Noms expire le %@ : relance outils/passeur.sh." : {
       "localizations" : {
         "en" : {
@@ -2541,6 +2493,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maison"
+          }
+        }
+      }
+    },
+    "Maison indisponible pour Passeur Noms." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home is unavailable to Passeur Noms."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maison indisponible pour Passeur Noms."
           }
         }
       }
@@ -3041,6 +3009,38 @@
         }
       }
     },
+    "Passeur Noms a échoué : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms failed: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms a échoué : %@"
+          }
+        }
+      }
+    },
+    "Passeur Noms a échoué." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms failed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms a échoué."
+          }
+        }
+      }
+    },
     "Passeur Noms est l'ancienne version : relance outils/passeur.sh." : {
       "localizations" : {
         "en" : {
@@ -3057,22 +3057,6 @@
         }
       }
     },
-    "Passeur Noms introuvable : lance outils/passeur.sh." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passeur Noms not found: run outils/passeur.sh."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passeur Noms introuvable : lance outils/passeur.sh."
-          }
-        }
-      }
-    },
     "Passeur Noms n'a pas répondu à la demande de relevé." : {
       "localizations" : {
         "en" : {
@@ -3085,6 +3069,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Passeur Noms n'a pas répondu à la demande de relevé."
+          }
+        }
+      }
+    },
+    "Passeur Noms n'est pas installé sur ce Mac (outils/passeur.sh) : les noms viennent de l'app Hue." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms is not installed on this Mac (outils/passeur.sh): names come from the Hue app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms n'est pas installé sur ce Mac (outils/passeur.sh) : les noms viennent de l'app Hue."
           }
         }
       }

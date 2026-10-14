@@ -14,7 +14,7 @@ struct NoeudChoisi: Identifiable {
 struct BarreOutils: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(SondeMaillage.self) private var sonde
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(\.openWindow) private var openWindow
     @State private var appareilsIP = false
 

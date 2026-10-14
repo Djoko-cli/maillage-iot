@@ -51,7 +51,7 @@ struct IconeBarre: View {
 /// evenements, et les actions.
 struct MenuBarre: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(SondeMaillage.self) private var sonde
     @Environment(\.openWindow) private var openWindow
     @Environment(ControleurReglages.self) private var reglages

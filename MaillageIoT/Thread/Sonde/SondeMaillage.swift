@@ -161,7 +161,8 @@ final class SondeMaillage {
     /// `fichierIdentites` : ou garder les identites des routeurs d'un lancement a l'autre (nil :
     /// nulle part).
     init(preferences: UserDefaults = .standard, actif: Bool,
-         ouvrirCanal: @escaping (String) -> any CanalSonde = { CanalSerie(liaison: LiaisonSerie(chemin: $0)) },
+         ouvrirCanal: @escaping (String) -> any CanalSonde
+             = { CanalSerie(liaison: LiaisonSerie(chemin: $0, etiquette: "fr.djoko.maillage.iot.sonde-thread")) },
          trousseau: any TrousseauCles = TrousseauMemoire(),
          ouvrirReseau: @escaping @MainActor (String, Data) async throws -> any CanalSonde
              = { try await CanalReseau.connecter(hote: $0, cle: $1) },
@@ -193,10 +194,12 @@ final class SondeMaillage {
         empreinteAcces = hote.flatMap(empreinte(pour:))
     }
 
-    /// Fichier des identites des routeurs : dans le dossier de l'app ; nil en demo et sous les
+    /// Fichier des identites des routeurs : sous `Thread/`, dans le dossier de l'app ; nil en demo et sous les
     /// tests (qui passent le leur, temporaire).
     static func fichierIdentites(demo: Bool, sousTests: Bool) -> URL? {
-        demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("identites-routeurs.json")
+        demo || sousTests
+            ? nil
+            : Surveillance.dossierThread(Surveillance.dossierParDefaut).appendingPathComponent("identites-routeurs.json")
     }
 
     /// Une activite est tenue (session reseau en place).

@@ -265,7 +265,7 @@ struct AdresseVerifieeAppTests {
     @Test func dernieresAdressesGardeesEtRelues() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let fichier = dossier.appendingPathComponent("dernieres-adresses.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")
         let avant = Self.surveillanceSurDisque(dossier)
         #expect(FileManager.default.fileExists(atPath: fichier.path))
         let annonce = try #require(avant.suivi.dernieresAnnonces[Self.hap])
@@ -294,7 +294,7 @@ struct AdresseVerifieeAppTests {
     @Test func dernieresAdressesEcritesSeulementSiChangement() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let fichier = dossier.appendingPathComponent("dernieres-adresses.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")
         let s = Self.surveillanceSurDisque(dossier)
         try FileManager.default.removeItem(at: fichier)
         s.integrer(Self.annonces(Self.depart + 260, muets: [Self.hap]))
@@ -335,8 +335,8 @@ struct AdresseVerifieeAppTests {
     @Test func dernieresAdressesIllisibles() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
-        let fichier = dossier.appendingPathComponent("dernieres-adresses.json")
+        try FileManager.default.createDirectory(at: Surveillance.dossierThread(dossier), withIntermediateDirectories: true)
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")
         let valide = #"{"adresse":"fd00:aaaa:bbbb:1::2","partition":"0000AAAA","annonce":"2026-10-12T08:00:00.000Z"}"#
         let cas = [
             "{ pas du json",
@@ -376,13 +376,13 @@ struct AdresseVerifieeAppTests {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
         _ = Self.surveillanceSurDisque(dossier)
-        let avant = try Data(contentsOf: dossier.appendingPathComponent("dernieres-adresses.json"))
+        let avant = try Data(contentsOf: Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json"))
         let demo = Surveillance(mode: .demo, dossier: dossier)
         demo.chargerAdressesGardees(maintenant: Self.lancement)
         #expect(demo.suivi.dernieresAdresses.isEmpty, "rien relu")
         demo.demarrer()
         #expect(!demo.suivi.dernieresAdresses.isEmpty, "la demo a son propre suivi")
-        #expect(try Data(contentsOf: dossier.appendingPathComponent("dernieres-adresses.json")) == avant, "rien ecrit")
+        #expect(try Data(contentsOf: Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")) == avant, "rien ecrit")
 
         let vide = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: vide) }

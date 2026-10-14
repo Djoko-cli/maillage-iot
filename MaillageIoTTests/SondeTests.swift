@@ -1128,7 +1128,7 @@ struct SondeMaillageTests {
         #expect(SondeMaillage.fichierIdentites(demo: false, sousTests: true) == nil)
         #expect(SondeMaillage.fichierIdentites(demo: true, sousTests: true) == nil)
         #expect(SondeMaillage.fichierIdentites(demo: false, sousTests: false)
-                == Surveillance.dossierParDefaut.appendingPathComponent("identites-routeurs.json"))
+                == Surveillance.dossierThread(Surveillance.dossierParDefaut).appendingPathComponent("identites-routeurs.json"))
     }
 
     /// En demo et sous tests : rien de lu.

@@ -9,7 +9,7 @@ import SwiftUI
 struct MaillageIoTApp: App {
     @State private var surveillance: Surveillance
     @State private var ouverture: OuvertureSession
-    @State private var nomsMaison: NomsInternes
+    @State private var nomsMaison: NomsPasseur
     @State private var sonde: SondeMaillage
     @State private var reglages: ControleurReglages
     @State private var misesAJour: MisesAJour
@@ -23,9 +23,12 @@ struct MaillageIoTApp: App {
     init() {
         let s = Surveillance(mode: Self.demo ? .demo : .direct, dossier: Self.demo ? nil : Surveillance.dossierParDefaut)
         let o = OuvertureSession()
-        // Sans memoire en demo et sous tests : aucun releve lu, ecrit ni demande au passeur.
-        let d = NomsInternes(cache: NomsInternes.fichierCache(demo: Self.demo, sousTests: Surveillance.sousTests),
-                             lanceur: NomsInternes.lancerPasseurDuMac)
+        // Les noms de Maison : inerte en demo et sous tests (aucun releve lu, ecrit ni demande au demon Passeur Noms) ;
+        // sinon le demon, son dernier releve garde dans `releve-maison.json`, a la racine du dossier de l'app.
+        let d = Self.demo || Surveillance.sousTests
+            ? NomsPasseur()
+            : NomsPasseur(cache: NomsPasseur.fichierCache(dossier: Surveillance.dossierParDefaut),
+                          lanceur: NomsPasseur.lancerPasseurDuMac)
         _surveillance = State(initialValue: s)
         _ouverture = State(initialValue: o)
         _nomsMaison = State(initialValue: d)
@@ -51,7 +54,7 @@ struct MaillageIoTApp: App {
             s.surAlertes = { n.presenter($0) }
             n.demanderAutorisation()
             o.proposerAuPremierLancement()
-            d.surNoms = { [weak s] m in s?.noms.maison = m }
+            d.surReleve = { [weak s] m in s?.noms.maison = m }
             d.demarrer()
             sm.surMaillage = { [weak s] m, recu in s?.recevoir(m, a: recu) }
             sm.surTournee = { [weak s] enCours in s?.tourneeEnCours = enCours }

@@ -202,6 +202,23 @@ struct PiecesRouteursTests {
                 "un fichier plus recent ne retombe pas sur l'ancien")
     }
 
+    /// Un `pieces-routeurs.json` version 1 a la main avec deux ExtMac qui ne different que par la casse : ils se
+    /// rejoignent en majuscules. La lecture ne plante pas ; le choix garde est toujours le meme (celui de la cle la
+    /// plus petite par ordre des octets, donc la majuscule avant la minuscule), jamais celui d'un ordre de hachage.
+    @Test func piecesRouteursVersion1CleEnDouble() throws {
+        let d = FileManager.default.temporaryDirectory.appendingPathComponent("v1-double-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: d) }
+        try FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
+        let ancien = d.appendingPathComponent("pieces-routeurs.json")
+        let url = d.appendingPathComponent("pieces-noeuds.json")
+        let v1 = #"{"appareils":{"Maison":{"aaaa000000000001":"Bureau","AAAA000000000001":"Salon","cccc000000000003":"Cave"}},"version":1}"#
+        try Data(v1.utf8).write(to: ancien)
+        for _ in 0..<20 {
+            let lu = PiecesRouteurs.lire(url, ancien: ancien, protocoleParDefaut: .thread)
+            #expect(lu.appareils == ["Maison": [idt("AAAA000000000001"): "Salon", idt("CCCC000000000003"): "Cave"]])
+        }
+    }
+
     /// Aller-retour sur disque des choix d'un noeud autre qu'un routeur de bordure (sous son ExtMac, en majuscules) ;
     /// un fichier absent, illisible ou d'une version plus recente donne des choix vides (repris de Maillage Zigbee).
     @Test func allerRetourDesAppareils() throws {

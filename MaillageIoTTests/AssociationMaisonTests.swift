@@ -66,7 +66,7 @@ struct AssociationMaisonTests {
         #expect(s.nom(try #require(s.appareil(Self.autre))) == Self.autre, "les autres ne bougent pas")
 
         // Dans le fichier, relu au lancement suivant.
-        let fichier = dossier.appendingPathComponent("associations.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("associations.json")
         #expect(Associations.lire(fichier) == [Self.muet: "00000000000000AA"])
         let relu = Self.surveillance(dossier: dossier)
         #expect(relu.noms.associations == [Self.muet: "00000000000000AA"])
@@ -116,13 +116,13 @@ struct AssociationMaisonTests {
         sans.dissocier(Self.muet)
         #expect(!FileManager.default.fileExists(atPath: dossier.path), "ni dossier ni fichier")
         // Un fichier illisible est ignore au lancement (puis mis de cote a la premiere ecriture).
-        try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
-        try Data("pas du json".utf8).write(to: dossier.appendingPathComponent("associations.json"))
+        try FileManager.default.createDirectory(at: Surveillance.dossierThread(dossier), withIntermediateDirectories: true)
+        try Data("pas du json".utf8).write(to: Surveillance.dossierThread(dossier).appendingPathComponent("associations.json"))
         let illisible = Self.surveillance(dossier: dossier)
         #expect(illisible.noms.associations.isEmpty)
         illisible.associer(Self.muet, a: accessoire)
         #expect(Self.surveillance(dossier: dossier).noms.associations == [Self.muet: "00000000000000AA"])
-        let fichiers = try FileManager.default.contentsOfDirectory(atPath: dossier.path)
+        let fichiers = try FileManager.default.contentsOfDirectory(atPath: Surveillance.dossierThread(dossier).path)
         #expect(fichiers.contains { $0.hasPrefix("associations.illisible-") })
     }
 

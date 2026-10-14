@@ -63,7 +63,7 @@ struct FenetreTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let surveillance = Surveillance(mode: .direct, dossier: nil)
-        let noms = NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit)
+        let noms = NomsPasseur()
         let journal = JournalCanaux()
         let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in SondeMaillageTests.canalRetenu(journal) })
         func taille(_ vue: some View) -> CGSize {

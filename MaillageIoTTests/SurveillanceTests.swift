@@ -209,7 +209,7 @@ struct SurveillanceTests {
     @Test func dernierMaillageGarde() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let fichier = dossier.appendingPathComponent("dernier-maillage.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json")
         let s = Surveillance(mode: .direct, dossier: dossier)
         #expect(!FileManager.default.fileExists(atPath: fichier.path))
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
@@ -269,8 +269,8 @@ struct SurveillanceTests {
     @Test func dernierMaillageIllisible() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
-        try Data("{ pas du json".utf8).write(to: dossier.appendingPathComponent("dernier-maillage.json"))
+        try FileManager.default.createDirectory(at: Surveillance.dossierThread(dossier), withIntermediateDirectories: true)
+        try Data("{ pas du json".utf8).write(to: Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json"))
         let s = Surveillance(mode: .direct, dossier: dossier)
         s.chargerMaillageGarde()
         #expect(s.maillage == nil && s.maillageRecu == nil && !s.maillageRelu)
@@ -288,7 +288,7 @@ struct SurveillanceTests {
     @Test func dernierMaillageIncoherent() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let fichier = dossier.appendingPathComponent("dernier-maillage.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json")
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
         Surveillance(mode: .direct, dossier: dossier).recevoir(try Self.maillageGarde(recu), a: recu)
         let original = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: fichier)) as? [String: Any])
@@ -325,7 +325,7 @@ struct SurveillanceTests {
     @Test func sondeOublieeEffaceLeMaillageGarde() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let fichier = dossier.appendingPathComponent("dernier-maillage.json")
+        let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json")
         let s = Surveillance(mode: .direct, dossier: dossier)
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
         s.recevoir(try Self.maillageGarde(recu), a: recu)
@@ -345,6 +345,6 @@ struct SurveillanceTests {
         let s = Surveillance(mode: .demo, dossier: dossier)
         s.demarrer()
         #expect(s.maillage != nil, "la demo a son maillage")
-        #expect(!FileManager.default.fileExists(atPath: dossier.appendingPathComponent("dernier-maillage.json").path))
+        #expect(!FileManager.default.fileExists(atPath: Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json").path))
     }
 }

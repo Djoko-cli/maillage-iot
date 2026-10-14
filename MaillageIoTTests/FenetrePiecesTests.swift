@@ -51,7 +51,7 @@ struct FenetrePiecesTests {
         Self.sansBarreDeTitre(fenetre)
         fenetre.contentView = NSHostingView(rootView: vue
             .environment(s)
-            .environment(NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit))
+            .environment(NomsPasseur())
             .environment(sonde ?? SondeMaillage(preferences: p, actif: false))
             .environment(\._accessibilityReduceMotion, reduire)
             .defaultAppStorage(p))
@@ -155,7 +155,7 @@ struct FenetrePiecesTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in SondeMaillageTests.canalRetenu(journal) })
-        let noms = NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit)
+        let noms = NomsPasseur()
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
         let sansReseau = Surveillance(mode: .direct, dossier: nil)
@@ -386,7 +386,7 @@ struct FenetrePiecesTests {
         let s = Surveillance(mode: .direct, dossier: nil)
         let vue = FenetrePieces(fichierPlaces: nil)
             .environment(s)
-            .environment(NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit))
+            .environment(NomsPasseur())
             .environment(SondeMaillage(preferences: p, actif: false))
         #expect(FenetrePieces.tailleMinimale == CGSize(width: 820, height: 680))
         #expect(NSHostingView(rootView: vue).fittingSize == FenetrePieces.tailleMinimale)
@@ -856,7 +856,7 @@ struct FenetrePiecesTests {
         let capsule = NSHostingView(rootView: BarreOutils().capsuleDeVerre()
             .environment(demo)
             .environment(SondeMaillage(preferences: p, actif: false))
-            .environment(NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit))).fittingSize.height
+            .environment(NomsPasseur())).fittingSize.height
         let hautDesCapsules = feux.milieu - capsule / 2
         #expect(hautDesCapsules >= 10 && hautDesCapsules <= 13, "le haut des capsules : \(hautDesCapsules) pt")
         let bas = try #require(Self.basDuHaut(moteur))
@@ -1118,7 +1118,7 @@ struct FenetrePiecesTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let sonde = SondeMaillage(preferences: p, actif: false)
-        let noms = NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit)
+        let noms = NomsPasseur()
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
         let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
@@ -1164,7 +1164,7 @@ struct FenetrePiecesTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let sonde = SondeMaillage(preferences: p, actif: false)
-        let noms = NomsInternes(cache: nil, lanceur: NomsInternes.lanceurInterdit)
+        let noms = NomsPasseur()
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
         let moteur = MoteurPieces(troisD: troisD)

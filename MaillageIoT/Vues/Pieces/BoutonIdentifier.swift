@@ -7,7 +7,7 @@ import SwiftUI
 /// dessous. Les noms de Maison sont facultatifs dans l'environnement : les mesures de la fiche (`CapturesPieces`) et
 /// plusieurs tests la rendent sans eux ; le bouton est alors grise.
 struct BoutonIdentifier: View {
-    @Environment(NomsInternes.self) private var nomsMaison: NomsInternes?
+    @Environment(NomsPasseur.self) private var nomsMaison: NomsPasseur?
     let accessoire: AccessoireMaison
 
     nonisolated static func actif(connecte: Bool, accessoire: AccessoireMaison) -> Bool {

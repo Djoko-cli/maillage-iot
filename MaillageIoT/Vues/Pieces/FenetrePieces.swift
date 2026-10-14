@@ -406,7 +406,7 @@ struct CommandesVue: View {
 /// Bandeau d'une maison dont Maison n'a encore donne aucune piece (spec, section 2.3).
 struct BandeauSansPieces: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(NomsPasseur.self) private var nomsMaison
 
     var body: some View {
         HStack(spacing: 8) {
