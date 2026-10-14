@@ -445,7 +445,7 @@ de l'eau et commitées avec le travail.
 |---|---|---|
 | **0. Préparation** | Les deux dépôts sont gelés : pas de nouvelle fonction. Zigbee a coché ses deux plans exécutés (fait le 13/10). Les états des lieux et les relectures vont dans `.superpowers/fusion/` (hors git). **Références de rejeu** : dans `maillage-thread`, un test (pas une fonction de l'app) construit le graphe affiché (nœuds, liens, pièces) à partir de la démo et des captures existantes, et l'écrit en JSON trié, commité comme résultat de référence. Squelette de `maillage-iot` : identité noreply, `.gitignore`, garde pre-push, `project.yml` vide, README bilingue. Cette spec est le premier commit. | La garde refuse un push qui contient un identifiant réel planté exprès (dont le prénom réel), puis l'accepte une fois l'identifiant retiré. Le résultat de référence de Thread est commité. |
 | **1. Cœur neutre + Thread à l'identique** | Recopie de Thread sous l'identité Maillage IoT (cibles, identifiants, dossier de données, trousseau, textes), démon, outils, firmware `sonde-thread/` et copie de Thread Route ; extraction de `MaillageCoeur` neutre et de `ProtocoleThread` (journal neutre : `TypeEvenement` ouvert) ; le code de l'app propre à Thread reste dans la cible de l'app, sous `Thread/` (section 6.4). | Tous les tests de Thread passent. **Rejeu exact** : la scène de la démo est égale au résultat de référence `docs/rejeu/thread-demo.json`, à chaque tâche. Le cœur compile et se teste seul, sans `ProtocoleThread`. Au banc, Thread 1.3.0 et Maillage IoT ouverts côte à côte, abonnés au même démon, montrent la même vue. |
-| **2. Zigbee branché** | Avant l'étape : dans `maillage-zigbee`, un enregistrement horodaté d'une tournée réelle (ajouté à `sonde_usb.py` ou `sonde_reseau.py`), les réponses brutes du pont, le relevé v2, les appariements, les pièces et les positions, en local et hors git, plus une version anonymisée et le résultat de référence du cœur de la 1.1.1, commités. Puis les enums unifiés (`injoignable`, lien `.chemin`, section 1.2) et `ProtocoleZigbee` sur l'interface : pont Hue, sonde Zigbee, `FusionNoms`, mémoire des appariements. **`SondeMaillage` n'est pas découpé** pendant cette étape. | Tous les tests de Zigbee passent. Rejeu contre le résultat de référence de la 1.1.1, préfixes retirés. Au banc, la vue de Zigbee seul est la même que celle de Zigbee 1.1.1. |
+| **2. Zigbee branché** | Avant l'étape : dans `maillage-zigbee`, un test (pas une fonction de l'app) écrit en JSON trié la scène de la démo de Zigbee 1.1.1 (`docs/rejeu/zigbee-demo.json`), commité comme résultat de référence (ajustement du 14/10, section 6.5). Puis les enums unifiés (`injoignable`, lien `.chemin`, section 1.2) et `ProtocoleZigbee` sur l'interface : pont Hue, sonde Zigbee, `FusionNoms`, mémoire des appariements. **`SondeMaillage` n'est pas découpé** pendant cette étape. | Tous les tests de Zigbee passent. **Rejeu exact** : la scène de la démo de Zigbee dans Maillage IoT est égale à la référence, à chaque tâche. Au banc, Zigbee 1.1.1 et Maillage IoT (Zigbee seul) ouverts côte à côte montrent la même vue. |
 | **2 bis. Découpe des deux `SondeMaillage`** | Les deux fichiers dépassent 700 lignes. Ils sont découpés dans un plan à part, sous les mêmes tests, une fois le banc de l'étape 2 passé. | Mêmes tests, mêmes rejeux, aucun changement de comportement. |
 | **3. Interface à deux protocoles** | Préfixe des identifiants (`IdNoeud`) à la jonction des graphes et dans les fichiers communs ; vue A (silhouettes, interrupteurs, bandes de qualité, légende), Réglages à six onglets, « Activer ce protocole », deux sondes en même temps, journal et notifications communs, menu de la barre, démo combinée. | Au banc, les deux réseaux réels sont affichés ensemble. Le temps d'ouverture de la vue (`mesurer.sh`) et la fluidité du zoom sont mesurés, avec Thread seul de l'étape 1 comme référence. Les places de la sonde Zigbee (3 places TCP, 2 sessions H1) sont observées avec l'ancienne app ouverte en même temps. |
 | **4. Reprise** | `ContratExport` dans les trois dépôts. Export dans Thread 1.4.0 et Zigbee 1.2.0 (dans leurs dépôts). Import dans Maillage IoT. | Tests d'import sur les deux exports d'exemple. **Répétition sur une copie** (identifiant et services de trousseau de test) avec les vraies données de Djoko, avant la vraie reprise. |
@@ -504,6 +504,19 @@ Validés par Djoko le 14/10, après l'inventaire du code de Thread :
 7. **Seules les données de `docs/` que lisent les tests sont recopiées** : `docs/rejeu/thread-demo.json`,
    `docs/releves/2026-09-28/capture-1228.json` et `docs/releves/2026-09-29/` (capture anonymisée de la sonde et son
    README).
+
+### 6.5 Ajustement du 14/10 pour l'étape 2
+
+Validé par Djoko le 14/10 : comme pour Thread (6.4, point 6), la référence de rejeu de Zigbee est la scène de sa démo,
+et le banc est visuel, côte à côte. L'enregistrement d'une tournée réelle et des réponses brutes du pont n'est pas fait.
+
+Validé par Djoko le 14/10, après l'inventaire de l'app Zigbee : le code d'app de Zigbee recouvre celui de Thread (30 fichiers
+de même nom au contenu différent, 121 noms de types communs). Les fondre est le travail de l'étape 3. À l'étape 2, le code
+d'app de Zigbee entre donc dans une **cible d'app temporaire**, « Maillage IoT Zigbee » (`MaillageIoTZigbee/`, identifiant
+`fr.djoko.maillage.iot.banc-zigbee`, jamais publiée, sans Sparkle), qui compile par-dessus `MaillageCoeur` et
+`ProtocoleZigbee`. Elle porte déjà l'identité définitive de Zigbee (services de trousseau, clés `zigbee.`, sous-dossier
+`Zigbee/`), porte le rejeu de la démo Zigbee et sert au banc. Elle disparaît à l'étape 3, quand les deux apps se fondent.
+L'étape 2 reste un seul plan.
 
 ## 7. Risques et parades
 
