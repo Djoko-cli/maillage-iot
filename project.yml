@@ -342,7 +342,7 @@ schemes:
     build:
       targets:
         MaillageIoT: all
-        MaillageIoTZigbee: all
+        MaillageIoTZigbee: [test]
         MaillageCoeur: all
         ProtocoleThread: all
         ProtocoleZigbee: all
