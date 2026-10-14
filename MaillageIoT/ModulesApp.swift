@@ -17,6 +17,8 @@ struct ModulesApp {
     let decouverte: DecouvertePont
     let sondeThread: SondeMaillageThread
     let sondeZigbee: SondeMaillageZigbee
+    /// Les cartes que chaque sonde retient : partage par les deux, une carte de l'une n'est ni proposee ni ouverte par l'autre.
+    let cartes: CartesRetenues
     /// Le protocole dont la demo est rejouee (`-demo`) ; nil hors demo.
     let demo: Protocole?
     let sousTests: Bool
@@ -55,15 +57,19 @@ struct ModulesApp {
         // Inertes en demo et sous tests : aucun port ouvert, ni trousseau du Mac lu, aucune identite de routeur lue ni
         // ecrite ; ils gardent un trousseau en memoire. Hors demo, la cle de l'acces reseau de chaque sonde vit dans le
         // trousseau du Mac (Zigbee reprend les cles de l'ancienne app, `TrousseauRepris`).
+        let cartes = CartesRetenues()
+        self.cartes = cartes
         sondeThread = SondeMaillageThread(
             actif: !inerte, trousseau: inerte ? TrousseauMemoireThread() : TrousseauSystemeThread(),
-            fichierIdentites: SondeMaillageThread.fichierIdentites(demo: demo != nil, sousTests: sousTests))
+            fichierIdentites: SondeMaillageThread.fichierIdentites(demo: demo != nil, sousTests: sousTests),
+            cartes: cartes)
         sondeZigbee = SondeMaillageZigbee(
             actif: !inerte,
             trousseau: inerte ? TrousseauMemoireZigbee()
                 : TrousseauRepris(actuel: CheminSonde.trousseau(),
                                   ancien: TrousseauSystemeZigbee(service: TrousseauRepris.serviceSondeAncien),
-                                  reprises: .preferences(cle: "zigbee.repriseTrousseauSonde")))
+                                  reprises: .preferences(cle: "zigbee.repriseTrousseauSonde")),
+            cartes: cartes)
     }
 
     /// Branche les modules entre eux et les lance (ni en demo, ni sous les tests) : le releve de Maison aux deux

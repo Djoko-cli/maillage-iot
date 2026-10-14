@@ -81,9 +81,16 @@ final class SondeMaillageZigbee {
     static let periodeTournees: Duration = .seconds(15 * 60)
 
     private(set) var etat: Etat = .sansSonde
-    /// Ports Espressif branches (la sonde, ou un autre C6 comme le pont Halo).
-    private(set) var ports: [PortUSB] = []
+    /// Ports Espressif branches, tels que le dernier evenement USB les a listes (`ports` en retire ceux de l'autre module).
+    private var portsVus: [PortUSB] = []
+    /// Ports Espressif que cette sonde propose et peut ouvrir : les C6 branches, sauf ceux que Thread retient (spec 3.4).
+    /// Un autre C6 (le pont Halo) y figure : il n'est ouvert que si on le choisit.
+    var ports: [PortUSB] { cartes.choix(portsVus, pour: .zigbee) }
+    /// Numero de serie USB de la sonde retenue ; seule `retenirSerie` l'ecrit, car elle le publie aux cartes retenues.
     private(set) var serie: String?
+    /// Le choix d'un port refuse parce que la carte est la sonde de l'autre module ; nil sinon. Efface par un autre choix,
+    /// un evenement USB ou « Oublier la sonde ».
+    private(set) var choixRefuse: String?
     /// Nom de la sonde (« SONDE-Z1 »), mis a jour a chaque `bonjour` ; nil sans sonde retenue.
     private(set) var nom: String?
     /// Numero de serie USB du port que l'etat concerne (connexion, connexion etablie, refus, erreur) ; nil sans sonde
@@ -165,6 +172,8 @@ final class SondeMaillageZigbee {
     /// Ou les ports sont suivis, comment on les liste, et l'ecoute Bonjour des sondes du reseau (factices dans les tests :
     /// aucun IOKit, aucun reseau).
     @ObservationIgnored private let surveillerPorts: @MainActor () -> any SurveillantPorts
+    /// Les cartes retenues par chaque module : la serie de cette sonde y est publiee, celle de Thread en est retiree des choix.
+    @ObservationIgnored private let cartes: CartesRetenues
     @ObservationIgnored private let listerPorts: @Sendable () -> [PortUSB]
     @ObservationIgnored private let fabriqueBonjour: @MainActor (String) -> any EcouteBonjour
     @ObservationIgnored private let ouvrirCanal: (String) -> any CanalSonde
@@ -246,8 +255,10 @@ final class SondeMaillageZigbee {
          dormir: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) },
          surveillerPorts: @escaping @MainActor () -> any SurveillantPorts = { PortsUSB() },
          listerPorts: @escaping @Sendable () -> [PortUSB] = { PortsUSB.lister() },
-         fabriqueBonjour: @escaping @MainActor (String) -> any EcouteBonjour = { NavigateurBonjour(type: $0) }) {
+         fabriqueBonjour: @escaping @MainActor (String) -> any EcouteBonjour = { NavigateurBonjour(type: $0) },
+         cartes: CartesRetenues = CartesRetenues()) {
         self.preferences = preferences
+        self.cartes = cartes
         self.actif = actif
         self.vivante = actif
         self.surveillerPorts = surveillerPorts
@@ -269,6 +280,7 @@ final class SondeMaillageZigbee {
         self.attendre = attendre
         self.dormir = dormir
         serie = actif ? preferences.string(forKey: Self.cleSerie) : nil
+        cartes.retenir(serie, par: .zigbee)
         nom = actif ? preferences.string(forKey: Self.cleNom) : nil
         ieee = actif ? preferences.string(forKey: Self.cleIeee) : nil
         nomWifi = actif ? preferences.string(forKey: Self.cleNomWifi) : nil
@@ -372,9 +384,30 @@ final class SondeMaillageZigbee {
 
     /// Choix d'un port dans les Reglages : retenu seulement s'il repond en sonde. Le port de la sonde deja connectee
     /// n'est pas rouvert.
+    /// Une carte que Thread retient est refusee (`choixRefuse`), sans que rien ne soit ouvert (spec 3.4).
     func choisir(_ port: PortUSB) {
         guard actif, port.chemin != cheminConnecte else { return }
+        if let autre = cartes.retenuePar(port.serie, hors: .zigbee) {
+            choixRefuse = CartesRetenues.texteRefus(retenuePar: autre)
+            return
+        }
+        choixRefuse = nil
         lancerConnexion(port, choisi: true)
+    }
+
+    /// Retient (ou rend, avec nil) le numero de serie de la sonde, et le publie aux cartes retenues : Thread ne propose
+    /// plus cette carte et ne l'ouvre plus.
+    private func retenirSerie(_ s: String?) {
+        serie = s
+        cartes.retenir(s, par: .zigbee)
+    }
+
+    /// Ce port peut etre ouvert : aucun autre module ne retient sa carte, et ou bien l'utilisateur l'a choisi, ou bien c'est
+    /// la carte retenue par cette sonde (un C6 inconnu n'est jamais ouvert de lui-meme, meme en Automatique : ouvrir un
+    /// port fait basculer DTR/RTS et peut redemarrer la carte).
+    private func ouvrable(_ port: PortUSB, choisi: Bool) -> Bool {
+        guard !cartes.retenueParUnAutre(port.serie, que: .zigbee) else { return false }
+        return choisi || (port.serie != nil && port.serie == serie)
     }
 
     /// Oublie la sonde retenue (numero de serie, nom), son releve et son maillage dans le graphe (`surOubli`), et ferme
@@ -389,7 +422,8 @@ final class SondeMaillageZigbee {
         annoncee = false
         instanceAnnoncee = nil
         preferences.removeObject(forKey: Self.cleSerie)
-        serie = nil
+        retenirSerie(nil)
+        choixRefuse = nil
         retenirNom(nil)
         oublierReleve()
         surOubli?()
@@ -684,7 +718,8 @@ final class SondeMaillageZigbee {
 
     /// Ports branches : la sonde retenue revient, ou s'en va.
     func portsChanges(_ liste: [PortUSB]) {
-        ports = liste.filter(\.estEspressif)
+        portsVus = liste.filter(\.estEspressif)
+        choixRefuse = nil
         guard actif, let serie else { return }
         if reglageChemin != .reseau, let p = ports.first(where: { $0.serie == serie }) {
             // `lancerConnexion` passe tout de suite a `.connexion` : un second appel n'en lance pas d'autre. Une
@@ -845,6 +880,7 @@ final class SondeMaillageZigbee {
     /// et sort sans toucher a l'etat, a la sonde, ni au numero de serie retenu. Automatique (`choisi` faux) et en echec,
     /// elle est refaite, de plus en plus espacee, tant que le port reste liste (`planifierNouvelEssai`).
     func connecter(_ port: PortUSB, choisi: Bool) async {
+        guard ouvrable(port, choisi: choisi) else { return }
         deconnecter(.connexion, port: port)
         let n = essai
         // Tant que l'ancienne liaison tient le port, TIOCEXCL refuse de le rouvrir.
@@ -872,6 +908,14 @@ final class SondeMaillageZigbee {
                 etat = .refusee(String(localized: "\(port.libelle) n'est pas une sonde Zigbee (« \(b.produit) »)"))
                 return
             }
+            // Thread a retenu cette carte pendant la connexion (deux choix en meme temps) : elle n'est pas a nous.
+            if let autre = cartes.retenuePar(port.serie, hors: .zigbee) {
+                await s.fermer()
+                guard n == essai else { return }
+                enConnexion = nil
+                etat = .refusee(CartesRetenues.texteRefus(retenuePar: autre))
+                return
+            }
             enConnexion = nil
             sonde = s
             cheminConnecte = port.chemin
@@ -882,7 +926,7 @@ final class SondeMaillageZigbee {
                 // Le releve etait celui d'une autre sonde.
                 if serieUSB != serie { oublierReleve() }
                 preferences.set(serieUSB, forKey: Self.cleSerie)
-                serie = serieUSB
+                retenirSerie(serieUSB)
             }
             // Le nom va avec la sonde retenue (un port sans numero de serie ne l'est pas).
             let retenue = port.serie != nil && port.serie == serie
@@ -924,6 +968,7 @@ final class SondeMaillageZigbee {
     /// `.connexion` tout de suite ; un `deconnecter` d'ici au depart de la tache (oublier, autre choix, port retire)
     /// l'annule.
     private func lancerConnexion(_ port: PortUSB, choisi: Bool) {
+        guard ouvrable(port, choisi: choisi) else { return }
         // Un evenement USB (ou un choix) : l'espacement des nouveaux essais repart du premier delai.
         rangNouvelEssai = 0
         deconnecter(.connexion, port: port)

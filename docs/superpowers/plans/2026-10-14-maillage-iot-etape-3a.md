@@ -312,10 +312,10 @@ D'après `inventaire-etape3-interface.md` §3.4 ; spec 3.4.
 - Modify: les deux `SondeMaillage` (`portsChanges` et `choisir` filtrent les cartes retenues par l'autre module ; rien ne s'ouvre sans série retenue ou choix explicite), les deux listes de ports des Réglages.
 - Test: `CartesRetenuesTests`, tests des deux sondes.
 
-- [ ] **Step 1: RED** — une série retenue par Thread disparaît des choix de Zigbee et n'est jamais ouverte par lui (et l'inverse) ; une carte Espressif inconnue n'est jamais ouverte ; « Oublier la sonde » la rend aux choix de l'autre. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Deux sondes : registre des cartes retenues, aucune carte de l'autre module ouverte ».
+- [x] **Step 1: RED** — une série retenue par Thread disparaît des choix de Zigbee et n'est jamais ouverte par lui (et l'inverse) ; une carte Espressif inconnue n'est jamais ouverte ; « Oublier la sonde » la rend aux choix de l'autre. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Deux sondes : registre des cartes retenues, aucune carte de l'autre module ouverte ».
 
 ---
 

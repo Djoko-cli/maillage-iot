@@ -212,6 +212,10 @@ struct FenetreReglages: View {
                             Text(verbatim: Self.libellePort(p, serieRetenue: sonde.serie, nom: sonde.nom)).tag(p.chemin)
                         }
                     }
+                    // Une carte que Zigbee retient n'est pas dans la liste ; un choix qui la vise malgre tout est refuse.
+                    if let refus = sonde.choixRefuse {
+                        Text(refus).font(.caption).foregroundStyle(.red)
+                    }
                 }
                 LabeledContent("État", value: Self.texteEtatSonde(sonde.etat, nom: sonde.nomEtat))
                 DernierePerteSonde()

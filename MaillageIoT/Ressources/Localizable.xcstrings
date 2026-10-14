@@ -2209,6 +2209,38 @@
         }
       }
     },
+    "Cette carte est la sonde Thread : elle ne peut pas servir de sonde Zigbee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This board is the Thread probe: it cannot serve as the Zigbee probe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette carte est la sonde Thread : elle ne peut pas servir de sonde Zigbee."
+          }
+        }
+      }
+    },
+    "Cette carte est la sonde Zigbee : elle ne peut pas servir de sonde Thread." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This board is the Zigbee probe: it cannot serve as the Thread probe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette carte est la sonde Zigbee : elle ne peut pas servir de sonde Thread."
+          }
+        }
+      }
+    },
     "Chemin" : {
       "localizations" : {
         "en" : {
