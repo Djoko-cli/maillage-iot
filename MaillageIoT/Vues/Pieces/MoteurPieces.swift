@@ -108,6 +108,26 @@ final class MoteurPieces {
     var selection: IdNoeud? {
         didSet { if selection != oldValue { majMiseEnAvant() } }
     }
+    /// Les liens montres : tous les liens radio (par defaut : Thread n'a pas de chemin vers un pont), ou les chemins vers
+    /// le pont (Zigbee, le bouton « Liens » du haut).
+    var liens = ModeLiens.tous {
+        didSet {
+            if liens != oldValue {
+                majMiseEnAvant()
+                reveiller()
+            }
+        }
+    }
+    /// En mode « chemins », les voisins entendus d'un noeud selectionne sont montres (par defaut) ou masques (le
+    /// bouton « Voisins » du haut). Sans effet en mode « tous ».
+    var voisins = true {
+        didSet {
+            if voisins != oldValue {
+                majMiseEnAvant()
+                reveiller()
+            }
+        }
+    }
     var ligneNiveau = LigneNiveau.lisibles
     var cibleMenu = CibleMenu.aucune
     /// Version de la scene la plus recente (`sceneRecente`), observee : elle change avec elle, a chaque scene
@@ -335,19 +355,21 @@ final class MoteurPieces {
     /// `troisD` : le mode garde ; `fichierPlaces` : `positions-pieces.json` (nil : ni lu ni ecrit) ; `places` : sans
     /// fichier, les places de depart, en memoire (la demo et son choix de niveau).
     init(troisD: Bool = false, fichierPlaces: URL? = nil, selection: IdNoeud? = nil,
-         places depart: PlacesGardees? = nil) {
+         places depart: PlacesGardees? = nil, liens: ModeLiens = .tous, voisins: Bool = true) {
         self.troisD = troisD
         t = troisD ? 1 : 0
         self.fichierPlaces = fichierPlaces
         places = fichierPlaces.map(PlacesGardees.lire) ?? depart ?? PlacesGardees()
         self.selection = selection
+        self.liens = liens
+        self.voisins = voisins
     }
 
     /// Ce qui reste net autour du noeud choisi, d'apres la scene affichee (`EntreeScene.miseEnAvant`, la fonction du
-    /// protocole) : a chaque selection et a chaque scene installee. L'estompement suit en douceur ; une capture (`fige`)
-    /// le prend tout de suite.
+    /// protocole) : a chaque selection, scene installee, et changement des liens ou des voisins montres. L'estompement
+    /// suit en douceur ; une capture (`fige`) le prend tout de suite.
     func majMiseEnAvant() {
-        let m = selection.flatMap { entree?.miseEnAvant(de: $0) }
+        let m = selection.flatMap { entree?.miseEnAvant(de: $0, voisins: liens == .tous || voisins) }
         miseEnAvant = m
         ciblesFocus = scene.map {
             MiseEnAvant.cibles(m, noeuds: $0.noeuds.map(\.id), liens: $0.liens.map(MiseEnAvant.cle))

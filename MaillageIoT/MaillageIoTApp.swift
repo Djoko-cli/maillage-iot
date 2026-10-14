@@ -10,10 +10,14 @@ struct MaillageIoTApp: App {
     @State private var surveillance: Surveillance
     @State private var ouverture: OuvertureSession
     @State private var nomsMaison: NomsPasseur
-    @State private var sonde: SondeMaillage
+    @State private var nomsPont: NomsPont
+    @State private var sonde: SondeMaillageThread
+    @State private var sondeZigbee: SondeMaillageZigbee
     @State private var reglages: ControleurReglages
     @State private var misesAJour: MisesAJour
     private let notifications = Notifications()
+    /// Bonjour `_hue._tcp` (le pont de Zigbee), demarre hors demo et hors tests : le seul de l'app.
+    private let decouverte: DecouvertePont
     private static let demo = CommandLine.arguments.contains("-demo")
     /// Le graphe s'ouvre au lancement en mode demo et au tout premier lancement
     /// (jamais a l'ouverture de session ensuite).
@@ -21,30 +25,23 @@ struct MaillageIoTApp: App {
     static let clePremierGraphe = "grapheDejaOuvert"
 
     init() {
-        let s = Surveillance(mode: Self.demo ? .demo : .direct, dossier: Self.demo ? nil : Surveillance.dossierParDefaut)
-        let o = OuvertureSession()
-        // Les noms de Maison : inerte en demo et sous tests (aucun releve lu, ecrit ni demande au demon Passeur Noms) ;
-        // sinon le demon, son dernier releve garde dans `releve-maison.json`, a la racine du dossier de l'app.
-        let d = Self.demo || Surveillance.sousTests
-            ? NomsPasseur()
-            : NomsPasseur(cache: NomsPasseur.fichierCache(dossier: Surveillance.dossierParDefaut),
-                          lanceur: NomsPasseur.lancerPasseurDuMac)
+        // `-demo` rejoue la panne de Thread (la demo de Zigbee et la demo combinee viennent avec la scene reunie).
+        let m = ModulesApp(demo: Self.demo ? .thread : nil)
+        let s = m.surveillance
+        let o = m.ouverture
         _surveillance = State(initialValue: s)
         _ouverture = State(initialValue: o)
-        _nomsMaison = State(initialValue: d)
-        // Inerte en demo et sous tests : aucun port ouvert, ni trousseau lu, aucune identite de
-        // routeur lue ni ecrite. La cle de l'acces reseau vit dans le trousseau du Mac (les tests
-        // gardent le leur en memoire).
-        let sm = SondeMaillage(actif: !Self.demo && !Surveillance.sousTests, trousseau: TrousseauSysteme(),
-                               fichierIdentites: SondeMaillage.fichierIdentites(demo: Self.demo,
-                                                                                sousTests: Surveillance.sousTests))
-        _sonde = State(initialValue: sm)
+        _nomsMaison = State(initialValue: m.nomsMaison)
+        _nomsPont = State(initialValue: m.nomsPont)
+        decouverte = m.decouverte
+        _sonde = State(initialValue: m.sondeThread)
+        _sondeZigbee = State(initialValue: m.sondeZigbee)
         // Les mises a jour : ni en demo, ni sous les tests (aucune recherche, aucun reseau), ni dans une
         // compilation de travail.
-        let m = MisesAJour(demarrer: MisesAJour.demarrerAuLancement(demo: Self.demo))
-        _misesAJour = State(initialValue: m)
-        _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: d, sonde: sm,
-                                                           misesAJour: m))
+        let mj = MisesAJour(demarrer: MisesAJour.demarrerAuLancement(demo: Self.demo))
+        _misesAJour = State(initialValue: mj)
+        _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: m.nomsMaison,
+                                                           sonde: m.sondeThread, misesAJour: mj))
         let premier = !UserDefaults.standard.bool(forKey: Self.clePremierGraphe)
         ouvrirGraphe = !Surveillance.sousTests && (Self.demo || premier)
         guard !Surveillance.sousTests else { return }
@@ -54,19 +51,12 @@ struct MaillageIoTApp: App {
             s.surAlertes = { n.presenter($0) }
             n.demanderAutorisation()
             o.proposerAuPremierLancement()
-            d.surReleve = { [weak s] m in s?.thread.noms.maison = m }
-            d.demarrer()
-            sm.surMaillage = { [weak s] m, recu in s?.thread.recevoir(m, a: recu) }
-            sm.surTournee = { [weak s] enCours in s?.thread.tourneeEnCours = enCours }
-            sm.surOubli = { [weak s] in s?.thread.oublierMaillage() }
-            sm.appareilsAResoudre = { [weak s] in s?.thread.appareilsAResoudre() ?? [] }
-            sm.reseauConnu = { [weak s] in s?.thread.instantane != nil }
-            sm.demarrer()
+            m.brancher()
         }
         s.demarrer()
         // `--args -demo -captures <dossier>` : images de la vue par pieces, puis l'app quitte.
         if Self.demo, let dossier = UserDefaults.standard.string(forKey: "captures") {
-            CapturesPieces.ecrire(dans: dossier, surveillance: s, sonde: sm, nomsMaison: d)
+            CapturesPieces.ecrire(dans: dossier, surveillance: s, sonde: m.sondeThread, nomsMaison: m.nomsMaison)
             exit(0)
         }
     }
@@ -77,7 +67,9 @@ struct MaillageIoTApp: App {
                 .environment(surveillance)
                 .environment(ouverture)
                 .environment(nomsMaison)
+                .environment(nomsPont)
                 .environment(sonde)
+                .environment(sondeZigbee)
                 .environment(reglages)
                 .environment(misesAJour)
         } label: {
@@ -107,7 +99,9 @@ struct MaillageIoTApp: App {
                           places: Self.demo ? NomsDemo.places() : nil)
                 .environment(surveillance)
                 .environment(nomsMaison)
+                .environment(nomsPont)
                 .environment(sonde)
+                .environment(sondeZigbee)
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 1100, height: 760)

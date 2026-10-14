@@ -143,13 +143,13 @@ enum RenduCanvas {
         }
     }
 
-    /// Liens enfant -> parent d'un pixel ; rattachements supposes en pointilles ; fils « ailleurs »
+    /// Liens enfant -> parent d'un pixel ; rattachements supposes et parents d'avant en pointilles ; fils « ailleurs »
     /// en tirets verts.
     private static func dessinerLiensEnfants(_ ctx: inout GraphicsContext, _ image: ImagePieces, _ palette: Palette) {
         let pixel = 1 / image.echelle
         for l in image.projetee.liensEnfants {
-            dessinerLienEnfant(&ctx, de: l.a, a: l.b, rattachement: l.genre == .rattachement, opacite: l.opacite,
-                               eclaire: l.eclaire, pixel: pixel, palette: palette)
+            dessinerLienEnfant(&ctx, de: l.a, a: l.b, rattachement: l.genre == .rattachement || l.suppose,
+                               opacite: l.opacite, eclaire: l.eclaire, pixel: pixel, palette: palette)
         }
         for f in image.projetee.fils {
             ctx.stroke(segment(f.a, f.b), with: .color(palette.filAilleurs.opacity(f.opacite)),
@@ -169,17 +169,44 @@ enum RenduCanvas {
         }
     }
 
-    /// Liens radio entre routeurs.
+    /// Liens entre routeurs : les voisins entendus d'abord (dessous), puis les liens radio et les chemins vers le pont.
     private static func dessinerLiensRouteurs(_ ctx: inout GraphicsContext, _ image: ImagePieces, _ palette: Palette) {
-        for l in image.projetee.liensRouteurs {
-            dessinerLienRadio(&ctx, de: l.a, a: l.b, qualite: l.qualite, opacite: l.opacite, palette: palette)
+        for l in image.projetee.liensRouteurs where l.voisin {
+            dessinerVoisin(&ctx, de: l.a, a: l.b, qualite: l.qualite, opacite: l.opacite, palette: palette)
+        }
+        for l in image.projetee.liensRouteurs where !l.voisin {
+            if l.genre == .chemin {
+                dessinerChemin(&ctx, de: l.a, a: l.b, qualite: l.qualite, suppose: l.suppose, opacite: l.opacite,
+                               palette: palette)
+            } else {
+                dessinerLienRadio(&ctx, de: l.a, a: l.b, qualite: l.qualite, opacite: l.opacite, palette: palette)
+            }
         }
     }
 
-    /// Un lien radio entre routeurs : 2 points, la couleur de sa qualite, bouts ronds. La legende le reprend.
+    /// Le chemin d'un routeur vers le pont : comme un lien radio (2 points, la couleur de la qualite du lien entre les
+    /// deux, gris si elle est inconnue), en pointilles s'il est suppose. La legende le reprend.
+    static func dessinerChemin(_ ctx: inout GraphicsContext, de a: CGPoint, a b: CGPoint, qualite: Int?, suppose: Bool,
+                               opacite: Double, palette: Palette) {
+        let style = suppose ? StrokeStyle(lineWidth: 2, lineCap: .round, dash: [0.5, 4.5])
+            : StrokeStyle(lineWidth: 2, lineCap: .round)
+        // Un chemin est propre a Zigbee.
+        ctx.stroke(segment(a, b), with: .color(palette.lienSonde(qualite, protocole: .zigbee).opacity(opacite)), style: style)
+    }
+
+    /// Un voisin entendu d'un noeud selectionne (mode « chemins ») : un trait fin (1 point) de la couleur de sa qualite,
+    /// estompe. La legende le reprend.
+    static func dessinerVoisin(_ ctx: inout GraphicsContext, de a: CGPoint, a b: CGPoint, qualite: Int?, opacite: Double,
+                               palette: Palette) {
+        // Un voisin entendu est propre a Zigbee.
+        ctx.stroke(segment(a, b), with: .color(palette.lienSonde(qualite, protocole: .zigbee).opacity(opacite)), lineWidth: 1)
+    }
+
+    /// Un lien radio entre routeurs : 2 points, la couleur de sa qualite (celle du protocole du lien : `protocole`, Thread
+    /// par defaut), bouts ronds. La legende le reprend.
     static func dessinerLienRadio(_ ctx: inout GraphicsContext, de a: CGPoint, a b: CGPoint, qualite: Int?, opacite: Double,
-                                  palette: Palette) {
-        ctx.stroke(segment(a, b), with: .color(palette.lienSonde(qualite).opacity(opacite)),
+                                  palette: Palette, protocole: Protocole = .thread) {
+        ctx.stroke(segment(a, b), with: .color(palette.lienSonde(qualite, protocole: protocole).opacity(opacite)),
                    style: StrokeStyle(lineWidth: 2, lineCap: .round))
     }
 
@@ -289,8 +316,10 @@ enum RenduCanvas {
         }
     }
 
+    /// Le texte du nom d'un noeud : 12 points pour un routeur, 11 pour un appareil ; semi-gras et blanc au survol
+    /// et a la selection. La legende le reprend (la couronne, la lune, des candidats).
     /// Opacite minimale du nom survole ou choisi sous le mode focus : on survole un noeud estompe justement pour lire son
-    /// nom avant de cliquer (repris de Maillage Zigbee, 09/10).
+    /// nom avant de cliquer.
     static let opaciteNomFort = 0.8
 
     /// Le facteur d'opacite du mode focus pour le nom d'un noeud : celui du noeud, mais un nom fort (survole) reste lisible.
@@ -298,8 +327,6 @@ enum RenduCanvas {
         fort ? max(facteur, opaciteNomFort) : facteur
     }
 
-    /// Le texte du nom d'un noeud : 12 points pour un routeur, 11 pour un appareil ; semi-gras et blanc au survol
-    /// et a la selection. La legende le reprend (la couronne, la lune, des candidats).
     static func texteNom(_ texte: String, routeur: Bool, fort: Bool, palette: Palette) -> Text {
         StylesNoms.noeud(texte, routeur: routeur, fort: fort).foregroundStyle(fort ? .white : palette.texteNom)
     }

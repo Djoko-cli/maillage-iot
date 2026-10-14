@@ -15,14 +15,14 @@ struct SondeConnue: Hashable, Sendable, Identifiable {
 /// Cles de l'acces reseau a la sonde, reprises du trousseau du pont Halo (benq,
 /// `HaloCompagnon/Reseau/Trousseau.swift`). La cle ne quitte le trousseau que pour ouvrir une
 /// session : jamais dans un journal, une preference ni un fichier.
-protocol TrousseauCles: Sendable {
+protocol TrousseauClesThread: Sendable {
     func lister() -> [SondeConnue]
     func lire(nom: String) throws -> Data
     func ranger(nom: String, cle: Data, empreinte: String) throws
     func oublier(nom: String) throws
 }
 
-enum ErreurTrousseau: Error, Equatable, Sendable, LocalizedError {
+enum ErreurTrousseauThread: Error, Equatable, Sendable, LocalizedError {
     case absente(String)
     case systeme(Int32)
 
@@ -39,7 +39,7 @@ enum ErreurTrousseau: Error, Equatable, Sendable, LocalizedError {
 /// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.sonde-thread`,
 /// compte = nom d'hote SRP (sans `.local`), valeur = 64 hexa MAJUSCULES, commentaire =
 /// empreinte. Non synchronise.
-struct TrousseauSysteme: TrousseauCles {
+struct TrousseauSystemeThread: TrousseauClesThread {
     let service: String
 
     init(service: String = "fr.djoko.maillage.iot.sonde-thread") {
@@ -70,10 +70,10 @@ struct TrousseauSysteme: TrousseauCles {
         q[kSecReturnData as String] = true
         var r: CFTypeRef?
         let s = SecItemCopyMatching(q as CFDictionary, &r)
-        if s == errSecItemNotFound { throw ErreurTrousseau.absente(nom) }
-        guard s == errSecSuccess else { throw ErreurTrousseau.systeme(s) }
+        if s == errSecItemNotFound { throw ErreurTrousseauThread.absente(nom) }
+        guard s == errSecSuccess else { throw ErreurTrousseauThread.systeme(s) }
         guard let d = r as? Data, let cle = H1.octets(hexa: String(decoding: d, as: UTF8.self)), cle.count == 32
-        else { throw ErreurTrousseau.systeme(errSecDecode) }
+        else { throw ErreurTrousseauThread.systeme(errSecDecode) }
         return cle
     }
 
@@ -85,18 +85,18 @@ struct TrousseauSysteme: TrousseauCles {
         if s == errSecItemNotFound {
             s = SecItemAdd(requete(nom).merging(valeurs) { $1 } as CFDictionary, nil)
         }
-        guard s == errSecSuccess else { throw ErreurTrousseau.systeme(s) }
+        guard s == errSecSuccess else { throw ErreurTrousseauThread.systeme(s) }
     }
 
     func oublier(nom: String) throws {
         let s = SecItemDelete(requete(nom) as CFDictionary)
-        guard s == errSecSuccess || s == errSecItemNotFound else { throw ErreurTrousseau.systeme(s) }
+        guard s == errSecSuccess || s == errSecItemNotFound else { throw ErreurTrousseauThread.systeme(s) }
     }
 }
 
-/// Trousseau en memoire : celui des tests, et celui de `SondeMaillage` tant qu'on ne lui en
+/// Trousseau en memoire : celui des tests, et celui de `SondeMaillageThread` tant qu'on ne lui en
 /// donne pas d'autre (seul le lancement de l'app lui passe celui du Mac).
-final class TrousseauMemoire: TrousseauCles {
+final class TrousseauMemoireThread: TrousseauClesThread {
     private let cles = Mutex<[String: (cle: Data, empreinte: String)]>([:])
 
     func lister() -> [SondeConnue] {
@@ -104,7 +104,7 @@ final class TrousseauMemoire: TrousseauCles {
     }
 
     func lire(nom: String) throws -> Data {
-        guard let e = cles.withLock({ $0[nom] }) else { throw ErreurTrousseau.absente(nom) }
+        guard let e = cles.withLock({ $0[nom] }) else { throw ErreurTrousseauThread.absente(nom) }
         return e.cle
     }
 

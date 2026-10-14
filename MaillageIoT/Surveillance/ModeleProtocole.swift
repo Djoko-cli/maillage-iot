@@ -2,7 +2,7 @@ import Foundation
 import MaillageCoeur
 
 /// Les trois chiffres que la barre des menus montre de chaque protocole (routeurs, appareils, injoignables). Thread en
-/// dit plus dans son menu (nom du reseau, partitions : `ResumeReseau`) ; ce resume commun est ce que les deux protocoles
+/// dit plus dans son menu (nom du reseau, partitions : `ResumeReseauThread`) ; ce resume commun est ce que les deux protocoles
 /// savent donner.
 struct ResumeMenu: Equatable {
     var routeurs: Int
@@ -11,16 +11,13 @@ struct ResumeMenu: Equatable {
 }
 
 /// Ce que chaque protocole fournit a l'app, au-dessus de la coque `Surveillance` : la forme de `ProtocoleMaille` (spec
-/// 1.2), dans l'app et non dans le coeur (le coeur ne connait aucun modele). `SurveillanceThread` s'y conforme ;
-/// `SurveillanceZigbee` s'y conformera a la tache 7 (graphe de `GrapheReseau(maillage:appareils:)`, appareils du pont,
-/// echelle `.lqi`, `ScenePieces.classementZigbee`, mise en avant qui lit `voisins` et ignore `chefs`, resume du menu tire
-/// de son propre `ResumeReseau`, fraicheur 16 et 45 min, courbes par `CourbesNoeud(zigbee:)`, `alerteReseau` toujours
-/// faux, `auReveil` sans effet). Les identifiants de noeud rendus sont deja des `IdNoeud` de ce protocole.
+/// 1.2), dans l'app et non dans le coeur (le coeur ne connait aucun modele). `SurveillanceThread` et `SurveillanceZigbee`
+/// s'y conforment ; l'identifiant de chaque noeud rendu est un `IdNoeud` de leur protocole.
 ///
-/// Ne porte que ce que les vues de Thread lisent aujourd'hui. Ce que les prochaines taches y ajoutent : `actif` (tache
-/// 11, arret reel du module) ; la scene reunie (tache 8) lira `graphe`, `appareils`, `classement` et `miseEnAvant` de
-/// chaque modele actif, et les libelles, apparences et chefs de la scene (`EntreeScene`) y deviendront des crochets
-/// de plus, avec la fiche d'un noeud.
+/// Ne porte que ce que les vues lisent aujourd'hui. Ce que les prochaines taches y ajoutent : `actif` (tache 11, arret
+/// reel du module) ; la scene reunie (tache 8) lira `graphe`, `appareils`, `classement` et `miseEnAvant` de chaque modele
+/// actif, et les libelles, apparences et chefs de la scene (`EntreeScene`) y deviendront des crochets de plus, avec la
+/// fiche d'un noeud.
 @MainActor
 protocol ModeleProtocole: AnyObject {
     var protocole: Protocole { get }
@@ -53,6 +50,12 @@ protocol ModeleProtocole: AnyObject {
     /// Applique (ou retire, avec nil) un surnom au resolveur de noms du module ; `cle` : la cle brute du noeud.
     func appliquerSurnom(_ surnom: String?, cle: String)
 
+    // MARK: Noms
+
+    /// Le releve de Maison du demon Passeur Noms, le meme pour tous les protocoles : chaque modele le range dans son
+    /// resolveur de noms (nil : plus de releve).
+    func recevoirReleveMaison(_ releve: NomsMaison?)
+
     // MARK: Menu et icone
 
     var resumeMenu: ResumeMenu? { get }
@@ -82,7 +85,7 @@ extension ModeleProtocole {
     /// Reference a l'heure du Mac.
     var maintenant: Date { maintenant(a: Date()) }
 
-    /// Le maillage affiche a depasse son seuil de fraicheur (6 min pour Thread), et aucune tournee n'est en cours : la
+    /// Le maillage affiche a depasse son seuil de fraicheur (6 min pour Thread, 16 min pour Zigbee), et aucune tournee n'est en cours : la
     /// sonde ne repond plus.
     var maillageAncien: Bool { fraicheurMaillage(a: maintenant) == .ancien }
 }

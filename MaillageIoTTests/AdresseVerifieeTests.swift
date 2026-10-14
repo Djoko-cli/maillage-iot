@@ -560,7 +560,7 @@ struct AdresseVerifieeAppTests {
         #expect(verifie.hasPrefix(francais ? "vérifié par la sonde " : "checked by the probe "))
         #expect(verifie.hasSuffix(FicheNoeud.relatif(t - 600, t)))
         let e = Evenement(date: t, type: .appareilSansAdresse, sujet: Sujet(id: "x", nom: "Prise"))
-        #expect(TexteEvenement.titre(e)
+        #expect(TexteEvenementThread.titre(e)
                 == (francais ? "Prise n'annonce plus d'adresse" : "Prise no longer advertises an address"))
     }
 }

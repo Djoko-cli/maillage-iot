@@ -52,7 +52,7 @@ struct IconeBarre: View {
 struct MenuBarre: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(NomsPasseur.self) private var nomsMaison
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
     @Environment(\.openWindow) private var openWindow
     @Environment(ControleurReglages.self) private var reglages
     @Environment(MisesAJour.self) private var misesAJour
@@ -70,8 +70,8 @@ struct MenuBarre: View {
             Divider()
             ForEach(surveillance.lignesJournal.prefix(3)) { l in
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(TexteEvenement.titre(l)).font(.callout).lineLimit(2)
-                    Text(l.evenements.first.map(TexteEvenement.quand) ?? "").font(.caption).foregroundStyle(.secondary)
+                    Text(TexteEvenementThread.titre(l)).font(.callout).lineLimit(2)
+                    Text(l.evenements.first.map(TexteEvenementThread.quand) ?? "").font(.caption).foregroundStyle(.secondary)
                 }
             }
             Divider()
@@ -128,17 +128,17 @@ struct MenuBarre: View {
     }
 
     /// Ligne de la sonde, sous le nom donne (celui de la sonde retenue quand l'etat la concerne,
-    /// `SondeMaillage.nomEtat`), sinon « Sonde » ; pendant une tournee, son etape et son
+    /// `SondeMaillageThread.nomEtat`), sinon « Sonde » ; pendant une tournee, son etape et son
     /// compteur. Rien tant qu'aucune sonde n'est choisie.
-    static func ligneSonde(_ e: SondeMaillage.Etat, nom: String?, derniere: Date?, avancement: AvancementTournee?,
+    static func ligneSonde(_ e: SondeMaillageThread.Etat, nom: String?, derniere: Date?, avancement: AvancementTournee?,
                            maintenant: Date) -> String? {
-        let n = SondeMaillage.nomAffiche(nom)
+        let n = SondeMaillageThread.nomAffiche(nom)
         switch e {
         case .sansSonde: return nil
         case .absente: return String(localized: "\(n) : absente")
         case .connexion: return String(localized: "\(n) : connexion…")
         case .connectee:
-            if let avancement { return TexteTournee.menu(avancement, nom: n) }
+            if let avancement { return TexteTourneeThread.menu(avancement, nom: n) }
             guard let d = derniere else { return String(localized: "\(n) : connectée") }
             return String(localized: "\(n) : connectée · relevé \(FicheNoeud.relatif(d, maintenant))")
         case .refusee, .erreur: return String(localized: "\(n) : erreur (voir les Réglages)")
@@ -152,7 +152,7 @@ struct MenuBarre: View {
 
     private var titre: String {
         if surveillance.thread.instantane == nil { return String(localized: "Écoute du réseau local…") }
-        if let d = muet { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
+        if let d = muet { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenementThread.heure(d))") }
         guard let r = surveillance.thread.reseau else { return String(localized: "Aucun réseau Thread visible") }
         if r.estScinde { return String(localized: "Réseau scindé") }
         return surveillance.alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")

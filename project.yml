@@ -94,6 +94,7 @@ targets:
     dependencies:
       - target: MaillageCoeur
       - target: ProtocoleThread
+      - target: ProtocoleZigbee
       - package: Sparkle
     info:
       path: MaillageIoT/Info.plist
@@ -113,12 +114,14 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true
         NSHumanReadableCopyright: ""
-        NSLocalNetworkUsageDescription: "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit) pour dessiner le réseau Thread, et se connecte à sa sonde par le réseau Thread si vous le choisissez."
+        NSLocalNetworkUsageDescription: "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit, pont Hue) pour dessiner vos réseaux Thread et Zigbee, et se connecte à vos sondes par le réseau local si vous le choisissez."
         NSBonjourServices:
           - _meshcop._udp
           - _matter._tcp
           - _hap._udp
           - _trel._udp
+          - _hue._tcp
+          - _maillage-zigbee._tcp
     settings:
       base:
         PRODUCT_NAME: Maillage IoT

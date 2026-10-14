@@ -161,6 +161,22 @@
         }
       }
     },
+    "%@ : passe complémentaire à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: follow-up pass at %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : passe complémentaire à %2$@"
+          }
+        }
+      }
+    },
     "%@ : port occupé (pio device monitor ou une autre app le tient)" : {
       "localizations" : {
         "en" : {
@@ -193,6 +209,54 @@
         }
       }
     },
+    "%@ : tournée complète à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: full round at %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : tournée complète à %2$@"
+          }
+        }
+      }
+    },
+    "%@ : tournée à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: round at %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : tournée à %2$@"
+          }
+        }
+      }
+    },
+    "%@ a changé %lld fois de chemin vers le pont en 1 h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed its path to the bridge %2$lld times in 1 h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a changé %2$lld fois de chemin vers le pont en 1 h"
+          }
+        }
+      }
+    },
     "%@ a changé %lld fois de parent en 1 h" : {
       "localizations" : {
         "en" : {
@@ -205,6 +269,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ a changé %2$lld fois de parent en 1 h"
+          }
+        }
+      }
+    },
+    "%@ a changé de chemin vers le pont : %@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed its path to the bridge: %2$@ → %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ a changé de chemin vers le pont : %2$@ → %3$@"
           }
         }
       }
@@ -349,6 +429,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ n'est pas une sonde (« %2$@ »)"
+          }
+        }
+      }
+    },
+    "%@ n'est pas une sonde Zigbee (« %@ »)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ is not a Zigbee probe (“%2$@”)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ n'est pas une sonde Zigbee (« %2$@ »)"
           }
         }
       }
@@ -513,6 +609,22 @@
         }
       }
     },
+    "%lld appareils perdus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld devices lost"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld appareils perdus"
+          }
+        }
+      }
+    },
     "%lld appareils perdus entre %@ et %@" : {
       "localizations" : {
         "en" : {
@@ -525,6 +637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld appareils perdus entre %2$@ et %3$@"
+          }
+        }
+      }
+    },
+    "%lld appareils · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld devices · %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld appareils · %2$@"
           }
         }
       }
@@ -993,6 +1121,70 @@
         }
       }
     },
+    "Adresse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse"
+          }
+        }
+      }
+    },
+    "Adresse IP du pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge IP address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse IP du pont"
+          }
+        }
+      }
+    },
+    "Adresse du pont invalide : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid bridge address: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse du pont invalide : %@"
+          }
+        }
+      }
+    },
+    "Adresse invalide : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid address: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse invalide : %@"
+          }
+        }
+      }
+    },
     "Afficher la liste" : {
       "localizations" : {
         "en" : {
@@ -1133,6 +1325,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Approuver dans Réglages Système…"
+          }
+        }
+      }
+    },
+    "Appuyez sur le bouton rond du pont Hue." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press the round button on the Hue Bridge."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur le bouton rond du pont Hue."
+          }
+        }
+      }
+    },
+    "Après « Lier… », appuyez dans les 60 secondes sur le bouton rond du pont Hue. La clé donnée par le pont va au trousseau de ce Mac." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After “Link…”, press the round button on the Hue Bridge within 60 seconds. The key given by the bridge goes to this Mac’s keychain."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après « Lier… », appuyez dans les 60 secondes sur le bouton rond du pont Hue. La clé donnée par le pont va au trousseau de ce Mac."
           }
         }
       }
@@ -1297,6 +1521,22 @@
         }
       }
     },
+    "Automatique" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique"
+          }
+        }
+      }
+    },
     "Autoriser l'accès réseau" : {
       "localizations" : {
         "en" : {
@@ -1409,6 +1649,22 @@
         }
       }
     },
+    "Branchez la sonde 1.1.0 en USB, hors tournée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect the probe 1.1.0 over USB, outside a round."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Branchez la sonde 1.1.0 en USB, hors tournée."
+          }
+        }
+      }
+    },
     "Candidats :" : {
       "localizations" : {
         "en" : {
@@ -1437,6 +1693,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capture enregistrée : %@"
+          }
+        }
+      }
+    },
+    "Ce n'est pas le pont attendu (certificat du pont %@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is not the expected bridge (certificate of bridge %@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce n'est pas le pont attendu (certificat du pont %@)."
           }
         }
       }
@@ -1473,6 +1745,54 @@
         }
       }
     },
+    "Certificat refusé : ce n'est pas celui d'un serveur de pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificate rejected: it is not a bridge server's certificate."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificat refusé : ce n'est pas celui d'un serveur de pont."
+          }
+        }
+      }
+    },
+    "Certificat refusé : il n'est pas signé par Signify. Ce n'est pas un pont Hue, ou il est trop ancien." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificate rejected: it is not signed by Signify. This is not a Hue Bridge, or it is too old."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificat refusé : il n'est pas signé par Signify. Ce n'est pas un pont Hue, ou il est trop ancien."
+          }
+        }
+      }
+    },
+    "Certificat refusé : il ne porte pas d'identifiant de pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificate rejected: it carries no bridge ID."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Certificat refusé : il ne porte pas d'identifiant de pont."
+          }
+        }
+      }
+    },
     "Cet accessoire ne sait pas s'identifier" : {
       "localizations" : {
         "en" : {
@@ -1489,6 +1809,38 @@
         }
       }
     },
+    "Cet appareil n'est pas connu du pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge does not know this device."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil n'est pas connu du pont."
+          }
+        }
+      }
+    },
+    "Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the probe in Settings › Probe. The link to the Hue bridge will come next."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite."
+          }
+        }
+      }
+    },
     "Clé absente de ce Mac pour %@.local : brancher la sonde en USB, puis « Autoriser l'accès réseau »." : {
       "localizations" : {
         "en" : {
@@ -1501,6 +1853,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clé absente de ce Mac pour %@.local : brancher la sonde en USB, puis « Autoriser l'accès réseau »."
+          }
+        }
+      }
+    },
+    "Clé absente de ce Mac pour le pont %@ : liez le pont depuis les Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No key on this Mac for bridge %@: link the bridge in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé absente de ce Mac pour le pont %@ : liez le pont depuis les Réglages."
+          }
+        }
+      }
+    },
+    "Clé créée, mais la sonde n'a pas confirmé le Wi-Fi : recommencez." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Key created, but the probe did not confirm the Wi-Fi: try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé créée, mais la sonde n'a pas confirmé le Wi-Fi : recommencez."
           }
         }
       }
@@ -1713,6 +2097,22 @@
         }
       }
     },
+    "Dernière lecture" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last read"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière lecture"
+          }
+        }
+      }
+    },
     "Dernière perte" : {
       "localizations" : {
         "en" : {
@@ -1809,6 +2209,22 @@
         }
       }
     },
+    "En attente du maillage de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for the probe's mesh"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du maillage de la sonde"
+          }
+        }
+      }
+    },
     "En grille" : {
       "localizations" : {
         "en" : {
@@ -1837,6 +2253,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En rangée"
+          }
+        }
+      }
+    },
+    "Encore %lld s" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld s left"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encore %lld s"
           }
         }
       }
@@ -2065,6 +2497,22 @@
         }
       }
     },
+    "Identifiant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifiant"
+          }
+        }
+      }
+    },
     "Identification demandée" : {
       "localizations" : {
         "en" : {
@@ -2193,6 +2641,22 @@
         }
       }
     },
+    "L'API répond pour un autre pont (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The API answers for another bridge (%@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'API répond pour un autre pont (%@)."
+          }
+        }
+      }
+    },
     "L'autoriser dans Réglages Système, Général, Ouverture et extensions." : {
       "localizations" : {
         "en" : {
@@ -2241,6 +2705,38 @@
         }
       }
     },
+    "La sonde a rendu une clé invalide : rien n'a été enregistré." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe returned an invalid key: nothing was saved."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde a rendu une clé invalide : rien n'a été enregistré."
+          }
+        }
+      }
+    },
+    "La sonde est suspendue : pas de tournée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe is suspended: no round."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde est suspendue : pas de tournée."
+          }
+        }
+      }
+    },
     "La sonde n'a pas encore de nom d'hôte (Matter ne l'a pas encore enregistré) : réessayer dans une minute." : {
       "localizations" : {
         "en" : {
@@ -2253,6 +2749,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La sonde n'a pas encore de nom d'hôte (Matter ne l'a pas encore enregistré) : réessayer dans une minute."
+          }
+        }
+      }
+    },
+    "La sonde n'est pas dans le réseau : pas de tournée." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe is not in the network: no round."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde n'est pas dans le réseau : pas de tournée."
+          }
+        }
+      }
+    },
+    "La sonde n'est pas encore prête : nouvel essai dans un instant." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe is not ready yet: trying again shortly."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde n'est pas encore prête : nouvel essai dans un instant."
           }
         }
       }
@@ -2305,6 +2833,38 @@
         }
       }
     },
+    "Le bouton du pont n'a pas été appuyé dans les 60 secondes (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge button was not pressed within 60 seconds (%@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le bouton du pont n'a pas été appuyé dans les 60 secondes (%@)."
+          }
+        }
+      }
+    },
+    "Le bouton du pont n'a pas été appuyé dans les 60 secondes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge button was not pressed within 60 seconds."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le bouton du pont n'a pas été appuyé dans les 60 secondes."
+          }
+        }
+      }
+    },
     "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher." : {
       "localizations" : {
         "en" : {
@@ -2317,6 +2877,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher."
+          }
+        }
+      }
+    },
+    "Le pont a refusé la clé (l'app a été retirée dans l'app Hue ?) : liez-le de nouveau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge rejected the key (was the app removed in the Hue app?): link it again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le pont a refusé la clé (l'app a été retirée dans l'app Hue ?) : liez-le de nouveau."
+          }
+        }
+      }
+    },
+    "Le pont a refusé la clé : liez-le de nouveau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge rejected the key: link it again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le pont a refusé la clé : liez-le de nouveau."
+          }
+        }
+      }
+    },
+    "Le pont n'a pas présenté de certificat." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bridge presented no certificate."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le pont n'a pas présenté de certificat."
           }
         }
       }
@@ -2353,6 +2961,22 @@
         }
       }
     },
+    "Les chemins des messages vers le pont ; les voisins entendus d'un nœud à sa sélection" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The paths messages take to the bridge; a node's heard neighbors when it is selected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les chemins des messages vers le pont ; les voisins entendus d'un nœud à sa sélection"
+          }
+        }
+      }
+    },
     "Liaison" : {
       "localizations" : {
         "en" : {
@@ -2369,6 +2993,38 @@
         }
       }
     },
+    "Liaison refusée par le pont : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link refused by the bridge: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liaison refusée par le pont : %@"
+          }
+        }
+      }
+    },
+    "Liens" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens"
+          }
+        }
+      }
+    },
     "Liens radio (qualité)" : {
       "localizations" : {
         "en" : {
@@ -2381,6 +3037,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liens radio (qualité)"
+          }
+        }
+      }
+    },
+    "Lier…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lier…"
           }
         }
       }
@@ -2477,6 +3149,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maillage IoT"
+          }
+        }
+      }
+    },
+    "Maillage incomplet" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete mesh"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage incomplet"
+          }
+        }
+      }
+    },
+    "Maillage incomplet · passe complémentaire à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete mesh · follow-up pass at %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage incomplet · passe complémentaire à %@"
           }
         }
       }
@@ -2609,6 +3313,22 @@
         }
       }
     },
+    "Modèle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle"
+          }
+        }
+      }
+    },
     "Monter d'un étage" : {
       "localizations" : {
         "en" : {
@@ -2637,6 +3357,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom d'hôte"
+          }
+        }
+      }
+    },
+    "Nom du Wi-Fi de 1 à 32 octets, mot de passe vide ou de 8 à 63 caractères." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi name of 1 to 32 bytes, password empty or 8 to 63 characters."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom du Wi-Fi de 1 à 32 octets, mot de passe vide ou de 8 à 63 caractères."
           }
         }
       }
@@ -2769,6 +3505,22 @@
         }
       }
     },
+    "Nœud %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Node %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nœud %@"
+          }
+        }
+      }
+    },
     "Oublier la sonde" : {
       "localizations" : {
         "en" : {
@@ -2781,6 +3533,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Oublier la sonde"
+          }
+        }
+      }
+    },
+    "Oublier le pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Forget Bridge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oublier le pont"
           }
         }
       }
@@ -2973,6 +3741,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pas encore d'historique de la sonde pour ce nœud sur cette période."
+          }
+        }
+      }
+    },
+    "Pas encore de pièces : le pont Hue les donnera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No rooms yet: the Hue bridge will provide them"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de pièces : le pont Hue les donnera"
           }
         }
       }
@@ -3181,6 +3965,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placer dans une pièce…"
+          }
+        }
+      }
+    },
+    "Pont injoignable : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge unreachable: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont injoignable : %@"
+          }
+        }
+      }
+    },
+    "Pont non lié : liez-le d'abord dans les Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge not linked: link it first in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont non lié : liez-le d'abord dans les Réglages."
+          }
+        }
+      }
+    },
+    "Pont trop ancien : son certificat est auto-signé, ce que l'app ne prend pas en charge." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge too old: its certificate is self-signed, which the app does not support."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont trop ancien : son certificat est auto-signé, ce que l'app ne prend pas en charge."
           }
         }
       }
@@ -3409,6 +4241,22 @@
         }
       }
     },
+    "Rafraîchir : rien à relever sans sonde connectée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: nothing to read without a connected probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : rien à relever sans sonde connectée"
+          }
+        }
+      }
+    },
     "Rafraîchir : réseau" : {
       "localizations" : {
         "en" : {
@@ -3469,6 +4317,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rafraîchir : réseau, tournée de la sonde et noms de Maison"
+          }
+        }
+      }
+    },
+    "Rafraîchir : tournée de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refresh: probe round"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rafraîchir : tournée de la sonde"
           }
         }
       }
@@ -3697,6 +4561,38 @@
         }
       }
     },
+    "Routes des routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router routes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes des routeurs"
+          }
+        }
+      }
+    },
+    "Routes du pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge routes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routes du pont"
+          }
+        }
+      }
+    },
     "Routeur Thread apparu : %@" : {
       "localizations" : {
         "en" : {
@@ -3725,6 +4621,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routeur Thread disparu : %@"
+          }
+        }
+      }
+    },
+    "Routeur apparu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router appeared: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur apparu : %@"
           }
         }
       }
@@ -3773,6 +4685,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routeur de bordure · %@"
+          }
+        }
+      }
+    },
+    "Routeur disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router gone"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur disparu"
+          }
+        }
+      }
+    },
+    "Routeur disparu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router gone: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Routeur disparu : %@"
           }
         }
       }
@@ -3853,6 +4797,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Régénérer une clé"
+          }
+        }
+      }
+    },
+    "Réponse illisible du pont (%@)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unreadable response from the bridge (%@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse illisible du pont (%@)."
+          }
+        }
+      }
+    },
+    "Réponse inattendue du pont (HTTP %lld)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unexpected response from the bridge (HTTP %lld)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réponse inattendue du pont (HTTP %lld)."
           }
         }
       }
@@ -4017,6 +4993,38 @@
         }
       }
     },
+    "Réseau Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau Zigbee"
+          }
+        }
+      }
+    },
+    "Réseau local refusé : autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Local network denied: allow Maillage IoT in System Settings › Privacy & Security › Local Network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau local refusé : autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local."
+          }
+        }
+      }
+    },
     "Réseau scindé" : {
       "localizations" : {
         "en" : {
@@ -4113,6 +5121,22 @@
         }
       }
     },
+    "Sans effet avec « Liens : tous » : tous les liens radio sont montrés" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No effect with “Links: all”: every radio link is shown"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans effet avec « Liens : tous » : tous les liens radio sont montrés"
+          }
+        }
+      }
+    },
     "Sans pièce" : {
       "localizations" : {
         "en" : {
@@ -4157,6 +5181,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seul le port choisi est ouvert. Un autre ESP32-C6 branché n'est jamais ouvert : ne le choisissez pas."
+          }
+        }
+      }
+    },
+    "Si le pont n'est pas trouvé : son adresse IP est dans l'app Hue, parmi les réglages du pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If the bridge is not found: its IP address is in the Hue app, in the bridge settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si le pont n'est pas trouvé : son adresse IP est dans l'app Hue, parmi les réglages du pont."
           }
         }
       }
@@ -4321,6 +5361,22 @@
         }
       }
     },
+    "Tables des routeurs" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Router tables"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tables des routeurs"
+          }
+        }
+      }
+    },
     "Thread Route" : {
       "localizations" : {
         "en" : {
@@ -4353,6 +5409,118 @@
         }
       }
     },
+    "Tournée complète à %@ : la sonde a déjà beaucoup servi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full round at %@: the probe has already been used a lot"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée complète à %@ : la sonde a déjà beaucoup servi"
+          }
+        }
+      }
+    },
+    "Tournée incomplète : %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete round: %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée incomplète : %@."
+          }
+        }
+      }
+    },
+    "Tournée incomplète : la sonde a atteint sa limite de requêtes." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete round: the probe reached its request limit."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée incomplète : la sonde a atteint sa limite de requêtes."
+          }
+        }
+      }
+    },
+    "Tournée incomplète : la sonde a quitté le réseau." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete round: the probe left the network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée incomplète : la sonde a quitté le réseau."
+          }
+        }
+      }
+    },
+    "Tournée incomplète : la sonde n'a pas répondu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete round: the probe did not reply."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée incomplète : la sonde n'a pas répondu."
+          }
+        }
+      }
+    },
+    "Tournée incomplète : tables de voisins pas encore lues." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incomplete round: neighbor tables not read yet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée incomplète : tables de voisins pas encore lues."
+          }
+        }
+      }
+    },
+    "Tournée à %@ : la sonde a déjà beaucoup servi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Round at %@: the probe has already been used a lot"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tournée à %@ : la sonde a déjà beaucoup servi"
+          }
+        }
+      }
+    },
     "Tous" : {
       "localizations" : {
         "en" : {
@@ -4365,6 +5533,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tous"
+          }
+        }
+      }
+    },
+    "Tous les liens radio entendus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All heard radio links"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les liens radio entendus"
           }
         }
       }
@@ -4465,6 +5649,70 @@
         }
       }
     },
+    "Un autre pont (%@) est déjà lié : oubliez-le d'abord." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Another bridge (%@) is already linked: forget it first."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre pont (%@) est déjà lié : oubliez-le d'abord."
+          }
+        }
+      }
+    },
+    "Utiliser cette adresse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use This Address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser cette adresse"
+          }
+        }
+      }
+    },
+    "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heard neighbors hidden when a node is selected: click to show them"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer"
+          }
+        }
+      }
+    },
+    "Voisins entendus montrés à la sélection d'un nœud : cliquer pour les masquer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heard neighbors shown when a node is selected: click to hide them"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voisins entendus montrés à la sélection d'un nœud : cliquer pour les masquer"
+          }
+        }
+      }
+    },
     "Voisins radio" : {
       "localizations" : {
         "en" : {
@@ -4477,6 +5725,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Voisins radio"
+          }
+        }
+      }
+    },
+    "Voisins à la sélection" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neighbors on selection"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voisins à la sélection"
           }
         }
       }
@@ -4577,6 +5841,22 @@
         }
       }
     },
+    "Wi-Fi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
+          }
+        }
+      }
+    },
     "Zones" : {
       "localizations" : {
         "en" : {
@@ -4589,6 +5869,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zones"
+          }
+        }
+      }
+    },
+    "a changé %lld fois de chemin" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "changed path %lld times"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "a changé %lld fois de chemin"
           }
         }
       }
@@ -4785,6 +6081,22 @@
         }
       }
     },
+    "aucun pont trouvé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no bridge found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun pont trouvé"
+          }
+        }
+      }
+    },
     "aucune sonde choisie" : {
       "localizations" : {
         "en" : {
@@ -4961,6 +6273,54 @@
         }
       }
     },
+    "chemin supposé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "assumed path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemin supposé"
+          }
+        }
+      }
+    },
+    "chemin vers le pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "path to the bridge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemin vers le pont"
+          }
+        }
+      }
+    },
+    "chemins" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "paths"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "chemins"
+          }
+        }
+      }
+    },
     "connecté · version %@ · %@" : {
       "localizations" : {
         "en" : {
@@ -5021,6 +6381,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "connu seulement avec la sonde"
+          }
+        }
+      }
+    },
+    "coordinateur (le pont)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "coordinator (the bridge)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "coordinateur (le pont)"
           }
         }
       }
@@ -5233,6 +6609,22 @@
         }
       }
     },
+    "erreur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "error"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "erreur"
+          }
+        }
+      }
+    },
     "erreur : %@" : {
       "localizations" : {
         "en" : {
@@ -5377,6 +6769,22 @@
         }
       }
     },
+    "inconnu du pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unknown to the bridge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "inconnu du pont"
+          }
+        }
+      }
+    },
     "inconnue" : {
       "localizations" : {
         "en" : {
@@ -5389,6 +6797,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "inconnue"
+          }
+        }
+      }
+    },
+    "injoignable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unreachable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "injoignable"
           }
         }
       }
@@ -5453,6 +6877,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "joignable, adresse plus annoncée"
+          }
+        }
+      }
+    },
+    "la sonde du réseau n'est pas la sonde retenue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "the probe on the network is not the chosen probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la sonde du réseau n'est pas la sonde retenue"
           }
         }
       }
@@ -5585,6 +7025,22 @@
         }
       }
     },
+    "liaison en cours…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linking…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "liaison en cours…"
+          }
+        }
+      }
+    },
     "liaison réseau perdue" : {
       "localizations" : {
         "en" : {
@@ -5613,6 +7069,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "liens par le réseau local (TREL) non montrés : la carte est radio seulement"
+          }
+        }
+      }
+    },
+    "lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lié"
+          }
+        }
+      }
+    },
+    "lié · erreur" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linked · error"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lié · erreur"
+          }
+        }
+      }
+    },
+    "lié · lecture…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "linked · reading…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lié · lecture…"
           }
         }
       }
@@ -5761,6 +7265,22 @@
         }
       }
     },
+    "parent d'avant (pointillé)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "previous parent (dotted)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent d'avant (pointillé)"
+          }
+        }
+      }
+    },
     "parent dans une autre pièce" : {
       "localizations" : {
         "en" : {
@@ -5821,6 +7341,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "pas vu par la sonde"
+          }
+        }
+      }
+    },
+    "passe complémentaire à %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "follow-up pass at %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "passe complémentaire à %@"
           }
         }
       }
@@ -6161,6 +7697,22 @@
         }
       }
     },
+    "tous" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "all"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tous"
+          }
+        }
+      }
+    },
     "tous les liens" : {
       "localizations" : {
         "en" : {
@@ -6189,6 +7741,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "tous les liens (+%lld)"
+          }
+        }
+      }
+    },
+    "trouvé, non lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "found, not linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "trouvé, non lié"
           }
         }
       }
@@ -6237,6 +7805,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vers son parent"
+          }
+        }
+      }
+    },
+    "voisin entendu (à la sélection)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "heard neighbor (when selected)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "voisin entendu (à la sélection)"
           }
         }
       }
@@ -6413,6 +7997,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "État de la sonde"
+          }
+        }
+      }
+    },
+    "à relier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "to link again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "à relier"
           }
         }
       }

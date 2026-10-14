@@ -30,17 +30,17 @@ struct CanalReseauTests {
     static let hote = "0123456789ABCDEF"
 
     /// Renvois a 100 et 200 ms ; veille lointaine (hors des tests qui la visent).
-    static func rapides(veille: Duration = .seconds(60), attenteVeille: Duration = .seconds(1)) -> CanalReseau.Reglages {
-        var r = CanalReseau.Reglages()
+    static func rapides(veille: Duration = .seconds(60), attenteVeille: Duration = .seconds(1)) -> CanalReseauUDP.Reglages {
+        var r = CanalReseauUDP.Reglages()
         r.renvois = [.milliseconds(100), .milliseconds(200)]
         r.veille = veille
         r.attenteVeille = attenteVeille
         return r
     }
 
-    static func canal(_ carte: CarteSimulee, reglages: CanalReseau.Reglages = rapides(),
-                      connexions: ConnexionsSimulees? = nil) async throws -> CanalReseau {
-        try await CanalReseau.connecter(hote: hote, cle: VecteursH1.psk, reglages: reglages,
+    static func canal(_ carte: CarteSimulee, reglages: CanalReseauUDP.Reglages = rapides(),
+                      connexions: ConnexionsSimulees? = nil) async throws -> CanalReseauUDP {
+        try await CanalReseauUDP.connecter(hote: hote, cle: VecteursH1.psk, reglages: reglages,
                                         reglagesTransport: TransportUDPTests.rapides()) { h, p in
             let c = ConnexionSimulee(hote: h, port: p, carte: carte)
             connexions?.ajouter(c)
@@ -85,7 +85,7 @@ struct CanalReseauTests {
     @Test(.timeLimit(.minutes(1))) func reponseAuSecondRenvoi() async throws {
         #expect(SondeUSB.delaiCommandeUSB == .seconds(3))
         #expect(SondeUSB.delaiCommandeReseau == .seconds(6))
-        #expect(CanalReseau.Reglages().renvois == [.seconds(2), .seconds(4)])
+        #expect(CanalReseauUDP.Reglages().renvois == [.seconds(2), .seconds(4)])
         let carte = CarteSimulee(cle: VecteursH1.psk, repondre: Self.sonde)
         let s = SondeUSB(canal: try await Self.canal(carte), delaiCommande: .milliseconds(800))
         try await s.demarrer {}
@@ -97,7 +97,7 @@ struct CanalReseauTests {
         await s.fermer()
     }
 
-    /// Deux `etat` lents de suite par le reseau, comme au debut d'une tournee (`SondeMaillage`,
+    /// Deux `etat` lents de suite par le reseau, comme au debut d'une tournee (`SondeMaillageThread`,
     /// puis `Tournee`) : chacun n'est servi qu'au second renvoi. L'echeance du premier, deja
     /// servi, n'expire pas le second, qui aboutit dans son propre delai (ici renvois a 0,4 et
     /// 0,8 s, attente de 1,2 s : l'app divisee par 5, renvois a 2 et 4 s, attente de 6 s).
@@ -209,7 +209,7 @@ struct CanalReseauTests {
     /// zero par tranches laisserait partir les 18 dernieres d'un coup (0,5 s entre la 10e et la
     /// 28e). Sans renvoi (la carte repond, renvois a 30 s) : chaque arrivee est un premier envoi.
     @Test(.timeLimit(.minutes(1))) func cadenceGlissanteAuDelaDeLaPremiereFenetre() async throws {
-        let defauts = CanalReseau.Reglages()
+        let defauts = CanalReseauUDP.Reglages()
         #expect(defauts.cadence == 18 && defauts.fenetreCadence == .seconds(1))
         let arrivees = Arrivees()
         let carte = Self.carteNotee(arrivees, repondre: Self.sonde)
@@ -265,7 +265,7 @@ struct CanalReseauTests {
     /// la fin du vol puis tous les 3 s, le dernier au plus tard 1 s avant l'echeance de
     /// `SondeUSB` (le delai plus 5 s) : aucun renvoi pendant le vol au-dela de 4 s.
     @Test func renvoisSelonLaCommande() {
-        let r = CanalReseau.Reglages()
+        let r = CanalReseauUDP.Reglages()
         let s: (Int) -> Duration = { .seconds($0) }
         #expect(r.renvois(pour: "diag 5000 1 1 6000") == [s(2), s(4), s(7), s(10)])
         #expect(r.renvois(pour: "diag 0400 0,1,2,6,9,24,26 12 8000") == [s(2), s(4), s(9), s(12)])
@@ -404,7 +404,7 @@ struct CanalReseauTests {
     /// pas de la garde de 1 s, reponse a la veille attendue 6 s. Les pas de la garde sont joues ici
     /// a 9,9 s puis a 10 s du dernier recu (l'ouverture), sans attendre.
     @Test func veilleApresDixSecondes() async throws {
-        let r = CanalReseau.Reglages()
+        let r = CanalReseauUDP.Reglages()
         #expect(r.veille == .seconds(10))
         #expect(r.attenteVeille == .seconds(6))
         #expect(r.pasGarde == .seconds(1))
@@ -480,8 +480,8 @@ struct CanalReseauTests {
         let annulees = connexions.toutes.allSatisfy { $0.annulee }
         #expect(annulees, "transport ferme")
         // La cause, montree comme dans Halo : « Connexion reseau perdue : la sonde ne repond plus… ».
-        #expect(c.raisonFermeture == CanalReseau.raisonSilence)
-        #expect(CanalReseau.raisonSilence.hasPrefix(ErreurReseau.cheminPerdu("").localizedDescription))
+        #expect(c.raisonFermeture == CanalReseauUDP.raisonSilence)
+        #expect(CanalReseauUDP.raisonSilence.hasPrefix(ErreurReseau.cheminPerdu("").localizedDescription))
     }
 
     /// Fermeture par l'app, ou session perdue : fin du flux des lignes.
@@ -502,7 +502,7 @@ struct CanalReseauTests {
 
     /// Canal sature : 30 commandes d'un coup, les 18 de la premiere fenetre partent et 12 attendent
     /// la cadence. La carte repond, sans renvoi pendant l'essai (renvois a 30 s).
-    static func canalSature() async throws -> (canal: CanalReseau, arrivees: Arrivees, lignes: RecueilLignes) {
+    static func canalSature() async throws -> (canal: CanalReseauUDP, arrivees: Arrivees, lignes: RecueilLignes) {
         let arrivees = Arrivees()
         var reglages = rapides()
         reglages.renvois = [.seconds(30), .seconds(60)]

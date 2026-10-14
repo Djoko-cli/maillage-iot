@@ -64,8 +64,11 @@ struct LegendePiecesTests {
                                    ScenePieces.Lien(de: idt("c"), vers: idt("a"), genre: .parent),
                                    ScenePieces.Lien(de: idt("d"), vers: idt("a"))],
                            ailleurs: true)
+        // Une scene de Thread seule n'a aucune des entrees propres a Zigbee (tache 7 : la legende porte les deux).
+        let deZigbee: Set<Entree> = [.routeurZigbee, .nonIdentifieZigbee, .coordinateur, .injoignable, .chemin,
+                                     .cheminSuppose, .voisinEntendu, .parentDAvant]
         #expect(LegendePieces.rubriques(tout) == LegendePieces.Groupe.allCases.map {
-            LegendePieces.Rubrique(groupe: $0, entrees: $0.entrees)
+            LegendePieces.Rubrique(groupe: $0, entrees: $0.entrees.filter { !deZigbee.contains($0) })
         })
         #expect(Set(LegendePieces.Groupe.allCases.flatMap(\.entrees)) == Set(Entree.allCases), "chaque entree a son groupe")
         let sansLiens = Lecture(couleurs: [idt("c"): .appareil(.joignable)], chefs: [idt("a")], ailleurs: true)

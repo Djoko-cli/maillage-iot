@@ -45,7 +45,7 @@ struct FenetreReglages: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(OuvertureSession.self) private var ouverture
     @Environment(NomsPasseur.self) private var nomsMaison
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
     @AppStorage(Notifications.cle(.scission)) private var scission = CategorieAlerte.scission.parDefaut
     @AppStorage(Notifications.cle(.routeurDisparu)) private var routeurDisparu = CategorieAlerte.routeurDisparu.parDefaut
@@ -228,8 +228,8 @@ struct FenetreReglages: View {
                 // Le reseau se propose une fois l'acces autorise (cle de ce Mac pour la sonde).
                 if sonde.reseauDisponible || sonde.liaison == .reseau {
                     Picker("Liaison", selection: Binding(get: { sonde.liaison }, set: { sonde.choisirLiaison($0) })) {
-                        Text("USB").tag(SondeMaillage.Liaison.usb)
-                        Text("Réseau Thread").tag(SondeMaillage.Liaison.reseau)
+                        Text("USB").tag(SondeMaillageThread.Liaison.usb)
+                        Text("Réseau Thread").tag(SondeMaillageThread.Liaison.reseau)
                     }
                     .pickerStyle(.segmented)
                 }
@@ -342,7 +342,7 @@ struct FenetreReglages: View {
 
     /// Note a la place du code Matter : par le reseau, la sonde (1.0.2) ne donne ni QR code ni
     /// code d'appairage, qui ne circulent pas en clair ; nil en USB, ou quand elle les donne.
-    static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillage.Liaison) -> String? {
+    static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillageThread.Liaison) -> String? {
         guard liaison == .reseau, (b.qr ?? "").isEmpty, (b.code ?? "").isEmpty else { return nil }
         return String(localized: "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher.")
     }
@@ -366,7 +366,7 @@ struct FenetreReglages: View {
 
     /// Etat de la sonde, precede du nom de la sonde retenue quand il la concerne
     /// (« SONDE-T1 · connectee ») ; seul pour un autre port choisi ou sans nom connu.
-    static func texteEtatSonde(_ e: SondeMaillage.Etat, nom: String?) -> String {
+    static func texteEtatSonde(_ e: SondeMaillageThread.Etat, nom: String?) -> String {
         let texte = switch e {
         case .sansSonde: String(localized: "aucune sonde choisie")
         case .absente: String(localized: "absente (débranchée ?)")
@@ -422,7 +422,7 @@ struct FenetreReglages: View {
 /// Acces reseau de la sonde retenue (Reglages › Sonde) : son etat, et « Autoriser l'acces
 /// reseau », qui cree la cle par l'USB (sonde branchee et connectee par son port).
 struct AccesReseauSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         LabeledContent("Accès réseau", value: FenetreReglages.texteAccesReseau(empreinte: sonde.empreinteAcces))
@@ -450,7 +450,7 @@ struct AccesReseauSonde: View {
 /// jusqu'a la connexion suivante reussie, quand l'etat est deja passe a la reprise (sonde
 /// promenee dans la maison). Rien en USB.
 struct DernierePerteSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         if sonde.liaison == .reseau, let perte = sonde.dernierePerte {
@@ -466,7 +466,7 @@ struct DernierePerteSonde: View {
 /// en cours ou dernier releve, erreur de la derniere tournee. Seulement la sonde connectee :
 /// debranchee, en reprise ou pendant une connexion, ces lignes seraient perimees.
 struct ReleveSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         if case .connectee = sonde.etat {
@@ -483,7 +483,7 @@ struct ReleveSonde: View {
             }
             if let a = sonde.avancement, let debut = sonde.debutTournee {
                 TimelineView(.periodic(from: debut, by: 1)) { contexte in
-                    LabeledContent("Tournée", value: TexteTournee.reglages(a, debut: debut, maintenant: contexte.date))
+                    LabeledContent("Tournée", value: TexteTourneeThread.reglages(a, debut: debut, maintenant: contexte.date))
                 }
             } else if let d = sonde.derniereTournee {
                 LabeledContent("Dernier relevé", value: FenetreReglages.texteDernierReleve(d))

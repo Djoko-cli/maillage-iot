@@ -45,11 +45,37 @@ struct FenetrePieces: View {
     static let cleMode = "vuePieces3D"
     /// Preference des etages en 2D : en grille (vrai, par defaut) ou en rangee.
     static let cleGrille = "etagesEnGrille"
+    /// Preference des liens montres de Zigbee : « chemins » (par defaut) ou « tous » (`ModeLiens`). Propre a Zigbee
+    /// (Thread n'a pas de chemin vers un pont) : la scene reunie la lit (tache 8).
+    static let cleLiens = "zigbee.liensMontres"
+
+    /// Les liens montres gardes ; « chemins » sans preference ou pour une valeur inconnue.
+    static func modeLiens(_ valeur: String?) -> ModeLiens {
+        valeur.flatMap(ModeLiens.init(rawValue:)) ?? .chemins
+    }
+    /// Preference des voisins entendus a la selection (mode « chemins », Zigbee) : montres (vrai, par defaut) ou masques.
+    static let cleVoisins = "zigbee.voisinsALaSelection"
+
+    /// Les voisins montres gardes ; montres sans preference ou pour une valeur qui n'est pas un booleen.
+    static func voisinsMontres(_ valeur: Any?) -> Bool {
+        valeur as? Bool ?? true
+    }
+
+    /// L'aide du bouton « Voisins » : ce que le clic fait, ou pourquoi il est grise (mode « tous »).
+    static func aideVoisins(montres: Bool, mode: ModeLiens) -> String {
+        if mode == .tous { return String(localized: "Sans effet avec « Liens : tous » : tous les liens radio sont montrés") }
+        return montres
+            ? String(localized: "Voisins entendus montrés à la sélection d'un nœud : cliquer pour les masquer")
+            : String(localized: "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer")
+    }
+
     /// Taille minimale de la fenetre (polissage B, section 3) : avec la fiche et ses courbes, la scene
     /// garde environ 230 pt de haut (88 pour 820 x 560, tri du sous-projet A, n° 11 ; 234 mesures, ligne de niveau
     /// comprise, sur le jeu de l'historique). 820 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
     /// invisible : la fenetre ne descend pas sous 820 x 732 pt.
     static let tailleMinimale = CGSize(width: 820, height: 680)
+    /// Largeur par defaut de la fenetre (`MaillageIoTApp`, `.defaultSize`).
+    static let largeurParDefaut: CGFloat = 1100
     /// Bord des elements poses sur la vue, et ecart entre eux (pt).
     static let bord: CGFloat = 16
     static let espacement: CGFloat = 10
@@ -79,7 +105,8 @@ struct FenetrePieces: View {
         demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("positions-pieces.json")
     }
 
-    /// Redessin de la fenetre au debut de chaque minute. « Ancien » (6 min) et « perime » (15 min)
+    /// Redessin de la fenetre au debut de chaque minute. « Ancien » et « perime » (6 et 15 min pour Thread, 16 et 45 min
+    /// pour Zigbee)
     /// ne dependent que de l'heure (`Surveillance.maintenant`), que rien n'observe : quand la sonde
     /// se tait, aucun evenement ne redessine la vue ; l'etat parait avec une minute de retard au
     /// plus, et le redessin n'a lieu que dans cette fenetre, tant qu'elle est ouverte.
@@ -380,14 +407,35 @@ struct MenuPieces: View {
     }
 }
 
-/// Capsule de droite du haut de la fenetre : l'interrupteur 2D / 3D, puis « Rotation lente », en 3D
-/// seulement (coupee par « Reduire les animations »).
+/// Capsule de droite du haut de la fenetre : pour une scene qui a des noeuds Zigbee, les liens montres (chemins ou tous)
+/// et le bouton des voisins entendus a la selection (grise en mode « tous ») ; l'interrupteur 2D / 3D, puis
+/// « Rotation lente », en 3D seulement (coupee par « Reduire les animations »).
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les liens montres, gardes d'un lancement a l'autre.
+    @AppStorage(FenetrePieces.cleLiens) private var liensGardes = ModeLiens.chemins.rawValue
+    /// Les voisins entendus a la selection, gardes d'un lancement a l'autre.
+    @AppStorage(FenetrePieces.cleVoisins) private var voisinsGardes = true
 
     var body: some View {
         HStack(spacing: 5) {
+            if moteur.scene?.noeuds.contains(where: { $0.id.protocole == .zigbee }) == true {
+                SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
+                    moteur.liens = v
+                    liensGardes = v.rawValue
+                }))
+                Toggle(isOn: Binding(get: { moteur.voisins }, set: { v in
+                    moteur.voisins = v
+                    voisinsGardes = v
+                })) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .accessibilityLabel(Text("Voisins à la sélection"))
+                }
+                .toggleStyle(StyleBasculeCapsule())
+                .disabled(moteur.liens == .tous)
+                .help(FenetrePieces.aideVoisins(montres: moteur.voisins, mode: moteur.liens))
+            }
             SelecteurVue(troisD: Binding(get: { moteur.troisD }, set: { v in
                 moteur.basculer(troisD: v)
                 troisD = v
@@ -483,7 +531,10 @@ struct LigneDuBas: View {
     var body: some View {
         // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
         let ailleurs = moteur.isolee != nil && !moteur.textes.ailleurs.isEmpty
-        let rubriques = entree.map { LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs)) } ?? []
+        let rubriques = entree.map {
+            LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens,
+                                                           voisins: moteur.voisins))
+        } ?? []
         let estRepliee = legendeForcee ?? (repliee || repliDePlace)
         let ouverte = !rubriques.isEmpty && !estRepliee
         HStack(spacing: 0) {

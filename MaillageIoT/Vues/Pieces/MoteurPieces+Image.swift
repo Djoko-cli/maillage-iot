@@ -27,8 +27,8 @@ extension MoteurPieces {
         guard pret, let scene else { return }
         let parts = scene.pieces.map { fk[$0.id] ?? 0 }
         let etat = EtatAnime(t: t, s: s, fk: parts, focus: focus, survol: survol, selection: selection, se: se,
-                             ek: scene.etages.map { ek[$0.id] ?? 0 }, survolEtage: survolEtage,
-                             noeudsEstompes: noeudsEstompes, liensEstompes: liensEstompes)
+                             ek: scene.etages.map { ek[$0.id] ?? 0 }, survolEtage: survolEtage, liens: liens,
+                             voisins: voisins, noeudsEstompes: noeudsEstompes, liensEstompes: liensEstompes)
         let p = SceneProjetee(scene: scene, cartes: cartes, positions: positions, geometrie: geometrie, etat: etat,
                               orbite: orbite, cadre: cadre, poses: posesAffichees)
         PlacementNoms.regler(&etiquettes, scene: scene, niveau: p.niveau, survol: survol, selection: selection,
@@ -139,7 +139,9 @@ extension MoteurPieces {
         }
     }
 
-    private func avancer(_ now: Double) {
+    /// Une image de l'horloge du moteur, a l'heure `now` (`MoteurPieces.maintenant()`) : avance la camera, les parts
+    /// propres et l'estompement du mode focus. Les tests l'appellent avec une heure choisie.
+    func avancer(_ now: Double) {
         dt = instant.map { min(0.1, max(0, now - $0)) } ?? 0
         instant = now
         let basculait = envol != nil || fondu != nil

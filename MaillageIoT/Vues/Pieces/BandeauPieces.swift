@@ -11,6 +11,8 @@ extension EnvironmentValues {
     /// Rendu d'une capture (`CapturesPieces`, par `ImageRenderer`) : ni le verre, ni les vues d'AppKit
     /// n'y sont dessines ; les vues posent a leur place le dessin de la maquette.
     @Entry var capturePieces = false
+    /// La periode des courbes de la fiche dans une capture (qui ne rend pas le choix de la periode) ; nil, 24 h.
+    @Entry var periodeCapture: PeriodeCourbes?
 }
 
 /// Cadre des trois boutons de la fenetre (fermer, reduire, agrandir), dans l'espace de la vue, dont
@@ -261,14 +263,15 @@ struct BandeFenetre: View {
 /// Haut de la fenetre, pose sur la scene : la ligne des capsules, centree sur les trois boutons de la
 /// fenetre (le reseau juste apres eux, la vue contre le bord droit, la bande entre elles) ; dessous, la
 /// colonne de gauche, contre le bord gauche de la fenetre, a la marge de la legende (ronde finale du 02/10) : la
-/// ligne de la tournee, pendant une tournee seulement, le bandeau de scission, celui d'une maison sans pieces, le
+/// ligne de la tournee, pendant une tournee seulement, le bandeau de scission (Thread), l'indicateur du maillage
+/// incomplet (Zigbee), celui d'une maison sans pieces, le
 /// fil, et, juste sous lui, la ligne de niveau avec la pastille d'un releve ancien (`RangeeNiveau`, decision de
 /// Djoko du 02/10). Son bas mesure donne la marge du haut de la vue d'ensemble (`surBas`, puis
 /// `FenetrePieces.margeHaut`), avec la place d'une ligne de tournee absente tant qu'une sonde est retenue : la
 /// scene ne bouge pas quand la ligne parait ou disparait, ni quand la ligne de niveau change de texte.
 struct HautPieces: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
     @Environment(\.accessibilityReduceMotion) private var reduire
     let moteur: MoteurPieces
     @Binding var troisD: Bool
@@ -276,6 +279,9 @@ struct HautPieces: View {
     var sansPieces = false
     /// Le releve de la sonde est ancien : sa pastille est a cote de la ligne de niveau.
     var ancien = false
+    /// « Maillage incomplet » (avec l'heure de la passe complementaire programmee, `TexteTourneeZigbee.texteIncomplet`) :
+    /// il prend la place de la ligne de la tournee quand aucune ne tourne ; nil : aucun.
+    var texteIncomplet: String?
     var feux = CadreFeux.defaut
     /// Le bas du haut de la fenetre, dans l'espace de la vue, la place d'une ligne de tournee absente comprise.
     var surBas: (CGFloat) -> Void = { _ in }
@@ -296,7 +302,8 @@ struct HautPieces: View {
     var body: some View {
         let tournee = LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee)
         // Hors tournee, une sonde retenue : la marge du haut compte la ligne absente et son espacement.
-        let reserve = tournee == .comptee ? (hauteurTournee ?? 0) + FenetrePieces.espacement : 0
+        // L'indicateur du maillage incomplet prend cette place (de la meme hauteur) : rien ne saute.
+        let reserve = tournee == .comptee && texteIncomplet == nil ? (hauteurTournee ?? 0) + FenetrePieces.espacement : 0
         VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
             // Chaque capsule garde la largeur de son contenu (`fixedSize`) : la bande vide prend la place qui
             // reste. Sans cela, les trois se la partagent et la capsule du reseau tronque ses boutons.
@@ -328,6 +335,10 @@ struct HautPieces: View {
                         BandeauScission(reseau: r)
                             .transition(apparition.transitionAnimee)
                     }
+                    if let texteIncomplet {
+                        IndicateurIncomplet(texte: texteIncomplet, hauteur: hauteurTournee)
+                            .transition(apparition.transitionAnimee)
+                    }
                     if sansPieces {
                         BandeauSansPieces()
                             .transition(apparition.transitionAnimee)
@@ -339,6 +350,7 @@ struct HautPieces: View {
             }
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.thread.reseau?.estScinde == true)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: sansPieces)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: texteIncomplet != nil)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: tournee == .montree)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: ancien)
             .background(alignment: .topLeading) {
@@ -422,6 +434,50 @@ struct SelecteurVue: View {
             Picker("Vue", selection: $troisD) {
                 Text("2D").tag(false)
                 Text("3D").tag(true)
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private func segment(_ titre: LocalizedStringKey, choisi: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(titre)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(choisi ? 1 : 0.8))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(Color.white.opacity(choisi ? 0.28 : 0)))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// « Liens : chemins | tous » (consigne de l'etape 3 bis, section 3) : le chemin de chaque routeur vers le pont, ou
+/// tous les liens radio entendus ; dessine comme l'interrupteur 2D / 3D.
+struct SelecteurLiens: View {
+    @Binding var liens: ModeLiens
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("Liens")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.7))
+                .padding(.leading, 6)
+            HStack(spacing: 0) {
+                segment("chemins", choisi: liens == .chemins) { liens = .chemins }
+                segment("tous", choisi: liens == .tous) { liens = .tous }
+            }
+            .background(Capsule().fill(Color.white.opacity(0.08)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.16), lineWidth: 0.5))
+        }
+        .help(liens == .chemins
+            ? String(localized: "Les chemins des messages vers le pont ; les voisins entendus d'un nœud à sa sélection")
+            : String(localized: "Tous les liens radio entendus"))
+        .accessibilityRepresentation {
+            Picker("Liens", selection: $liens) {
+                Text("chemins").tag(ModeLiens.chemins)
+                Text("tous").tag(ModeLiens.tous)
             }
             .pickerStyle(.segmented)
         }

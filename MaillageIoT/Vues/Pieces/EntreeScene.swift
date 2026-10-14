@@ -75,11 +75,12 @@ struct EntreeScene: Equatable {
     }
 
     /// Mode focus du graphe : ce qui reste net a la selection du noeud `id`, calcule par le modele du protocole
-    /// (`ModeleProtocole.miseEnAvant`, pour Thread `FocusThread`) sur le graphe de cette scene et ses chefs. Le moteur,
+    /// (`ModeleProtocole.miseEnAvant`, pour Thread `FocusThread`) sur le graphe de cette scene et ses chefs ; `voisins` :
+    /// ses voisins entendus aussi (Zigbee, en mode « chemins » ; le moteur passe vrai en mode « tous »). Le moteur,
     /// generique, ne fait que l'appeler (`MoteurPieces.majMiseEnAvant`).
     @MainActor
-    func miseEnAvant(de id: IdNoeud) -> MiseEnAvant? {
-        modele.miseEnAvant(de: id, graphe: graphe, chefs: chefs, voisins: true)
+    func miseEnAvant(de id: IdNoeud, voisins: Bool = true) -> MiseEnAvant? {
+        modele.miseEnAvant(de: id, graphe: graphe, chefs: chefs, voisins: voisins)
     }
 
     /// Ce qui oblige a recalculer la disposition : celle de la scene, sans les badges des noms (polissage D, section 2).

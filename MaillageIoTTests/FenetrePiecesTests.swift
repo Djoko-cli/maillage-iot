@@ -40,7 +40,7 @@ struct FenetrePiecesTests {
     /// ajouterait la barre de titre), faite comme celle de l'app (`sansBarreDeTitre`). `sonde` : la sonde de la vue
     /// (sinon une sonde inactive, sans sonde retenue). A retirer par `fermer`.
     static func fenetre(_ s: Surveillance, taille: CGSize, preferences p: UserDefaults,
-                        reduire: Bool = false, sonde: SondeMaillage? = nil) throws -> (NSWindow, MoteurPieces) {
+                        reduire: Bool = false, sonde: SondeMaillageThread? = nil) throws -> (NSWindow, MoteurPieces) {
         let vue = FenetrePieces(fichierPlaces: nil)
         let etat = try #require(Mirror(reflecting: vue).children.first { $0.label == "_moteur" }?.value)
         let moteur = try #require(Mirror(reflecting: etat).descendant("_value") as? MoteurPieces)
@@ -52,7 +52,7 @@ struct FenetrePiecesTests {
         fenetre.contentView = NSHostingView(rootView: vue
             .environment(s)
             .environment(NomsPasseur())
-            .environment(sonde ?? SondeMaillage(preferences: p, actif: false))
+            .environment(sonde ?? SondeMaillageThread(preferences: p, actif: false))
             .environment(\._accessibilityReduceMotion, reduire)
             .defaultAppStorage(p))
         fenetre.setFrame(NSRect(origin: fenetre.frame.origin, size: taille), display: false)
@@ -154,7 +154,7 @@ struct FenetrePiecesTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
-        let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in SondeMaillageTests.canalRetenu(journal) })
+        let sonde = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in SondeMaillageTests.canalRetenu(journal) })
         let noms = NomsPasseur()
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
@@ -387,7 +387,7 @@ struct FenetrePiecesTests {
         let vue = FenetrePieces(fichierPlaces: nil)
             .environment(s)
             .environment(NomsPasseur())
-            .environment(SondeMaillage(preferences: p, actif: false))
+            .environment(SondeMaillageThread(preferences: p, actif: false))
         #expect(FenetrePieces.tailleMinimale == CGSize(width: 820, height: 680))
         #expect(NSHostingView(rootView: vue).fittingSize == FenetrePieces.tailleMinimale)
     }
@@ -855,7 +855,7 @@ struct FenetrePiecesTests {
         #expect(ligne.minX == feux.droite + HautPieces.ecartFeux, "la capsule de gauche apres les boutons : \(ligne)")
         let capsule = NSHostingView(rootView: BarreOutils().capsuleDeVerre()
             .environment(demo)
-            .environment(SondeMaillage(preferences: p, actif: false))
+            .environment(SondeMaillageThread(preferences: p, actif: false))
             .environment(NomsPasseur())).fittingSize.height
         let hautDesCapsules = feux.milieu - capsule / 2
         #expect(hautDesCapsules >= 10 && hautDesCapsules <= 13, "le haut des capsules : \(hautDesCapsules) pt")
@@ -878,7 +878,7 @@ struct FenetrePiecesTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         let canal = SondeMaillageTests.canalRetenu(journal)
-        let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let sonde = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
         #expect(demo.thread.reseau?.estScinde == true, "la demo : le bandeau de scission, dans la colonne")
@@ -939,7 +939,7 @@ struct FenetrePiecesTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         let canal = SondeMaillageTests.canalRetenu(journal)
-        let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let sonde = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
         let (fenetre, moteur) = try Self.fenetre(demo, taille: CGSize(width: 1100, height: 760), preferences: p,
@@ -1117,7 +1117,7 @@ struct FenetrePiecesTests {
     @Test func bandeEntreLesCapsules() throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let sonde = SondeMaillage(preferences: p, actif: false)
+        let sonde = SondeMaillageThread(preferences: p, actif: false)
         let noms = NomsPasseur()
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
@@ -1163,7 +1163,7 @@ struct FenetrePiecesTests {
     func capsulesALeurLargeurIdeale(troisD: Bool) throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let sonde = SondeMaillage(preferences: p, actif: false)
+        let sonde = SondeMaillageThread(preferences: p, actif: false)
         let noms = NomsPasseur()
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()

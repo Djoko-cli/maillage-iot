@@ -212,13 +212,13 @@ struct AffichageSondeTests {
     }
 
     /// Ligne du menu : le nom de la sonde a la place de « Sonde » quand il est donne (celui de la
-    /// sonde retenue, quand l'etat la concerne : `SondeMaillage.nomEtat`) ; pendant une tournee,
+    /// sonde retenue, quand l'etat la concerne : `SondeMaillageThread.nomEtat`) ; pendant une tournee,
     /// son etape et son compteur. Etat des Reglages : « SONDE-01 · connectee », l'etat seul sans nom.
     @Test func menuEtReglages() {
         let t = Date(timeIntervalSince1970: 1_790_000_000)
         let sonde = String(localized: "Sonde")
-        #expect(SondeMaillage.nomAffiche(nil) == sonde)
-        #expect(SondeMaillage.nomAffiche("SONDE-01") == "SONDE-01")
+        #expect(SondeMaillageThread.nomAffiche(nil) == sonde)
+        #expect(SondeMaillageThread.nomAffiche("SONDE-01") == "SONDE-01")
         #expect(MenuBarre.ligneSonde(.sansSonde, nom: nil, derniere: nil, avancement: nil, maintenant: t) == nil)
         #expect(MenuBarre.ligneSonde(.absente, nom: nil, derniere: nil, avancement: nil, maintenant: t)
                 == String(localized: "\(sonde) : absente"))
@@ -238,10 +238,10 @@ struct AffichageSondeTests {
                 == String(localized: "\("SONDE-01") : connectée · relevé \(FicheNoeud.relatif(t - 120, t))"))
         let resolution = AvancementTournee(etape: .resolution, fait: 24, total: 48)
         #expect(MenuBarre.ligneSonde(.connectee(b), nom: "SONDE-01", derniere: t - 120, avancement: resolution, maintenant: t)
-                == String(localized: "\("SONDE-01") : \(TexteTournee.etape(.resolution)) \(24)/\(48)…"))
+                == String(localized: "\("SONDE-01") : \(TexteTourneeThread.etape(.resolution)) \(24)/\(48)…"))
         let rien = AvancementTournee(etape: .identites, fait: 0, total: 0)
         #expect(MenuBarre.ligneSonde(.connectee(b), nom: nil, derniere: nil, avancement: rien, maintenant: t)
-                == String(localized: "\(sonde) : \(TexteTournee.etape(.identites))…"))
+                == String(localized: "\(sonde) : \(TexteTourneeThread.etape(.identites))…"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "connectée"))"))
         #expect(FenetreReglages.texteEtatSonde(.absente, nom: "SONDE-01")
@@ -276,21 +276,21 @@ struct AffichageSondeTests {
     /// seule quand elle n'a rien a faire ; duree en m:ss dans la barre du graphe, en unites
     /// dans les Reglages.
     @Test func texteAvancement() {
-        let etapes = AvancementTournee.Etape.allCases.map(TexteTournee.etape)
+        let etapes = AvancementTournee.Etape.allCases.map(TexteTourneeThread.etape)
         #expect(Set(etapes).count == etapes.count)
         #expect(!etapes.contains(""))
         let a = AvancementTournee(etape: .resolution, fait: 24, total: 48)
-        #expect(TexteTournee.avancement(a) == String(localized: "\(TexteTournee.etape(.resolution)) · \(24)/\(48)"))
-        #expect(TexteTournee.avancement(AvancementTournee(etape: .identites, fait: 0, total: 0))
-                == TexteTournee.etape(.identites))
+        #expect(TexteTourneeThread.avancement(a) == String(localized: "\(TexteTourneeThread.etape(.resolution)) · \(24)/\(48)"))
+        #expect(TexteTourneeThread.avancement(AvancementTournee(etape: .identites, fait: 0, total: 0))
+                == TexteTourneeThread.etape(.identites))
         #expect(TexteTournee.chrono(42) == "0:42")
         #expect(TexteTournee.chrono(600) == "10:00")
         #expect(TexteTournee.chrono(3723) == "1:02:03")
         #expect(TexteTournee.chrono(-3) == "0:00", "horloge qui recule")
         let t = Date(timeIntervalSince1970: 1_790_000_000)
-        #expect(TexteTournee.barre(a, debut: t, maintenant: t + 42) == String(localized: "\(TexteTournee.avancement(a)) · \("0:42")"))
-        #expect(TexteTournee.reglages(a, debut: t, maintenant: t + 42)
-                == String(localized: "\(TexteTournee.avancement(a)) · depuis \(TexteTournee.duree(42))"))
+        #expect(TexteTourneeThread.barre(a, debut: t, maintenant: t + 42) == String(localized: "\(TexteTourneeThread.avancement(a)) · \("0:42")"))
+        #expect(TexteTourneeThread.reglages(a, debut: t, maintenant: t + 42)
+                == String(localized: "\(TexteTourneeThread.avancement(a)) · depuis \(TexteTournee.duree(42))"))
         #expect(TexteTournee.duree(42).contains("42"))
         #expect(TexteTournee.duree(90).contains("1") && TexteTournee.duree(90).contains("30"))
     }

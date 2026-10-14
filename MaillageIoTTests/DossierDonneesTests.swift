@@ -12,7 +12,7 @@ struct DossierDonneesTests {
     }
 
     @Test func clesDePreferencesThreadPrefixees() {
-        #expect(SondeMaillage.cles.allSatisfy { $0.hasPrefix("thread.") })
+        #expect(SondeMaillageThread.cles.allSatisfy { $0.hasPrefix("thread.") })
         #expect(SurveillanceThread.cleScissionsNotifiees == "thread.scissionsNotifiees")
     }
 }

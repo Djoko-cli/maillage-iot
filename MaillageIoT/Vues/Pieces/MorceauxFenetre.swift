@@ -13,7 +13,7 @@ struct NoeudChoisi: Identifiable {
 /// Capsule de gauche du haut de la fenetre : reseau, appareils IP, journal, rafraichir.
 struct BarreOutils: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
     @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(\.openWindow) private var openWindow
     @State private var appareilsIP = false
@@ -25,7 +25,7 @@ struct BarreOutils: View {
     }
 
     /// Aide du bouton rafraichir : ce qu'il lancera vraiment. Le reseau toujours ; une tournee
-    /// si la sonde est connectee et libre (`SondeMaillage.tourneeAuRafraichir`) ; les noms de
+    /// si la sonde est connectee et libre (`SondeMaillageThread.tourneeAuRafraichir`) ; les noms de
     /// Maison si le passeur sera lance (`lancePasseur`).
     static func aideRafraichir(tournee: Bool, passeur: Bool) -> String {
         switch (tournee, passeur) {
@@ -84,7 +84,7 @@ struct BarreOutils: View {
 /// haut compte sa place (`gabarit`) tant qu'une sonde est retenue, comme avant, et la vue d'ensemble ne se recadre pas
 /// a chaque tournee. Vue a part : seule elle se redessine a chaque pas de la tournee, pas la fenetre de la vue.
 struct LigneTournee: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     /// Ce que fait la ligne : montree pendant une tournee ; hors tournee, une sonde retenue, cachee, mais sa place
     /// comptee dans la marge du haut ; rien sans sonde.
@@ -137,11 +137,11 @@ struct IndicateurTournee: View {
             // pas de taille d'une etape a l'autre (texte cale a gauche).
             ZStack(alignment: .leading) {
                 ForEach(AvancementTournee.Etape.allCases, id: \.self) { e in
-                    Text(TexteTournee.gabaritBarre(e)).hidden()
+                    Text(TexteTourneeThread.gabaritBarre(e)).hidden()
                 }
                 if let debut {
                     TimelineView(.periodic(from: debut, by: 1)) { contexte in
-                        Text(TexteTournee.barre(avancement, debut: debut, maintenant: contexte.date))
+                        Text(TexteTourneeThread.barre(avancement, debut: debut, maintenant: contexte.date))
                     }
                 }
             }
@@ -174,6 +174,22 @@ struct BandeauScission: View {
             return String(localized: "Réseau scindé en \(n) partitions, constaté le \(quand) · à part : \(aPart)")
         }
         return String(localized: "Réseau scindé en \(n) partitions depuis le \(quand) · à part : \(aPart)")
+    }
+}
+
+/// « Maillage incomplet » (Zigbee, avec l'heure de la passe complementaire programmee), a la place de la ligne de la
+/// tournee quand aucune ne tourne : texte discret, de la hauteur de la ligne (`hauteur`, mesuree sur son gabarit) pour
+/// que la colonne ne bouge pas quand l'une prend la place de l'autre.
+struct IndicateurIncomplet: View {
+    let texte: String
+    let hauteur: CGFloat?
+
+    var body: some View {
+        Text(texte)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .frame(height: hauteur)
     }
 }
 

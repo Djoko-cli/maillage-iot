@@ -5,7 +5,7 @@ import Observation
 import os
 
 /// Chiffres du reseau affiche, pour la barre des menus.
-struct ResumeReseau: Equatable {
+struct ResumeReseauThread: Equatable {
     var nom: String
     var partitions: Int
     var routeurs: Int
@@ -45,6 +45,9 @@ final class SurveillanceThread: ModeleProtocole {
     }
 
     let mode: Surveillance.Mode
+    /// Ce modele rejoue la panne du 27/09 ; faux : en demo, un modele muet (la demo n'a qu'un reseau a la fois, la demo
+    /// combinee est a l'etape 3b).
+    let rejoueLaDemo: Bool
     private(set) var etatEcoute: EtatEcoute
     private(set) var suivi = Suivi()
     private(set) var dernierReleve: Annonces?
@@ -65,7 +68,7 @@ final class SurveillanceThread: ModeleProtocole {
     /// il se montre quel que soit son age, frais ou « ancien » selon la regle normale, mais jamais perime (la
     /// peremption de 15 min ne vaut que pour un maillage recu pendant que l'app tourne).
     private(set) var maillageRelu = false
-    /// Une tournee de la sonde est en cours (`SondeMaillage.surTournee`) : le
+    /// Une tournee de la sonde est en cours (`SondeMaillageThread.surTournee`) : le
     /// maillage affiche attend le suivant, il n'est pas « ancien ».
     var tourneeEnCours = false
     /// Historique de la sonde (spec de la sonde, section 6) : les releves des 30 derniers jours,
@@ -109,9 +112,11 @@ final class SurveillanceThread: ModeleProtocole {
     /// `dossier` : la racine des donnees de l'app ; les fichiers de Thread (associations, dernier maillage, adresses
     /// gardees, historique de la sonde) vont sous `Thread/` (nil : nulle part) ; `surnoms` : ceux de `surnoms.json`, de
     /// tous les protocoles (le resolveur de noms ne garde que ceux de Thread) ; `preferences` : les scissions deja
-    /// notifiees (mode direct, une fois demarre).
-    init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults) {
+    /// notifiees (mode direct, une fois demarre) ; `rejoueLaDemo` : en demo, la panne du 27/09.
+    init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults,
+         rejoueLaDemo: Bool = true) {
         self.mode = mode
+        self.rejoueLaDemo = rejoueLaDemo
         self.preferences = preferences
         switch mode {
         case .direct:
@@ -129,7 +134,7 @@ final class SurveillanceThread: ModeleProtocole {
             fichierAssociations = nil
             fichierMaillage = nil
             fichierAdresses = nil
-            noms = ResolveurNoms(maison: NomsDemo.maison)
+            noms = rejoueLaDemo ? ResolveurNoms(maison: NomsDemo.maison) : ResolveurNoms()
             fichiersHistorique = nil
         }
     }
@@ -137,6 +142,7 @@ final class SurveillanceThread: ModeleProtocole {
     func demarrer() {
         switch mode {
         case .demo:
+            guard rejoueLaDemo else { return }
             for a in ScenarioPanne.releves { integrer(a) }
             if let m = instantane.flatMap({ MaillageDemo.maillage($0, date: maintenant) }) {
                 recevoir(m, a: maintenant)
@@ -194,8 +200,10 @@ final class SurveillanceThread: ModeleProtocole {
         garderAdresses(releve: a.date)
     }
 
-    /// Verse des evenements au journal de la coque (qui les marque du protocole Thread, les garde et notifie).
+    /// Verse des evenements au journal de la coque (qui les marque du protocole Thread, les garde et notifie). Un modele
+    /// n'est jamais utilise apres la mort de sa coque : en Debug, des evenements perdus sont une erreur.
     private func ajouter(_ evenements: [Evenement]) {
+        assert(coque != nil || evenements.isEmpty, "SurveillanceThread sans coque : des evenements seraient perdus")
         coque?.ajouter(evenements, de: Self.protocole)
     }
 
@@ -445,7 +453,7 @@ final class SurveillanceThread: ModeleProtocole {
         return suivi.dernieresAdresses.filter { verifies[$0.key] != nil }
     }
 
-    /// Sonde oubliee (`SondeMaillage.surOubli`) : son maillage part tout de suite, sans attendre
+    /// Sonde oubliee (`SondeMaillageThread.surOubli`) : son maillage part tout de suite, sans attendre
     /// qu'il soit perime ; le graphe revient aux pointilles. Son suivi aussi : le maillage suivant
     /// (une autre sonde, plus tard) est un point de depart, sans evenement. L'historique reste : il
     /// parle du reseau, pas de la sonde.
@@ -466,6 +474,11 @@ final class SurveillanceThread: ModeleProtocole {
     /// Veille du Mac (appele au reveil par la coque) : ses evenements vont au journal.
     func noterVeille(_ intervalle: DateInterval) -> [Evenement] {
         suivi.noterVeille(intervalle)
+    }
+
+    /// Le releve de Maison du Passeur (le meme que celui de Zigbee) : le resolveur de noms de Thread le garde.
+    func recevoirReleveMaison(_ releve: NomsMaison?) {
+        noms.maison = releve
     }
 
     /// Applique (ou retire) le surnom d'un noeud Thread au resolveur de noms ; `cle` : la cle brute du noeud.
@@ -512,8 +525,12 @@ final class SurveillanceThread: ModeleProtocole {
     var instantane: Instantane? { suivi.instantane }
 
     /// Reference des durees a l'heure `horloge` (celle de la fenetre du graphe, que sa `TimelineView`
-    /// avance chaque minute) : cette heure, ou la fin de la panne rejouee en demo.
-    func maintenant(a horloge: Date) -> Date { mode == .demo ? (dernierReleve?.date ?? horloge) : horloge }
+    /// avance chaque minute) : cette heure, ou la fin de la panne rejouee en demo (`.distantPast` pour un modele muet :
+    /// la coque prend le plus tard des modeles).
+    func maintenant(a horloge: Date) -> Date {
+        guard mode == .demo else { return horloge }
+        return rejoueLaDemo ? (dernierReleve?.date ?? horloge) : .distantPast
+    }
 
     var reseau: Reseau? {
         guard let i = instantane else { return nil }
@@ -711,10 +728,10 @@ final class SurveillanceThread: ModeleProtocole {
     }
 
     /// Chiffres du reseau affiche.
-    var resume: ResumeReseau? {
+    var resume: ResumeReseauThread? {
         guard let i = instantane, let r = reseau else { return nil }
         let affiches = appareilsAffiches(pour: r)
-        return ResumeReseau(nom: r.nom, partitions: r.partitions.count, routeurs: r.routeurs.count,
+        return ResumeReseauThread(nom: r.nom, partitions: r.partitions.count, routeurs: r.routeurs.count,
                             appareils: affiches.count,
                             injoignables: affiches.filter { $0.etat != .joignable }.count
                                 + i.appareilsIP.filter { $0.etat != .joignable }.count)

@@ -48,7 +48,7 @@ struct DossierThreadTests {
     @Test func cheminsDesFichiers() {
         let racine = Surveillance.dossierParDefaut
         #expect(Surveillance.dossierThread(racine) == racine.appendingPathComponent("Thread", isDirectory: true))
-        #expect(SondeMaillage.fichierIdentites(demo: false, sousTests: false)
+        #expect(SondeMaillageThread.fichierIdentites(demo: false, sousTests: false)
                 == Surveillance.dossierThread(racine).appendingPathComponent("identites-routeurs.json"))
         #expect(NomsPasseur.fichierCache(dossier: racine) == racine.appendingPathComponent("releve-maison.json"))
     }

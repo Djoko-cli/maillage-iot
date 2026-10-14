@@ -10,7 +10,7 @@ struct ListeChangements: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(Array(groupe.enumerated()), id: \.offset) { _, e in
-                Text(TexteEvenement.changement(e))
+                Text(TexteEvenementThread.changement(e))
                     .font(police)
                     .foregroundStyle(.secondary)
             }
@@ -22,9 +22,9 @@ struct ListeChangements: View {
     }
 }
 
-/// Une ligne de changements de parent regroupes (reprise de Maillage Zigbee, 09/10), dans la fiche comme dans la
-/// fenetre du journal : la tete (a la charge de l'appelant), les relais en texte secondaire, et, sous un chevron, la
-/// liste des changements. Repliee par defaut.
+/// Une ligne de changements de parent ou de chemin regroupes (reprise de Maillage Zigbee, 09/10), dans la fiche comme
+/// dans la fenetre du journal : la tete (a la charge de l'appelant), les relais en texte secondaire, et, sous un chevron,
+/// la liste des changements. Repliee par defaut.
 struct LigneChangements<Tete: View>: View {
     let groupe: [Evenement]
     var police: Font = .caption
@@ -51,7 +51,7 @@ struct LigneChangements<Tete: View>: View {
                         .frame(width: 10)
                     VStack(alignment: .leading, spacing: 2) {
                         tete
-                        Text(TexteEvenement.resume(Regroupement.resumeRelais(groupe)))
+                        Text(TexteEvenementThread.resume(Regroupement.resumeRelais(groupe)))
                             .font(police)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

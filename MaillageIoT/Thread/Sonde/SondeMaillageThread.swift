@@ -12,7 +12,7 @@ import os
 /// peut etre debranchee du Mac et alimentee ailleurs.
 @MainActor
 @Observable
-final class SondeMaillage {
+final class SondeMaillageThread {
     enum Etat: Equatable {
         /// Aucune sonde choisie dans les Reglages.
         case sansSonde
@@ -114,10 +114,11 @@ final class SondeMaillage {
     /// Attente du premier releve Bonjour et pas de sa relecture (`attendreReseau`) ; courts dans les tests.
     @ObservationIgnored private let attenteReseau: Duration
     @ObservationIgnored private let pasAttenteReseau: Duration
-    @ObservationIgnored private let actif: Bool
+    /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`).
+    @ObservationIgnored let actif: Bool
     @ObservationIgnored private let ouvrirCanal: (String) -> any CanalSonde
     /// Cles de l'acces reseau : en memoire par defaut, celui du Mac au lancement de l'app.
-    @ObservationIgnored private let trousseau: any TrousseauCles
+    @ObservationIgnored let trousseau: any TrousseauClesThread
     /// Session reseau vers `<hote>.local` avec la cle : le canal pret, ou l'erreur.
     @ObservationIgnored private let ouvrirReseau: @MainActor (String, Data) async throws -> any CanalSonde
     @ObservationIgnored private let delaisReprise: [Duration]
@@ -162,13 +163,14 @@ final class SondeMaillage {
     /// nulle part).
     init(preferences: UserDefaults = .standard, actif: Bool,
          ouvrirCanal: @escaping (String) -> any CanalSonde
-             = { CanalSerie(liaison: LiaisonSerie(chemin: $0, etiquette: "fr.djoko.maillage.iot.sonde-thread")) },
-         trousseau: any TrousseauCles = TrousseauMemoire(),
+             = { CanalSerie(liaison: LiaisonSerie(chemin: $0, etiquette: "fr.djoko.maillage.iot.sonde-thread"),
+                                  decoupeur: { DecoupeurLignes() }) },
+         trousseau: any TrousseauClesThread = TrousseauMemoireThread(),
          ouvrirReseau: @escaping @MainActor (String, Data) async throws -> any CanalSonde
-             = { try await CanalReseau.connecter(hote: $0, cle: $1) },
-         delaisReprise: [Duration] = SondeMaillage.delaisReprise,
-         delaiNouvelEssai: Duration = SondeMaillage.delaiNouvelEssai,
-         attenteReseau: Duration = SondeMaillage.attenteReseau, pasAttenteReseau: Duration = .seconds(1),
+             = { try await CanalReseauUDP.connecter(hote: $0, cle: $1) },
+         delaisReprise: [Duration] = SondeMaillageThread.delaisReprise,
+         delaiNouvelEssai: Duration = SondeMaillageThread.delaiNouvelEssai,
+         attenteReseau: Duration = SondeMaillageThread.attenteReseau, pasAttenteReseau: Duration = .seconds(1),
          horloge: @escaping () -> Date = { Date() }, fichierIdentites: URL? = nil) {
         self.preferences = preferences
         self.actif = actif
@@ -536,7 +538,7 @@ final class SondeMaillage {
             etat = .erreur(error.localizedDescription)
             // Sans cle ou sans nom d'hote (trousseau, ou jamais appris) : il faut l'USB ; le reste
             // se reprend seul.
-            if error is ErreurTrousseau || error is CleReseau.Erreur { return }
+            if error is ErreurTrousseauThread || error is CleReseau.Erreur { return }
             if let e = error as? ErreurReseau, !e.repriseAutomatique { return }
             planifierReprise()
         }

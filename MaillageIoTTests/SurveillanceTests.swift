@@ -35,7 +35,7 @@ struct SurveillanceTests {
         }
         #expect(pertes.count == 5)
         let resume = try #require(s.thread.resume)
-        #expect(resume == ResumeReseau(nom: "MyHome1482620090", partitions: 2, routeurs: 6, appareils: 24, injoignables: 5))
+        #expect(resume == ResumeReseauThread(nom: "MyHome1482620090", partitions: 2, routeurs: 6, appareils: 24, injoignables: 5))
         #expect(s.alerte, "reseau scinde")
         let r = try #require(s.thread.reseau)
         let affiches = s.thread.appareilsAffiches(pour: r)
@@ -359,7 +359,7 @@ struct SurveillanceTests {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
         let s = Surveillance(mode: .direct, dossier: dossier)
-        #expect(s.modeles.map(\.protocole) == [.thread], "Thread seul pour l'instant")
+        #expect(s.modeles.map(\.protocole) == [.thread, .zigbee], "un modele par protocole, Thread d'abord")
         #expect(s.evenements.isEmpty && s.lignesJournal.isEmpty && !s.alerte)
         #expect(s.thread.instantane == nil && s.thread.maillage == nil && s.thread.dernierReleve == nil)
         let t0 = Date(timeIntervalSince1970: 1_790_000_000)
@@ -374,6 +374,7 @@ struct SurveillanceTests {
         s.renommer(zigbee, en: "Autre")
         #expect(s.surnom(de: thread) == "Lampe" && s.surnom(de: zigbee) == "Autre")
         #expect(s.thread.noms.surnoms == ["AAAA000000000001": "Lampe"], "le modele de Thread ne voit que ses cles")
+        #expect(s.zigbee.noms.surnoms == ["AAAA000000000001": "Autre"], "celui de Zigbee aussi")
         #expect(Surveillance(mode: .direct, dossier: dossier).surnom(de: zigbee) == "Autre", "relu du disque")
     }
 
@@ -399,6 +400,6 @@ struct SurveillanceTests {
                                            injoignables: resume.injoignables))
         #expect(m.aHistorique == !s.thread.historique.isEmpty && m.alerteReseau == (s.thread.instantane?.reseaux.contains(where: \.estScinde) == true))
         #expect(m.fraicheurMaillage(a: s.maintenant) == s.thread.fraicheurMaillage(a: s.maintenant))
-        #expect(s.modele(pour: .zigbee) == nil && s.modele(pour: .thread) === s.thread)
+        #expect(s.modele(pour: .zigbee) === s.zigbee && s.modele(pour: .thread) === s.thread)
     }
 }

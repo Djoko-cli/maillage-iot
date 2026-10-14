@@ -84,9 +84,11 @@ struct FichiersCommunsTests {
         s.chargerJournal()
         #expect(s.evenements.count == 3)
         #expect(s.evenements(de: idt("AAAA000000000001")) == [sans, thread], "Thread et sans protocole, le plus recent d'abord")
-        #expect(s.evenements(de: idz("AAAA000000000001")).isEmpty, "Thread n'est pas Zigbee")
+        // Chaque noeud n'a que les evenements de son protocole : la meme cle, chez Zigbee, a le sien (tache 7 : le modele de
+        // Zigbee existe, `concernant` garde le protocole des deux cotes).
+        #expect(s.evenements(de: idz("AAAA000000000001")) == [zigbee], "Thread n'est pas Zigbee, et inversement")
         #expect(s.lignesJournal(de: idt("AAAA000000000001")).map(\.evenements.count) == [2], "regroupes : le parent change deux fois")
-        #expect(s.lignesJournal(de: idz("AAAA000000000001")).isEmpty)
+        #expect(s.lignesJournal(de: idz("AAAA000000000001")).map(\.evenements.count) == [1])
     }
 
     /// Les evenements de l'app entrent au journal avec `protocole = thread` ; les lignes d'avant, sans protocole, se
@@ -96,7 +98,8 @@ struct FichiersCommunsTests {
         defer { try? FileManager.default.removeItem(at: d) }
         let s = Surveillance(mode: .direct, dossier: d)
         s.noterVeille(debut: Self.t0, fin: Self.t0.addingTimeInterval(60))
-        #expect(s.evenements.map(\.protocole) == [.thread])
+        // Chaque modele de protocole note la veille du Mac dans son propre journal (tache 7 : Thread, puis Zigbee).
+        #expect(s.evenements.map(\.protocole) == [.thread, .zigbee])
         let relus = try JournalFichiers(dossier: d.appendingPathComponent("Journal"),
                                         politique: Surveillance.politiqueJournal).lire()
         #expect(relus == s.evenements && relus.first?.protocole == .thread)

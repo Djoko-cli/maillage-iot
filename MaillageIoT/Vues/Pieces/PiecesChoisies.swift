@@ -69,12 +69,21 @@ final class PiecesChoisies {
 }
 
 extension PiecesChoisies {
-    /// « Placer dans une piece… » pour un noeud du reseau affiche, dans une maison qui a des pieces : un
+    /// « Placer dans une piece… » pour un noeud du reseau affiche, dans une maison qui a des pieces. Thread : un
     /// routeur de bordure de l'instantane que Maison ne place pas (precision 24) ; un autre noeud sans
     /// piece de Maison dont l'ExtMac est connue (precision 27). Nil pour un noeud que Maison place, un
-    /// routeur de bordure que la sonde seule connait (precision 25), un noeud sans ExtMac. `entree` : la
-    /// scene du meme rendu, dont le graphe et les appareils servent tels quels.
+    /// routeur de bordure que la sonde seule connait (precision 25), un noeud sans ExtMac. Zigbee : un noeud sans piece
+    /// sur le pont dont l'adresse longue est connue (`placementZigbee`). `entree` : la scene du meme rendu, dont le
+    /// graphe et les appareils servent tels quels.
     static func placement(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
+        switch id.protocole {
+        case .thread: placementThread(id, dans: surveillance, entree: entree)
+        case .zigbee: placementZigbee(id, dans: surveillance, entree: entree)
+        }
+    }
+
+    /// Le placement d'un noeud Thread (voir `placement`).
+    private static func placementThread(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
         let maison = surveillance.thread.noms.maison
         let pieces = PiecesRouteurs.pieces(de: maison).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         guard !pieces.isEmpty else { return nil }

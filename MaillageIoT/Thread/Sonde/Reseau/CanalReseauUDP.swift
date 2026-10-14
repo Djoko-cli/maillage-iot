@@ -22,7 +22,7 @@ import Synchronization
 /// - La cle ne passe jamais par le reseau : les commandes `cle ...` ne partent pas.
 /// - Fermee, il garde la cause (`raisonFermeture`), montree comme dans Halo :
 ///   « Connexion reseau perdue : <cause> ».
-final class CanalReseau: CanalSonde, CauseFermeture {
+final class CanalReseauUDP: CanalSonde, CauseFermeture {
     struct Reglages: Sendable {
         /// Renvois d'une commande sans reponse, comptes depuis son premier envoi.
         var renvois: [Duration] = [.seconds(2), .seconds(4)]
@@ -151,10 +151,10 @@ final class CanalReseau: CanalSonde, CauseFermeture {
     static func connecter(hote: String, cle: Data, reglages: Reglages = Reglages(),
                           reglagesTransport: TransportUDP.Reglages = TransportUDP.Reglages(),
                           fabrique: @escaping @Sendable (String, UInt16) -> any ConnexionDatagrammes
-                              = { ConnexionNW(hote: $0, port: $1) }) async throws -> CanalReseau {
+                              = { ConnexionNW(hote: $0, port: $1) }) async throws -> CanalReseauUDP {
         let t = TransportUDP(hote: "\(hote).local", cle: cle, reglages: reglagesTransport, fabrique: fabrique)
         let charges = try await t.ouvrir()
-        return CanalReseau(transport: t, charges: charges, reglages: reglages)
+        return CanalReseauUDP(transport: t, charges: charges, reglages: reglages)
     }
 
     init(transport: TransportUDP, charges: AsyncStream<EvenementLiaison>, reglages: Reglages = Reglages()) {

@@ -123,7 +123,7 @@ enum CapturesPieces {
 
     /// Ecrit les images dans `dossier` ; rend leurs noms.
     @discardableResult
-    static func ecrire(dans dossier: String, surveillance s: Surveillance, sonde: SondeMaillage,
+    static func ecrire(dans dossier: String, surveillance s: Surveillance, sonde: SondeMaillageThread,
                        nomsMaison: NomsPasseur) -> [String] {
         try? FileManager.default.createDirectory(atPath: dossier, withIntermediateDirectories: true)
         guard let r = s.thread.reseau else { return [] }
@@ -217,7 +217,7 @@ struct VueCapture: View {
 extension View {
     /// Ce qu'une vue de la fenetre lit dans une capture : la surveillance, la sonde et les noms de la
     /// demo, l'apparence sombre, et le rendu de capture.
-    func pourCapture(_ s: Surveillance, _ sonde: SondeMaillage, _ noms: NomsPasseur) -> some View {
+    func pourCapture(_ s: Surveillance, _ sonde: SondeMaillageThread, _ noms: NomsPasseur) -> some View {
         environment(\.capturePieces, true)
             .environment(\.colorScheme, .dark)
             .environment(s)

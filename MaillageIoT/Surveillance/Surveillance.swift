@@ -1,6 +1,7 @@
 import AppKit
 import MaillageCoeur
 import ProtocoleThread
+import ProtocoleZigbee
 import Observation
 import os
 
@@ -9,7 +10,8 @@ import os
 /// protocoles), la veille du Mac, la purge du mois, la reference de temps (`maintenant`) et la capture JSON. Chaque
 /// protocole a son modele (`ModeleProtocole`) : releves -> suivi -> evenements, maillages de la sonde -> historique,
 /// noms, fraicheur ; il verse ses evenements au journal de la coque (`ajouter(_:de:)`), qui les marque de son protocole.
-/// Les vues de Thread lisent son etat par `thread` (`SurveillanceThread`).
+/// Les vues lisent l'etat de chaque protocole par son modele : `thread` (`SurveillanceThread`) et `zigbee`
+/// (`SurveillanceZigbee`).
 @MainActor
 @Observable
 final class Surveillance {
@@ -33,9 +35,11 @@ final class Surveillance {
     private(set) var erreurJournal: String?
     /// Le modele de Thread : Bonjour, instantane, sonde, suivi, historique, noms, fichiers sous `Thread/`.
     let thread: SurveillanceThread
+    /// Le modele de Zigbee : pont, sonde, suivi des connexions, historique, noms, fichiers sous `Zigbee/`.
+    let zigbee: SurveillanceZigbee
 
-    /// Les modeles de protocole de l'app (Thread seul pour l'instant).
-    var modeles: [any ModeleProtocole] { [thread] }
+    /// Les modeles de protocole de l'app.
+    var modeles: [any ModeleProtocole] { [thread, zigbee] }
 
     /// Le modele d'un protocole ; nil si l'app n'en porte pas.
     func modele(pour protocole: Protocole) -> (any ModeleProtocole)? {
@@ -57,8 +61,10 @@ final class Surveillance {
     @ObservationIgnored private var observateurs: [NSObjectProtocol] = []
 
     /// Ce que le journal sait de chaque protocole : types d'evenements, pertes, notifications, changements de parent.
-    /// Composee par protocole : Thread seul pour l'instant (une ligne sans protocole est de Thread).
-    nonisolated static let politiqueJournal = PolitiqueJournalComposee([.thread: PolitiqueJournalThread()])
+    /// Composee par protocole (une ligne sans protocole est de Thread : les journaux de Zigbee 1.1.1 se relisent a l'import,
+    /// etape 4).
+    nonisolated static let politiqueJournal = PolitiqueJournalComposee([.thread: PolitiqueJournalThread(),
+                                                                         .zigbee: PolitiqueJournalZigbee()])
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
     static let dureeHistorique: TimeInterval = 30 * 24 * 3600
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
@@ -79,10 +85,18 @@ final class Surveillance {
         dossier.appendingPathComponent("Thread", isDirectory: true)
     }
 
+    /// Le dossier des fichiers propres a Zigbee : `Zigbee/`, sous le dossier de l'app (noms du pont, appariements de Maison,
+    /// dernier maillage et historique de la sonde).
+    nonisolated static func dossierZigbee(_ dossier: URL) -> URL {
+        dossier.appendingPathComponent("Zigbee", isDirectory: true)
+    }
+
     /// `dossier` : la racine des donnees de l'app, ou garder le journal et les surnoms ; les fichiers de chaque protocole
     /// vont sous son dossier (`Thread/` : associations, dernier maillage, adresses gardees, historique de la sonde ;
-    /// nil : nulle part) ; `preferences` : les scissions deja notifiees (mode direct, une fois demarree).
-    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard) {
+    /// `Zigbee/` : dernier maillage, appariements, historique ; nil : nulle part) ; `preferences` : les scissions deja
+    /// notifiees (mode direct, une fois demarree) ; `demo` : en mode demo, le protocole dont la demo est rejouee (la demo
+    /// n'a qu'un reseau a la fois, chacune l'autre protocole eteint ; la demo combinee est a l'etape 3b).
+    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: Protocole = .thread) {
         self.mode = mode
         var surnoms: [IdNoeud: String] = [:]
         switch mode {
@@ -98,8 +112,11 @@ final class Surveillance {
             journal = nil
             fichierSurnoms = nil
         }
-        thread = SurveillanceThread(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences)
+        thread = SurveillanceThread(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
+                                    rejoueLaDemo: demo == .thread)
+        zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, rejoueLaDemo: demo == .zigbee)
         thread.coque = self
+        zigbee.coque = self
     }
 
     func demarrer() {
@@ -185,9 +202,30 @@ final class Surveillance {
     /// Le surnom d'un noeud ; nil sans surnom.
     func surnom(de id: IdNoeud) -> String? { surnomsCommuns[id] }
 
-    /// Dernier releve en JSON (option de capture).
+    /// Le releve de Maison du demon Passeur Noms, donne a chaque modele de protocole (un seul client du demon, un seul
+    /// abonnement : son releve sert les deux).
+    func recevoirReleveMaison(_ releve: NomsMaison?) {
+        modeles.forEach { $0.recevoirReleveMaison(releve) }
+    }
+
+    /// Dernier releve en JSON (option de capture) : celui de Thread, a defaut le dernier maillage de Zigbee.
     func captureJSON() throws -> Data? {
-        try thread.dernierReleve.map { try CodageJSON.encodeur(lisible: true).encode($0) }
+        if let d = try thread.dernierReleve.map({ try CodageJSON.encodeur(lisible: true).encode($0) }) { return d }
+        return try zigbee.captureJSON()
+    }
+
+    /// Les captures de la demo montrent un noeud qui hesite entre plusieurs relais (changements regroupes du journal) :
+    /// ces evenements inventes s'ajoutent a ceux de la demo, sous le protocole `protocole` (celui qui n'en a pas). En
+    /// demo seulement, et seulement pour elles ; rien sur disque.
+    func evenementsDeCapture(_ nouveaux: [Evenement], de protocole: Protocole) {
+        guard mode == .demo else { return }
+        let nouveaux = nouveaux.map { e in
+            var e = e
+            e.protocole = e.protocole ?? protocole
+            return e
+        }
+        let tous = (evenements + nouveaux).enumerated()
+        evenements = tous.sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }.map(\.element)
     }
 
     /// Verse au journal les evenements d'un modele : ils portent le protocole du modele des qu'ils entrent au journal,
@@ -237,10 +275,10 @@ final class Surveillance {
     func maintenant(a horloge: Date) -> Date { modeles.map { $0.maintenant(a: horloge) }.max() ?? horloge }
 
     /// Alerte en cours : le reseau d'un modele est lui-meme une alerte (`ModeleProtocole.alerteReseau` : un reseau
-    /// scinde), ou un evenement grave dans l'heure.
+    /// scinde), ou un evenement grave dans l'heure (a l'heure de `maintenant` : la fin de la demo rejouee en demo).
     var alerte: Bool {
         if modeles.contains(where: { $0.alerteReseau }) { return true }
-        let recent = Date().addingTimeInterval(-3600)
+        let recent = maintenant.addingTimeInterval(-3600)
         return evenements.reversed().prefix { $0.date >= recent }.contains { $0.gravite == .alerte }
     }
 
@@ -260,7 +298,7 @@ final class Surveillance {
     }
 
     /// Le critere du modele du protocole du noeud ; aucun evenement si l'app ne porte pas ce protocole.
-    private func concernant(_ id: IdNoeud) -> (Evenement) -> Bool {
+    func concernant(_ id: IdNoeud) -> (Evenement) -> Bool {
         modele(pour: id.protocole)?.concernant(id) ?? { _ in false }
     }
 }

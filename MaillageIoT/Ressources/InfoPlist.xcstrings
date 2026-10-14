@@ -2,19 +2,19 @@
   "sourceLanguage" : "fr",
   "strings" : {
     "NSLocalNetworkUsageDescription" : {
-      "comment" : "Autorisation reseau local (ecoute Bonjour des routeurs de bordure et des appareils, connexion a la sonde par le reseau Thread).",
+      "comment" : "Autorisation reseau local (ecoute Bonjour des routeurs de bordure Thread, des appareils Matter et HomeKit et du pont Hue ; connexion aux sondes Thread et Zigbee par le reseau local).",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage IoT listens to local network announcements (Thread border routers, Matter and HomeKit devices) to draw the Thread network, and connects to its probe over the Thread network if you choose to."
+            "value" : "Maillage IoT listens to local network announcements (Thread border routers, Matter and HomeKit devices, Hue bridge) to draw your Thread and Zigbee networks, and connects to your probes over the local network if you choose to."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit) pour dessiner le réseau Thread, et se connecte à sa sonde par le réseau Thread si vous le choisissez."
+            "value" : "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit, pont Hue) pour dessiner vos réseaux Thread et Zigbee, et se connecte à vos sondes par le réseau local si vous le choisissez."
           }
         }
       }

@@ -651,7 +651,7 @@ struct FicheNoeud: View {
 
     private func role(_ r: RouteurBordure) -> String {
         guard let role = r.role else { return String(localized: "rôle inconnu (Thread \(r.versionThread ?? "?"))") }
-        return TexteEvenement.role(role.rawValue)
+        return TexteEvenementThread.role(role.rawValue)
     }
 
     private func bbr(_ r: RouteurBordure) -> String? {
@@ -695,14 +695,14 @@ struct FicheNoeud: View {
         switch ligne {
         case .parents(let groupe), .chemins(let groupe):
             LigneChangements(groupe: groupe) {
-                Text("\(TexteEvenement.plage(groupe)) · \(TexteEvenement.changements(ligne))")
+                Text("\(TexteEvenementThread.plage(groupe)) · \(TexteEvenementThread.changements(ligne))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         case .evenement, .pertes:
             ForEach(ligne.evenements) { e in
-                Text("\(TexteEvenement.quand(e)) · \(TexteEvenement.titre(e))")
+                Text("\(TexteEvenementThread.quand(e)) · \(TexteEvenementThread.titre(e))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

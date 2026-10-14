@@ -17,7 +17,7 @@ final class ControleurReglages {
     @ObservationIgnored private let surveillance: Surveillance
     @ObservationIgnored private let ouverture: OuvertureSession
     @ObservationIgnored private let nomsMaison: NomsPasseur
-    @ObservationIgnored private let sonde: SondeMaillage
+    @ObservationIgnored private let sonde: SondeMaillageThread
     @ObservationIgnored private let misesAJour: MisesAJour
     /// Creee a la premiere ouverture, puis gardee : elle rouvre sur le meme onglet.
     @ObservationIgnored private var fenetre: NSWindow?
@@ -25,7 +25,7 @@ final class ControleurReglages {
     /// au premier plan, que la fenetre soit ouverte ou non (`SuiviThreadRoute`).
     @ObservationIgnored private var suiviThreadRoute: SuiviThreadRoute?
 
-    init(surveillance: Surveillance, ouverture: OuvertureSession, nomsMaison: NomsPasseur, sonde: SondeMaillage,
+    init(surveillance: Surveillance, ouverture: OuvertureSession, nomsMaison: NomsPasseur, sonde: SondeMaillageThread,
          misesAJour: MisesAJour) {
         self.surveillance = surveillance
         self.ouverture = ouverture

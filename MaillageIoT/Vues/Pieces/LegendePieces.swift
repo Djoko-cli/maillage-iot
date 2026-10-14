@@ -129,35 +129,48 @@ struct LegendePieces: View {
 }
 
 extension LegendePieces {
-    /// Une entree de la legende : un signe et son texte (spec du polissage B, section 2) ; la couronne du chef et la
-    /// lune d'un endormi sont leur signe, dans un nom de noeud comme dans la scene.
+    /// Une entree de la legende : un signe et son texte (spec du polissage B, section 2) ; la couronne du chef (Thread)
+    /// ou du coordinateur (Zigbee) et la lune d'un endormi sont leur signe, dans un nom de noeud comme dans la scene.
+    /// Les entrees propres a un protocole : `routeur` (de bordure), `routeurSimple`, `nonIdentifie`, `autrePartition`,
+    /// `chef`, `verifiee`, `partitionCoupee`, `sansAdresse`, `rattachement`, `candidats` pour Thread ; `routeurZigbee`,
+    /// `nonIdentifieZigbee`, `coordinateur`, `injoignable`, `chemin`, `cheminSuppose`, `voisinEntendu`, `parentDAvant`
+    /// pour Zigbee. Les autres sont communes.
     enum Entree: Hashable, CaseIterable {
         /// `routeur` : un routeur de bordure ; `routeurSimple` : un routeur qui ne l'est pas.
         case routeur, routeurSimple, nonIdentifie, autrePartition, chef
-        case joignable, verifiee, partitionCoupee, sansAdresse, disparu, endormi, pile, sonde
+        case routeurZigbee, nonIdentifieZigbee, coordinateur
+        case joignable, verifiee, partitionCoupee, sansAdresse, injoignable, disparu, endormi, pile, sonde
+        case chemin, cheminSuppose, voisinEntendu
         case bonne, moyenne, faible, inconnue
-        case versParent, rattachement, ailleurs, candidats
+        case versParent, parentDAvant, rattachement, ailleurs, candidats
 
         var texte: String {
             switch self {
             case .routeur: String(localized: "routeur de bordure")
-            case .routeurSimple: String(localized: "routeur")
+            case .routeurSimple, .routeurZigbee: String(localized: "routeur")
             case .nonIdentifie: String(localized: "non identifié")
+            case .nonIdentifieZigbee: String(localized: "inconnu du pont")
+            case .coordinateur: String(localized: "coordinateur (le pont)")
             case .autrePartition: String(localized: "routeur de bordure d'une autre partition")
             case .chef: String(localized: "chef du réseau Thread, élu automatiquement")
             case .joignable: String(localized: "joignable")
             case .verifiee: String(localized: "joignable, adresse plus annoncée")
             case .partitionCoupee: String(localized: "partition coupée")
             case .sansAdresse: String(localized: "adresse non annoncée")
+            case .injoignable: String(localized: "injoignable")
             case .disparu: String(localized: "disparu")
             case .endormi: String(localized: "endormi")
             case .pile: String(localized: "pile")
             case .sonde: String(localized: "sonde")
+            case .chemin: String(localized: "chemin vers le pont")
+            case .cheminSuppose: String(localized: "chemin supposé")
+            case .voisinEntendu: String(localized: "voisin entendu (à la sélection)")
             case .bonne: String(localized: "bonne")
             case .moyenne: String(localized: "moyenne")
             case .faible: String(localized: "faible")
             case .inconnue: String(localized: "inconnue")
             case .versParent: String(localized: "vers son parent")
+            case .parentDAvant: String(localized: "parent d'avant (pointillé)")
             case .rattachement: String(localized: "rattachement supposé")
             case .ailleurs: String(localized: "parent dans une autre pièce")
             case .candidats: String(localized: "candidats")
@@ -171,10 +184,16 @@ extension LegendePieces {
 
         var entrees: [Entree] {
             switch self {
-            case .routeurs: [.routeur, .routeurSimple, .nonIdentifie, .autrePartition, .chef]
-            case .appareils: [.joignable, .verifiee, .partitionCoupee, .sansAdresse, .disparu, .endormi, .pile, .sonde]
+            case .routeurs:
+                [.routeur, .routeurSimple, .routeurZigbee, .nonIdentifie, .nonIdentifieZigbee, .autrePartition, .chef,
+                 .coordinateur]
+            case .appareils:
+                [.joignable, .verifiee, .partitionCoupee, .sansAdresse, .injoignable, .disparu, .endormi, .pile, .sonde]
             case .liens: [.bonne, .moyenne, .faible, .inconnue]
-            case .autres: [.versParent, .rattachement, .ailleurs, .candidats]
+            // Les traits des chemins de Zigbee avec celui vers un parent : la rangee du bas prend une ligne de plus
+            // quand ils depassent les qualites.
+            case .autres:
+                [.chemin, .cheminSuppose, .voisinEntendu, .versParent, .parentDAvant, .rattachement, .ailleurs, .candidats]
             }
         }
 
@@ -212,6 +231,11 @@ extension LegendePieces {
         var candidats: Set<IdNoeud> = []
         var liens: [ScenePieces.Lien] = []
         var ailleurs = false
+        /// Les liens montres (Zigbee : chemins vers le pont ou tous les liens radio ; sans effet sur ceux de Thread).
+        var mode = ModeLiens.tous
+        /// Les voisins entendus de Zigbee se montrent a la selection (mode « chemins ») : sinon ni leur entree ni leurs
+        /// qualites.
+        var voisins = true
     }
 
     /// Les entrees que la scene contient (spec du polissage B, section 2) : chaque couleur de noeud (un appareil
@@ -223,36 +247,61 @@ extension LegendePieces {
     static func entrees(_ l: Lecture) -> Set<Entree> {
         var r = Set<Entree>()
         for (id, c) in l.couleurs {
+            let zigbee = id.protocole == .zigbee
             switch c {
-            case .routeur(principale: true): r.insert(.routeur)
+            case .routeur(principale: true): r.insert(zigbee ? .routeurZigbee : .routeur)
             case .routeur(principale: false): r.insert(.autrePartition)
             case .appareil(.joignable): r.insert(l.verifies.contains(id) ? .verifiee : .joignable)
-            case .appareil(.partitionCoupee): r.insert(.partitionCoupee)
-            case .appareil(.sansAdresse): r.insert(.sansAdresse)
-            // Thread n'emet pas `injoignable` (etat d'un pont) ; sa legende propre vient avec Zigbee. D'ici la, au plus
-            // proche : un appareil que l'on ne joint pas.
-            case .appareil(.injoignable): r.insert(.sansAdresse)
+            // Les etats de Thread, que Zigbee ne donne jamais : comme injoignable ; et `injoignable` (etat d'un pont),
+            // que Thread n'emet pas : au plus proche, un appareil que l'on ne joint pas.
+            case .appareil(.partitionCoupee): r.insert(zigbee ? .injoignable : .partitionCoupee)
+            case .appareil(.sansAdresse), .appareil(.injoignable): r.insert(zigbee ? .injoignable : .sansAdresse)
             case .appareil(.disparu): r.insert(.disparu)
             case .routeurInconnu, .appareil(.inconnu): break
             }
         }
         if !l.routeursSimples.isEmpty { r.insert(.routeurSimple) }
         if !l.sondes.isEmpty { r.insert(.sonde) }
-        if !l.inconnus.isEmpty { r.insert(.nonIdentifie) }
-        if !l.chefs.isEmpty { r.insert(.chef) }
+        if l.inconnus.contains(where: { $0.protocole == .thread }) { r.insert(.nonIdentifie) }
+        if l.inconnus.contains(where: { $0.protocole == .zigbee }) { r.insert(.nonIdentifieZigbee) }
+        if l.chefs.contains(where: { $0.protocole == .thread }) { r.insert(.chef) }
+        if l.chefs.contains(where: { $0.protocole == .zigbee }) { r.insert(.coordinateur) }
         if !l.endormis.isEmpty { r.insert(.endormi) }
         if !l.piles.isEmpty { r.insert(.pile) }
         if !l.candidats.isEmpty { r.insert(.candidats) }
+        func qualite(_ q: Int?, _ protocole: Protocole) {
+            switch Palette.NiveauLien(Palette.qualiteAffichee(q, protocole: protocole)) {
+            case .bon: r.insert(.bonne)
+            case .moyen: r.insert(.moyenne)
+            case .faible: r.insert(.faible)
+            case .inconnu: r.insert(.inconnue)
+            }
+        }
         for lien in l.liens {
+            if lien.de.protocole == .zigbee {
+                switch (lien.genre, l.mode) {
+                case (.radio, .tous):
+                    qualite(lien.qualite, .zigbee)
+                case (.radio, .chemins):
+                    // Les voisins entendus ne paraissent qu'a la selection d'un noeud ; la legende ne change pas avec
+                    // elle : leur entree et leurs qualites sont la des qu'il y en a, sauf s'ils sont masques.
+                    guard l.voisins else { break }
+                    r.insert(.voisinEntendu)
+                    qualite(lien.qualite, .zigbee)
+                case (.chemin, .chemins):
+                    r.insert(lien.suppose ? .cheminSuppose : .chemin)
+                    qualite(lien.qualite, .zigbee)
+                case (.chemin, .tous), (.rattachement, _):
+                    break
+                case (.parent, _):
+                    // Le parent d'avant (appareil final absent des dernieres tables) est trace en pointilles.
+                    r.insert(lien.suppose ? .parentDAvant : .versParent)
+                }
+                continue
+            }
             switch lien.genre {
             // Un chemin vers le pont (Zigbee, que Thread n'emet pas) se lit comme un lien radio : meme couleur de qualite.
-            case .radio, .chemin:
-                switch Palette.NiveauLien(lien.qualite) {
-                case .bon: r.insert(.bonne)
-                case .moyen: r.insert(.moyenne)
-                case .faible: r.insert(.faible)
-                case .inconnu: r.insert(.inconnue)
-                }
+            case .radio, .chemin: qualite(lien.qualite, .thread)
             case .parent: r.insert(.versParent)
             case .rattachement: r.insert(.rattachement)
             }
@@ -274,8 +323,8 @@ extension LegendePieces {
 
 extension LegendePieces.Lecture {
     /// Lecture de la scene d'un rendu (`EntreeScene`) ; `ailleurs` : des reperes « ailleurs » sont
-    /// poses.
-    init(_ e: EntreeScene, ailleurs: Bool) {
+    /// poses ; `mode` : les liens montres, et `voisins` : les voisins entendus a la selection (Zigbee).
+    init(_ e: EntreeScene, ailleurs: Bool, mode: ModeLiens = .tous, voisins: Bool = true) {
         let ids = e.scene.noeuds.map(\.id)
         couleurs = Dictionary(ids.compactMap { id in e.apparences[id].map { (id, $0.couleur) } },
                               uniquingKeysWith: { a, _ in a })
@@ -292,6 +341,8 @@ extension LegendePieces.Lecture {
         })
         liens = e.scene.liens
         self.ailleurs = ailleurs
+        self.mode = mode
+        self.voisins = voisins
     }
 }
 

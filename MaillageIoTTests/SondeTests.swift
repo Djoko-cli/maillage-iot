@@ -700,7 +700,7 @@ struct SondeMaillageTests {
         }
     }
 
-    static func connectee(_ s: SondeMaillage) -> Bool {
+    static func connectee(_ s: SondeMaillageThread) -> Bool {
         if case .connectee = s.etat { true } else { false }
     }
 
@@ -722,17 +722,17 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let canal = CanalRejoue { l in l == "bonjour\n" ? [CanalRejoue.bonjour] : l == "etat\n" ? [CanalRejoue.etatDetache] : [] }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         await s.connecter(Self.port, choisi: true)
         guard case .connectee(let b) = s.etat else {
             Issue.record("etat \(s.etat)")
             return
         }
         #expect(b.version == "1.0.0")
-        #expect(p.string(forKey: SondeMaillage.cleSerie) == "A0:00:00:00:00:01")
+        #expect(p.string(forKey: SondeMaillageThread.cleSerie) == "A0:00:00:00:00:01")
         await s.oublier()
         #expect(s.etat == .sansSonde)
-        #expect(p.string(forKey: SondeMaillage.cleSerie) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleSerie) == nil)
     }
 
     /// Un autre C6 (le pont Halo) n'est pas une sonde : refuse, rien de retenu.
@@ -740,14 +740,14 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let halo = #"{"v":1,"t":"bonjour","produit":"pont-halo","version":"0.4.0","mac":null,"appairee":true,"code":null,"qr":null}"#
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { _ in [halo] } })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { _ in [halo] } })
         await s.connecter(Self.port, choisi: true)
         guard case .refusee(let m) = s.etat else {
             Issue.record("etat \(s.etat)")
             return
         }
         #expect(m.contains("pont-halo"))
-        #expect(p.string(forKey: SondeMaillage.cleSerie) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleSerie) == nil)
     }
 
     /// Aucune sonde retenue : un C6 branche est liste pour les Reglages, jamais ouvert
@@ -756,7 +756,7 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             return CanalRejoue { _ in [CanalRejoue.bonjour] }
         })
@@ -773,11 +773,11 @@ struct SondeMaillageTests {
     @Test func autreC6JamaisOuvert() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         let autre = PortUSB(chemin: "/dev/cu.usbmodemFACTICE02", vid: 0x303A, pid: 0x1001, serie: "B0:00:00:00:00:02",
                             produit: "USB JTAG/serial debug unit")
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             return CanalRejoue { _ in [CanalRejoue.bonjour] }
         })
@@ -793,12 +793,12 @@ struct SondeMaillageTests {
     @Test(.timeLimit(.minutes(1))) func choixDUnAutrePortSansLaSondeRetenue() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         let autre = PortUSB(chemin: "/dev/cu.usbmodemFACTICE02", vid: 0x303A, pid: 0x1001, serie: "B0:00:00:00:00:02",
                             produit: nil)
         let journal = JournalCanaux()
         let canal = CanalTemoin("2", journal: journal, retenirBonjour: true)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         s.portsChanges([autre])
         #expect(s.etat == .absente)
         s.choisir(autre)
@@ -816,8 +816,8 @@ struct SondeMaillageTests {
     @Test func debranchee() throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { _ in [] } })
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { _ in [] } })
         s.portsChanges([])
         #expect(s.etat == .absente)
     }
@@ -829,7 +829,7 @@ struct SondeMaillageTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         let canal = CanalTemoin("1", journal: journal, retenirBonjour: true)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let connexion = Task { await s.connecter(Self.port, choisi: true) }
         await journal.attendre("bonjour 1")
         await s.oublier()
@@ -838,7 +838,7 @@ struct SondeMaillageTests {
         await connexion.value
         #expect(s.etat == .sansSonde)
         #expect(s.serie == nil)
-        #expect(p.string(forKey: SondeMaillage.cleSerie) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleSerie) == nil)
         #expect(journal.cycle == ["ouvrir 1", "fermer 1", "fin 1"])
     }
 
@@ -846,10 +846,10 @@ struct SondeMaillageTests {
     @Test func deuxChangementsDePorts() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         let journal = JournalCanaux()
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             return CanalTemoin("\(canaux)", journal: journal)
         })
@@ -867,7 +867,7 @@ struct SondeMaillageTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             return CanalTemoin("\(canaux)", journal: journal)
         })
@@ -890,7 +890,7 @@ struct SondeMaillageTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             // Fin du flux en differe, comme la liaison serie qui ferme le port sur sa file.
             return CanalTemoin("\(canaux)", journal: journal, fermetureDifferee: .milliseconds(50))
@@ -907,9 +907,9 @@ struct SondeMaillageTests {
     @Test(.timeLimit(.minutes(1))) func nouvelEssaiApresUneConnexionAutomatiqueEnEchec() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ -> any CanalSonde in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ -> any CanalSonde in
             canaux += 1
             return canaux == 1 ? CanalEnPanne() : CanalRejoue { CanalRejoue.reseauMinimal($0) }
         }, delaiNouvelEssai: .milliseconds(50))
@@ -925,9 +925,9 @@ struct SondeMaillageTests {
     @Test(.timeLimit(.minutes(1))) func unSeulNouvelEssaiEtAucunPourUnChoix() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             return CanalEnPanne()
         }, delaiNouvelEssai: .milliseconds(20))
@@ -955,12 +955,12 @@ struct SondeMaillageTests {
     func nouvelEssaiPerime(_ cas: String) async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
         let autre = PortUSB(chemin: "/dev/cu.usbmodemFACTICE02", vid: 0x303A, pid: 0x1001, serie: "B0:00:00:00:00:02",
                             produit: nil)
         let journal = JournalCanaux()
         var ouverts: [String] = []
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { chemin -> any CanalSonde in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { chemin -> any CanalSonde in
             ouverts.append(chemin)
             return chemin == autre.chemin ? CanalTemoin("autre", journal: journal, retenirBonjour: true) : CanalEnPanne()
         }, delaiNouvelEssai: .milliseconds(50))
@@ -1009,7 +1009,7 @@ struct SondeMaillageTests {
         let fichier = dossier.appendingPathComponent("identites-routeurs.json")
         /// Un lancement de l'app : une sonde, une tournee, son maillage.
         func lancement(ext: String?, partition: String = "0000000A") async -> Maillage? {
-            let s = SondeMaillage(preferences: p, actif: true,
+            let s = SondeMaillageThread(preferences: p, actif: true,
                                   ouvrirCanal: { _ in Self.canalIdentites(ext: ext, partition: partition) },
                                   fichierIdentites: fichier)
             var recu: Maillage?
@@ -1050,7 +1050,7 @@ struct SondeMaillageTests {
         let dossier = FileManager.default.temporaryDirectory.appendingPathComponent("maillage-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dossier) }
         let fichier = dossier.appendingPathComponent("identites-routeurs.json")
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in Self.canalSansListe() },
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in Self.canalSansListe() },
                               fichierIdentites: fichier)
         let (fins, fin) = AsyncStream.makeStream(of: Void.self)
         s.surTournee = { enCours in if !enCours { fin.yield() } }
@@ -1075,7 +1075,7 @@ struct SondeMaillageTests {
             guard l == "routeurs\n" else { return CanalRejoue.reseauMinimal(l) }
             return [CanalRejoue.routeurs([("0000", entendue.withLock { $0 })], suite: false)]
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal }, fichierIdentites: fichier)
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal }, fichierIdentites: fichier)
         let (fins, fin) = AsyncStream.makeStream(of: Void.self)
         s.surTournee = { enCours in if !enCours { fin.yield() } }
         var tournees = fins.makeAsyncIterator()
@@ -1104,7 +1104,7 @@ struct SondeMaillageTests {
         let bouchon = dossier.appendingPathComponent("Maillage IoT")
         try Data().write(to: bouchon)
         let fichier = bouchon.appendingPathComponent("identites-routeurs.json")
-        let s = SondeMaillage(preferences: p, actif: true,
+        let s = SondeMaillageThread(preferences: p, actif: true,
                               ouvrirCanal: { _ in Self.canalIdentites(ext: "E0000000000000A0", partition: "0000000A") },
                               fichierIdentites: fichier)
         let (fins, fin) = AsyncStream.makeStream(of: Void.self)
@@ -1124,10 +1124,10 @@ struct SondeMaillageTests {
     /// Fichier des identites : dans le dossier de l'app ; jamais en demo ni sous les tests (qui
     /// passent leur propre fichier, temporaire).
     @Test func fichierDesIdentites() {
-        #expect(SondeMaillage.fichierIdentites(demo: true, sousTests: false) == nil)
-        #expect(SondeMaillage.fichierIdentites(demo: false, sousTests: true) == nil)
-        #expect(SondeMaillage.fichierIdentites(demo: true, sousTests: true) == nil)
-        #expect(SondeMaillage.fichierIdentites(demo: false, sousTests: false)
+        #expect(SondeMaillageThread.fichierIdentites(demo: true, sousTests: false) == nil)
+        #expect(SondeMaillageThread.fichierIdentites(demo: false, sousTests: true) == nil)
+        #expect(SondeMaillageThread.fichierIdentites(demo: true, sousTests: true) == nil)
+        #expect(SondeMaillageThread.fichierIdentites(demo: false, sousTests: false)
                 == Surveillance.dossierThread(Surveillance.dossierParDefaut).appendingPathComponent("identites-routeurs.json"))
     }
 
@@ -1135,9 +1135,9 @@ struct SondeMaillageTests {
     @Test func inactive() throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
-        p.set("SONDE-01", forKey: SondeMaillage.cleNom)
-        let s = SondeMaillage(preferences: p, actif: false)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
+        p.set("SONDE-01", forKey: SondeMaillageThread.cleNom)
+        let s = SondeMaillageThread(preferences: p, actif: false)
         #expect(s.serie == nil)
         #expect(s.nom == nil)
     }
@@ -1150,15 +1150,15 @@ struct SondeMaillageTests {
         let canal = CanalRejoue { l in
             l == "bonjour\n" ? [CanalRejoue.bonjourNomme] : l == "etat\n" ? [CanalRejoue.etatDetache] : []
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         #expect(s.nom == nil)
         await s.connecter(Self.port, choisi: true)
         #expect(s.nom == "SONDE-01")
-        #expect(p.string(forKey: SondeMaillage.cleNom) == "SONDE-01")
-        #expect(SondeMaillage(preferences: p, actif: true).nom == "SONDE-01", "relu au lancement")
+        #expect(p.string(forKey: SondeMaillageThread.cleNom) == "SONDE-01")
+        #expect(SondeMaillageThread(preferences: p, actif: true).nom == "SONDE-01", "relu au lancement")
         await s.oublier()
         #expect(s.nom == nil)
-        #expect(p.string(forKey: SondeMaillage.cleNom) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleNom) == nil)
     }
 
     /// Port sans numero de serie : la sonde n'est pas retenue, son nom non plus (il resterait
@@ -1170,12 +1170,12 @@ struct SondeMaillageTests {
         let canal = CanalRejoue { l in
             l == "bonjour\n" ? [CanalRejoue.bonjourNomme] : l == "etat\n" ? [CanalRejoue.etatDetache] : []
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         await s.connecter(sansSerie, choisi: true)
         #expect(Self.connectee(s))
         #expect(s.serie == nil)
         #expect(s.nom == nil)
-        #expect(p.string(forKey: SondeMaillage.cleNom) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleNom) == nil)
         await s.oublier()
     }
 
@@ -1190,7 +1190,7 @@ struct SondeMaillageTests {
         let troisieme = PortUSB(chemin: "/dev/cu.usbmodemFACTICE03", vid: 0x303A, pid: 0x1001, serie: "C0:00:00:00:00:03",
                                 produit: nil)
         let journal = JournalCanaux()
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { chemin in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { chemin in
             if chemin == Self.port.chemin {
                 return CanalRejoue { l in
                     l == "bonjour\n" ? [CanalRejoue.bonjourNomme] : l == "etat\n" ? [CanalRejoue.etatDetache] : []
@@ -1225,11 +1225,11 @@ struct SondeMaillageTests {
     @Test(.timeLimit(.minutes(1))) func nomDeLaSondeRetenueEnConnexionEtEnErreur() async throws {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
-        p.set("SONDE-01", forKey: SondeMaillage.cleNom)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
+        p.set("SONDE-01", forKey: SondeMaillageThread.cleNom)
         let journal = JournalCanaux()
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ -> any CanalSonde in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ -> any CanalSonde in
             canaux += 1
             // D'abord un bonjour qui tarde (connexion en cours), puis un port qui ne s'ouvre pas.
             return canaux == 1 ? CanalTemoin("1", journal: journal, retenirBonjour: true) : CanalEnPanne()
@@ -1250,7 +1250,7 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         var canaux = 0
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in
             canaux += 1
             let b = canaux == 1 ? CanalRejoue.bonjourNomme : CanalRejoue.bonjour
             return CanalRejoue { l in l == "bonjour\n" ? [b] : l == "etat\n" ? [CanalRejoue.etatDetache] : [] }
@@ -1260,7 +1260,7 @@ struct SondeMaillageTests {
         await s.connecter(Self.port, choisi: true)
         #expect(Self.connectee(s))
         #expect(s.nom == nil)
-        #expect(p.string(forKey: SondeMaillage.cleNom) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleNom) == nil)
         await s.oublier()
     }
 
@@ -1273,7 +1273,7 @@ struct SondeMaillageTests {
         let horloge = HorlogeFactice(t0)
         let journal = JournalCanaux()
         let canal = Self.canalRetenu(journal)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal }, horloge: { horloge.maintenant })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal }, horloge: { horloge.maintenant })
         #expect(s.avancement == nil && s.debutTournee == nil)
         await s.connecter(Self.port, choisi: true)
         await journal.attendre(Self.listeRetenue)
@@ -1294,7 +1294,7 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in Self.canalRetenu(journal) })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in Self.canalRetenu(journal) })
         await s.connecter(Self.port, choisi: true)
         await journal.attendre(Self.listeRetenue)
         await Self.attendre { s.avancement != nil }
@@ -1321,7 +1321,7 @@ struct SondeMaillageTests {
             }
             return CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let adresse = try #require(AdresseIPv6("fd00:aaaa:bbbb:1::17"))
         var demandes = 0
         s.appareilsAResoudre = {
@@ -1349,7 +1349,7 @@ struct SondeMaillageTests {
         let canal = CanalRejoue { l in
             l == "etat\n" && muette.withLock({ $0 }) ? [] : CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         await s.connecter(Self.port, choisi: true)
         await Self.attendre { s.derniereTournee != nil && !s.tourneeEnCours }
         muette.withLock { $0 = true }
@@ -1376,7 +1376,7 @@ struct SondeMaillageTests {
             l == "etat\n" && muette.withLock({ $0 }) ? [] : CanalRejoue.reseauMinimal(l)
         }
         let seconde = CanalRejoue { l in l == "bonjour\n" ? [CanalRejoue.bonjour] : [] }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { $0 == autre.chemin ? seconde : premiere })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { $0 == autre.chemin ? seconde : premiere })
         await s.connecter(Self.port, choisi: true)
         await Self.attendre { s.derniereTournee != nil && !s.tourneeEnCours }
         muette.withLock { $0 = true }
@@ -1398,7 +1398,7 @@ struct SondeMaillageTests {
         let (p, domaine) = try Self.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let surveillance = Surveillance(mode: .direct, dossier: nil)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { CanalRejoue.reseauMinimal($0) } })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { CanalRejoue.reseauMinimal($0) } })
         s.surMaillage = { m, recu in surveillance.thread.recevoir(m, a: recu) }
         s.surOubli = { surveillance.thread.oublierMaillage() }
         await s.connecter(Self.port, choisi: true)
@@ -1420,7 +1420,7 @@ struct SondeMaillageTests {
             journal.noter(l.trimmingCharacters(in: .newlines))
             return l == "etat\n" ? [] : CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         await s.connecter(Self.port, choisi: true)
         await journal.attendre("etat")
         await s.oublier()
@@ -1439,7 +1439,7 @@ struct SondeMaillageTests {
             journal.noter(l.trimmingCharacters(in: .newlines))
             return l.hasPrefix("diag 0000 5,6 ") ? [] : CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         var maillages = 0
         s.surMaillage = { _, _ in maillages += 1 }
         await s.connecter(Self.port, choisi: true)
@@ -1460,7 +1460,7 @@ struct SondeMaillageTests {
         let canal = CanalRejoue { l in
             l == "etat\n" ? [#"{"v":1,"t":"etat","erreur":"occupee"}"#] : CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let debut = ContinuousClock.now
         await s.connecter(Self.port, choisi: true)
         await Self.attendre { s.erreurTournee != nil }
@@ -1492,7 +1492,7 @@ struct SondeMaillageTests {
             if l.hasPrefix("diag 0000 5,6 ") { horloge.avancer(90) }
             return CanalRejoue.reseauMinimal(l)
         }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal }, horloge: { horloge.maintenant })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal }, horloge: { horloge.maintenant })
         var suite: [String] = []
         var recus: [(date: Date, recu: Date)] = []
         s.surTournee = { suite.append($0 ? "debut" : "fin") }
@@ -1518,7 +1518,7 @@ struct SondeMaillageTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let journal = JournalCanaux()
         let canal = Self.canalRetenu(journal)
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         #expect(!s.tourneeAuRafraichir, "sans sonde connectee")
         await s.connecter(Self.port, choisi: true)
         await journal.attendre(Self.listeRetenue)
@@ -1601,9 +1601,9 @@ struct AttenteReseauTests {
     static func tournee(_ c: CanalRejoue) -> Bool { c.envoyes.contains("routeurs\n") }
 
     static func sonde(_ p: UserDefaults, attente: Duration, connu: @escaping @MainActor () -> Bool)
-        -> (SondeMaillage, CanalRejoue) {
+        -> (SondeMaillageThread, CanalRejoue) {
         let canal = CanalRejoue { CanalRejoue.reseauMinimal($0) }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal }, attenteReseau: attente,
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal }, attenteReseau: attente,
                               pasAttenteReseau: .milliseconds(10))
         s.reseauConnu = connu
         return (s, canal)
@@ -1659,7 +1659,7 @@ struct AttenteReseauTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let canal = CanalRejoue { CanalRejoue.reseauMinimal($0) }
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal }, attenteReseau: .seconds(600))
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal }, attenteReseau: .seconds(600))
         await s.connecter(SondeMaillageTests.port, choisi: true)
         await SondeMaillageTests.attendre { s.derniereTournee != nil && !s.tourneeEnCours }
         await s.oublier()

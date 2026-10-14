@@ -1,9 +1,8 @@
 import Foundation
 import MaillageCoeur
-import ProtocoleThread
 
 /// Textes affiches des evenements, des lignes du journal et des notifications.
-enum TexteEvenement {
+enum TexteEvenementZigbee {
     static func heure(_ d: Date) -> String {
         d.formatted(date: .omitted, time: .shortened)
     }
@@ -27,16 +26,6 @@ enum TexteEvenement {
         }
     }
 
-    static func role(_ brut: String?) -> String {
-        switch brut.flatMap(RoleThread.init(rawValue:)) {
-        case .chef?: String(localized: "chef")
-        case .routeur?: String(localized: "routeur")
-        case .enfant?: String(localized: "enfant")
-        case .detache?: String(localized: "détaché")
-        case nil: String(localized: "inconnu")
-        }
-    }
-
     static func titre(_ e: Evenement) -> String {
         let nom = e.sujet?.nom ?? ""
         let avant = e.avant ?? "?"
@@ -45,54 +34,28 @@ enum TexteEvenement {
         case .surveillanceDemarree:
             let r = e.details["routeurs"] ?? "0"
             let a = e.details["appareils"] ?? "0"
-            if e.sujet != nil {
-                return String(localized: "Surveillance du réseau \(nom) démarrée (routeurs : \(r), appareils : \(a))")
-            }
             return String(localized: "Surveillance démarrée (routeurs : \(r), appareils : \(a))")
         case .veille:
             guard let p = e.periode else { return String(localized: "Mac en veille") }
             return String(localized: "Mac en veille de \(heure(p.start)) à \(heure(p.end))")
-        case .reseauScinde:
-            // Constatee : au lancement, a la decouverte ou au retour du reseau.
-            if e.constate { return String(localized: "Réseau \(nom) trouvé scindé") }
-            return String(localized: "Réseau \(nom) scindé en \(apres) partitions")
-        case .reseauReuni:
-            return String(localized: "Réseau \(nom) réuni")
-        case .chefChange:
-            return String(localized: "Nouveau chef : \(apres) (avant : \(avant))")
-        case .bbrPrimaireChange:
-            return String(localized: "Nouveau BBR primaire : \(apres) (avant : \(avant))")
-        case .jeuActifChange:
-            return String(localized: "Réseau \(nom) : nouveau jeu de paramètres actif")
-        case .routeurApparu, .appareilNouveau:
+        case .routeurApparu:
+            return String(localized: "Routeur apparu : \(nom)")
+        case .routeurDisparu:
+            return String(localized: "Routeur disparu : \(nom)")
+        case .appareilNouveau:
             return String(localized: "\(nom) est apparu")
-        case .routeurDisparu, .appareilDisparu:
+        case .appareilDisparu:
             return String(localized: "\(nom) a disparu")
-        case .routeurRoleChange:
-            return String(localized: "\(nom) : rôle \(role(e.avant)) → \(role(e.apres))")
-        case .routeurNouvelleAdresseLien:
-            return String(localized: "\(nom) : nouvelle adresse de lien (redémarrage probable)")
-        case .prefixeNouveau:
-            return String(localized: "Nouveau préfixe \(nom)")
-        case .prefixeRetire:
-            return String(localized: "Préfixe \(nom) retiré")
         case .appareilRevenu:
             return String(localized: "\(nom) est revenu")
-        case .appareilSansAdresse:
-            return String(localized: "\(nom) n'annonce plus d'adresse")
-        case .appareilChangePartition:
-            if e.details["coupee"] == "oui" { return String(localized: "\(nom) est isolé dans la partition \(apres)") }
-            return String(localized: "\(nom) a rejoint la partition \(apres)")
         case .parentChange:
             return String(localized: "\(nom) a changé de parent : \(avant) → \(apres)")
         case .sansParent:
             return String(localized: "\(nom) n'a plus de parent")
-        case .routeurThreadApparu:
-            return String(localized: "Routeur Thread apparu : \(nom)")
-        case .routeurThreadDisparu:
-            return String(localized: "Routeur Thread disparu : \(nom)")
+        case .cheminChange:
+            return String(localized: "\(nom) a changé de chemin vers le pont : \(avant) → \(apres)")
         default:
-            // Type d'un autre protocole, ou relu d'un journal plus recent : son nom, tel que le journal l'ecrit.
+            // Un type d'un autre protocole (le journal du coeur est commun) : Zigbee n'en ecrit jamais.
             return e.type.rawValue
         }
     }
@@ -105,11 +68,13 @@ enum TexteEvenement {
             let debut = heure(p.first?.date ?? .distantPast)
             let fin = heure(p.last?.date ?? .distantPast)
             return String(localized: "\(p.count) appareils perdus entre \(debut) et \(fin)")
-        case .parents(let p), .chemins(let p):
-            // Thread ne produit pas de `.chemins` (protocole Zigbee) : texte des changements de parent, sans cle neuve.
+        case .parents(let p):
             // Le dernier nom connu : le nom d'un noeud peut changer d'un changement a l'autre.
             let nom = p.last?.sujet?.nom ?? ""
             return String(localized: "\(nom) a changé \(p.count) fois de parent en 1 h")
+        case .chemins(let p):
+            let nom = p.last?.sujet?.nom ?? ""
+            return String(localized: "\(nom) a changé \(p.count) fois de chemin vers le pont en 1 h")
         }
     }
 
@@ -119,7 +84,7 @@ enum TexteEvenement {
     }
 
     /// Plage horaire d'une ligne de changements regroupes : « 08/10 20:58 – 21:45 », le jour repete de l'autre cote
-    /// quand elle passe minuit (reprise de Maillage Zigbee, 09/10).
+    /// quand elle passe minuit.
     static func plage(_ evenements: [Evenement]) -> String {
         guard let debut = evenements.map(\.date).min(), let fin = evenements.map(\.date).max() else { return "" }
         let deb = "\(jour(debut)) \(heure(debut))"
@@ -127,11 +92,12 @@ enum TexteEvenement {
         return "\(deb) – \(jour(fin)) \(heure(fin))"
     }
 
-    /// Ce que fait une ligne de changements regroupes, sans le nom du noeud (la fiche est la sienne) : « a changé 4 fois
-    /// de parent ». Vide pour les autres lignes.
+    /// Ce que fait une ligne de changements regroupes, sans le nom du noeud (la fiche est la sienne) : « a changé 4 fois de
+    /// chemin ». Vide pour les autres lignes.
     static func changements(_ l: LigneJournal) -> String {
         switch l {
-        case .parents(let p), .chemins(let p): String(localized: "a changé \(p.count) fois de parent")
+        case .parents(let p): String(localized: "a changé \(p.count) fois de parent")
+        case .chemins(let p): String(localized: "a changé \(p.count) fois de chemin")
         case .evenement, .pertes: ""
         }
     }
@@ -145,36 +111,25 @@ enum TexteEvenement {
         return r.relais.joined(separator: r.alternent ? " ⇄ " : " → ") + " · " + finit
     }
 
-    /// Un changement dans le detail d'une ligne regroupee : « 20:58 → HomePod salon ».
+    /// Un changement dans le detail d'une ligne regroupee : « 20:58 → Etagere (droite) ».
     static func changement(_ e: Evenement) -> String {
         "\(heure(e.date)) → \(e.apres ?? "?")"
-    }
-
-    /// Routeurs des partitions a part (toutes sauf la plus grande), d'apres les details d'une scission.
-    static func isoles(_ e: Evenement) -> String {
-        let groupes = e.details.map { (partition: $0.key, routeurs: $0.value) }
-            .sorted { ($0.routeurs.components(separatedBy: ", ").count, $1.partition)
-                    > ($1.routeurs.components(separatedBy: ", ").count, $0.partition) }
-        return groupes.dropFirst().map(\.routeurs).joined(separator: " ; ")
     }
 
     /// Titre et texte d'une notification.
     static func notification(_ a: AlerteAEnvoyer) -> (titre: String, corps: String) {
         guard let e = a.evenements.first else { return ("", "") }
         switch a.categorie {
-        case .scission:
-            let nom = e.sujet?.nom ?? ""
-            return (String(localized: "Réseau Thread scindé"),
-                    String(localized: "\(nom) — partition à part : \(isoles(e))"))
         case .routeurDisparu:
-            return (String(localized: "Routeur de bordure disparu"), titre(e) + " · " + quand(e))
+            return (String(localized: "Routeur disparu"), titre(e) + " · " + quand(e))
         case .pertes:
             let noms = a.evenements.compactMap { $0.sujet?.nom }.joined(separator: ", ")
             let debut = heure(a.evenements.first?.date ?? .distantPast)
             let fin = heure(a.evenements.last?.date ?? .distantPast)
-            return (String(localized: "\(a.evenements.count) appareils Thread perdus"),
+            return (String(localized: "\(a.evenements.count) appareils perdus"),
                     String(localized: "Entre \(debut) et \(fin) : \(noms)"))
-        case .informations:
+        // Une scission est propre a Thread : Zigbee n'en notifie jamais.
+        case .informations, .scission:
             return (titre(e), quand(e))
         }
     }

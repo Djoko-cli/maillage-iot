@@ -51,7 +51,7 @@ struct FiltreJournal: Equatable {
             let ev = l.evenements
             guard ev.contains(where: { famille.contient($0.type) }), l.gravite >= graviteMinimale else { return false }
             guard !r.isEmpty else { return true }
-            return TexteEvenement.titre(l).localizedCaseInsensitiveContains(r)
+            return TexteEvenementThread.titre(l).localizedCaseInsensitiveContains(r)
                 || ev.contains { ($0.sujet?.id ?? "").localizedCaseInsensitiveContains(r)
                     || ($0.sujet?.nom ?? "").localizedCaseInsensitiveContains(r)
                     || ($0.avant ?? "").localizedCaseInsensitiveContains(r)
@@ -100,22 +100,22 @@ struct LigneJournalVue: View {
     var body: some View {
         switch ligne {
         case .evenement(let e):
-            contenu(TexteEvenement.titre(e), quand: TexteEvenement.quand(e), gravite: e.gravite)
+            contenu(TexteEvenementThread.titre(e), quand: TexteEvenementThread.quand(e), gravite: e.gravite)
         case .parents(let groupe), .chemins(let groupe):
             // Thread ne produit pas de changements de chemin (`.chemins`, protocole Zigbee) : meme ligne, a deplier.
             // Les relais, et a deplier leurs changements, comme dans la fiche (repris de Maillage Zigbee, 09/10).
             LigneChangements(groupe: groupe, police: .callout) {
-                contenu(TexteEvenement.titre(ligne), quand: TexteEvenement.quand(ligne), gravite: ligne.gravite)
+                contenu(TexteEvenementThread.titre(ligne), quand: TexteEvenementThread.quand(ligne), gravite: ligne.gravite)
             }
         case .pertes(let groupe):
             DisclosureGroup {
                 ForEach(groupe) { e in
-                    Text("\(TexteEvenement.heure(e.date)) · \(TexteEvenement.titre(e))")
+                    Text("\(TexteEvenementThread.heure(e.date)) · \(TexteEvenementThread.titre(e))")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             } label: {
-                contenu(TexteEvenement.titre(ligne), quand: TexteEvenement.quand(ligne),
+                contenu(TexteEvenementThread.titre(ligne), quand: TexteEvenementThread.quand(ligne),
                         gravite: ligne.gravite)
             }
         }

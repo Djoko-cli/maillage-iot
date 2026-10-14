@@ -224,10 +224,10 @@ D'après `inventaire-etape3-fusion-apps.md` §1 (carte des 58 fichiers), §3 (co
 **Interfaces:**
 - Produces: `surveillance.zigbee: SurveillanceZigbee` (même protocole d'app que `SurveillanceThread`) ; les deux sondes instanciées, chacune avec ses clés `thread.`/`zigbee.`.
 
-- [ ] **Step 1: RED** — `DemarrageTests.deuxModelesSousTests` : sous tests, `surveillance.thread` et `surveillance.zigbee` existent, aucun port, aucun Bonjour, aucun trousseau réel. Échec attendu.
-- [ ] **Step 2: GREEN** — copier et renommer ; brancher. La scène ne montre encore que Thread (jonction à la tâche 8).
-- [ ] **Step 3: Vérifier** — porte de la tâche ; `CataloguesTests` (les deux apps), `verifier-noms-publics`.
-- [ ] **Step 4: Commit** — « App : le code de Zigbee entre dans Maillage IoT (pont, sonde, modele Zigbee) ».
+- [x] **Step 1: RED** — `DemarrageTests.deuxModelesSousTests` : sous tests, `surveillance.thread` et `surveillance.zigbee` existent, aucun port, aucun Bonjour, aucun trousseau réel. Échec attendu.
+- [x] **Step 2: GREEN** — copier et renommer ; brancher. La scène ne montre encore que Thread (jonction à la tâche 8).
+- [x] **Step 3: Vérifier** — porte de la tâche ; `CataloguesTests` (les deux apps), `verifier-noms-publics`.
+- [x] **Step 4: Commit** — « App : le code de Zigbee entre dans Maillage IoT (pont, sonde, modele Zigbee) ».
 
 ---
 
