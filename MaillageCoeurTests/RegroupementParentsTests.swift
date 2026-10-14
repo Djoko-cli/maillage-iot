@@ -161,4 +161,32 @@ struct RegroupementParentsTests {
                                          Self.parent(20, "y", .thread)], politique: compose)
         #expect(avant.map(\.evenements.count) == apres.map(\.evenements.count) && apres.map(\.evenements.count) == [1, 2])
     }
+
+    /// Les pertes se regroupent par protocole, comme les changements de parent : deux pertes de deux protocoles, dans la
+    /// meme fenetre de 10 min, ne forment pas une ligne ; deux d'un meme protocole oui, meme entrelacees avec l'autre.
+    @Test func pertesParProtocole() {
+        func perte(_ secondes: Double, _ protocole: Protocole?, _ id: String) -> Evenement {
+            Evenement(date: Self.t0.addingTimeInterval(secondes), type: .essaiPerte, sujet: Sujet(id: id, nom: id),
+                      protocole: protocole)
+        }
+        let melangees = [perte(0, .thread, "t1"), perte(10, .zigbee, "z1"), perte(20, .thread, "t2"),
+                         perte(30, .zigbee, "z2"), perte(40, .zigbee, "z3")]
+        let lignes = Regroupement.lignes(melangees, politique: PolitiqueEssai())
+        let groupes = lignes.compactMap { l -> [String]? in
+            if case .pertes(let g) = l { return g.compactMap(\.sujet?.id) }
+            return nil
+        }.sorted { $0.joined() < $1.joined() }
+        #expect(groupes == [["t1", "t2"], ["z1", "z2", "z3"]], "une ligne de pertes par protocole")
+        #expect(lignes.count == 2)
+        // Un seul de chaque protocole : deux evenements, pas un groupe.
+        let seuls = Regroupement.lignes([perte(0, .thread, "t1"), perte(10, .zigbee, "z1")], politique: PolitiqueEssai())
+        #expect(seuls.count == 2 && seuls.allSatisfy { if case .evenement = $0 { true } else { false } })
+        // Sans protocole : Thread, regroupe avec ceux de Thread.
+        let anciennes = Regroupement.lignes([perte(0, nil, "t1"), perte(10, .thread, "t2")], politique: PolitiqueEssai())
+        #expect(anciennes.map(\.evenements.count) == [2])
+        // La fenetre de 10 min se compte par protocole : la premiere perte de chacun l'ouvre.
+        let fenetres = Regroupement.lignes([perte(0, .thread, "t1"), perte(500, .zigbee, "z1"), perte(700, .zigbee, "z2"),
+                                            perte(650, .thread, "t2")], politique: PolitiqueEssai())
+        #expect(Set(fenetres.map(\.evenements.count)) == [1, 2], "t1 | t2 ; z1, z2 (a 200 s l'un de l'autre)")
+    }
 }

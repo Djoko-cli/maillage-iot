@@ -185,7 +185,6 @@ struct FenetrePieces: View {
             // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
             let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
                 ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix) : nil
-            let zigbeeSeul = entree?.protocoles == [.zigbee]
             let fiche = moteur.selection != nil
             // Sous une fiche, la legende se replie d'elle-meme si la place manque, sauf si Djoko l'a rouverte.
             let repliDePlace = fiche && !legendeRouverte && hauteurVue.map {
@@ -209,7 +208,7 @@ struct FenetrePieces: View {
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
                            ancien: surveillance.modeles.contains(where: \.maillageAncien),
                            texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
-                           zigbeeSeul: zigbeeSeul, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           protocoles: entree?.protocoles ?? [], feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
@@ -433,9 +432,15 @@ struct CommandesVue: View {
     /// Les voisins entendus a la selection, gardes d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleVoisins) private var voisinsGardes = true
 
+    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene (`ContenuHaut.liens`), seul ou avec
+    /// Thread.
+    static func montreLiens(scene: ScenePieces?) -> Bool {
+        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? [])).liens
+    }
+
     var body: some View {
         HStack(spacing: 5) {
-            if moteur.scene?.noeuds.contains(where: { $0.id.protocole == .zigbee }) == true {
+            if Self.montreLiens(scene: moteur.scene) {
                 SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
                     moteur.liens = v
                     liensGardes = v.rawValue

@@ -873,7 +873,16 @@ struct PasseComplementaireTests {
         let heure = passe.formatted(date: .omitted, time: .shortened)
         #expect(TexteTourneeZigbee.heure(passe) == heure)
         #expect(TexteTourneeZigbee.menuPasse(passe, nom: "SONDE-01") == String(localized: "\("SONDE-01") : passe complémentaire à \(heure)"))
-        // La ligne du menu (`MenuBarre.ligneSonde` de Zigbee) revient avec la tache 13.
+        guard case .bonjour(let b)? = MessageSondeZigbee.lire(Data(CanalRejoueZigbee.bonjourNomme.utf8)) else {
+            Issue.record("bonjour illisible")
+            return
+        }
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t, avancement: nil, maintenant: t,
+                                           passe: passe) == TexteTourneeZigbee.menuPasse(passe, nom: "SONDE-01"))
+        let tables = AvancementTourneeZigbee(etape: .tables, fait: 1, total: 2)
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t, avancement: tables, maintenant: t,
+                                           passe: passe) == TexteTourneeZigbee.menu(tables, nom: "SONDE-01"),
+                "la tournee en cours d'abord")
         var bilan = BilanTournee()
         bilan.complementaire = true
         bilan.routesRouteursDemandees = 20
@@ -1029,7 +1038,19 @@ struct BudgetPagesAppTests {
         let simple = SondeMaillageZigbee.TourneeDifferee(instant: instant, complete: false)
         #expect(TexteTourneeZigbee.tourneeDifferee(simple) == String(localized: "Tournée à \(heure) : la sonde a déjà beaucoup servi"))
         #expect(TexteTourneeZigbee.menuDifferee(simple, nom: "SONDE-01") == String(localized: "\("SONDE-01") : tournée à \(heure)"))
-        // La ligne du menu (`MenuBarre.ligneSonde` de Zigbee, tournee differee et passe) revient avec la tache 13.
+        guard case .bonjour(let b)? = MessageSondeZigbee.lire(Data(CanalRejoueZigbee.bonjourNomme.utf8)) else {
+            Issue.record("bonjour illisible")
+            return
+        }
+        let complete = SondeMaillageZigbee.TourneeDifferee(instant: instant, complete: true)
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t, avancement: nil, maintenant: t,
+                                           differee: complete) == TexteTourneeZigbee.menuDifferee(complete, nom: "SONDE-01"))
+        let tables = AvancementTourneeZigbee(etape: .tables, fait: 1, total: 2)
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t, avancement: tables, maintenant: t,
+                                           differee: complete) == TexteTourneeZigbee.menu(tables, nom: "SONDE-01"))
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t, avancement: nil, maintenant: t,
+                                           passe: instant, differee: complete)
+                == TexteTourneeZigbee.menuPasse(instant, nom: "SONDE-01"))
     }
 
     /// Sans sonde active (mode demo, tests sans preferences) : ni lecture ni ecriture des preferences.

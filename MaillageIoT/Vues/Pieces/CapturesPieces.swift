@@ -308,7 +308,7 @@ enum CapturesPieces {
                                                                          nomsPont: nomsPont)).fittingSize.height
         }
         // Marge du haut : la hauteur du haut de la fenetre, mesuree comme dans la fenetre.
-        let haut = hauteur(HautPieces(moteur: MoteurPieces(), troisD: .constant(false), zigbeeSeul: protocole == .zigbee))
+        let haut = hauteur(HautPieces(moteur: MoteurPieces(), troisD: .constant(false), protocoles: [protocole]))
         let marges = (FenetrePieces.margeHaut(bas: haut), FenetrePieces.margeBas(pile: nil))
         var noms: [String] = []
         for c in liste {
@@ -383,7 +383,7 @@ struct VueCapture: View {
         ZStack(alignment: .topLeading) {
             RadialGradient(gradient: palette.fond, center: UnitPoint(x: 0.3, y: 0.35), startRadius: 0, endRadius: 900)
             Canvas { ctx, taille in moteur.image(&ctx, taille: taille, echelle: 2, palette: palette) }
-            HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), zigbeeSeul: moteur.entree?.protocoles == [.zigbee])
+            HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), protocoles: moteur.entree?.protocoles ?? [])
             FeuxDeCapture()
             VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 Spacer()

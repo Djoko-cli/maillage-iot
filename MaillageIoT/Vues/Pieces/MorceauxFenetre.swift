@@ -74,7 +74,8 @@ struct BarreOutils: View {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(StyleBoutonCapsule())
-            .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir,
+            .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir
+                                          || (surveillance.zigbee.aUnReseau && sondeZigbee?.tourneeAuRafraichir == true),
                                       passeur: Self.lancePasseur(mode: surveillance.mode)))
         }
     }
@@ -196,12 +197,56 @@ struct IndicateurIncomplet: View {
     }
 }
 
-/// Ecran d'attente ou d'erreur, quand il n'y a pas de reseau a dessiner.
+/// Ecran d'attente ou d'erreur, quand il n'y a pas de reseau a dessiner : l'etat de chaque protocole actif, Thread d'abord.
+/// Un protocole eteint n'a rien a dire (« Ecoute du reseau local… » ne s'affiche pas quand Thread est eteint) ; aucun
+/// protocole actif, l'ecran le dit.
 struct EtatVide: View {
     @Environment(Surveillance.self) private var surveillance
 
+    /// Ce que l'ecran dit d'un protocole.
+    enum Etat: Hashable {
+        /// Thread : l'acces au reseau local est refuse.
+        case reseauLocalRefuse
+        /// Thread : le Mac a ecoute le reseau local sans y voir de reseau Thread.
+        case aucunReseauThread
+        /// Thread : le Mac n'a encore rien ecoute.
+        case ecouteThread
+        /// Zigbee : ni maillage de la sonde, ni appareil du pont.
+        case attenteZigbee
+        /// Aucun protocole n'est actif.
+        case aucunProtocole
+    }
+
+    /// Les etats a dire : un par protocole actif (en demo, celui dont la demo est rejouee), Thread d'abord ; l'etat « aucun
+    /// protocole » seul quand aucun n'est actif.
+    static func etats(_ s: Surveillance) -> [Etat] {
+        let montres = s.modelesMontres.map(\.protocole)
+        guard !montres.isEmpty else { return [.aucunProtocole] }
+        return montres.map { p in
+            switch p {
+            case .thread:
+                if s.thread.etatEcoute == .reseauLocalRefuse { .reseauLocalRefuse }
+                else if s.thread.instantane != nil { .aucunReseauThread }
+                else { .ecouteThread }
+            case .zigbee:
+                .attenteZigbee
+            }
+        }
+    }
+
     var body: some View {
-        if surveillance.thread.etatEcoute == .reseauLocalRefuse {
+        let etats = Self.etats(surveillance)
+        VStack(spacing: 24) {
+            ForEach(etats, id: \.self) { etat in
+                vue(etat)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func vue(_ etat: Etat) -> some View {
+        switch etat {
+        case .reseauLocalRefuse:
             ContentUnavailableView {
                 Label("Accès au réseau local refusé", systemImage: "network.slash")
             } description: {
@@ -213,11 +258,19 @@ struct EtatVide: View {
                     }
                 }
             }
-        } else if surveillance.thread.instantane != nil {
+        case .aucunReseauThread:
             ContentUnavailableView("Aucun réseau Thread visible sur ce réseau local",
                                    systemImage: "point.3.connected.trianglepath.dotted")
-        } else {
+        case .ecouteThread:
             ProgressView("Écoute du réseau local…")
+        case .attenteZigbee:
+            EtatVideZigbee()
+        case .aucunProtocole:
+            ContentUnavailableView {
+                Label("Aucun protocole actif", systemImage: "pause.circle")
+            } description: {
+                Text("Activez Thread ou Zigbee dans les Réglages.")
+            }
         }
     }
 }

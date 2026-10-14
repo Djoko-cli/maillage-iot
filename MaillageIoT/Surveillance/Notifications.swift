@@ -34,7 +34,7 @@ final class Notifications {
 
     func presenter(_ alertes: [AlerteAEnvoyer]) {
         for a in alertes where Self.active(a.categorie) {
-            let (titre, corps) = TexteEvenementThread.notification(a)
+            let (titre, corps) = TexteEvenement.notification(a)
             let contenu = UNMutableNotificationContent()
             contenu.title = titre
             contenu.body = corps

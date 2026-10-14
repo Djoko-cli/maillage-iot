@@ -128,17 +128,49 @@ struct AffichageSondeZigbeeTests {
         #expect(!FicheNoeudZigbee.renommable(idz(I.pont), entree: nil))
     }
 
-    /// Le nom de la sonde a la place de « Sonde » quand il est donne (celui de la sonde retenue, quand l'etat la
-    /// concerne : `SondeMaillageZigbee.nomEtat`). Etat des Reglages : « SONDE-01 · connectee », l'etat seul sans nom. La
-    /// ligne du menu (`MenuBarre.ligneSonde`) de Zigbee revient avec la tache 13.
+    /// Titre du menu de Zigbee : en attente sans rien a montrer ; l'alerte de l'heure ; sinon le reseau normal.
+    @Test func titreDuMenu() {
+        let r = ResumeReseauZigbee(routeurs: 14, appareils: 8, injoignables: 1)
+        #expect(MenuBarre.titreZigbee(resume: nil, alerte: true) == String(localized: "En attente du maillage de la sonde…"))
+        #expect(MenuBarre.titreZigbee(resume: r, alerte: true) == String(localized: "Alerte dans l'heure"))
+        #expect(MenuBarre.titreZigbee(resume: r, alerte: false) == String(localized: "Réseau Zigbee normal"))
+    }
+
+    /// Ligne du menu : le nom de la sonde a la place de « Sonde » quand il est donne (celui de la sonde retenue, quand
+    /// l'etat la concerne : `SondeMaillageZigbee.nomEtat`) ; pendant une tournee, son etape et son compteur. Etat des
+    /// Reglages : « SONDE-01 · connectee », l'etat seul sans nom. (La ligne du menu de Zigbee est `MenuBarre.ligneSondeZigbee`.)
     @Test func menuEtReglages() {
+        let t = Date(timeIntervalSince1970: 1_790_000_000)
         let sonde = String(localized: "Sonde")
         #expect(SondeMaillageZigbee.nomAffiche(nil) == sonde)
         #expect(SondeMaillageZigbee.nomAffiche("SONDE-01") == "SONDE-01")
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.sansSonde, nom: nil, derniere: nil, avancement: nil,
+                                           maintenant: t) == nil)
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.absente, nom: nil, derniere: nil, avancement: nil,
+                                           maintenant: t) == String(localized: "\(sonde) : absente"))
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.absente, nom: "SONDE-01", derniere: nil, avancement: nil,
+                                           maintenant: t) == String(localized: "\("SONDE-01") : absente"))
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.injoignable, nom: "SONDE-01", derniere: nil,
+                                           avancement: nil, maintenant: t) == String(localized: "\("SONDE-01") : injoignable"))
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.connexion, nom: "SONDE-01", derniere: nil, avancement: nil,
+                                           maintenant: t) == String(localized: "\("SONDE-01") : connexion…"))
+        #expect(MenuBarre.ligneSondeZigbee(SondeMaillageZigbee.Etat.erreur("x"), nom: "SONDE-01", derniere: nil,
+                                           avancement: nil, maintenant: t)
+                == String(localized: "\("SONDE-01") : erreur (voir les Réglages)"))
         guard case .bonjour(let b)? = MessageSondeZigbee.lire(Data(CanalRejoueZigbee.bonjourNomme.utf8)) else {
             Issue.record("bonjour illisible")
             return
         }
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: nil, avancement: nil, maintenant: t)
+                == String(localized: "\("SONDE-01") : connectée"))
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t - 120, avancement: nil, maintenant: t)
+                == String(localized: "\("SONDE-01") : connectée · relevé \(FicheNoeud.relatif(t - 120, t))"))
+        let tables = AvancementTourneeZigbee(etape: .tables, fait: 24, total: 48)
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: "SONDE-01", derniere: t - 120, avancement: tables, maintenant: t)
+                == String(localized: "\("SONDE-01") : \(TexteTourneeZigbee.etape(.tables)) \(24)/\(48)…"))
+        let rien = AvancementTourneeZigbee(etape: .routes, fait: 0, total: 0)
+        #expect(MenuBarre.ligneSondeZigbee(.connectee(b), nom: nil, derniere: nil, avancement: rien, maintenant: t)
+                == String(localized: "\(sonde) : \(TexteTourneeZigbee.etape(.routes))…"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "connectée"))"))
         #expect(FenetreReglages.texteEtatSonde(SondeMaillageZigbee.Etat.absente, nom: "SONDE-01")

@@ -3,8 +3,9 @@ import ProtocoleZigbee
 import SwiftUI
 
 // La part de Zigbee des morceaux de la fenetre de la vue par pieces (la coque commune est `MorceauxFenetre` : la
-// feuille « Renommer… », la place de la ligne de la tournee, l'indicateur du maillage incomplet). La scene reunie et
-// la barre du haut (taches 8 et 13) choisissent, pour chaque protocole actif, le morceau qui lui revient.
+// feuille « Renommer… », la place de la ligne de la tournee, l'indicateur du maillage incomplet). L'ecran d'attente
+// (`EtatVide`) et le haut de la fenetre (`ContenuHaut`) choisissent, pour chaque protocole de la scene, le morceau qui lui
+// revient.
 
 /// Capsule de gauche du haut de la fenetre pour Zigbee : journal, rafraichir (tournee de la sonde de Zigbee).
 struct BarreOutilsZigbee: View {
@@ -98,7 +99,7 @@ struct EtatVideZigbee: View {
         ContentUnavailableView {
             Label("En attente du maillage de la sonde", systemImage: "point.3.connected.trianglepath.dotted")
         } description: {
-            Text("Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite.")
+            Text("Choisissez la sonde ou liez le pont Hue dans Réglages › Zigbee.")
         }
     }
 }

@@ -635,12 +635,15 @@ struct NomsPontTests {
         #expect(vide.height > 0 && trouve.height > vide.height && lu.height > vide.height)
     }
 
-    /// Les textes de l'etat (Reglages) ; la ligne du menu revient avec la tache 13.
+    /// Les textes de l'etat (Reglages) et la ligne du menu.
     @Test func textes() {
         #expect(ReglagesPont.texteEtat(.lie, lie: true, lecture: true) == String(localized: "lié · lecture…"))
         #expect(ReglagesPont.texteEtat(.erreur("x"), lie: true, lecture: false) == String(localized: "lié · erreur"))
         #expect(ReglagesPont.message(.erreur("x")) == "x" && ReglagesPont.message(.lie) == nil)
-        // La ligne du menu (`MenuBarre.lignePont` de Zigbee) revient avec la tache 13.
+        #expect(MenuBarre.lignePont(.lie, lie: true) == nil)
+        #expect(MenuBarre.lignePont(.trouve(ip: "192.0.2.10", identifiant: S.identifiant), lie: false)
+                == String(localized: "Pont Hue non lié"))
+        #expect(MenuBarre.lignePont(.erreur("x"), lie: true) == String(localized: "Pont Hue : erreur (voir les Réglages)"))
         for v in [VerdictCertificat.nonSigne, .autoSigne, .autrePont(vu: S.identifiant), .sansIdentifiant, .pasUnServeur] {
             #expect(!NomsPont.message(v).isEmpty)
         }

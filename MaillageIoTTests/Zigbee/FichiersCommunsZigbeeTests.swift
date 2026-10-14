@@ -75,9 +75,11 @@ struct FichiersCommunsZigbeeTests {
         let d = Self.dossier()
         defer { try? FileManager.default.removeItem(at: d) }
         let s = Surveillance(mode: .direct, dossier: d)
+        // La veille du Mac s'ecrit une fois (tache 13), sous le premier protocole allume : Thread eteint, c'est Zigbee, avec son
+        // protocole.
+        s.thread.actif = false
         s.noterVeille(debut: Self.t0, fin: Self.t0.addingTimeInterval(60))
-        // Chaque modele note la veille du Mac dans son journal : celui de Zigbee a son evenement, avec son protocole.
-        #expect(s.evenements.map(\.protocole) == [.thread, .zigbee])
+        #expect(s.evenements.map(\.protocole) == [.zigbee])
         let relus = try JournalFichiers(dossier: d.appendingPathComponent("Journal"),
                                         politique: Surveillance.politiqueJournal).lire()
         #expect(relus == s.evenements)

@@ -111,8 +111,10 @@ public struct Evenement: Codable, Hashable, Sendable, Identifiable {
         self.protocole = protocole
     }
 
+    /// Identifiant de l'evenement : sa date, son protocole (sans protocole : Thread, comme partout), son type et son sujet.
+    /// Deux evenements identiques sauf le protocole ne se confondent pas (ligne du journal, identifiant de notification).
     public var id: String {
-        "\(Int64((date.timeIntervalSince1970 * 1000).rounded()))-\(type.rawValue)-\(sujet?.id ?? reseau ?? "")"
+        "\(Int64((date.timeIntervalSince1970 * 1000).rounded()))-\((protocole ?? .thread).rawValue)-\(type.rawValue)-\(sujet?.id ?? reseau ?? "")"
     }
 
     enum CodingKeys: String, CodingKey {

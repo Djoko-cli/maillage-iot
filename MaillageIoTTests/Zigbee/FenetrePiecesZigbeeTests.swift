@@ -142,7 +142,7 @@ struct FenetrePiecesZigbeeTests {
         let demo = NomsSceneZigbeeTests.surveillanceDemo()
         let sansReseau = Surveillance(mode: .direct, dossier: nil)
         func haut(_ s: Surveillance, sansPieces: Bool) -> CGFloat {
-            let vue = HautPieces(moteur: MoteurPieces(liens: .chemins), troisD: .constant(true), sansPieces: sansPieces, zigbeeSeul: true)
+            let vue = HautPieces(moteur: MoteurPieces(liens: .chemins), troisD: .constant(true), sansPieces: sansPieces, protocoles: [.zigbee])
             return NSHostingView(rootView: vue.environment(s).environment(sonde).environment(noms).environment(SondeMaillageThread(preferences: p, actif: false)).environment(NomsPasseur())).fittingSize.height
         }
         #expect(FenetrePieces.margeHaut(bas: 57.2) == 58 + FenetrePieces.espacement, "le bas arrondi, et l'espacement")
@@ -1015,7 +1015,7 @@ struct FenetrePiecesZigbeeTests {
         fenetre.isReleasedWhenClosed = false
         let vue = ZStack(alignment: .topLeading) {
             Color.black.onTapGesture {}
-            HautPieces(moteur: MoteurPieces(liens: .chemins), troisD: .constant(true), zigbeeSeul: true)
+            HautPieces(moteur: MoteurPieces(liens: .chemins), troisD: .constant(true), protocoles: [.zigbee])
         }
         let hote = NSHostingView(rootView: vue.ignoresSafeArea().environment(s).environment(sonde).environment(noms).environment(SondeMaillageThread(preferences: p, actif: false)).environment(NomsPasseur()))
         fenetre.contentView = hote
@@ -1068,7 +1068,7 @@ struct FenetrePiecesZigbeeTests {
                                defer: false)
         fenetre.isReleasedWhenClosed = false
         defer { fenetre.contentView = nil }
-        let haut = hote(HautPieces(moteur: moteur, troisD: .constant(troisD), zigbeeSeul: true)
+        let haut = hote(HautPieces(moteur: moteur, troisD: .constant(troisD), protocoles: [.zigbee])
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading))
         fenetre.contentView = haut
         Self.sansBarreDeTitre(fenetre)

@@ -41,6 +41,12 @@ final class Surveillance {
     /// Les modeles de protocole de l'app.
     var modeles: [any ModeleProtocole] { [thread, zigbee] }
 
+    /// Les modeles dont l'app parle (menu, ecran d'attente) : les protocoles actifs ; en demo, celui dont la demo est rejouee
+    /// (l'autre, muet, n'a rien a dire).
+    var modelesMontres: [any ModeleProtocole] {
+        modeles.filter { $0.actif && (mode != .demo || $0.rejoueLaDemo) }
+    }
+
     /// Le modele d'un protocole ; nil si l'app n'en porte pas.
     func modele(pour protocole: Protocole) -> (any ModeleProtocole)? {
         modeles.first { $0.protocole == protocole }
@@ -190,11 +196,13 @@ final class Surveillance {
         erreurJournal = message
     }
 
-    /// Veille du Mac (appele au reveil) : l'evenement de chaque protocole actif va au journal ; un protocole eteint n'ecrit
-    /// rien.
+    /// Veille du Mac (appele au reveil) : chaque protocole actif la note dans son suivi (la date des changements incertains
+    /// en depend), mais le journal n'en recoit qu'une ligne, celle du premier protocole actif (la veille est celle du Mac,
+    /// pas d'un protocole) ; un protocole eteint ne note ni n'ecrit rien, et aucun protocole actif, aucune ligne.
     func noterVeille(debut: Date, fin: Date) {
         let intervalle = DateInterval(start: debut, end: max(fin, debut))
-        for m in modeles where m.actif { ajouter(m.noterVeille(intervalle), de: m.protocole) }
+        let notees = modeles.filter(\.actif).map { ($0.protocole, $0.noterVeille(intervalle)) }
+        if let (protocole, evenements) = notees.first { ajouter(evenements, de: protocole) }
     }
 
     /// Donne (ou retire, avec nil ou "") un surnom a un noeud. L'identifiant porte son protocole : le fichier garde les
@@ -291,14 +299,18 @@ final class Surveillance {
     /// avance chaque minute) : cette heure, ou, en demo, la fin de la panne rejouee (le plus tard des modeles).
     func maintenant(a horloge: Date) -> Date { modeles.map { $0.maintenant(a: horloge) }.max() ?? horloge }
 
-    /// Alerte en cours : le reseau d'un modele est lui-meme une alerte (`ModeleProtocole.alerteReseau` : un reseau
-    /// scinde), ou un evenement grave dans l'heure (a l'heure de `maintenant` : la fin de la demo rejouee en demo).
-    var alerte: Bool {
-        if modeles.contains(where: { $0.alerteReseau }) { return true }
+    /// Alerte en cours : celle d'un protocole actif (`alerte(de:)`). Un protocole eteint n'en signale aucune.
+    var alerte: Bool { modeles.contains { alerte(de: $0.protocole) } }
+
+    /// Alerte en cours d'un protocole : son reseau est lui-meme une alerte (`ModeleProtocole.alerteReseau` : un reseau
+    /// scinde), ou il a un evenement grave dans l'heure (a l'heure de `maintenant` : la fin de la demo rejouee en demo).
+    /// Faux s'il est eteint, et les evenements graves qu'il a ecrits avant ne comptent plus.
+    func alerte(de protocole: Protocole) -> Bool {
+        guard let m = modele(pour: protocole), m.actif else { return false }
+        if m.alerteReseau { return true }
         let recent = maintenant.addingTimeInterval(-3600)
-        // Les evenements graves d'un protocole eteint ne comptent plus.
         return evenements.reversed().prefix { $0.date >= recent }.contains {
-            $0.gravite == .alerte && modele(pour: $0.protocole ?? SurveillanceThread.protocole)?.actif ?? true
+            $0.gravite == .alerte && ($0.protocole ?? SurveillanceThread.protocole) == protocole
         }
     }
 

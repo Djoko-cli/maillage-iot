@@ -10,7 +10,7 @@ struct ListeChangements: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             ForEach(Array(groupe.enumerated()), id: \.offset) { _, e in
-                Text(TexteEvenementThread.changement(e))
+                Text(TexteEvenement.changement(e))
                     .font(police)
                     .foregroundStyle(.secondary)
             }
@@ -51,7 +51,8 @@ struct LigneChangements<Tete: View>: View {
                         .frame(width: 10)
                     VStack(alignment: .leading, spacing: 2) {
                         tete
-                        Text(TexteEvenementThread.resume(Regroupement.resumeRelais(groupe)))
+                        Text(TexteEvenement.resume(Regroupement.resumeRelais(groupe),
+                                                   protocole: groupe.first.map(TexteEvenement.protocole) ?? .thread))
                             .font(police)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

@@ -42,11 +42,18 @@ public struct Alertes: Sendable {
     /// lancement a l'autre par l'app.
     public var scissionsNotifiees: Set<String> = []
 
-    private var debutFenetre: Date?
-    /// Identifiant de la notification groupee, fixe a l'ouverture de la fenetre
-    /// (d'apres sa premiere perte) : une perte datee plus tot ne le change pas.
-    private var identifiantPertes: String?
-    private var pertes: [Evenement] = []
+    /// La fenetre de regroupement des pertes d'un protocole.
+    private struct FenetrePertes {
+        var debut: Date
+        /// Identifiant de la notification groupee, fixe a l'ouverture de la fenetre (d'apres sa premiere perte) : une
+        /// perte datee plus tot ne le change pas.
+        var identifiant: String
+        var pertes: [Evenement]
+    }
+
+    /// Les pertes se comptent par protocole (sans protocole : Thread) : trois pertes de deux protocoles ne font pas une
+    /// notification groupee, et celle d'un protocole n'embarque que les siennes.
+    private var fenetres: [Protocole: FenetrePertes] = [:]
     private let politique: any PolitiqueJournal
 
     /// Avec la politique neutre (`PolitiqueJournalNeutre`), rien ne se notifie : c'est le protocole qui dit quoi.
@@ -58,25 +65,38 @@ public struct Alertes: Sendable {
     /// embarquer ses evenements, ni atteindre le seuil grace a eux). La fenetre repart de la plus ancienne perte gardee ;
     /// vide, elle se referme.
     public mutating func oublierPertes(ou oubli: (Evenement) -> Bool) {
-        pertes.removeAll(where: oubli)
-        debutFenetre = pertes.map(\.date).min()
-        if pertes.isEmpty { identifiantPertes = nil }
+        for (protocole, var f) in fenetres {
+            f.pertes.removeAll(where: oubli)
+            if let debut = f.pertes.map(\.date).min() {
+                f.debut = debut
+                fenetres[protocole] = f
+            } else {
+                fenetres[protocole] = nil
+            }
+        }
+    }
+
+    /// Identifiant de la notification groupee d'un protocole : celui de Thread est reste « pertes-<date> ».
+    private static func identifiantPertes(_ protocole: Protocole, _ date: Date) -> String {
+        let t = Int(date.timeIntervalSince1970)
+        return protocole == .thread ? "pertes-\(t)" : "pertes-\(protocole.rawValue)-\(t)"
     }
 
     public mutating func traiter(_ evenements: [Evenement]) -> [AlerteAEnvoyer] {
         var sortie: [AlerteAEnvoyer] = []
-        var pertesModifiees = false
+        var pertesModifiees: Set<Protocole> = []
         for e in evenements {
             if politique.estPerte(e) {
-                if let d = debutFenetre, abs(e.date.timeIntervalSince(d)) < Regroupement.fenetre {
-                    pertes.append(e)
-                    debutFenetre = min(d, e.date)
+                let protocole = e.protocole ?? .thread
+                if var f = fenetres[protocole], abs(e.date.timeIntervalSince(f.debut)) < Regroupement.fenetre {
+                    f.pertes.append(e)
+                    f.debut = min(f.debut, e.date)
+                    fenetres[protocole] = f
                 } else {
-                    debutFenetre = e.date
-                    identifiantPertes = "pertes-\(Int(e.date.timeIntervalSince1970))"
-                    pertes = [e]
+                    fenetres[protocole] = FenetrePertes(debut: e.date, identifiant: Self.identifiantPertes(protocole, e.date),
+                                                        pertes: [e])
                 }
-                pertesModifiees = true
+                pertesModifiees.insert(protocole)
             } else if politique.estScission(e) {
                 let s = Self.signature(e)
                 if !(e.constate && scissionsNotifiees.contains(s)), let c = politique.categorie(e) {
@@ -93,9 +113,11 @@ public struct Alertes: Sendable {
                 }
             }
         }
-        if pertesModifiees, let identifiant = identifiantPertes, pertes.count >= Self.seuilPertes {
-            sortie.append(AlerteAEnvoyer(categorie: .pertes, identifiant: identifiant,
-                                         evenements: pertes.sorted { $0.date < $1.date }))
+        for protocole in Protocole.allCases where pertesModifiees.contains(protocole) {
+            if let f = fenetres[protocole], f.pertes.count >= Self.seuilPertes {
+                sortie.append(AlerteAEnvoyer(categorie: .pertes, identifiant: f.identifiant,
+                                             evenements: f.pertes.sorted { $0.date < $1.date }))
+            }
         }
         return sortie
     }

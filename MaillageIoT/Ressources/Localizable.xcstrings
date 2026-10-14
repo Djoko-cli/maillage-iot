@@ -161,6 +161,22 @@
         }
       }
     },
+    "%@ : injoignable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: unreachable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ : injoignable"
+          }
+        }
+      }
+    },
     "%@ : nouvelle adresse de lien (redémarrage probable)" : {
       "localizations" : {
         "en" : {
@@ -1441,6 +1457,22 @@
         }
       }
     },
+    "Activez Thread ou Zigbee dans les Réglages." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on Thread or Zigbee in Settings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez Thread ou Zigbee dans les Réglages."
+          }
+        }
+      }
+    },
     "Adresse" : {
       "localizations" : {
         "en" : {
@@ -1805,6 +1837,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun accessoire de Maison à associer"
+          }
+        }
+      }
+    },
+    "Aucun protocole actif" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No active protocol"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun protocole actif"
           }
         }
       }
@@ -2257,18 +2305,18 @@
         }
       }
     },
-    "Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite." : {
+    "Choisissez la sonde ou liez le pont Hue dans Réglages › Zigbee." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose the probe in Settings › Probe. The link to the Hue bridge will come next."
+            "value" : "Choose the probe or link the Hue Bridge in Settings › Zigbee."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choisissez la sonde dans Réglages › Sonde. La liaison au pont Hue viendra ensuite."
+            "value" : "Choisissez la sonde ou liez le pont Hue dans Réglages › Zigbee."
           }
         }
       }
@@ -2717,6 +2765,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "En attente du maillage de la sonde"
+          }
+        }
+      }
+    },
+    "En attente du maillage de la sonde…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for the probe's mesh…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente du maillage de la sonde…"
           }
         }
       }
@@ -3921,6 +3985,22 @@
         }
       }
     },
+    "Mode démo : faux réseau Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo mode: fake Hue network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : faux réseau Hue"
+          }
+        }
+      }
+    },
     "Mode démo : le relevé de Maison de la démo, pas de Passeur." : {
       "localizations" : {
         "en" : {
@@ -4717,6 +4797,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pont Hue"
+          }
+        }
+      }
+    },
+    "Pont Hue : erreur (voir les Réglages)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue Bridge: error (see Settings)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont Hue : erreur (voir les Réglages)"
+          }
+        }
+      }
+    },
+    "Pont Hue introuvable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue Bridge not found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont Hue introuvable"
+          }
+        }
+      }
+    },
+    "Pont Hue non lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue Bridge not linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont Hue non lié"
           }
         }
       }
@@ -5809,6 +5937,22 @@
         }
       }
     },
+    "Réseau Zigbee normal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee network normal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau Zigbee normal"
+          }
+        }
+      }
+    },
     "Réseau local refusé : autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
       "localizations" : {
         "en" : {
@@ -6205,6 +6349,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Surnom"
+          }
+        }
+      }
+    },
+    "Surveillance" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monitoring"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surveillance"
           }
         }
       }

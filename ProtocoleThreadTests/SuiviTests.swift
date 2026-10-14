@@ -445,6 +445,6 @@ struct SuiviTests {
         let ancien = Data(#"{"date":"2026-09-27T00:14:00Z","type":"appareilDisparu"}"#.utf8)
         let lu = try decodeur.decode(Evenement.self, from: ancien)
         #expect(lu.gravite == .attention && !lu.constate && lu.details.isEmpty, "champs manquants : valeurs par defaut")
-        #expect(e.id == "1790000000000-reseauScinde-4B36A2B7FEFB200B")
+        #expect(e.id == "1790000000000-thread-reseauScinde-4B36A2B7FEFB200B", "l'identifiant porte le protocole (Thread sans protocole)")
     }
 }

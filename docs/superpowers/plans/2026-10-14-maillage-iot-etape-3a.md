@@ -332,10 +332,10 @@ Ajout (relecture de la tâche 8, I1) : dans la scène réunie, la barre du haut 
 - Modify: `Surveillance` (un journal, `PolitiqueJournalComposee` avec Thread et Zigbee, événements des deux modèles avec leur `protocole`) ; `Notifications`/`Alertes` (alertes des deux protocoles actifs, catégories et clés actuelles communes) ; `MenuBarre` (les lignes de résumé des deux protocoles actifs, l'une sous l'autre) ; `FenetreJournal` (les deux protocoles, textes d'événements de chaque module : `TexteEvenement` Thread et Zigbee renommés à la tâche 7).
 - Test: `JournalDeuxProtocolesTests`, `MenuTests`.
 
-- [ ] **Step 1: RED** — un événement Zigbee et un Thread du même type gardent chacun la gravité de leur protocole dans le journal relu ; le menu montre une ligne par protocole actif et aucune pour un protocole éteint. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Journal, alertes et menu : les deux protocoles ».
+- [x] **Step 1: RED** — un événement Zigbee et un Thread du même type gardent chacun la gravité de leur protocole dans le journal relu ; le menu montre une ligne par protocole actif et aucune pour un protocole éteint. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Journal, alertes et menu : les deux protocoles ».
 
 ---
 

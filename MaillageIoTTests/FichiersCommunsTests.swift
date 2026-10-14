@@ -98,8 +98,8 @@ struct FichiersCommunsTests {
         defer { try? FileManager.default.removeItem(at: d) }
         let s = Surveillance(mode: .direct, dossier: d)
         s.noterVeille(debut: Self.t0, fin: Self.t0.addingTimeInterval(60))
-        // Chaque modele de protocole note la veille du Mac dans son propre journal (tache 7 : Thread, puis Zigbee).
-        #expect(s.evenements.map(\.protocole) == [.thread, .zigbee])
+        // La veille du Mac s'ecrit une fois (tache 13), sous le premier protocole allume : Thread.
+        #expect(s.evenements.map(\.protocole) == [.thread])
         let relus = try JournalFichiers(dossier: d.appendingPathComponent("Journal"),
                                         politique: Surveillance.politiqueJournal).lire()
         #expect(relus == s.evenements && relus.first?.protocole == .thread)

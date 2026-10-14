@@ -101,4 +101,25 @@ struct AlertesTests {
         #expect(a.traiter([Self.scission(["PART-A", "PART-B"], constate: false), Self.perte(0), Self.perte(1),
                            Self.perte(2)]).isEmpty)
     }
+
+    /// Les pertes se comptent par protocole : trois pertes de deux protocoles ne font pas une notification groupee, et celle
+    /// d'un protocole n'embarque que les siennes, sous un identifiant a lui.
+    @Test func pertesParProtocole() {
+        func perte(_ secondes: Double, _ protocole: Protocole, _ id: String) -> Evenement {
+            Evenement(date: Self.t.addingTimeInterval(secondes), type: .essaiPerte, sujet: Sujet(id: id, nom: id),
+                      protocole: protocole)
+        }
+        var a = Alertes(politique: PolitiqueEssai())
+        #expect(a.traiter([perte(0, .thread, "t1"), perte(1, .zigbee, "z1"), perte(2, .thread, "t2")]).isEmpty,
+                "trois pertes en tout, mais deux et une")
+        let sortie = a.traiter([perte(3, .zigbee, "z2"), perte(4, .zigbee, "z3")])
+        #expect(sortie.map(\.categorie) == [.pertes])
+        #expect(sortie.first?.evenements.compactMap(\.sujet?.id) == ["z1", "z2", "z3"], "rien de Thread")
+        let thread = a.traiter([perte(5, .thread, "t3")])
+        #expect(thread.first?.evenements.compactMap(\.sujet?.id) == ["t1", "t2", "t3"], "rien de Zigbee")
+        #expect(thread.first?.identifiant != sortie.first?.identifiant, "deux groupes ouverts a la meme minute : deux identifiants")
+        // Un protocole oublie (eteint) laisse l'autre intact.
+        a.oublierPertes { $0.protocole == .zigbee }
+        #expect(a.traiter([perte(6, .thread, "t4")]).first?.evenements.compactMap(\.sujet?.id) == ["t1", "t2", "t3", "t4"])
+    }
 }

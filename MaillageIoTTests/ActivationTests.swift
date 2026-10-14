@@ -271,7 +271,8 @@ struct ActivationTests {
                 "rien d'un protocole eteint dans la notification")
     }
 
-    /// Chaque Mac qui se reveille ecrit une ligne « veille » par protocole allume ; un protocole eteint n'ecrit rien.
+    /// Un Mac qui se reveille ecrit une seule ligne « veille » (la veille est celle du Mac), celle du premier protocole allume ;
+    /// un protocole eteint n'ecrit rien, et aucun protocole allume, aucune ligne.
     @Test func veilleSeulementPourLesProtocolesAllumes() throws {
         let debut = Date(timeIntervalSince1970: 1_800_000_000)
         func protocoles(thread: Bool?, zigbee: Bool?) throws -> [Protocole?] {
@@ -283,7 +284,7 @@ struct ActivationTests {
                 return e.protocole
             }
         }
-        #expect(try protocoles(thread: nil, zigbee: nil) == [.thread, .zigbee])
+        #expect(try protocoles(thread: nil, zigbee: nil) == [.thread], "une seule ligne pour deux protocoles")
         #expect(try protocoles(thread: false, zigbee: nil) == [.zigbee])
         #expect(try protocoles(thread: nil, zigbee: false) == [.thread])
         #expect(try protocoles(thread: false, zigbee: false).isEmpty)

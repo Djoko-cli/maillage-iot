@@ -46,4 +46,20 @@ struct EvenementProtocoleTests {
         let neuf = Evenement(date: Self.date, type: .essaiRoutine, protocole: .thread)
         #expect(neuf.protocole == .thread)
     }
+
+    /// L'identifiant d'un evenement (identite d'une ligne du journal, identifiant de notification) porte son protocole :
+    /// deux evenements identiques, sauf le protocole, ne se confondent pas. Sans protocole, c'est Thread : une ligne
+    /// d'avant l'etape 3 garde l'identifiant qu'elle prend en recevant son protocole.
+    @Test func identifiantPorteLeProtocole() {
+        let sujet = Sujet(id: "S", nom: "S")
+        let thread = Evenement(date: Self.date, type: .essaiPerte, sujet: sujet, protocole: .thread)
+        let zigbee = Evenement(date: Self.date, type: .essaiPerte, sujet: sujet, protocole: .zigbee)
+        let sans = Evenement(date: Self.date, type: .essaiPerte, sujet: sujet)
+        #expect(thread.id != zigbee.id, "meme date, meme type, meme sujet : deux protocoles, deux identifiants")
+        #expect(sans.id == thread.id, "sans protocole : Thread")
+        #expect(sans.id != zigbee.id)
+        // Les lignes du journal qui les groupent se distinguent de meme.
+        #expect(LigneJournal.evenement(thread).id != LigneJournal.evenement(zigbee).id)
+        #expect(LigneJournal.pertes([thread, thread]).id != LigneJournal.pertes([zigbee, zigbee]).id)
+    }
 }

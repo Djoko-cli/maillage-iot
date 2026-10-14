@@ -49,6 +49,8 @@ struct EntreeSceneTests {
             for n in seule.scene.noeuds {
                 let m = try #require(reunie.scene.noeud(n.id), "\(n.id.cle)")
                 #expect(m.libelle == n.libelle && m.genre == n.genre && m.partition == n.partition && m.routeur == n.routeur)
+                // La piece de chaque noeud : celle que lui donne son protocole, la meme seul ou reuni.
+                #expect(reunie.scene.pieces[m.piece].nom == seule.scene.pieces[n.piece].nom, "piece de \(n.id.cle)")
                 #expect(m.rang == n.rang && m.rayon == n.rayon, "classement de son protocole : \(n.id.cle)")
                 #expect(m.chef == n.chef && m.pile == n.pile && m.inconnu == n.inconnu && m.bordure == n.bordure)
                 #expect(reunie.libelles[n.id] == seule.libelles[n.id])
@@ -161,6 +163,42 @@ struct EntreeSceneTests {
         #expect(nomsRouteurs[routeur.instance] == "Enceinte inventee", "le surnom donne a Thread distingue les deux noeuds")
         #expect(libelles[IdNoeud(.thread, routeur.instance)]?.nom == "Enceinte inventee")
         #expect(libelles[intrus.id]?.nom == CartesPieces.couper(routeur.instance), "le repli est la cle, jamais le nom de Thread")
+    }
+
+    /// Les libelles de Zigbee ne lisent le pont que pour les noeuds de Zigbee : un noeud de Thread de meme cle garde son repli
+    /// (sa cle). Echoue si la garde de protocole de `LibellesNoeuds.libelles(graphe:appareils:nom:chefs:)` est retiree.
+    @Test func libellesDeZigbeeIgnorentLesNoeudsDeThread() {
+        func noeud(_ id: IdNoeud) -> GrapheReseau.Noeud {
+            GrapheReseau.Noeud(id: id, genre: .routeur, partition: "p", routeur: true, bordure: false, inconnu: false, extMac: nil)
+        }
+        let thread = noeud(IdNoeud(.thread, "CLE-0001")), zigbee = noeud(IdNoeud(.zigbee, "CLE-0001"))
+        let graphe = GrapheReseau(noeuds: [thread, zigbee], liens: [])
+        let libelles = LibellesNoeuds.libelles(graphe: graphe, appareils: [:], nom: { _ in "Nom du pont" }, chefs: [])
+        #expect(libelles[zigbee.id]?.nom == "Nom du pont", "un noeud de Zigbee est lu sur le pont")
+        #expect(libelles[thread.id]?.nom == CartesPieces.couper("CLE-0001"), "le repli de Thread est sa cle, jamais le nom du pont")
+    }
+
+    /// Les candidats d'un routeur de bordure sont ceux du maillage de Thread, pour ses noeuds seulement : un noeud de Zigbee de
+    /// meme cle n'est pas un routeur a candidats. Echoue si la garde de protocole de `LegendePieces.Lecture.candidats` est
+    /// retiree.
+    @Test func candidatsDeLaLegendeSontCeuxDeThread() throws {
+        let (s, r) = try NomsSceneTests.demoSansIdentite()
+        var e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
+        let candidats = LegendePieces.Lecture(e, ailleurs: false).candidats
+        try #require(!candidats.isEmpty, "la demo sans identite a des routeurs de bordure a candidats")
+        #expect(candidats.allSatisfy { $0.protocole == .thread })
+        // Un noeud de Zigbee de meme cle que le premier, ajoute a la scene.
+        let cle = try #require(candidats.first).cle
+        let intrus = GrapheReseau.Noeud(id: IdNoeud(.zigbee, cle), genre: .routeur, partition: "zigbee", routeur: true,
+                                        bordure: false, inconnu: false, extMac: nil)
+        e.graphe = GrapheReseau(noeuds: e.graphe.noeuds + [intrus], liens: e.graphe.liens)
+        e.scene = ScenePieces(graphe: e.graphe, libelles: e.libelles.mapValues(\.nom), piecesNoeuds: [:], zones: nil,
+                              chefs: e.chefs, piecesMaison: false,
+                              classement: EntreeScene.classement(thread: s.thread.classement, zigbee: s.zigbee.classement))
+        #expect(e.scene.noeud(intrus.id) != nil, "le noeud de Zigbee est de la scene")
+        let lecture = LegendePieces.Lecture(e, ailleurs: false)
+        #expect(lecture.candidats == candidats, "seulement les noeuds de Thread")
+        #expect(!lecture.candidats.contains(intrus.id))
     }
 
     /// Le contenu des fiches suit le protocole du noeud : l'echelle du signal (dBm, LQI) est celle du modele, le survol d'une
