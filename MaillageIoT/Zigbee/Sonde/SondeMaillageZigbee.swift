@@ -116,7 +116,8 @@ final class SondeMaillageZigbee {
     var reglageChemin: ReglageChemin = .automatique {
         didSet {
             guard reglageChemin != oldValue else { return }
-            if actif { preferences.set(reglageChemin.rawValue, forKey: CheminSonde.cleReglage) }
+            // Un reglage change sonde eteinte est garde aussi (`vivante`) : seule la sonde inerte (demo, tests) n'ecrit rien.
+            if vivante { preferences.set(reglageChemin.rawValue, forKey: CheminSonde.cleReglage) }
             reevaluer()
         }
     }
@@ -279,9 +280,10 @@ final class SondeMaillageZigbee {
     }
 
     /// La memoire d'une tournee qui commence : vide, sauf le journal des pages envoyees dans les 10 dernieres minutes
-    /// (et les pages des dernieres tables), relu des preferences. Ni preferences lues ni ecrites hors `actif`.
+    /// (et les pages des dernieres tables), relu des preferences. Ni preferences lues ni ecrites par une sonde inerte
+    /// (`vivante` faux : demo, tests).
     private func nouvelleMemoire() -> MemoireTourneeZigbee {
-        guard actif else { return MemoireTourneeZigbee() }
+        guard vivante else { return MemoireTourneeZigbee() }
         var m = MemoireTourneeZigbee()
         if let valeurs = preferences.object(forKey: Self.cleJournalPages) as? [Double] {
             m.budget = BudgetPages(enregistre: valeurs, a: horloge())
@@ -294,7 +296,7 @@ final class SondeMaillageZigbee {
     /// app quittee en pleine tournee n'oublie pas ses pages).
     private func garderBudget(_ b: BudgetPages) {
         memoire.budget = b
-        guard actif else { return }
+        guard vivante else { return }
         preferences.set(b.enregistrable(a: horloge()), forKey: Self.cleJournalPages)
     }
 
@@ -498,7 +500,7 @@ final class SondeMaillageZigbee {
         passeComplementaire = nil
         tourneeDifferee = nil
         // Le journal des pages reste : c'est la sonde physique qui plafonne, pas le reseau lu.
-        if actif { preferences.removeObject(forKey: Self.clePagesTables) }
+        if vivante { preferences.removeObject(forKey: Self.clePagesTables) }
         memoire = nouvelleMemoire()
     }
 
@@ -598,7 +600,7 @@ final class SondeMaillageZigbee {
                 return .rythme
             }
             memoire = r.memoire
-            if actif {
+            if vivante {
                 if let pages = r.memoire.pagesTables {
                     preferences.set(pages, forKey: Self.clePagesTables)
                 }

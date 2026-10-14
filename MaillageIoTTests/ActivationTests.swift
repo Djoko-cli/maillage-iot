@@ -249,6 +249,28 @@ struct ActivationTests {
         #expect(b.s.evenements.count == 2 && b.s.alerte, "rallume : il ecrit et alerte de nouveau")
     }
 
+    /// La fenetre des pertes (3 en 10 min, une notification groupee) ne garde rien d'un protocole eteint : deux pertes
+    /// Zigbee, Zigbee eteint, une perte Thread ne font pas trois ; la notification, quand elle part, ne compte que Thread.
+    @Test func pertesDUnProtocoleEteintNeCompentPlus() throws {
+        let b = try BancActivation()
+        defer { b.nettoyer() }
+        let t = b.s.maintenant
+        func perte(_ id: String, _ decalage: TimeInterval) -> Evenement {
+            Evenement(date: t.addingTimeInterval(decalage), type: .appareilDisparu, sujet: Sujet(id: id, nom: "Appareil \(id)"))
+        }
+        func groupees() -> [AlerteAEnvoyer] { b.alertes.alertes.filter { $0.categorie == .pertes } }
+
+        b.s.ajouter([perte("Z1", 0), perte("Z2", 1)], de: .zigbee)
+        b.s.modele(pour: .zigbee)?.actif = false
+        b.s.ajouter([perte("T1", 300)], de: .thread)
+        #expect(groupees().isEmpty, "deux pertes Zigbee, Zigbee eteint, une perte Thread : pas trois")
+
+        b.s.ajouter([perte("T2", 301), perte("T3", 302)], de: .thread)
+        let envoyee = try #require(groupees().last, "trois pertes Thread : la notification part")
+        #expect(envoyee.evenements.count == 3 && envoyee.evenements.allSatisfy { $0.protocole == .thread },
+                "rien d'un protocole eteint dans la notification")
+    }
+
     /// Chaque Mac qui se reveille ecrit une ligne « veille » par protocole allume ; un protocole eteint n'ecrit rien.
     @Test func veilleSeulementPourLesProtocolesAllumes() throws {
         let debut = Date(timeIntervalSince1970: 1_800_000_000)

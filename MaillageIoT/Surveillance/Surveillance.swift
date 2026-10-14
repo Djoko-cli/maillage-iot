@@ -256,6 +256,10 @@ final class Surveillance {
         } catch {
             erreurJournal = error.localizedDescription
         }
+        // Les pertes d'un protocole eteint depuis ne comptent plus dans la fenetre du groupe (ni pour le seuil, ni dans la
+        // notification).
+        let eteints = Set(modeles.filter { !$0.actif }.map(\.protocole))
+        alertes.oublierPertes { eteints.contains($0.protocole ?? SurveillanceThread.protocole) }
         let notifiees = alertes.scissionsNotifiees
         let envoyer = alertes.traiter(nouveaux)
         if alertes.scissionsNotifiees != notifiees { thread.garderScissionsNotifiees(alertes.scissionsNotifiees) }

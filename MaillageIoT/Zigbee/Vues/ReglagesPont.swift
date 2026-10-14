@@ -7,6 +7,8 @@ import SwiftUI
 /// pas le pont ; la derniere lecture et le nombre d'appareils lus.
 struct ReglagesPont: View {
     @Environment(NomsPont.self) private var pont
+    /// Facultative : les mesures de la page (`CapturesPieces`) la rendent sans coque.
+    @Environment(Surveillance.self) private var surveillance: Surveillance?
     @State private var adresse = ""
     @State private var verification = false
 
@@ -61,6 +63,7 @@ struct ReglagesPont: View {
         } else if pont.pont != nil && !pont.lie {
             HStack {
                 Button("Lier…") { pont.lier() }
+                    .disabled(surveillance?.zigbee.actif == false)
                 Spacer()
             }
             Text("Après « Lier… », appuyez dans les 60 secondes sur le bouton rond du pont Hue. La clé donnée par le pont va au trousseau de ce Mac.")

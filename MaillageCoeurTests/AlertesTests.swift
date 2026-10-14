@@ -82,6 +82,19 @@ struct AlertesTests {
         #expect(a.traiter([rejointe]).map(\.categorie) == [.informations], "coupure non coupee : pas une perte")
     }
 
+    /// Les pertes oubliees (un protocole eteint) ne comptent plus : ni pour le seuil, ni dans la notification.
+    @Test func pertesOublieesNeComptentPlus() {
+        var a = Alertes(politique: PolitiqueEssai())
+        #expect(a.traiter([Self.perte(0, "z1"), Self.perte(1, "z2")]).isEmpty)
+        a.oublierPertes { $0.sujet?.id.hasPrefix("z") == true }
+        #expect(a.traiter([Self.perte(300, "t1")]).isEmpty, "deux oubliees + une : pas trois")
+        let sortie = a.traiter([Self.perte(301, "t2"), Self.perte(302, "t3")])
+        #expect(sortie.map(\.categorie) == [.pertes])
+        #expect(sortie.first?.evenements.map(\.sujet?.id) == ["t1", "t2", "t3"], "rien des oubliees")
+        a.oublierPertes { _ in true }
+        #expect(a.traiter([Self.perte(400), Self.perte(401)]).isEmpty, "fenetre videe puis rouverte : 2 pertes seulement")
+    }
+
     /// Sans politique (`PolitiqueJournalNeutre`), rien ne se notifie.
     @Test func politiqueNeutreNeNotifieRien() {
         var a = Alertes(politique: PolitiqueJournalNeutre())

@@ -54,6 +54,15 @@ public struct Alertes: Sendable {
         self.politique = politique
     }
 
+    /// Retire de la fenetre des pertes celles que `oubli` designe (un protocole eteint : aucune notification ne doit
+    /// embarquer ses evenements, ni atteindre le seuil grace a eux). La fenetre repart de la plus ancienne perte gardee ;
+    /// vide, elle se referme.
+    public mutating func oublierPertes(ou oubli: (Evenement) -> Bool) {
+        pertes.removeAll(where: oubli)
+        debutFenetre = pertes.map(\.date).min()
+        if pertes.isEmpty { identifiantPertes = nil }
+    }
+
     public mutating func traiter(_ evenements: [Evenement]) -> [AlerteAEnvoyer] {
         var sortie: [AlerteAEnvoyer] = []
         var pertesModifiees = false

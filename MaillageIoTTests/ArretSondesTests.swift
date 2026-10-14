@@ -214,6 +214,8 @@ struct ArretSondeZigbeeTests {
 
     struct Banc {
         let sonde: SondeMaillageZigbee
+        /// Une sonde neuve sur les memes preferences, comme au lancement suivant (inerte tant qu'on ne la demarre pas).
+        let relancee: @MainActor () -> SondeMaillageZigbee
         let registre: RegistrePorts
         let ports: FabriquePorts
         let bonjour: FabriqueBonjour
@@ -257,7 +259,13 @@ struct ArretSondeZigbeeTests {
             delaiReessaiReseau: .milliseconds(300), periodeEntretien: .seconds(3600), delaiNouvelEssai: .milliseconds(300),
             delaiPremiereTournee: .seconds(3600),
             surveillerPorts: ports.fabriquer, listerPorts: { branches }, fabriqueBonjour: bonjour.fabriquer)
-        return Banc(sonde: s, registre: registre, ports: ports, bonjour: bonjour, reseau: reseau,
+        let retenu = Self.retenu
+        let relancee: @MainActor () -> SondeMaillageZigbee = {
+            SondeMaillageZigbee(preferences: p, actif: true, trousseau: TrousseauMemoireZigbee(),
+                                surveillerPorts: FabriquePorts().fabriquer, listerPorts: { [retenu] },
+                                fabriqueBonjour: FabriqueBonjour().fabriquer)
+        }
+        return Banc(sonde: s, relancee: relancee, registre: registre, ports: ports, bonjour: bonjour, reseau: reseau,
                     nettoyage: { SondeMaillageZigbeeTests.nettoyer(p, domaine) })
     }
 
@@ -393,6 +401,27 @@ struct ArretSondeZigbeeTests {
         try await Task.sleep(for: .milliseconds(150))
         #expect(b.registre.ouvertures == ouvertures && b.registre.ouverts == 0, "plus rien ne s'ouvre apres coup")
         #expect(b.sonde.tachesPlanifiees == 0)
+    }
+
+    /// Un reglage change Zigbee eteint (« Liaison ») est enregistre : l'app quittee puis relancee le retrouve, et rien ne
+    /// s'ouvre pendant l'extinction (la sonde eteinte n'agit pas, mais ne perd pas le choix).
+    @Test func reglageChangeEteintEstGarde() async throws {
+        let b = try Self.banc()
+        defer { b.nettoyer() }
+        b.sonde.demarrer()
+        #expect(await attendreActivation { SondeMaillageZigbeeTests.connectee(b.sonde) })
+        b.sonde.arreter()
+        #expect(await attendreActivation { b.registre.ouverts == 0 })
+        let ouvertures = b.registre.ouvertures
+
+        b.sonde.reglageChemin = .reseau
+        b.sonde.annoncesChangees(["SONDE-01"])
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(b.registre.ouvertures == ouvertures && b.registre.ouverts == 0 && b.reseau.noms.isEmpty,
+                "aucun port ni session ouverts pendant l'extinction")
+        #expect(b.sonde.tachesPlanifiees == 0 && !b.sonde.actif)
+
+        #expect(b.relancee().reglageChemin == .reseau, "le choix est garde")
     }
 
     /// La sonde de la demo et des tests est inerte : `arreter` et `demarrer` ne la reveillent pas.

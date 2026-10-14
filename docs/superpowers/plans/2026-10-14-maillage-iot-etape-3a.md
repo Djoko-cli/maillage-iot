@@ -328,6 +328,7 @@ Le minimum de l'étape 3a ; les filtres et marques du journal, les catégories p
 Ajout (relecture de la tâche 8, I1) : dans la scène réunie, la barre du haut (`BandeauPieces`, `HautPieces`) montre aussi les commandes de Zigbee (« Liens » chemins/tous, voisins, ligne de tournée) à côté de celles de Thread, en remplaçant le paramètre transitoire `zigbeeSeul` ; la barre définitive avec les interrupteurs de vue est à l'étape 3b. Tests ajoutés : `sceneReunieEstLUnionDesDeux` compare aussi la pièce de chaque nœud ; un test qui échoue si l'on retire la garde de protocole de `LibellesNoeudsZigbee` ou des candidats de `LegendePieces`.
 
 **Files:**
+- Modify (relecture de la tâche 11) : `MorceauxFenetre`/`EtatVide` et `MenuBarre` ne parlent plus seulement de Thread (« Écoute du réseau local… » affiché Thread éteint) : texte par protocole actif.
 - Modify: `Surveillance` (un journal, `PolitiqueJournalComposee` avec Thread et Zigbee, événements des deux modèles avec leur `protocole`) ; `Notifications`/`Alertes` (alertes des deux protocoles actifs, catégories et clés actuelles communes) ; `MenuBarre` (les lignes de résumé des deux protocoles actifs, l'une sous l'autre) ; `FenetreJournal` (les deux protocoles, textes d'événements de chaque module : `TexteEvenement` Thread et Zigbee renommés à la tâche 7).
 - Test: `JournalDeuxProtocolesTests`, `MenuTests`.
 

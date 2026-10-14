@@ -88,12 +88,15 @@ struct ArretNomsPontTests {
 
     /// Un pont lie et sa cle, simules ; la relecture de 5 minutes dure 30 ms (on la voit tourner), toute autre attente est
     /// celle des tests de la liaison. Rien ne passe par le reseau.
-    static func banc() -> Banc {
+    /// `lie` faux : le pont est retenu mais sa cle n'est pas au trousseau (etat « trouve »). `relecture` : la duree de la
+    /// relecture de 5 minutes.
+    static func banc(lie: Bool = true, relecture: Duration = .milliseconds(30)) -> Banc {
         let simule = PontSimule()
         let date = NomsPontTests.date
-        let d = DependancesPont(transport: simule, trousseau: TrousseauMemoireZigbee([PontSimule.identifiant: PontSimule.cle]),
+        let cles = lie ? [PontSimule.identifiant: PontSimule.cle] : [:]
+        let d = DependancesPont(transport: simule, trousseau: TrousseauMemoireZigbee(cles),
                                 memoire: MemoireVive(NomsPontTests.retenu), cache: nil, attendre: { duree in
-            try await Task.sleep(for: duree == NomsPont.periodeLecture ? .milliseconds(30) : duree)
+            try await Task.sleep(for: duree == NomsPont.periodeLecture ? relecture : duree)
         }, maintenant: { date }, nomMac: "Mac invente")
         return Banc(pont: NomsPont(dependances: d), simule: simule)
     }
@@ -162,5 +165,58 @@ struct ArretNomsPontTests {
         let n = b.simule.appels.count
         try await Task.sleep(for: .milliseconds(250))
         #expect(b.simule.appels.count == n, "plus aucune lecture")
+    }
+
+    /// Zigbee eteint, le pont est a l'etat « trouve » : « Lier… » est refuse (aucune demande au pont, aucune tache), et
+    /// aucune relecture n'est armee.
+    @Test func lierRefuseEteint() async throws {
+        let b = Self.banc(lie: false)
+        b.pont.demarrer()
+        #expect(b.pont.etat == .trouve(ip: "192.0.2.10", identifiant: PontSimule.identifiant))
+        b.pont.arreter()
+        #expect(b.pont.lier() == nil, "refuse")
+        #expect(b.pont.tacheLiaison == nil && b.pont.tachesPlanifiees == 0)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(b.simule.appels.isEmpty, "rien n'est demande au pont")
+        #expect(b.pont.etat == .trouve(ip: "192.0.2.10", identifiant: PontSimule.identifiant) && b.pont.tachesPlanifiees == 0)
+    }
+
+    /// Zigbee eteint, « Identifier » est refuse sans rien noter ni envoyer.
+    @Test func identifierRefuseEteint() async throws {
+        let b = Self.banc(relecture: .seconds(3600))
+        b.pont.demarrer()
+        #expect(await attendreActivation { b.pont.noms != nil })
+        let ieee = try #require(b.pont.noms?.accessoires.compactMap(\.ieee).first)
+        b.pont.arreter()
+        #expect(await attendreActivation { !b.pont.lectureEnCours })
+        let appels = b.simule.appels.count
+        #expect(b.pont.identifier(ieee: ieee) == nil, "refuse")
+        #expect(b.pont.identifications.isEmpty && b.pont.tachesPlanifiees == 0)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(b.simule.appels.count == appels, "rien n'est envoye au pont")
+    }
+
+    /// Eteint puis rallume pendant une lecture : la lecture abandonnee ne montre pas d'erreur ni ne relance la decouverte, et
+    /// la lecture neuve n'est pas refusee (le pont n'attend pas 5 minutes de plus).
+    @Test func basculeRapideAllumeePendantUneLecture() async throws {
+        let b = Self.banc(relecture: .seconds(3600))
+        var echecs = 0
+        b.pont.surEchecReseau = { echecs += 1 }
+        // La lecture en vol echouera (reseau coupe quand elle part), la neuve reussira.
+        b.simule.modifier { $0.reseauCoupe = true }
+        b.simule.retenir("GET")
+        b.pont.demarrer()
+        #expect(await attendreActivation { b.simule.retient })
+        b.pont.arreter()
+        b.simule.modifier { $0.reseauCoupe = false }
+        b.pont.demarrer()
+        #expect(await attendreActivation { b.pont.noms != nil }, "la lecture neuve a lieu tout de suite : \(b.pont.etat)")
+
+        b.simule.liberer()
+        #expect(await attendreActivation { !b.pont.lectureEnCours && b.pont.tachesPlanifiees == 1 })
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(echecs == 0, "la decouverte n'est pas relancee")
+        #expect(b.pont.etat == .lie, "pas d'erreur montree : \(b.pont.etat)")
+        b.pont.arreter()
     }
 }
