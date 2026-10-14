@@ -323,4 +323,28 @@ struct DispositionPiecesTests {
         #expect(!DispositionPieces.croise(SIMD2(0, 0), SIMD2(1, 1), SIMD2(1, 1), SIMD2(2, 0)), "bout commun")
         #expect(!DispositionPieces.croise(SIMD2(0, 0), SIMD2(1, 0), SIMD2(0, 1), SIMD2(1, 1)))
     }
+
+    /// Les chemins vers le pont doublent des liens radio : ils n'entrent pas dans la disposition (ni dans le cout), meme
+    /// quand ils relient des cartes differentes ; les autres liens y entrent tous.
+    @Test func liensCheminHorsDisposition() throws {
+        let graphe = try ScenePiecesTests.graphe(sonde: true)
+        let chemins = ["E000000000000002", "E000000000000003", "E000000000000005", "E000000000000004"].map {
+            GrapheReseau.Lien(de: $0, vers: "HomePod", genre: .chemin, qualite: 2)
+        }
+        let pieces = ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
+                      "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
+        func scene(_ g: GrapheReseau) -> ScenePieces {
+            ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
+                        chefs: ["Apple TV"], piecesMaison: true)
+        }
+        let sans = scene(graphe)
+        let avec = scene(GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins))
+        #expect(avec.liens.count == sans.liens.count + chemins.count, "la scene garde les chemins")
+        let c = CartesPieces.cartes(sans, largeurs: [:])
+        let calculSans = DispositionPieces.Calcul(scene: sans, cartes: c, fixees: [:])
+        let calculAvec = DispositionPieces.Calcul(scene: avec, cartes: c, fixees: [:])
+        #expect(calculAvec.liens.count == calculSans.liens.count && calculSans.liens.count == graphe.liens.count)
+        #expect(DispositionPieces(scene: avec, cartes: c) == DispositionPieces(scene: sans, cartes: c))
+    }
 }

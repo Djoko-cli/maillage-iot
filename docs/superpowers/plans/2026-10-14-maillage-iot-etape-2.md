@@ -87,10 +87,10 @@ D'après `inventaire-zigbee-coeur.md` §1.2 (SceneProjetee, TransitionScene, Dis
 **Interfaces:**
 - Produces: `ModeLiens` (défaut `.tous`), `EtatAnime(…, liens: ModeLiens = .tous, voisins: Bool = true)`, `enum Trace`, `PosesScene.Lien.suppose`, `TransitionScene.graphe` ; `ScenePieces.init(…, classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = ScenePieces.classementParDefaut)` où `classementParDefaut` est la règle actuelle (Thread : bordure 1, routeur 2, sinon 3 ; rayons centre 15, bordure 13, routeur 8, sinon 7).
 
-- [ ] **Step 1: RED** — porter les tests de Zigbee : `liensSelonLeMode` et `voisinsMasquesEtParentDAvant` (`Z:MaillageCoeurTests/SceneProjeteeTests.swift:169-242`), le bloc focus estompé de `Z:TransitionSceneTests.swift:478-487`, un test `classementFourni` (une règle passée en paramètre donne ses rangs et rayons) et un test `liensCheminHorsDisposition`. Échec attendu.
-- [ ] **Step 2: GREEN** — reprendre `Z:Scene/SceneProjetee.swift` et `Z:Scene/TransitionScene.swift` (diff purement additif d'après l'inventaire), la règle `.chemin` de `Z:Scene/DispositionPieces.swift:230-231`, et le paramètre `classement` de `ScenePieces`. L'app Thread compile sans changement d'appel (valeurs par défaut).
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh` ; `outils/mesurer.sh` (3 lignes « mesure : »).
-- [ ] **Step 4: Commit** — « Coeur : scene projetee et transitions de Zigbee (modes de liens, voisins, chemins), classement des noeuds parametre ».
+- [x] **Step 1: RED** — porter les tests de Zigbee : `liensSelonLeMode` et `voisinsMasquesEtParentDAvant` (`Z:MaillageCoeurTests/SceneProjeteeTests.swift:169-242`), le bloc focus estompé de `Z:TransitionSceneTests.swift:478-487`, un test `classementFourni` (une règle passée en paramètre donne ses rangs et rayons) et un test `liensCheminHorsDisposition`. Échec attendu.
+- [x] **Step 2: GREEN** — reprendre `Z:Scene/SceneProjetee.swift` et `Z:Scene/TransitionScene.swift` (diff purement additif d'après l'inventaire), la règle `.chemin` de `Z:Scene/DispositionPieces.swift:230-231`, et le paramètre `classement` de `ScenePieces`. L'app Thread compile sans changement d'appel (valeurs par défaut).
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0, rejeu Thread exact) ; `bash outils/tester-coeur.sh` ; `outils/mesurer.sh` (3 lignes « mesure : »).
+- [x] **Step 4: Commit** — « Coeur : scene projetee et transitions de Zigbee (modes de liens, voisins, chemins), classement des noeuds parametre ».
 
 ---
 

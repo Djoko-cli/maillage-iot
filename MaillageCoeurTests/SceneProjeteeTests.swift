@@ -162,4 +162,81 @@ struct SceneProjeteeTests {
         #expect(abs(meme.r - bleu.r) < 1e-9 && abs(meme.g - bleu.g) < 1e-9 && abs(meme.b - bleu.b) < 1e-9)
         #expect(bleu.eclairee(0.5).b < bleu.b)
     }
+
+    /// Les liens selon le mode : « tous » (par defaut), les liens radio et vers un parent, pas les chemins ; « chemins »,
+    /// les chemins (suppose garde) et les liens vers un parent, les liens radio seulement ceux du noeud selectionne, en
+    /// voisins estompes. La disposition ne depend pas des chemins.
+    @Test func liensSelonLeMode() throws {
+        let (s0, c, d, g) = try Self.scene()
+        let chemins = [GrapheReseau.Lien(de: "HomePod", vers: "Apple TV", genre: .chemin, qualite: 2),
+                       GrapheReseau.Lien(de: "E000000000000004", vers: "Apple TV", genre: .chemin, qualite: 2, suppose: true)]
+        let graphe = try ScenePiecesTests.graphe(sonde: true)
+        let gc = GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins)
+        let pieces = ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
+                      "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
+        let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
+                            chefs: ["Apple TV"], piecesMaison: true)
+        #expect(DispositionPieces(scene: s, cartes: c).positions == d.positions && s0.pieces.count == s.pieces.count)
+        func projeter(_ mode: ModeLiens, selection: String? = nil) -> SceneProjetee {
+            let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode)
+            return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
+                                 orbite: CameraScene.canonique(g, aspect: 1.5, u: 0), cadre: Self.cadre)
+        }
+        let tous = projeter(.tous)
+        #expect(tous.liensRouteurs.map(\.genre) == [.radio, .radio] && tous.liensEnfants.count == 3)
+        let parChemins = projeter(.chemins)
+        #expect(parChemins.liensRouteurs.map(\.genre) == [.chemin, .chemin] && parChemins.liensEnfants.count == 3)
+        #expect(parChemins.liensRouteurs.map(\.suppose) == [false, true] && parChemins.liensRouteurs.allSatisfy { !$0.voisin })
+        let selection = projeter(.chemins, selection: "HomePod")
+        let voisins = selection.liensRouteurs.filter(\.voisin)
+        #expect(voisins.count == 1 && voisins[0].genre == .radio && voisins[0].opacite < parChemins.liensRouteurs[0].opacite)
+        #expect(selection.liensRouteurs.filter { $0.genre == .chemin }.count == 2, "les autres chemins restent")
+    }
+
+    /// L'option « voisins a la selection » : masques, les voisins entendus du noeud selectionne ne se dessinent plus (les
+    /// chemins restent) ; sans effet en mode « tous ». Le parent d'avant (`suppose`) d'un appareil final garde son lien,
+    /// en pointilles.
+    @Test func voisinsMasquesEtParentDAvant() throws {
+        let (_, c, d, g) = try Self.scene()
+        let graphe = try ScenePiecesTests.graphe(sonde: true)
+        let chemins = [GrapheReseau.Lien(de: "HomePod", vers: "Apple TV", genre: .chemin, qualite: 2),
+                       GrapheReseau.Lien(de: "E000000000000004", vers: "Apple TV", genre: .chemin, qualite: 2, suppose: true)]
+        let parents = graphe.liens.filter { $0.genre == .parent }
+        let premier = try #require(parents.first)
+        // Le premier lien vers un parent devient un parent d'avant.
+        var liens = graphe.liens + chemins
+        let i = try #require(liens.firstIndex(of: premier))
+        liens[i].suppose = true
+        let gc = GrapheReseau(noeuds: graphe.noeuds, liens: liens)
+        let pieces = ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
+                      "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
+        let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
+                            chefs: ["Apple TV"], piecesMaison: true)
+        func projeter(_ mode: ModeLiens, voisins: Bool, selection: String? = "HomePod") -> SceneProjetee {
+            let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode,
+                              voisins: voisins)
+            return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
+                                 orbite: CameraScene.canonique(g, aspect: 1.5, u: 0), cadre: Self.cadre)
+        }
+        let montres = projeter(.chemins, voisins: true)
+        let masques = projeter(.chemins, voisins: false)
+        #expect(montres.liensRouteurs.filter(\.voisin).count == 1, "par defaut, comme avant")
+        #expect(masques.liensRouteurs.filter(\.voisin).isEmpty, "masques : aucun voisin entendu")
+        #expect(masques.liensRouteurs.map(\.genre) == [.chemin, .chemin], "les chemins restent")
+        #expect(masques.liensRouteurs.count == montres.liensRouteurs.count - 1)
+        #expect(masques.liensEnfants.count == montres.liensEnfants.count, "les liens vers un parent aussi")
+        // Sans selection, ou en mode « tous » : le choix ne change rien.
+        #expect(projeter(.chemins, voisins: false, selection: nil).liensRouteurs.count == masques.liensRouteurs.count)
+        #expect(projeter(.tous, voisins: false).liensRouteurs.map(\.genre) == projeter(.tous, voisins: true).liensRouteurs.map(\.genre))
+        #expect(projeter(.tous, voisins: false).liensRouteurs.allSatisfy { !$0.voisin })
+        // Le trace d'un lien radio du noeud selectionne : voisin, ou cache.
+        let radio = GrapheReseau.Lien(de: "HomePod", vers: "Apple TV", genre: .radio, qualite: 2)
+        #expect(SceneProjetee.trace(radio, mode: .chemins, selection: "HomePod") == .voisin)
+        #expect(SceneProjetee.trace(radio, mode: .chemins, selection: "HomePod", voisins: false) == nil)
+        #expect(SceneProjetee.trace(radio, mode: .tous, selection: nil, voisins: false) == .normal)
+        // Le parent d'avant : son lien vers le parent est trace en pointilles, les autres non.
+        #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])
+    }
 }

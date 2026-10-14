@@ -46,14 +46,19 @@ public struct EtatAnime: Hashable, Sendable {
     public var ek: [Double]
     /// Disque cliquable sous le pointeur : il s'eclaircit.
     public var survolEtage: Int?
-    /// Mode focus : l'estompement de chaque noeud, par identifiant, et de chaque lien, par paire (`MiseEnAvant.cle`), de
-    /// 0 (net) a 1 (estompe) ; absent : net.
+    /// Les liens montres : les chemins vers le pont, ou tous les liens radio.
+    public var liens: ModeLiens
+    /// En mode « chemins », les voisins entendus d'un noeud selectionne sont montres (vrai) ou masques (faux).
+    public var voisins: Bool
+    /// Mode focus (etape 5, section 1) : l'estompement de chaque noeud, par identifiant, et de chaque lien, par paire
+    /// (`MiseEnAvant.cle`), de 0 (net) a 1 (estompe) ; absent : net.
     public var noeudsEstompes: [String: Double]
     public var liensEstompes: [String: Double]
 
     public init(t: Double = 0, s: Double = 0, fk: [Double], focus: Int? = nil, survol: String? = nil,
                 selection: String? = nil, se: Double = 0, ek: [Double] = [], survolEtage: Int? = nil,
-                noeudsEstompes: [String: Double] = [:], liensEstompes: [String: Double] = [:]) {
+                liens: ModeLiens = .tous, voisins: Bool = true, noeudsEstompes: [String: Double] = [:],
+                liensEstompes: [String: Double] = [:]) {
         self.t = t
         self.s = s
         self.fk = fk
@@ -63,9 +68,20 @@ public struct EtatAnime: Hashable, Sendable {
         self.se = se
         self.ek = ek
         self.survolEtage = survolEtage
+        self.liens = liens
+        self.voisins = voisins
         self.noeudsEstompes = noeudsEstompes
         self.liensEstompes = liensEstompes
     }
+}
+
+/// Les liens que montre la vue (consigne de l'etape 3 bis, section 3).
+public enum ModeLiens: String, Hashable, Sendable, CaseIterable {
+    /// Le chemin de chaque routeur vers le pont, et les liens vers un parent ; les voisins entendus d'un noeud
+    /// selectionne seulement (et si la vue les montre : `EtatAnime.voisins`).
+    case chemins
+    /// Tous les liens radio entendus, et les liens vers un parent (l'affichage d'avant les chemins).
+    case tous
 }
 
 /// Repere « ailleurs » d'un enfant de la piece isolee dont le parent est dans une autre piece.
@@ -128,6 +144,50 @@ public struct SceneProjetee: Sendable {
         public var qualite: Int?
         public var opacite: Double
         public var eclaire: Bool
+        /// Chemin suppose, ou lien vers le parent d'avant : en pointilles.
+        public var suppose = false
+        /// Voisin entendu d'un noeud selectionne, en mode « chemins » : trait fin et estompe.
+        public var voisin = false
+    }
+
+    /// Opacite d'un voisin entendu, au repos (en mode « chemins », a la selection) : estompe.
+    public static let opaciteVoisin = 0.45
+
+    /// Le lien projete : un lien radio, un chemin ou un voisin entendu (couche des routeurs), ou un lien vers un parent
+    /// (couche des enfants, plus visible eclaire) ; `poids` : le voile de ses pieces, `fondu` : sa transition.
+    static func lien(_ l: GrapheReseau.Lien, trace: Trace, a: CGPoint, b: CGPoint, poids: Double, fondu: Double,
+                     eclaire: Bool) -> Lien {
+        switch l.genre {
+        case .radio, .chemin:
+            let base = trace == .voisin ? opaciteVoisin : opaciteLienRadio
+            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite, opacite: base * poids * fondu, eclaire: eclaire,
+                        suppose: l.suppose, voisin: trace == .voisin)
+        case .parent, .rattachement:
+            return Lien(a: a, b: b, genre: l.genre, qualite: l.qualite,
+                        opacite: (eclaire ? 0.85 : opaciteLienEnfant * poids) * fondu, eclaire: eclaire,
+                        suppose: l.suppose)
+        }
+    }
+
+    /// Comment un lien se montre dans un mode : nil, cache ; `voisin`, en trait fin et estompe (un voisin entendu du
+    /// noeud selectionne, en mode « chemins »).
+    public enum Trace: Hashable, Sendable {
+        case normal, voisin
+    }
+
+    /// Le trace d'un lien : en mode « chemins », les chemins, les liens vers un parent, et les liens radio du noeud
+    /// selectionne (en voisins, sauf si `voisins` est faux : ils sont masques) ; en mode « tous », les liens radio et les
+    /// liens vers un parent, sans les chemins.
+    public static func trace(_ l: GrapheReseau.Lien, mode: ModeLiens, selection: String?,
+                             voisins: Bool = true) -> Trace? {
+        switch (l.genre, mode) {
+        case (.parent, _), (.rattachement, _): .normal
+        case (.chemin, .chemins): .normal
+        case (.chemin, .tous): nil
+        case (.radio, .tous): .normal
+        case (.radio, .chemins):
+            voisins && selection != nil && (l.de == selection || l.vers == selection) ? .voisin : nil
+        }
     }
 
     public struct Fil: Sendable {
@@ -194,7 +254,8 @@ public struct SceneProjetee: Sendable {
     /// Noeuds qui s'effacent pendant une transition (polissage D, section 1) : absents de la scene, ils ne se cliquent
     /// pas et n'ont pas de nom.
     public var fantomes: Set<String> = []
-    /// Mode focus : le facteur d'opacite des noeuds estompes (et de leurs noms), par identifiant ; absent : 1.
+    /// Mode focus : le facteur d'opacite des noeuds estompes (et de leurs noms, et de ceux qui s'effacent), par identifiant ;
+    /// absent : 1.
     public var facteursNoeuds: [String: Double] = [:]
 
     /// Le facteur d'opacite du mode focus d'un noeud et de son nom : 1 net.
@@ -383,7 +444,8 @@ public struct SceneProjetee: Sendable {
         // etage ; eclaires au survol (ou a la selection) d'un bout ; en mode focus, estompes s'ils ne sont pas mis en
         // avant.
         for l in scene.liens {
-            guard let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b),
+            guard let trace = Self.trace(l, mode: etat.liens, selection: etat.selection, voisins: etat.voisins),
+                  let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b),
                   let na = scene.noeud(l.de), let nb = scene.noeud(l.vers) else { continue }
             let poids = min(1 - 0.85 * (1 - max(voiles[na.piece], voiles[nb.piece])),
                             max(voileEtage(na.piece), voileEtage(nb.piece)))
@@ -393,14 +455,8 @@ public struct SceneProjetee: Sendable {
             if !etat.liensEstompes.isEmpty, let e = etat.liensEstompes[MiseEnAvant.cle(l)] {
                 fondu *= MiseEnAvant.facteur(e)
             }
-            if l.genre == .radio {
-                liensRouteurs.append(Lien(a: pa, b: pb, genre: .radio, qualite: l.qualite,
-                                          opacite: Self.opaciteLienRadio * poids * fondu, eclaire: eclaire))
-            } else {
-                liensEnfants.append(Lien(a: pa, b: pb, genre: l.genre, qualite: l.qualite,
-                                         opacite: (eclaire ? 0.85 : Self.opaciteLienEnfant * poids) * fondu,
-                                         eclaire: eclaire))
-            }
+            let p = Self.lien(l, trace: trace, a: pa, b: pb, poids: poids, fondu: fondu, eclaire: eclaire)
+            if p.genre == .parent || p.genre == .rattachement { liensEnfants.append(p) } else { liensRouteurs.append(p) }
         }
         // Les liens qui s'effacent, absents de la scene, entre les places affichees de leurs bouts, sous le voile de
         // leurs bouts, comme ceux qui restent : un bout de la scene, celui de sa piece ; un bout qui s'efface, celui
@@ -412,16 +468,12 @@ public struct SceneProjetee: Sendable {
         }
         let presents = poses.liens.isEmpty ? Set<String>() : Set(scene.liens.map(PosesScene.cle))
         for (k, l) in poses.liens.sorted(by: { $0.key < $1.key }) where !presents.contains(k) {
-            guard let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b) else { continue }
+            guard let trace = Self.trace(l.graphe, mode: etat.liens, selection: etat.selection, voisins: etat.voisins),
+                  let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b) else { continue }
             let va = voilesBout(l.de), vb = voilesBout(l.vers)
             let poids = min(1 - 0.85 * (1 - max(va.piece, vb.piece)), max(va.etage, vb.etage))
-            if l.genre == .radio {
-                liensRouteurs.append(Lien(a: pa, b: pb, genre: .radio, qualite: l.qualite,
-                                          opacite: Self.opaciteLienRadio * poids * l.opacite, eclaire: false))
-            } else {
-                liensEnfants.append(Lien(a: pa, b: pb, genre: l.genre, qualite: l.qualite,
-                                         opacite: Self.opaciteLienEnfant * poids * l.opacite, eclaire: false))
-            }
+            let p = Self.lien(l.graphe, trace: trace, a: pa, b: pb, poids: poids, fondu: l.opacite, eclaire: false)
+            if p.genre == .parent || p.genre == .rattachement { liensEnfants.append(p) } else { liensRouteurs.append(p) }
         }
 
         // Reperes « ailleurs » de la piece isolee : un fil vers le bord de la piece, du cote du parent.
