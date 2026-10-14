@@ -205,10 +205,10 @@ D'après `inventaire-etape3-fusion-apps.md` §2.2, §2.5 (point 1) ; spec 6.6, d
 **Interfaces:**
 - Produces: `Surveillance(mode:dossier:)` inchangé ; `surveillance.thread: SurveillanceThread` ; un point d'entrée par protocole pour la scène (`graphe(pour:) -> GrapheReseau`, `appareils`, `echelle`, crochets de fiche et de focus, résumé de menu), réunis dans un protocole d'app `ModeleProtocole` (forme de `ProtocoleMaille`, spec 1.2), dans l'app, pas dans le cœur.
 
-- [ ] **Step 1: RED** — `SurveillanceTests.coqueSansProtocole` (la coque se construit, journal et surnoms marchent, sans modèle actif) ; échec de compilation attendu.
-- [ ] **Step 2: GREEN** — scinder ; aucun comportement ne change.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; comptes de `@Test` de `MaillageIoTTests` notés avant et après.
-- [ ] **Step 4: Commit** — « Surveillance : coque commune et modele Thread ».
+- [x] **Step 1: RED** — `SurveillanceTests.coqueSansProtocole` (la coque se construit, journal et surnoms marchent, sans modèle actif) ; échec de compilation attendu.
+- [x] **Step 2: GREEN** — scinder ; aucun comportement ne change.
+- [x] **Step 3: Vérifier** — porte de la tâche ; comptes de `@Test` de `MaillageIoTTests` notés avant et après.
+- [x] **Step 4: Commit** — « Surveillance : coque commune et modele Thread ».
 
 ---
 
@@ -258,7 +258,7 @@ D'après `inventaire-etape3-fusion-apps.md` §5 (25 homologues, 11 Zigbee seuls,
 **Files:**
 - Move: `MaillageIoTZigbeeTests/*` → `MaillageIoTTests/Zigbee/` (homologues fusionnés, collisions renommées, `@testable import MaillageIoT`) ; attentes d'identité ramenées à l'app unique (titre « Maillage IoT », identifiant `fr.djoko.maillage.iot`, domaine de préférences de test).
 - Delete: `MaillageIoTZigbee/`, cibles `MaillageIoTZigbee` et `MaillageIoTZigbeeTests`, schéma `MaillageIoTZigbee` ; `CataloguesTests` et `outils/synchroniser-textes.sh` reviennent à une seule app.
-- Modify: `project.yml`, `outils/tester.sh` si besoin.
+- Modify: `project.yml`, `outils/tester.sh` si besoin ; `MaillageIoT/Noms/NomsPasseur.swift:347` : le message « …les noms viennent de l'app Hue » devient neutre (vrai pour Thread seul, Zigbee seul ou les deux), avec son test (relecture de la tâche 5).
 
 - [ ] **Step 1: Compter** — `@Test` de `MaillageIoTTests` et de `MaillageIoTZigbeeTests` avant ; tableau fichier par fichier au rapport.
 - [ ] **Step 2: Déplacer et fusionner** — chaque test Zigbee garde son assertion ; un test dédoublonné (même assertion des deux côtés) est justifié au rapport.

@@ -39,7 +39,7 @@ struct IdNoeudAppTests {
     @Test func placementIgnoreUnAutreProtocole() throws {
         let (s, _) = try NomsSceneTests.demoAvecInconnus()
         let e = try #require(FenetrePiecesTests.entree(s))
-        s.oublierMaillage()
+        s.thread.oublierMaillage()
         for cle in ["rloc:041F", "HomePod Palier"] {
             #expect(PiecesChoisies.placement(idt(cle), dans: s, entree: e) != nil, "\(cle)")
             #expect(PiecesChoisies.placement(idt(cle, .zigbee), dans: s, entree: e) == nil, "\(cle) sous un autre protocole")

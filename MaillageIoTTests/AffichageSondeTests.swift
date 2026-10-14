@@ -52,9 +52,9 @@ struct AffichageSondeTests {
     @Test func nomsDesRouteurs() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
+        let r = try #require(s.thread.reseau)
         s.renommer(idt("HomePod Avant"), en: "Enceinte droite")
-        let noms = s.nomsRouteurs(pour: r)
+        let noms = s.thread.nomsRouteurs(pour: r)
         #expect(noms["HomePod Avant"] == "Enceinte droite")
         #expect(noms["HomePod Palier"] == "HomePod Palier")
         #expect(Set(noms.keys) == Set(r.routeurs.map(\.instance)))
@@ -95,9 +95,9 @@ struct AffichageSondeTests {
     @Test func ficheEtDemo() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
-        let m = try #require(s.maillageAffiche(pour: r))
-        #expect(!s.maillageAncien)
+        let r = try #require(s.thread.reseau)
+        let m = try #require(s.thread.maillageAffiche(pour: r))
+        #expect(!s.thread.maillageAncien)
         let enfant = try #require(m.enfants.values.first { $0.reconnu && m.parent(de: $0.id) != nil })
         let ligne = FicheNoeud.ligneSonde(enfant, maillage: m, nom: { "P[\($0)]" })
         #expect(ligne.hasPrefix(String(format: "RLOC16 %04X", enfant.rloc16)))
@@ -138,7 +138,7 @@ struct AffichageSondeTests {
     @Test func ficheAvecLesSources() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau), i = try #require(s.instantane), p = try #require(r.principale)
+        let r = try #require(s.thread.reseau), i = try #require(s.thread.instantane), p = try #require(r.principale)
         let appareils = i.appareils.filter { $0.partition == p.id && $0.etat == .joignable }.sorted { $0.id < $1.id }
         let routeur = try #require(appareils.first), enfant = try #require(appareils.last)
         let t = Date(timeIntervalSince1970: 1_790_000_000)
@@ -182,7 +182,7 @@ struct AffichageSondeTests {
         #expect(FicheNoeud.ligneSonde(inventeSansParent, maillage: m, nom: { $0 }, instant: t)
                 == String(localized: "Non identifié"), "RLOC16 invente, sans parent : jamais affiche")
         // Maillage de demo : aucune source, la qualite seule.
-        let demo = try #require(s.maillageAffiche(pour: r))
+        let demo = try #require(s.thread.maillageAffiche(pour: r))
         let chef = try #require(demo.routeurs[1])
         let lienDemo = try #require(demo.liens.first { $0.genre == .radio && ($0.de == chef.id || $0.vers == chef.id) })
         #expect(FicheNoeud.origineVoisin(lienDemo.de == chef.id ? lienDemo.vers : lienDemo.de, de: chef.id, maillage: demo,
@@ -195,14 +195,14 @@ struct AffichageSondeTests {
     @Test func renommable() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
-        let m = try #require(s.maillageAffiche(pour: r))
+        let r = try #require(s.thread.reseau)
+        let m = try #require(s.thread.maillageAffiche(pour: r))
         let routeur = try #require(r.routeurs.first)
-        let appareil = try #require(s.instantane?.appareils.first)
-        let disparu = try #require(s.suivi.disparus.keys.sorted().first)
+        let appareil = try #require(s.thread.instantane?.appareils.first)
+        let disparu = try #require(s.thread.suivi.disparus.keys.sorted().first)
         let inconnu = try #require(m.inconnus.first)
         #expect(m.noeud(inconnu.id) != nil, "connu de la sonde")
-        #expect(s.instantane?.appareil(disparu) == nil && s.instantane?.routeur(disparu) == nil,
+        #expect(s.thread.instantane?.appareil(disparu) == nil && s.thread.instantane?.routeur(disparu) == nil,
                 "le disparu n'est plus dans l'instantane : seul le suivi le connait")
         #expect(FicheNoeud.renommable(routeur.instance, dans: s))
         #expect(FicheNoeud.renommable(appareil.id, dans: s))

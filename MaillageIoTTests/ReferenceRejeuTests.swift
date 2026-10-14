@@ -50,7 +50,7 @@ struct ReferenceRejeuTests {
     static func reference() throws -> Reference {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
+        let r = try #require(s.thread.reseau)
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let sc = e.scene
         let pieces = sc.pieces.map(\.nom.cle)

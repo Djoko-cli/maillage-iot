@@ -40,11 +40,11 @@ struct BarreOutils: View {
         HStack(spacing: 5) {
             // « Reseau demo ▾ » : le menu, dessine comme les autres boutons de la capsule.
             Menu {
-                ForEach(surveillance.instantane?.reseaux ?? []) { r in
-                    Button(r.nom) { surveillance.reseauChoisi = r.id }
+                ForEach(surveillance.thread.instantane?.reseaux ?? []) { r in
+                    Button(r.nom) { surveillance.thread.reseauChoisi = r.id }
                 }
             } label: {
-                Text(verbatim: (surveillance.reseau?.nom ?? String(localized: "Aucun réseau Thread")) + " ▾")
+                Text(verbatim: (surveillance.thread.reseau?.nom ?? String(localized: "Aucun réseau Thread")) + " ▾")
             }
             .menuStyle(.button)
             .buttonStyle(StyleBoutonCapsule())
@@ -52,7 +52,7 @@ struct BarreOutils: View {
             Button {
                 appareilsIP = true
             } label: {
-                Text("Appareils IP · \(surveillance.instantane?.appareilsIP.count ?? 0)")
+                Text("Appareils IP · \(surveillance.thread.instantane?.appareilsIP.count ?? 0)")
             }
             .buttonStyle(StyleBoutonCapsule())
             .popover(isPresented: $appareilsIP) { ListeAppareilsIP() }
@@ -62,7 +62,7 @@ struct BarreOutils: View {
             .buttonStyle(StyleBoutonCapsule())
             // Pendant une tournee : le reseau et les noms, sans seconde tournee.
             Button {
-                surveillance.rafraichir()
+                surveillance.thread.rafraichir()
                 sonde.rafraichir()
                 if Self.lancePasseur(mode: surveillance.mode) {
                     nomsMaison.relire()
@@ -165,8 +165,8 @@ struct BandeauScission: View {
 
     private var texte: String {
         let n = reseau.partitions.count
-        let aPart = reseau.partitions.dropFirst().flatMap(\.routeurs).map { surveillance.nom($0) }.joined(separator: ", ")
-        guard let e = surveillance.derniereScission(reseau) else {
+        let aPart = reseau.partitions.dropFirst().flatMap(\.routeurs).map { surveillance.thread.nom($0) }.joined(separator: ", ")
+        guard let e = surveillance.thread.derniereScission(reseau) else {
             return String(localized: "Réseau scindé en \(n) partitions · à part : \(aPart)")
         }
         let quand = e.date.formatted(date: .abbreviated, time: .shortened)
@@ -182,7 +182,7 @@ struct EtatVide: View {
     @Environment(Surveillance.self) private var surveillance
 
     var body: some View {
-        if surveillance.etatEcoute == .reseauLocalRefuse {
+        if surveillance.thread.etatEcoute == .reseauLocalRefuse {
             ContentUnavailableView {
                 Label("Accès au réseau local refusé", systemImage: "network.slash")
             } description: {
@@ -194,7 +194,7 @@ struct EtatVide: View {
                     }
                 }
             }
-        } else if surveillance.instantane != nil {
+        } else if surveillance.thread.instantane != nil {
             ContentUnavailableView("Aucun réseau Thread visible sur ce réseau local",
                                    systemImage: "point.3.connected.trianglepath.dotted")
         } else {
@@ -208,7 +208,7 @@ struct ListeAppareilsIP: View {
     @Environment(Surveillance.self) private var surveillance
 
     var body: some View {
-        let appareils = surveillance.instantane?.appareilsIP ?? []
+        let appareils = surveillance.thread.instantane?.appareilsIP ?? []
         VStack(alignment: .leading, spacing: 10) {
             Text("Appareils du réseau local (hors Thread)").font(.headline)
             if appareils.isEmpty {
@@ -216,7 +216,7 @@ struct ListeAppareilsIP: View {
             }
             ForEach(appareils) { a in
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(surveillance.nom(a))
+                    Text(surveillance.thread.nom(a))
                     Text((a.adresses.map(\.description) + a.adressesIPv4).joined(separator: ", "))
                         .font(.caption)
                         .foregroundStyle(.secondary)

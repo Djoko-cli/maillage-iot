@@ -34,7 +34,7 @@ final class PiecesChoisies {
         self.fichier = fichier
         choix = fichier.map {
             PiecesRouteurs.lire($0, ancien: $0.deletingLastPathComponent().appendingPathComponent("pieces-routeurs.json"),
-                                protocoleParDefaut: Surveillance.protocole)
+                                protocoleParDefaut: SurveillanceThread.protocole)
         } ?? PiecesRouteurs()
     }
 
@@ -75,10 +75,10 @@ extension PiecesChoisies {
     /// routeur de bordure que la sonde seule connait (precision 25), un noeud sans ExtMac. `entree` : la
     /// scene du meme rendu, dont le graphe et les appareils servent tels quels.
     static func placement(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
-        let maison = surveillance.noms.maison
+        let maison = surveillance.thread.noms.maison
         let pieces = PiecesRouteurs.pieces(de: maison).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         guard !pieces.isEmpty else { return nil }
-        if id.protocole == .thread, surveillance.instantane?.routeur(id.cle) != nil {
+        if id.protocole == .thread, surveillance.thread.instantane?.routeur(id.cle) != nil {
             guard PiecesRouteurs.pieceDeMaison(routeur: id.cle, maison: maison) == nil else { return nil }
             return Placement(cle: .routeur(id), pieces: pieces)
         }

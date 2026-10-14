@@ -60,7 +60,7 @@ struct IsolementTests {
     static func sceneQuiArrive(_ e: EntreeScene, places: PlacesGardees, deplacer: [String: String] = [:],
                                zones changer: (inout [ZoneMaison]) -> Void = { _ in }) throws -> EntreeScene {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         // Les zones de `e`, dans son ordre, avec leurs pieces de Maison.
         var zones = e.scene.etages.compactMap { et -> ZoneMaison? in
             guard case .zone(let nom) = et.nom else { return nil }
@@ -73,7 +73,7 @@ struct IsolementTests {
         for k in maison.accessoires.indices {
             if let p = maison.accessoires[k].piece, let q = deplacer[p] { maison.accessoires[k].piece = q }
         }
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         return EntreeScene(surveillance: s, reseau: r, places: places)
     }
 
@@ -132,7 +132,7 @@ struct IsolementTests {
         m.versMaison()
         #expect(m.fil == Fil())
         let (s, r, _) = try NomsSceneTests.demo()
-        s.noms.maison?.zones = nil
+        s.thread.noms.maison?.zones = nil
         let seul = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         #expect(seul.scene.etages.count == 1)
         let n = MoteurPiecesTests.moteur(seul)

@@ -23,24 +23,26 @@ struct EntreeScene: Equatable {
     var chefs: Set<IdNoeud>
     /// Appareils affiches, par id.
     var appareils: [IdNoeud: AppareilAffiche]
+    /// Le modele du protocole de cette scene (Thread) : son classement des noeuds et sa mise en avant.
+    let modele: any ModeleProtocole
 
     /// `places` : les places gardees, dont l'ordre des etages de la maison et ses choix de niveau ; `choix` :
     /// les pieces choisies pour les noeuds que Maison ne place pas, routeurs de bordure (sous leur instance)
     /// et autres noeuds (sous leur ExtMac, precision 27).
     @MainActor
     init(surveillance: Surveillance, reseau r: Reseau, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs()) {
-        let affiches = surveillance.appareilsAffiches(pour: r)
-        let maillage = surveillance.maillageAffiche(pour: r)
+        let affiches = surveillance.thread.appareilsAffiches(pour: r)
+        let maillage = surveillance.thread.maillageAffiche(pour: r)
         let graphe = GrapheReseau(reseau: r, appareils: affiches, maillage: maillage)
         let parId = Dictionary(affiches.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        let chefs = LibellesNoeuds.chefs(reseau: r, maillage: surveillance.maillage, affiche: maillage)
+        let chefs = LibellesNoeuds.chefs(reseau: r, maillage: surveillance.thread.maillage, affiche: maillage)
         let libelles = LibellesNoeuds.libelles(graphe: graphe, appareils: parId,
-                                               nomsRouteurs: surveillance.nomsRouteurs(pour: r), maillage: maillage,
+                                               nomsRouteurs: surveillance.thread.nomsRouteurs(pour: r), maillage: maillage,
                                                chefs: chefs)
-        let maison = surveillance.noms.maison
+        let maison = surveillance.thread.noms.maison
         let domicile = maison?.domicile ?? ""
         let pieces = LibellesNoeuds.pieces(reseau: r, appareils: affiches, maison: maison,
-                                           nomsRouteurs: surveillance.nomsRouteurs(pour: r), choix: choix,
+                                           nomsRouteurs: surveillance.thread.nomsRouteurs(pour: r), choix: choix,
                                            graphe: graphe, maillage: maillage)
         // La scene voit les noms sans leurs badges : un badge qui change ne la change pas (polissage D, section 2).
         let scene = ScenePieces(graphe: graphe, libelles: libelles.mapValues(\.nom), piecesNoeuds: pieces,
@@ -48,7 +50,7 @@ struct EntreeScene: Equatable {
                                 piecesMaison: maison?.accessoires.contains { $0.piece?.isEmpty == false } == true,
                                 ordreEtages: places.maison(domicile).ordreEtages, aCote: places.maison(domicile).aCote,
                                 piles: Set(parId.filter { $0.value.batterie != nil }.keys),
-                                classement: classementThread)
+                                classement: surveillance.thread.classement)
         let principale = r.partitions.first(where: \.estPrincipale)?.id
         self.scene = scene
         self.libelles = libelles
@@ -56,6 +58,7 @@ struct EntreeScene: Equatable {
         self.graphe = graphe
         self.maillage = maillage
         self.chefs = chefs
+        modele = surveillance.thread
         appareils = parId
         apparences = Dictionary(scene.noeuds.map { n in
             (n.id, DessinNoeud.apparence(n, etat: parId[n.id]?.etat,
@@ -71,11 +74,12 @@ struct EntreeScene: Equatable {
         a.scene == b.scene && a.libelles == b.libelles && a.apparences == b.apparences && a.domicile == b.domicile
     }
 
-    /// Mode focus du graphe : ce qui reste net a la selection du noeud `id`, calcule par la fonction propre a Thread
-    /// (`FocusThread`) sur le graphe de cette scene et ses chefs. Le moteur, generique, ne fait que l'appeler
-    /// (`MoteurPieces.majMiseEnAvant`).
+    /// Mode focus du graphe : ce qui reste net a la selection du noeud `id`, calcule par le modele du protocole
+    /// (`ModeleProtocole.miseEnAvant`, pour Thread `FocusThread`) sur le graphe de cette scene et ses chefs. Le moteur,
+    /// generique, ne fait que l'appeler (`MoteurPieces.majMiseEnAvant`).
+    @MainActor
     func miseEnAvant(de id: IdNoeud) -> MiseEnAvant? {
-        FocusThread.miseEnAvant(de: id, graphe: graphe, chefs: chefs)
+        modele.miseEnAvant(de: id, graphe: graphe, chefs: chefs, voisins: true)
     }
 
     /// Ce qui oblige a recalculer la disposition : celle de la scene, sans les badges des noms (polissage D, section 2).

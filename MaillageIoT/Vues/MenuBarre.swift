@@ -62,7 +62,7 @@ struct MenuBarre: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             entete
-            if surveillance.etatEcoute == .reseauLocalRefuse {
+            if surveillance.thread.etatEcoute == .reseauLocalRefuse {
                 Label("Accès au réseau local refusé", systemImage: "network.slash")
                     .foregroundStyle(.red)
                     .font(.callout)
@@ -113,7 +113,7 @@ struct MenuBarre: View {
             }
             Text(titre).font(.headline)
         }
-        if let r = surveillance.resume {
+        if let r = surveillance.thread.resume {
             Text("\(r.nom) · partitions : \(r.partitions)").font(.caption).foregroundStyle(.secondary)
             Text("Routeurs : \(r.routeurs) · appareils : \(r.appareils) · injoignables : \(r.injoignables)")
                 .font(.caption)
@@ -147,13 +147,13 @@ struct MenuBarre: View {
 
     /// Le Mac n'entend plus rien depuis cette date ; le resume montre le dernier etat connu.
     private var muet: Date? {
-        surveillance.instantane == nil ? nil : surveillance.rienVuDepuis
+        surveillance.thread.instantane == nil ? nil : surveillance.thread.rienVuDepuis
     }
 
     private var titre: String {
-        if surveillance.instantane == nil { return String(localized: "Écoute du réseau local…") }
+        if surveillance.thread.instantane == nil { return String(localized: "Écoute du réseau local…") }
         if let d = muet { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
-        guard let r = surveillance.reseau else { return String(localized: "Aucun réseau Thread visible") }
+        guard let r = surveillance.thread.reseau else { return String(localized: "Aucun réseau Thread visible") }
         if r.estScinde { return String(localized: "Réseau scindé") }
         return surveillance.alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")
     }

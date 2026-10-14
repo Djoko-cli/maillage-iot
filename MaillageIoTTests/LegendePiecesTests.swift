@@ -85,7 +85,7 @@ struct LegendePiecesTests {
         #expect(avec == [.routeur, .routeurSimple, .nonIdentifie, .autrePartition, .chef, .joignable, .sansAdresse, .disparu, .endormi,
                          .pile, .sonde, .bonne, .moyenne, .faible, .versParent, .rattachement])
         #expect(LegendePieces.entrees(Lecture(e, ailleurs: true)).contains(.ailleurs))
-        s.oublierMaillage()
+        s.thread.oublierMaillage()
         let sans = try #require(FenetrePiecesTests.entree(s))
         #expect(sans.maillage == nil)
         let rubriques = LegendePieces.rubriques(Lecture(sans, ailleurs: false))

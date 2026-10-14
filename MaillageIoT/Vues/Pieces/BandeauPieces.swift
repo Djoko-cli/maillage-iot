@@ -324,7 +324,7 @@ struct HautPieces: View {
                         LigneTournee()
                             .transition(apparition.transitionAnimee)
                     }
-                    if let r = surveillance.reseau, r.estScinde {
+                    if let r = surveillance.thread.reseau, r.estScinde {
                         BandeauScission(reseau: r)
                             .transition(apparition.transitionAnimee)
                     }
@@ -337,7 +337,7 @@ struct HautPieces: View {
                 .obstacle("colonne", moteur)
                 RangeeNiveau(moteur: moteur, ancien: ancien)
             }
-            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.reseau?.estScinde == true)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.thread.reseau?.estScinde == true)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: sansPieces)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: tournee == .montree)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: ancien)

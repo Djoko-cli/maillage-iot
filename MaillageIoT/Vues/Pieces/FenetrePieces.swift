@@ -143,7 +143,7 @@ struct FenetrePieces: View {
         // fiche la recoit (`instant`) : sinon SwiftUI la sauterait, ses entrees n'ayant pas change. La
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
-            let entree = surveillance.reseau.map {
+            let entree = surveillance.thread.reseau.map {
                 EntreeScene(surveillance: surveillance, reseau: $0, places: moteur.places, choix: piecesChoisies.choix)
             }
             let fiche = moteur.selection != nil
@@ -167,7 +167,7 @@ struct FenetrePieces: View {
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
-                           ancien: surveillance.maillageAncien, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           ancien: surveillance.thread.maillageAncien, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()

@@ -275,8 +275,8 @@ struct FenetreReglages: View {
         Section {
             LabeledContent("Écoute", value: etatEcoute)
             LabeledContent("Dernier relevé",
-                           value: surveillance.dernierReleve?.date.formatted(date: .abbreviated, time: .standard) ?? "—")
-            if let a = surveillance.dernierReleve {
+                           value: surveillance.thread.dernierReleve?.date.formatted(date: .abbreviated, time: .standard) ?? "—")
+            if let a = surveillance.thread.dernierReleve {
                 LabeledContent("Services vus", value: "_meshcop._udp \(a.routeurs.count) · _matter._tcp \(a.matter.count) · _hap._udp \(a.hap.count)")
                 LabeledContent("Préfixes du Mac", value: a.prefixesLocaux.joined(separator: ", "))
             }
@@ -286,7 +286,7 @@ struct FenetreReglages: View {
             }
             HStack {
                 Button("Enregistrer une capture…") { enregistrerCapture() }
-                    .disabled(surveillance.dernierReleve == nil)
+                    .disabled(surveillance.thread.dernierReleve == nil)
                 Button("Afficher le journal dans le Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting(
                         [Surveillance.dossierParDefaut.appendingPathComponent("Journal")])
@@ -380,7 +380,7 @@ struct FenetreReglages: View {
     }
 
     private var etatEcoute: String {
-        switch surveillance.etatEcoute {
+        switch surveillance.thread.etatEcoute {
         case .demarrage: String(localized: "démarrage")
         case .active: String(localized: "active")
         case .reseauLocalRefuse: String(localized: "accès au réseau local refusé")
@@ -390,7 +390,7 @@ struct FenetreReglages: View {
     }
 
     private var routes: String {
-        switch surveillance.routesLisibles {
+        switch surveillance.thread.routesLisibles {
         case true?: String(localized: "lue")
         case false?: String(localized: "illisible : préfixes tirés des adresses")
         case nil: "—"

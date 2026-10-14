@@ -330,12 +330,12 @@ struct MoteurPiecesTests {
     /// Deux zones de Maison du meme nom : un seul etage, et la disposition s'installe sans plantage.
     @Test func zonesHomonymes() throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Terrasse", "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau", "Salle de bain", "Chambre d'amis",
                                                           "Grenier", "Salle de jeux"]),
                         ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Entrée", "Buanderie"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         #expect(e.scene.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Étage"])
         let m = Self.moteur(e)
@@ -411,11 +411,11 @@ struct MoteurPiecesTests {
     /// scene s'applique au relachement, la piece glissee a la place du geste.
     @Test(.timeLimit(.minutes(1))) func releveQuiChangeLaStructurePendantUnGlisser() async throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         for k in maison.accessoires.indices where maison.accessoires[k].piece == "Chambre d'amis" {
             maison.accessoires[k].piece = "Chambre"
         }
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let autre = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         // Disposition finie pendant le geste (`installerMaintenant` : comme un calcul qui se termine).
         let (m, e) = try Self.moteur()
@@ -601,12 +601,12 @@ struct MoteurPiecesTests {
     /// a un etage le rayon d'un autre. Trois etages : « Sans piece » reste sur celui du bas.
     @Test(.timeLimit(.minutes(1))) func ordreDesEtagesPendantUnCalcul() async throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Entrée", "Buanderie", "Terrasse",
                                                                     "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Chambre d'amis"]),
                         ZoneMaison(nom: "Combles", pieces: ["Bureau", "Salle de bain", "Grenier", "Salle de jeux"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let m = Self.moteur(e)
         s.renommer(idt("56B1E064401F74EF"), en: "Pont du bureau, sous la lampe de l'écran")
@@ -706,12 +706,12 @@ struct MoteurPiecesTests {
     /// pieces de la demo, celles du jardin et des combles de sa maquette comprises.
     static func quatrePlateaux(_ places: PlacesGardees = PlacesGardees()) throws -> EntreeScene {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Buanderie"]),
                         ZoneMaison(nom: "Jardin", pieces: ["Entrée", "Terrasse", "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Salle de bain"]),
                         ZoneMaison(nom: "Combles", pieces: ["Bureau", "Chambre d'amis", "Grenier", "Salle de jeux"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         return EntreeScene(surveillance: s, reseau: r, places: places)
     }
 

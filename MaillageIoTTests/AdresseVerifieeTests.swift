@@ -43,9 +43,9 @@ struct AdresseVerifieeAppTests {
     /// Mode direct sans dossier : le depart il y a 15 min, puis `muets` et `partis` au-dela du sursis de 2 min.
     static func surveillance(muets: Set<String> = [], partis: Set<String> = [], maintenant: Date) -> Surveillance {
         let s = Surveillance(mode: .direct, dossier: nil)
-        s.integrer(annonces(maintenant - 900))
-        s.integrer(annonces(maintenant - 840, muets: muets, partis: partis))
-        s.integrer(annonces(maintenant - 700, muets: muets, partis: partis))
+        s.thread.integrer(annonces(maintenant - 900))
+        s.thread.integrer(annonces(maintenant - 840, muets: muets, partis: partis))
+        s.thread.integrer(annonces(maintenant - 700, muets: muets, partis: partis))
         return s
     }
 
@@ -81,23 +81,23 @@ struct AdresseVerifieeAppTests {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.matter, Self.hap], maintenant: maintenant)
         #expect(s.evenements.filter { $0.type == .appareilSansAdresse }.count == 2, "l'evenement existant reste")
-        #expect(s.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin, Self.hap].sorted())
-        #expect(s.appareilsAResoudre().first { $0.id == Self.hap }?.adresse == AdresseIPv6(Self.adresse(2)))
+        #expect(s.thread.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin, Self.hap].sorted())
+        #expect(s.thread.appareilsAResoudre().first { $0.id == Self.hap }?.adresse == AdresseIPv6(Self.adresse(2)))
         var alertes: [AlerteAEnvoyer] = []
         s.surAlertes = { alertes += $0 }
         let avant = s.evenements
         let trouve = maintenant - 120
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve]),
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve]),
                    a: maintenant - 60)
 
-        let r = try #require(s.reseau)
-        let affiches = s.appareilsAffiches(pour: r)
+        let r = try #require(s.thread.reseau)
+        let affiches = s.thread.appareilsAffiches(pour: r)
         #expect(affiches.first { $0.id == idt(Self.matter) }?.etat == .joignable)
         #expect(affiches.first { $0.id == idt(Self.hap) }?.etat == .joignable)
-        #expect(s.resume?.injoignables == 0)
-        #expect(s.verification(Self.matter, a: maintenant) == trouve)
-        #expect(s.verification(Self.temoin, a: maintenant) == nil, "il annonce son adresse : rien a verifier")
-        let m = try #require(s.maillageAffiche(pour: r))
+        #expect(s.thread.resume?.injoignables == 0)
+        #expect(s.thread.verification(Self.matter, a: maintenant) == trouve)
+        #expect(s.thread.verification(Self.temoin, a: maintenant) == nil, "il annonce son adresse : rien a verifier")
+        let m = try #require(s.thread.maillageAffiche(pour: r))
         #expect(m.parent(de: Self.matter) == Self.routeur, "par son ExtMac")
         #expect(m.parent(de: Self.hap) == Self.routeur, "par sa derniere adresse")
         let graphe = GrapheReseau(reseau: r, appareils: affiches, maillage: m)
@@ -110,7 +110,7 @@ struct AdresseVerifieeAppTests {
                 == String(localized: "vérifié par la sonde \(FicheNoeud.relatif(trouve, maintenant))"))
 
         #expect(s.evenements == avant, "aucun evenement nouveau")
-        s.integrer(Self.annonces(maintenant - 30, muets: [Self.matter, Self.hap]))
+        s.thread.integrer(Self.annonces(maintenant - 30, muets: [Self.matter, Self.hap]))
         #expect(s.evenements == avant, "ni au releve suivant")
         #expect(alertes.isEmpty, "aucune notification")
     }
@@ -121,23 +121,23 @@ struct AdresseVerifieeAppTests {
     @Test func pasTrouve() throws {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.hap], maintenant: maintenant)
-        let r = try #require(s.reseau)
-        #expect(s.verification(Self.hap, a: maintenant) == nil, "sans sonde")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [:]), a: maintenant - 60)
-        #expect(s.verification(Self.hap, a: maintenant) == nil)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
-        #expect(s.resume?.injoignables == 1)
-        #expect(s.maillageAffiche(pour: r)?.parent(de: Self.hap) == nil)
+        let r = try #require(s.thread.reseau)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil, "sans sonde")
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [:]), a: maintenant - 60)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+        #expect(s.thread.resume?.injoignables == 1)
+        #expect(s.thread.maillageAffiche(pour: r)?.parent(de: Self.hap) == nil)
         #expect(FicheNoeud.texteEtat(.sansAdresse, disparu: false, verifie: false)
                 == String(localized: "adresse non annoncée"))
 
-        let vieille = maintenant - Surveillance.ageMaxVerification - 60
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: vieille]), a: maintenant - 60)
-        #expect(s.verification(Self.hap, a: maintenant) == nil, "resolution trop ancienne")
-        s.recevoir(Self.maillage(maintenant - 1100, resolus: [Self.hap: maintenant - 1100]), a: maintenant - 16 * 60)
-        #expect(s.verification(Self.hap, a: maintenant) == nil, "maillage perime")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+        let vieille = maintenant - SurveillanceThread.ageMaxVerification - 60
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: vieille]), a: maintenant - 60)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil, "resolution trop ancienne")
+        s.thread.recevoir(Self.maillage(maintenant - 1100, resolus: [Self.hap: maintenant - 1100]), a: maintenant - 16 * 60)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil, "maillage perime")
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
     }
 
     /// Le cache d'adresses seul ne verifie pas : un appareil trouve mais qui n'a pas repondu a la sonde (repondu faux,
@@ -146,24 +146,24 @@ struct AdresseVerifieeAppTests {
     @Test func cacheSeulNeVerifiePas() throws {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.matter, Self.hap], maintenant: maintenant)
-        let r = try #require(s.reseau)
+        let r = try #require(s.thread.reseau)
         let trouve = maintenant - 120
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve], places: false,
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve], places: false,
                                  repondus: []), a: maintenant - 60)
-        #expect(s.verification(Self.matter, a: maintenant) == nil && s.verification(Self.hap, a: maintenant) == nil)
-        #expect(s.appareilsAffiches(pour: r).filter { $0.etat == .sansAdresse }.count == 2)
-        #expect(s.resume?.injoignables == 2)
-        #expect(s.appareilsAffiches(pour: r).allSatisfy { !$0.verifie })
-        let carte = s.maillageAffiche(pour: r)
+        #expect(s.thread.verification(Self.matter, a: maintenant) == nil && s.thread.verification(Self.hap, a: maintenant) == nil)
+        #expect(s.thread.appareilsAffiches(pour: r).filter { $0.etat == .sansAdresse }.count == 2)
+        #expect(s.thread.resume?.injoignables == 2)
+        #expect(s.thread.appareilsAffiches(pour: r).allSatisfy { !$0.verifie })
+        let carte = s.thread.maillageAffiche(pour: r)
         #expect(carte?.parent(de: Self.matter) == nil && carte?.parent(de: Self.hap) == nil)
         // L'un a repondu, l'autre non.
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve],
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve],
                                  repondus: [Self.matter]), a: maintenant - 60)
-        #expect(s.verification(Self.matter, a: maintenant) == trouve)
-        #expect(s.verification(Self.hap, a: maintenant) == nil)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
-        #expect(s.resume?.injoignables == 1)
+        #expect(s.thread.verification(Self.matter, a: maintenant) == trouve)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+        #expect(s.thread.resume?.injoignables == 1)
     }
 
     /// Un perdu dont la derniere adresse est annoncee aujourd'hui par un autre identifiant (le meme appareil sous un
@@ -171,35 +171,35 @@ struct AdresseVerifieeAppTests {
     @Test func perduRevenuSousUnAutreHoteNiDemandeNiVerifie() throws {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.hap], maintenant: maintenant)
-        let r = try #require(s.reseau)
+        let r = try #require(s.thread.reseau)
         let trouve = maintenant - 120
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: trouve]), a: maintenant - 60)
-        #expect(s.verification(Self.hap, a: maintenant) == trouve)
-        #expect(s.appareilsAResoudre().contains { $0.id == Self.hap })
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: trouve]), a: maintenant - 60)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == trouve)
+        #expect(s.thread.appareilsAResoudre().contains { $0.id == Self.hap })
         var a = Self.annonces(maintenant - 30, muets: [Self.hap])
         a.matter.append(AnnonceService(instance: "0000000000000F01-00000000000000AA", hote: "Autre.local", port: 5540))
         a.adresses["Autre.local"] = [Self.adresse(2)]
-        s.integrer(a)
-        #expect(!s.appareilsAResoudre().contains { $0.id == Self.hap }, "plus demande")
-        #expect(s.verification(Self.hap, a: maintenant) == nil, "plus verifie")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+        s.thread.integrer(a)
+        #expect(!s.thread.appareilsAResoudre().contains { $0.id == Self.hap }, "plus demande")
+        #expect(s.thread.verification(Self.hap, a: maintenant) == nil, "plus verifie")
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
     }
 
     /// Un disparu demande a la sonde avec sa derniere adresse, et trouve : joignable, a sa place, sans alerte.
     @Test func disparuTrouve() throws {
         let maintenant = Date()
         let s = Self.surveillance(partis: [Self.matter], maintenant: maintenant)
-        #expect(s.suivi.disparus[Self.matter] != nil)
-        #expect(s.appareilsAResoudre().first { $0.id == Self.matter }
+        #expect(s.thread.suivi.disparus[Self.matter] != nil)
+        #expect(s.thread.appareilsAResoudre().first { $0.id == Self.matter }
                 == AppareilAResoudre(id: Self.matter, partition: Self.partition,
                                      adresse: try #require(AdresseIPv6(Self.adresse(1))),
-                                     derniereAnnonce: s.suivi.dernieresAnnonces[Self.matter], disparu: true))
-        let r = try #require(s.reseau)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: maintenant - 120]), a: maintenant - 60)
-        let affiche = try #require(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) })
+                                     derniereAnnonce: s.thread.suivi.dernieresAnnonces[Self.matter], disparu: true))
+        let r = try #require(s.thread.reseau)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: maintenant - 120]), a: maintenant - 60)
+        let affiche = try #require(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) })
         #expect(affiche.etat == .joignable && affiche.partition == Self.partition)
-        #expect(s.maillageAffiche(pour: r)?.parent(de: Self.matter) == Self.routeur)
+        #expect(s.thread.maillageAffiche(pour: r)?.parent(de: Self.matter) == Self.routeur)
         #expect(FicheNoeud.texteEtat(.joignable, disparu: true, verifie: true)
                 == String(localized: "joignable, adresse plus annoncée"))
         #expect(FicheNoeud.texteEtat(.joignable, disparu: true, verifie: false) == String(localized: "disparu"))
@@ -211,32 +211,32 @@ struct AdresseVerifieeAppTests {
     @Test func resolutionAnterieureALaPerte() throws {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.hap], partis: [Self.matter], maintenant: maintenant)
-        let r = try #require(s.reseau)
-        let annonceHap = try #require(s.suivi.dernieresAnnonces[Self.hap])
-        let annonceMatter = try #require(s.suivi.dernieresAnnonces[Self.matter])
-        #expect(s.appareilsAResoudre().first { $0.id == Self.hap }?.derniereAnnonce == annonceHap)
-        #expect(s.appareilsAResoudre().first { $0.id == Self.matter }?.derniereAnnonce == annonceMatter)
+        let r = try #require(s.thread.reseau)
+        let annonceHap = try #require(s.thread.suivi.dernieresAnnonces[Self.hap])
+        let annonceMatter = try #require(s.thread.suivi.dernieresAnnonces[Self.matter])
+        #expect(s.thread.appareilsAResoudre().first { $0.id == Self.hap }?.derniereAnnonce == annonceHap)
+        #expect(s.thread.appareilsAResoudre().first { $0.id == Self.matter }?.derniereAnnonce == annonceMatter)
 
         for (hap, matter) in [(annonceHap - 60, annonceMatter - 60), (annonceHap, annonceMatter)] {
-            s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: hap, Self.matter: matter], places: false),
+            s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: hap, Self.matter: matter], places: false),
                        a: maintenant - 60)
-            #expect(s.verification(Self.hap, a: maintenant) == nil)
-            #expect(s.verification(Self.matter, a: maintenant) == nil)
-            #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
-            #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
-            #expect(s.resume?.injoignables == 2)
-            let carte = s.maillageAffiche(pour: r)
+            #expect(s.thread.verification(Self.hap, a: maintenant) == nil)
+            #expect(s.thread.verification(Self.matter, a: maintenant) == nil)
+            #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+            #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
+            #expect(s.thread.resume?.injoignables == 2)
+            let carte = s.thread.maillageAffiche(pour: r)
             #expect(carte?.parent(de: Self.hap) == nil && carte?.parent(de: Self.matter) == nil)
             #expect(carte?.inconnus.isEmpty == true, "pas de noeud fantome sous le routeur")
         }
 
         let apres = maintenant - 120
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: apres, Self.matter: apres]), a: maintenant - 60)
-        #expect(s.verification(Self.hap, a: maintenant) == apres)
-        #expect(s.verification(Self.matter, a: maintenant) == apres)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .joignable)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
-        #expect(s.resume?.injoignables == 0)
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: apres, Self.matter: apres]), a: maintenant - 60)
+        #expect(s.thread.verification(Self.hap, a: maintenant) == apres)
+        #expect(s.thread.verification(Self.matter, a: maintenant) == apres)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .joignable)
+        #expect(s.thread.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
+        #expect(s.thread.resume?.injoignables == 0)
     }
 
     // MARK: Dernieres adresses sur disque
@@ -253,9 +253,9 @@ struct AdresseVerifieeAppTests {
     /// Mode direct avec ce dossier : le depart, puis `hap` sans adresse au-dela du sursis de 2 min.
     static func surveillanceSurDisque(_ dossier: URL) -> Surveillance {
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.integrer(annonces(depart))
-        s.integrer(annonces(depart + 60, muets: [hap]))
-        s.integrer(annonces(depart + 200, muets: [hap]))
+        s.thread.integrer(annonces(depart))
+        s.thread.integrer(annonces(depart + 60, muets: [hap]))
+        s.thread.integrer(annonces(depart + 200, muets: [hap]))
         return s
     }
 
@@ -268,25 +268,25 @@ struct AdresseVerifieeAppTests {
         let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")
         let avant = Self.surveillanceSurDisque(dossier)
         #expect(FileManager.default.fileExists(atPath: fichier.path))
-        let annonce = try #require(avant.suivi.dernieresAnnonces[Self.hap])
-        let attendu = try #require(avant.appareilsAResoudre().first { $0.id == Self.hap })
+        let annonce = try #require(avant.thread.suivi.dernieresAnnonces[Self.hap])
+        let attendu = try #require(avant.thread.appareilsAResoudre().first { $0.id == Self.hap })
         #expect(attendu.derniereAnnonce == annonce && attendu.adresse == AdresseIPv6(Self.adresse(2)))
 
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        #expect(relu.suivi.dernieresAdresses.isEmpty, "rien avant la relecture")
-        relu.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(relu.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
-        #expect(relu.suivi.dernieresAnnonces[Self.hap] == annonce, "l'annonce relue telle quelle")
-        #expect(relu.suivi.dernieresPartitions[Self.hap] == Self.partition)
-        #expect(relu.appareilsAResoudre().isEmpty, "pas d'instantane : rien a demander")
+        #expect(relu.thread.suivi.dernieresAdresses.isEmpty, "rien avant la relecture")
+        relu.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(relu.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
+        #expect(relu.thread.suivi.dernieresAnnonces[Self.hap] == annonce, "l'annonce relue telle quelle")
+        #expect(relu.thread.suivi.dernieresPartitions[Self.hap] == Self.partition)
+        #expect(relu.thread.appareilsAResoudre().isEmpty, "pas d'instantane : rien a demander")
         // Premier releve de la nouvelle session (3 h plus tard) : hap n'a plus d'adresse, il est demande.
-        relu.integrer(Self.annonces(Self.depart + 3 * 3600, muets: [Self.hap]))
-        let demande = try #require(relu.appareilsAResoudre().first { $0.id == Self.hap })
+        relu.thread.integrer(Self.annonces(Self.depart + 3 * 3600, muets: [Self.hap]))
+        let demande = try #require(relu.thread.appareilsAResoudre().first { $0.id == Self.hap })
         #expect(demande == AppareilAResoudre(id: attendu.id, partition: attendu.partition, adresse: attendu.adresse,
                                              derniereAnnonce: annonce),
                 "meme adresse, meme partition, meme derniere annonce")
         #expect(!demande.disparu)
-        #expect(relu.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin, Self.hap].sorted())
+        #expect(relu.thread.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin, Self.hap].sorted())
     }
 
     /// On n'ecrit que ce qui change : un releve identique (annonce avancee de moins de 15 min) ne reecrit pas le
@@ -297,18 +297,18 @@ struct AdresseVerifieeAppTests {
         let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")
         let s = Self.surveillanceSurDisque(dossier)
         try FileManager.default.removeItem(at: fichier)
-        s.integrer(Self.annonces(Self.depart + 260, muets: [Self.hap]))
+        s.thread.integrer(Self.annonces(Self.depart + 260, muets: [Self.hap]))
         #expect(!FileManager.default.fileExists(atPath: fichier.path), "releve identique, 60 s plus tard")
-        s.integrer(Self.annonces(Self.depart + 200 + 1000, muets: [Self.hap]))
+        s.thread.integrer(Self.annonces(Self.depart + 200 + 1000, muets: [Self.hap]))
         #expect(FileManager.default.fileExists(atPath: fichier.path), "l'annonce de matter a avance de plus de 15 min")
         try FileManager.default.removeItem(at: fichier)
         var changee = Self.annonces(Self.depart + 1300, muets: [Self.hap])
         changee.adresses[Self.matter + ".local"] = [Self.adresse(9)]
-        s.integrer(changee)
+        s.thread.integrer(changee)
         #expect(FileManager.default.fileExists(atPath: fichier.path), "matter a une autre adresse")
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(relu.suivi.dernieresAdresses[Self.matter] == AdresseIPv6(Self.adresse(9)))
+        relu.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(relu.thread.suivi.dernieresAdresses[Self.matter] == AdresseIPv6(Self.adresse(9)))
 
         // La regle seule : un appareil qui annonce encore et dont l'annonce avance de moins de 15 min ne s'ecrit pas ;
         // une annonce qui ne bouge plus s'ecrit exacte.
@@ -318,16 +318,16 @@ struct AdresseVerifieeAppTests {
         proche.annonce = Self.depart + 899
         var loin = g
         loin.annonce = Self.depart + 900
-        #expect(!Surveillance.adressesAEcrire(["x": g], ecrites: ["x": g], releve: Self.depart))
-        #expect(!Surveillance.adressesAEcrire(["x": proche], ecrites: ["x": g], releve: proche.annonce))
-        #expect(Surveillance.adressesAEcrire(["x": loin], ecrites: ["x": g], releve: loin.annonce))
-        #expect(Surveillance.adressesAEcrire(["x": proche], ecrites: ["x": g], releve: loin.annonce),
+        #expect(!SurveillanceThread.adressesAEcrire(["x": g], ecrites: ["x": g], releve: Self.depart))
+        #expect(!SurveillanceThread.adressesAEcrire(["x": proche], ecrites: ["x": g], releve: proche.annonce))
+        #expect(SurveillanceThread.adressesAEcrire(["x": loin], ecrites: ["x": g], releve: loin.annonce))
+        #expect(SurveillanceThread.adressesAEcrire(["x": proche], ecrites: ["x": g], releve: loin.annonce),
                 "il n'annonce plus : sa derniere annonce s'ecrit")
-        #expect(Surveillance.adressesAEcrire(["x": g, "y": g], ecrites: ["x": g], releve: Self.depart))
-        #expect(Surveillance.adressesAEcrire([:], ecrites: ["x": g], releve: Self.depart))
+        #expect(SurveillanceThread.adressesAEcrire(["x": g, "y": g], ecrites: ["x": g], releve: Self.depart))
+        #expect(SurveillanceThread.adressesAEcrire([:], ecrites: ["x": g], releve: Self.depart))
         var autre = g
         autre.partition = "0000BBBB"
-        #expect(Surveillance.adressesAEcrire(["x": autre], ecrites: ["x": g], releve: Self.depart))
+        #expect(SurveillanceThread.adressesAEcrire(["x": autre], ecrites: ["x": g], releve: Self.depart))
     }
 
     /// Un fichier illisible, ou en JSON valide mais incoherent (adresse invalide, partition vide), est ignore sans
@@ -350,25 +350,25 @@ struct AdresseVerifieeAppTests {
         for texte in cas {
             try Data(texte.utf8).write(to: fichier)
             let s = Surveillance(mode: .direct, dossier: dossier)
-            s.chargerAdressesGardees(maintenant: Self.lancement)
-            #expect(s.suivi.dernieresAdresses.isEmpty && s.suivi.dernieresAnnonces.isEmpty
-                    && s.suivi.dernieresPartitions.isEmpty, "ignore : \(texte)")
-            s.integrer(Self.annonces(Self.depart + 3 * 3600, muets: [Self.hap]))
-            #expect(s.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin].sorted(), "hap non demande")
+            s.thread.chargerAdressesGardees(maintenant: Self.lancement)
+            #expect(s.thread.suivi.dernieresAdresses.isEmpty && s.thread.suivi.dernieresAnnonces.isEmpty
+                    && s.thread.suivi.dernieresPartitions.isEmpty, "ignore : \(texte)")
+            s.thread.integrer(Self.annonces(Self.depart + 3 * 3600, muets: [Self.hap]))
+            #expect(s.thread.appareilsAResoudre().map(\.id) == [Self.matter, Self.temoin].sorted(), "hap non demande")
         }
         // Le fichier valide du dernier cas est lisible tel quel (garde-fou du test).
         try Data(#"{"appareils":{"\#(Self.hap)":\#(valide)}}"#.utf8).write(to: fichier)
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(s.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
+        s.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(s.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
         // Un fichier illisible est remplace par le premier changement.
         try Data("{ pas du json".utf8).write(to: fichier)
         let t = Surveillance(mode: .direct, dossier: dossier)
-        t.chargerAdressesGardees(maintenant: Self.lancement)
-        t.integrer(Self.annonces(Self.depart))
+        t.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        t.thread.integrer(Self.annonces(Self.depart))
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(relu.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
+        relu.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(relu.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(2)))
     }
 
     /// La demo n'ecrit ni ne lit rien, meme avec un dossier ; sans dossier, rien sur disque non plus.
@@ -378,10 +378,10 @@ struct AdresseVerifieeAppTests {
         _ = Self.surveillanceSurDisque(dossier)
         let avant = try Data(contentsOf: Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json"))
         let demo = Surveillance(mode: .demo, dossier: dossier)
-        demo.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(demo.suivi.dernieresAdresses.isEmpty, "rien relu")
+        demo.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(demo.thread.suivi.dernieresAdresses.isEmpty, "rien relu")
         demo.demarrer()
-        #expect(!demo.suivi.dernieresAdresses.isEmpty, "la demo a son propre suivi")
+        #expect(!demo.thread.suivi.dernieresAdresses.isEmpty, "la demo a son propre suivi")
         #expect(try Data(contentsOf: Surveillance.dossierThread(dossier).appendingPathComponent("dernieres-adresses.json")) == avant, "rien ecrit")
 
         let vide = Self.dossierJetable()
@@ -390,9 +390,9 @@ struct AdresseVerifieeAppTests {
         demoVide.demarrer()
         #expect(!FileManager.default.fileExists(atPath: vide.path), "aucun dossier cree")
         let sansDossier = Surveillance(mode: .direct, dossier: nil)
-        sansDossier.chargerAdressesGardees(maintenant: Self.lancement)
-        sansDossier.integrer(Self.annonces(Self.depart))
-        #expect(!sansDossier.suivi.dernieresAdresses.isEmpty)
+        sansDossier.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        sansDossier.thread.integrer(Self.annonces(Self.depart))
+        #expect(!sansDossier.thread.suivi.dernieresAdresses.isEmpty)
     }
 
     /// Une annonce relue est bornee a l'heure du lancement : une date future (horloge reculee, fichier modifie) ne
@@ -401,57 +401,57 @@ struct AdresseVerifieeAppTests {
     @Test func annonceReluePasDansLeFutur() throws {
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let brute = try #require(Self.surveillanceSurDisque(dossier).suivi.dernieresAnnonces[Self.hap])
+        let brute = try #require(Self.surveillanceSurDisque(dossier).thread.suivi.dernieresAnnonces[Self.hap])
         // Relue telle quelle, sans marge.
         let normal = Surveillance(mode: .direct, dossier: dossier)
-        normal.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(normal.suivi.dernieresAnnonces[Self.hap] == brute)
+        normal.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(normal.thread.suivi.dernieresAnnonces[Self.hap] == brute)
         // Lancement avant la date du disque : bornee a l'heure du lancement.
         let tot = Surveillance(mode: .direct, dossier: dossier)
         let lancement = brute - 3600
-        tot.chargerAdressesGardees(maintenant: lancement)
-        #expect(tot.suivi.dernieresAnnonces[Self.hap] == lancement)
+        tot.thread.chargerAdressesGardees(maintenant: lancement)
+        #expect(tot.thread.suivi.dernieresAnnonces[Self.hap] == lancement)
         // Une resolution posterieure a l'annonce bornee verifie l'appareil (avec une annonce future, jamais).
-        tot.integrer(Self.annonces(lancement + 60, muets: [Self.hap]))
+        tot.thread.integrer(Self.annonces(lancement + 60, muets: [Self.hap]))
         let t = lancement + 120
-        tot.recevoir(Self.maillage(lancement + 90, resolus: [Self.hap: lancement + 100]), a: t - 10)
-        #expect(tot.verification(Self.hap, a: t) == lancement + 100)
-        #expect(tot.appareilsAResoudre().first { $0.id == Self.hap }?.derniereAnnonce != nil)
+        tot.thread.recevoir(Self.maillage(lancement + 90, resolus: [Self.hap: lancement + 100]), a: t - 10)
+        #expect(tot.thread.verification(Self.hap, a: t) == lancement + 100)
+        #expect(tot.thread.appareilsAResoudre().first { $0.id == Self.hap }?.derniereAnnonce != nil)
         // Le disque est corrige : relue plus tard, l'annonce n'est plus la date future d'origine.
         let relue = Surveillance(mode: .direct, dossier: dossier)
-        relue.chargerAdressesGardees(maintenant: brute + 7200)
-        #expect(relue.suivi.dernieresAnnonces[Self.hap] == lancement)
+        relue.thread.chargerAdressesGardees(maintenant: brute + 7200)
+        #expect(relue.thread.suivi.dernieresAnnonces[Self.hap] == lancement)
     }
 
     /// Les appareils sans annonce depuis plus de 30 jours sont oublies, a l'ecriture comme a la relecture.
     @Test func adressesDePlusDeTrenteJoursOubliees() throws {
-        let trente = Surveillance.dureeAdressesGardees
+        let trente = SurveillanceThread.dureeAdressesGardees
         #expect(trente == 30 * 24 * 3600)
         let g = Suivi.AdresseGardee(adresse: try #require(AdresseIPv6(Self.adresse(1))), partition: Self.partition,
                                     annonce: Self.depart)
-        #expect(Surveillance.adressesRecentes(["x": g], a: Self.depart + trente).keys.contains("x"), "30 jours pile")
-        #expect(Surveillance.adressesRecentes(["x": g], a: Self.depart + trente + 1).isEmpty)
+        #expect(SurveillanceThread.adressesRecentes(["x": g], a: Self.depart + trente).keys.contains("x"), "30 jours pile")
+        #expect(SurveillanceThread.adressesRecentes(["x": g], a: Self.depart + trente + 1).isEmpty)
 
         // A la relecture : le fichier garde hap (annonce a `brute`) ; relu 30 jours apres, il est oublie.
         let dossier = Self.dossierJetable()
         defer { try? FileManager.default.removeItem(at: dossier) }
-        let brute = try #require(Self.surveillanceSurDisque(dossier).suivi.dernieresAnnonces[Self.hap])
+        let brute = try #require(Self.surveillanceSurDisque(dossier).thread.suivi.dernieresAnnonces[Self.hap])
         let pile = Surveillance(mode: .direct, dossier: dossier)
-        pile.chargerAdressesGardees(maintenant: brute + trente)
-        #expect(pile.suivi.dernieresAdresses[Self.hap] != nil)
+        pile.thread.chargerAdressesGardees(maintenant: brute + trente)
+        #expect(pile.thread.suivi.dernieresAdresses[Self.hap] != nil)
         let oublie = Surveillance(mode: .direct, dossier: dossier)
-        oublie.chargerAdressesGardees(maintenant: Self.depart + 200 + trente + 1)
-        #expect(oublie.suivi.dernieresAdresses[Self.hap] == nil)
-        #expect(oublie.suivi.dernieresAdresses[Self.matter] == nil, "matter aussi : annonce a Self.depart + 200")
+        oublie.thread.chargerAdressesGardees(maintenant: Self.depart + 200 + trente + 1)
+        #expect(oublie.thread.suivi.dernieresAdresses[Self.hap] == nil)
+        #expect(oublie.thread.suivi.dernieresAdresses[Self.matter] == nil, "matter aussi : annonce a Self.depart + 200")
 
         // A l'ecriture : un releve 31 jours plus tard ou matter et temoin annoncent encore reecrit le fichier sans hap.
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.chargerAdressesGardees(maintenant: Self.depart + 3600)
-        s.integrer(Self.annonces(Self.depart + 31 * 24 * 3600, muets: [Self.hap]))
+        s.thread.chargerAdressesGardees(maintenant: Self.depart + 3600)
+        s.thread.integrer(Self.annonces(Self.depart + 31 * 24 * 3600, muets: [Self.hap]))
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerAdressesGardees(maintenant: Self.depart + 3600)
-        #expect(relu.suivi.dernieresAdresses[Self.hap] == nil, "hap oublie dans le fichier")
-        #expect(relu.suivi.dernieresAdresses[Self.matter] != nil && relu.suivi.dernieresAdresses[Self.temoin] != nil)
+        relu.thread.chargerAdressesGardees(maintenant: Self.depart + 3600)
+        #expect(relu.thread.suivi.dernieresAdresses[Self.hap] == nil, "hap oublie dans le fichier")
+        #expect(relu.thread.suivi.dernieresAdresses[Self.matter] != nil && relu.thread.suivi.dernieresAdresses[Self.temoin] != nil)
     }
 
     /// Une adresse annoncee de nouveau remplace celle qui a ete relue, avec sa date : l'appareil n'est plus demande
@@ -461,23 +461,23 @@ struct AdresseVerifieeAppTests {
         defer { try? FileManager.default.removeItem(at: dossier) }
         _ = Self.surveillanceSurDisque(dossier)
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.chargerAdressesGardees(maintenant: Self.lancement)
+        s.thread.chargerAdressesGardees(maintenant: Self.lancement)
         let plusTard = Self.depart + 3 * 3600
         var a = Self.annonces(plusTard)
         a.adresses[Self.hap + ".local"] = [Self.adresse(9)]
-        s.integrer(a)
-        #expect(s.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
-        #expect(s.suivi.dernieresAnnonces[Self.hap] == plusTard)
-        let demande = try #require(s.appareilsAResoudre().first { $0.id == Self.hap })
+        s.thread.integrer(a)
+        #expect(s.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
+        #expect(s.thread.suivi.dernieresAnnonces[Self.hap] == plusTard)
+        let demande = try #require(s.thread.appareilsAResoudre().first { $0.id == Self.hap })
         #expect(demande.adresse == AdresseIPv6(Self.adresse(9)) && demande.derniereAnnonce == nil)
         // Un appareil relu que le releve ne montre pas du tout garde sa derniere adresse, et le fichier aussi.
         let seul = Surveillance(mode: .direct, dossier: dossier)
-        seul.chargerAdressesGardees(maintenant: Self.lancement)
-        seul.integrer(Self.annonces(plusTard + 60, partis: [Self.hap]))
-        #expect(seul.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
+        seul.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        seul.thread.integrer(Self.annonces(plusTard + 60, partis: [Self.hap]))
+        #expect(seul.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
         let encore = Surveillance(mode: .direct, dossier: dossier)
-        encore.chargerAdressesGardees(maintenant: Self.lancement)
-        #expect(encore.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
+        encore.thread.chargerAdressesGardees(maintenant: Self.lancement)
+        #expect(encore.thread.suivi.dernieresAdresses[Self.hap] == AdresseIPv6(Self.adresse(9)))
     }
 
     /// L'anneau de la variante B (12/10) : porte par l'appareil que la sonde a trouve, et par lui seul ; la carte garde
@@ -486,16 +486,16 @@ struct AdresseVerifieeAppTests {
     @Test func anneauDesAppareilsVerifies() throws {
         let maintenant = Date()
         let s = Self.surveillance(muets: [Self.matter, Self.hap], maintenant: maintenant)
-        let r = try #require(s.reseau)
-        #expect(s.appareilsAffiches(pour: r).allSatisfy { !$0.verifie }, "rien de verifie sans la sonde")
+        let r = try #require(s.thread.reseau)
+        #expect(s.thread.appareilsAffiches(pour: r).allSatisfy { !$0.verifie }, "rien de verifie sans la sonde")
         let sans = try #require(FenetrePiecesTests.entree(s))
         #expect(sans.apparences.values.allSatisfy { !$0.verifie })
         #expect(!LegendePieces.entrees(LegendePieces.Lecture(sans, ailleurs: false)).contains(.verifiee))
 
         let trouve = maintenant - 120
-        s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve]),
+        s.thread.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve]),
                    a: maintenant - 60)
-        let affiches = s.appareilsAffiches(pour: r)
+        let affiches = s.thread.appareilsAffiches(pour: r)
         #expect(Set(affiches.filter(\.verifie).map(\.id)) == [idt(Self.matter), idt(Self.hap)])
         #expect(affiches.first { $0.id == idt(Self.temoin) }?.verifie == false, "il annonce son adresse")
         #expect(affiches.filter(\.verifie).allSatisfy { $0.etat == .joignable }, "le point reste joignable, donc vert")

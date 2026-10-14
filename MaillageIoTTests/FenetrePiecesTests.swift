@@ -31,7 +31,7 @@ struct FenetrePiecesTests {
 
     /// La scene de la fenetre, comme la construit `FenetrePieces` a chaque rendu ; nil sans reseau.
     static func entree(_ s: Surveillance) -> EntreeScene? {
-        s.reseau.map { EntreeScene(surveillance: s, reseau: $0, places: PlacesGardees()) }
+        s.thread.reseau.map { EntreeScene(surveillance: s, reseau: $0, places: PlacesGardees()) }
     }
 
     /// La vraie fenetre de la vue par pieces, hors ecran, de `taille` pt, sur la surveillance `s`, avec les
@@ -164,7 +164,7 @@ struct FenetrePiecesTests {
             return NSHostingView(rootView: vue.environment(s).environment(sonde).environment(noms)).fittingSize.height
         }
         #expect(FenetrePieces.margeHaut(bas: 57.2) == 58 + FenetrePieces.espacement, "le bas arrondi, et l'espacement")
-        #expect(demo.reseau?.estScinde == true, "la demo : reseau scinde, bandeau affiche")
+        #expect(demo.thread.reseau?.estScinde == true, "la demo : reseau scinde, bandeau affiche")
         let seul = haut(sansReseau, sansPieces: false)
         let scinde = haut(demo, sansPieces: false)
         #expect(seul > 2 * CadreFeux.defaut.milieu + RangeeNiveau.hauteur, "la ligne des capsules, le fil, la ligne de niveau")
@@ -406,8 +406,8 @@ struct FenetrePiecesTests {
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
         // Un releve de la sonde ancien (plus de 6 min) : sa pastille est en haut, et ne compte pas en bas.
-        demo.recevoir(try #require(demo.maillage), a: demo.maintenant.addingTimeInterval(-7 * 60))
-        #expect(demo.maillageAncien)
+        demo.thread.recevoir(try #require(demo.thread.maillage), a: demo.maintenant.addingTimeInterval(-7 * 60))
+        #expect(demo.thread.maillageAncien)
         // La vraie fenetre, hors ecran, avec son moteur (l'etat `moteur` de la vue) et des preferences a part.
         let (fenetre, moteur) = try Self.fenetre(demo, taille: taille, preferences: p)
         defer { Self.fermer(fenetre) }
@@ -472,7 +472,7 @@ struct FenetrePiecesTests {
         p.set(false, forKey: LegendePieces.cleRepliee)
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        let maillage = try #require(demo.maillage)
+        let maillage = try #require(demo.thread.maillage)
         let (fenetre, moteur) = try Self.fenetre(demo, taille: taille, preferences: p)
         defer { Self.fermer(fenetre) }
         func cadre(_ cle: String) throws -> CGRect { try #require(moteur.cadresInterface[cle], "le cadre « \(cle) »") }
@@ -531,8 +531,8 @@ struct FenetrePiecesTests {
                 "\(cas) : la colonne ne bouge pas, hors sa largeur (le fil de la piece isolee) : \(isolee)")
 
         // La pastille d'un releve ancien : a cote de la ligne de niveau, dans la colonne ; la marge ne bouge pas.
-        demo.recevoir(maillage, a: demo.maintenant.addingTimeInterval(-7 * 60))
-        #expect(demo.maillageAncien)
+        demo.thread.recevoir(maillage, a: demo.maintenant.addingTimeInterval(-7 * 60))
+        #expect(demo.thread.maillageAncien)
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["ancien"] != nil }
         try await stable()
         let ancien = try cadre("ancien")
@@ -545,7 +545,7 @@ struct FenetrePiecesTests {
         #expect(niveau.minX == FenetrePieces.bord, "\(cas) : la ligne de niveau ne bouge pas avec la pastille")
         #expect(moteur.marges.haut == marge, "\(cas) : la marge du haut ne change pas avec la pastille : \(moteur.marges.haut)")
         #expect(try cadre("colonne").height == colonne.height, "\(cas) : la colonne ne bouge pas, avec la pastille")
-        demo.recevoir(maillage, a: demo.maintenant)
+        demo.thread.recevoir(maillage, a: demo.maintenant)
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["ancien"] == nil }
         try await stable()
         #expect(moteur.marges.haut == marge, "\(cas) : ni quand elle repart : \(moteur.marges.haut)")
@@ -648,9 +648,9 @@ struct FenetrePiecesTests {
         p.set(false, forKey: LegendePieces.cleRepliee)
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        let maillage = try #require(demo.maillage)
-        demo.recevoir(maillage, a: demo.maintenant.addingTimeInterval(-7 * 60))
-        #expect(demo.maillageAncien)
+        let maillage = try #require(demo.thread.maillage)
+        demo.thread.recevoir(maillage, a: demo.maintenant.addingTimeInterval(-7 * 60))
+        #expect(demo.thread.maillageAncien)
         let (fenetre, moteur) = try Self.fenetre(demo, taille: CGSize(width: 1100, height: 760), preferences: p,
                                                  reduire: reduire)
         defer { Self.fermer(fenetre) }
@@ -661,7 +661,7 @@ struct FenetrePiecesTests {
         let niveau = try #require(moteur.cadresInterface["niveau"])
         // Le releve n'est plus ancien : sa pastille part.
         let t0 = ProcessInfo.processInfo.systemUptime
-        demo.recevoir(maillage, a: demo.maintenant)
+        demo.thread.recevoir(maillage, a: demo.maintenant)
         var delai = 1.5
         while ProcessInfo.processInfo.systemUptime - t0 < 1.5 {
             if moteur.cadresInterface["ancien"] == nil {
@@ -691,7 +691,7 @@ struct FenetrePiecesTests {
         p.set(false, forKey: LegendePieces.cleRepliee)
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        demo.recevoir(try #require(demo.maillage), a: demo.maintenant.addingTimeInterval(-7 * 60))
+        demo.thread.recevoir(try #require(demo.thread.maillage), a: demo.maintenant.addingTimeInterval(-7 * 60))
         let taille = Self.hauteAssez
         let (fenetre, moteur) = try Self.fenetre(demo, taille: taille, preferences: p, reduire: true)
         defer { Self.fermer(fenetre) }
@@ -723,13 +723,13 @@ struct FenetrePiecesTests {
         #expect(FicheNoeud.couronne(idt("Apple TV 4K"), entree: e))
         #expect(!FicheNoeud.couronne(idt("Apple TV 4K"), entree: nil))
         let (s, _) = try NomsSceneTests.demoAvecRouteurThread()
-        let m = try #require(s.maillage)
+        let m = try #require(s.thread.maillage)
         let routeurs = m.routeurs.map { r in
             var r = r
             r.chef = r.id == 45
             return r
         }
-        s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: routeurs, liens: m.liens, enfants: m.enfants,
+        s.thread.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: routeurs, liens: m.liens, enfants: m.enfants,
                             signaux: m.signaux), a: s.maintenant)
         let thread = try #require(Self.entree(s))
         #expect(thread.chefs == [idt("Apple TV 4K"), idt("rloc:B400")], "le chef de la partition, et celui du maillage")
@@ -881,7 +881,7 @@ struct FenetrePiecesTests {
         let sonde = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in canal })
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        #expect(demo.reseau?.estScinde == true, "la demo : le bandeau de scission, dans la colonne")
+        #expect(demo.thread.reseau?.estScinde == true, "la demo : le bandeau de scission, dans la colonne")
         let (fenetre, moteur) = try Self.fenetre(demo, taille: CGSize(width: 1100, height: 760), preferences: p,
                                                  sonde: sonde)
         defer { Self.fermer(fenetre) }
@@ -1212,7 +1212,7 @@ struct FenetrePiecesTests {
     @Test func placerUnRouteur() throws {
         let (s, _, e) = try NomsSceneTests.demo()
         #expect(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: e) == nil, "Maison le place au salon")
-        s.noms.maison = NomsSceneTests.maisonSansRouteurs(s)
+        s.thread.noms.maison = NomsSceneTests.maisonSansRouteurs(s)
         let entree = try #require(Self.entree(s))
         let pieces = try #require(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: entree)?.pieces)
         #expect(pieces == ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
@@ -1283,8 +1283,8 @@ struct FenetrePiecesTests {
         let routeur = try #require(PiecesChoisies.placement(idt("rloc:B400"), dans: s, entree: e))
         #expect(routeur.cle == .appareil(idt("E0000000000000F1")))
         #expect(MenuPlacer.articles(routeur).first == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
-        s.noms.maison?.zones = nil
-        for k in s.noms.maison?.accessoires.indices ?? 0..<0 { s.noms.maison?.accessoires[k].piece = nil }
+        s.thread.noms.maison?.zones = nil
+        for k in s.thread.noms.maison?.accessoires.indices ?? 0..<0 { s.thread.noms.maison?.accessoires[k].piece = nil }
         let sansPieces = try #require(Self.entree(s))
         for id in ["rloc:B400", "rloc:041F", "1E5019DAC2638F92", "HomePod Palier"] {
             #expect(PiecesChoisies.placement(idt(id), dans: s, entree: sansPieces) == nil, "\(id)")
@@ -1297,7 +1297,7 @@ struct FenetrePiecesTests {
     @Test func menuDeLaScene() throws {
         let (s, _) = try NomsSceneTests.demoAvecInconnus()
         let e = try #require(Self.entree(s))
-        s.oublierMaillage()
+        s.thread.oublierMaillage()
         #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e)?.cle == .appareil(idt("E0000000000000FF")))
         let suivante = try #require(Self.entree(s))
         #expect(suivante.maillage == nil && suivante.graphe.noeud(idt("rloc:041F")) == nil)

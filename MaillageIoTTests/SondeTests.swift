@@ -1399,14 +1399,14 @@ struct SondeMaillageTests {
         defer { p.removePersistentDomain(forName: domaine) }
         let surveillance = Surveillance(mode: .direct, dossier: nil)
         let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in CanalRejoue { CanalRejoue.reseauMinimal($0) } })
-        s.surMaillage = { m, recu in surveillance.recevoir(m, a: recu) }
-        s.surOubli = { surveillance.oublierMaillage() }
+        s.surMaillage = { m, recu in surveillance.thread.recevoir(m, a: recu) }
+        s.surOubli = { surveillance.thread.oublierMaillage() }
         await s.connecter(Self.port, choisi: true)
-        await Self.attendre { surveillance.maillage != nil }
-        #expect(surveillance.fraicheurMaillage(a: Date()) == .frais)
+        await Self.attendre { surveillance.thread.maillage != nil }
+        #expect(surveillance.thread.fraicheurMaillage(a: Date()) == .frais)
         await s.oublier()
-        #expect(surveillance.maillage == nil)
-        #expect(surveillance.fraicheurMaillage(a: Date()) == nil)
+        #expect(surveillance.thread.maillage == nil)
+        #expect(surveillance.thread.fraicheurMaillage(a: Date()) == nil)
     }
 
     /// « Oublier » pendant que la reponse a `etat` de la tournee est en route : arrivee apres
@@ -1473,11 +1473,11 @@ struct SondeMaillageTests {
     /// ensuite ; pendant une tournee, jamais ancien, mais perime apres 15 min.
     @Test func fraicheur() {
         let t = Date(timeIntervalSince1970: 1_790_000_000)
-        #expect(Surveillance.fraicheur(t, maintenant: t + 300) == .frais)
-        #expect(Surveillance.fraicheur(t, maintenant: t + 7 * 60) == .ancien)
-        #expect(Surveillance.fraicheur(t, maintenant: t + 16 * 60) == .perime)
-        #expect(Surveillance.fraicheur(t, maintenant: t + 7 * 60, tourneeEnCours: true) == .frais)
-        #expect(Surveillance.fraicheur(t, maintenant: t + 16 * 60, tourneeEnCours: true) == .perime)
+        #expect(SurveillanceThread.fraicheur(t, maintenant: t + 300) == .frais)
+        #expect(SurveillanceThread.fraicheur(t, maintenant: t + 7 * 60) == .ancien)
+        #expect(SurveillanceThread.fraicheur(t, maintenant: t + 16 * 60) == .perime)
+        #expect(SurveillanceThread.fraicheur(t, maintenant: t + 7 * 60, tourneeEnCours: true) == .frais)
+        #expect(SurveillanceThread.fraicheur(t, maintenant: t + 16 * 60, tourneeEnCours: true) == .perime)
     }
 
     /// Une tournee de 90 s : le maillage, date du debut de sa tournee, est recu a sa fin
@@ -1554,13 +1554,13 @@ struct SondeMaillageTests {
         var vues: [Surveillance.Fraicheur] = []
         for seconde in stride(from: 0, through: t, by: 1.0) {
             for tr in tournees {
-                if seconde == tr.debut { s.tourneeEnCours = true }
+                if seconde == tr.debut { s.thread.tourneeEnCours = true }
                 if seconde == tr.fin {
-                    s.recevoir(ConstructionMaillage(date: t0 + tr.debut, partition: "0000000A").maillage(), a: t0 + seconde)
-                    s.tourneeEnCours = false
+                    s.thread.recevoir(ConstructionMaillage(date: t0 + tr.debut, partition: "0000000A").maillage(), a: t0 + seconde)
+                    s.thread.tourneeEnCours = false
                 }
             }
-            if let f = s.fraicheurMaillage(a: t0 + seconde) { vues.append(f) }
+            if let f = s.thread.fraicheurMaillage(a: t0 + seconde) { vues.append(f) }
         }
         #expect(vues.count == Int(t - 90) + 1, "un maillage des la fin de la premiere tournee")
         #expect(vues.filter { $0 != .frais }.isEmpty)
@@ -1571,16 +1571,16 @@ struct SondeMaillageTests {
     @Test func fraicheurSansTournee() {
         let s = Surveillance(mode: .direct, dossier: nil)
         let t0 = Date(timeIntervalSince1970: 1_790_000_000)
-        #expect(s.fraicheurMaillage(a: t0) == nil)
+        #expect(s.thread.fraicheurMaillage(a: t0) == nil)
         // Tournee de 90 s : le maillage est recu a t0.
-        s.recevoir(ConstructionMaillage(date: t0 - 90, partition: "0000000A").maillage(), a: t0)
-        #expect(s.fraicheurMaillage(a: t0 + 6 * 60) == .frais)
-        #expect(s.fraicheurMaillage(a: t0 + 6 * 60 + 1) == .ancien)
-        #expect(s.fraicheurMaillage(a: t0 + 15 * 60) == .ancien)
-        #expect(s.fraicheurMaillage(a: t0 + 15 * 60 + 1) == .perime)
-        s.tourneeEnCours = true
-        #expect(s.fraicheurMaillage(a: t0 + 6 * 60 + 1) == .frais)
-        #expect(s.fraicheurMaillage(a: t0 + 15 * 60 + 1) == .perime)
+        s.thread.recevoir(ConstructionMaillage(date: t0 - 90, partition: "0000000A").maillage(), a: t0)
+        #expect(s.thread.fraicheurMaillage(a: t0 + 6 * 60) == .frais)
+        #expect(s.thread.fraicheurMaillage(a: t0 + 6 * 60 + 1) == .ancien)
+        #expect(s.thread.fraicheurMaillage(a: t0 + 15 * 60) == .ancien)
+        #expect(s.thread.fraicheurMaillage(a: t0 + 15 * 60 + 1) == .perime)
+        s.thread.tourneeEnCours = true
+        #expect(s.thread.fraicheurMaillage(a: t0 + 6 * 60 + 1) == .frais)
+        #expect(s.thread.fraicheurMaillage(a: t0 + 15 * 60 + 1) == .perime)
     }
 }
 

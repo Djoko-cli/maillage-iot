@@ -22,15 +22,15 @@ struct GlissementTests {
     private static func demo(enfants: ([EnfantMaillage]) -> [EnfantMaillage] = { $0 },
                              accessoires changer: (inout AccessoireMaison) -> Void) throws -> EntreeScene {
         let (s, r, _) = try NomsSceneTests.demo()
-        let m = try #require(s.maillage)
+        let m = try #require(s.thread.maillage)
         let changes = enfants(m.enfants)
         if changes != m.enfants {
-            s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: m.liens,
+            s.thread.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: m.liens,
                                 enfants: changes, signaux: m.signaux), a: s.maintenant)
         }
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         for k in maison.accessoires.indices { changer(&maison.accessoires[k]) }
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         return EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
     }
 
@@ -601,14 +601,14 @@ struct GlissementTests {
     @Test func lienQuiApparaitRelance() throws {
         func demo(liens: ([LienRadio]) -> [LienRadio], deplacer: [String: String]) throws -> EntreeScene {
             let (s, r, _) = try NomsSceneTests.demo()
-            let m = try #require(s.maillage)
-            s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: liens(m.liens),
+            let m = try #require(s.thread.maillage)
+            s.thread.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: liens(m.liens),
                                 enfants: m.enfants, signaux: m.signaux), a: s.maintenant)
-            var maison = try #require(s.noms.maison)
+            var maison = try #require(s.thread.noms.maison)
             for k in maison.accessoires.indices {
                 if let p = deplacer[maison.accessoires[k].nom] { maison.accessoires[k].piece = p }
             }
-            s.noms.maison = maison
+            s.thread.noms.maison = maison
             return EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         }
         let (m, _) = try Self.moteur()
@@ -794,7 +794,7 @@ struct GlissementTests {
     /// la piece, elle ne regarde plus la meme chose ; elle ne bouge pas, avec ou sans « Reduire les animations ».
     @Test(arguments: [false, true]) func pieceIsoleeDisparueVueZoomee(reduire: Bool) throws {
         let (s, _, e) = try NomsSceneTests.demo()
-        let maison = try #require(s.noms.maison)
+        let maison = try #require(s.thread.noms.maison)
         var deplacer: [String: String] = [:]
         for a in maison.accessoires where a.piece == "Cuisine" { deplacer[a.nom] = "Salon" }
         let e2 = try Self.demo(deplacer)

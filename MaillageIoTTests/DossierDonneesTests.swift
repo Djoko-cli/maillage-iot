@@ -13,6 +13,6 @@ struct DossierDonneesTests {
 
     @Test func clesDePreferencesThreadPrefixees() {
         #expect(SondeMaillage.cles.allSatisfy { $0.hasPrefix("thread.") })
-        #expect(Surveillance.cleScissionsNotifiees == "thread.scissionsNotifiees")
+        #expect(SurveillanceThread.cleScissionsNotifiees == "thread.scissionsNotifiees")
     }
 }

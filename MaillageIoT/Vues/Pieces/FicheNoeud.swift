@@ -85,16 +85,16 @@ struct FicheNoeud: View {
     /// Le noeud a une fiche : un routeur de bordure de l'instantane, un appareil connu, ou un noeud que la sonde seule
     /// connait.
     static func connu(_ id: String, dans surveillance: Surveillance, maillage: MaillageAffiche?) -> Bool {
-        surveillance.instantane?.routeur(id) != nil || surveillance.appareil(id) != nil || maillage?.noeud(id) != nil
+        surveillance.thread.instantane?.routeur(id) != nil || surveillance.thread.appareil(id) != nil || maillage?.noeud(id) != nil
     }
 
     // MARK: Colonne 1 : identite
 
     private func colonneIdentite() -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let r = surveillance.instantane?.routeur(cle) {
+            if let r = surveillance.thread.instantane?.routeur(cle) {
                 identiteRouteur(r)
-            } else if let a = surveillance.appareil(cle) {
+            } else if let a = surveillance.thread.appareil(cle) {
                 identiteAppareil(a)
             } else if let m = sonde, let n = m.noeud(cle) {
                 identiteSonde(n)
@@ -114,20 +114,20 @@ struct FicheNoeud: View {
                 Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
                     .boutonDeFiche()
             }
-            if let a = surveillance.appareil(cle) {
-                if surveillance.associeALaMain(a) {
-                    Button("Dissocier") { surveillance.dissocier(cle) }
+            if let a = surveillance.thread.appareil(cle) {
+                if surveillance.thread.associeALaMain(a) {
+                    Button("Dissocier") { surveillance.thread.dissocier(cle) }
                         .boutonDeFiche()
                 } else if MenuAssocier.propose(a, dans: surveillance) {
                     MenuAssocier(id: cle)
                 }
-                if let accessoire = surveillance.accessoire(a) {
+                if let accessoire = surveillance.thread.accessoire(a) {
                     BoutonIdentifier(accessoire: accessoire)
                 }
             }
             if let piecesChoisies, let entree,
                let placement = PiecesChoisies.placement(id, dans: surveillance, entree: entree) {
-                MenuPlacer(placement: placement, domicile: surveillance.noms.maison?.domicile ?? "",
+                MenuPlacer(placement: placement, domicile: surveillance.thread.noms.maison?.domicile ?? "",
                            choisies: piecesChoisies)
             }
         }
@@ -138,19 +138,19 @@ struct FicheNoeud: View {
     private func colonneRole() -> some View {
         VStack(alignment: .leading, spacing: 4) {
             TitreColonne(titre: "Rôle et parent")
-            if let r = surveillance.instantane?.routeur(cle) {
+            if let r = surveillance.thread.instantane?.routeur(cle) {
                 roleRouteur(r)
                 lignesPartition(partition: r.partition, prefixe: r.prefixeOMR)
-            } else if let a = surveillance.appareil(cle) {
+            } else if let a = surveillance.thread.appareil(cle) {
                 let genre = genre(a)
                 if !genre.isEmpty { Text(genre).foregroundStyle(.secondary) }
                 if !a.fabriques.isEmpty {
                     Text("Fabriques : \(a.fabriques.count)").foregroundStyle(.secondary)
                 }
                 ligneSonde
-                let verifie = surveillance.verification(a.id, a: surveillance.maintenant) != nil
-                lignesPartition(partition: surveillance.partitionAffichee(a, verifie: verifie), prefixe: a.prefixe,
-                                incertaine: surveillance.instantane?.partitionIncertaine(a) == true)
+                let verifie = surveillance.thread.verification(a.id, a: surveillance.maintenant) != nil
+                lignesPartition(partition: surveillance.thread.partitionAffichee(a, verifie: verifie), prefixe: a.prefixe,
+                                incertaine: surveillance.thread.instantane?.partitionIncertaine(a) == true)
             } else if let m = sonde, let n = m.noeud(cle) {
                 ligneSonde
                 Text(Self.explication(n)).font(.caption).foregroundStyle(.secondary)
@@ -270,7 +270,7 @@ struct FicheNoeud: View {
     static func trel(_ id: String, maillage: MaillageAffiche?, graphe: GrapheReseau?,
                      dans surveillance: Surveillance) -> Bool {
         guard let ext = maillage?.extMacs[id] ?? graphe?.noeud(IdNoeud(.thread, id))?.extMac else { return false }
-        return surveillance.instantane?.trel.contains(ext.uppercased()) == true
+        return surveillance.thread.instantane?.trel.contains(ext.uppercased()) == true
     }
 
     /// Ce que le point de couleur d'une pastille d'enfant dit a VoiceOver : « qualité du lien : bonne ».
@@ -321,30 +321,30 @@ struct FicheNoeud: View {
     /// Courbes de l'historique sous les colonnes, pour tout noeud, des que l'historique de la
     /// sonde a un releve (jamais en demo) : la fiche garde sa hauteur d'un noeud a l'autre.
     static func courbesVisibles(dans surveillance: Surveillance) -> Bool {
-        !surveillance.historique.isEmpty
+        !surveillance.thread.historique.isEmpty
     }
 
     /// « Renommer… » : le surnom est indexe par l'instance d'un routeur de l'instantane ou
     /// par l'id d'un appareil connu. Un noeud que la sonde seule connait n'a qu'un RLOC16,
     /// volatil : rien ne lirait son surnom.
     static func renommable(_ id: String, dans surveillance: Surveillance) -> Bool {
-        surveillance.instantane?.routeur(id) != nil || surveillance.appareil(id) != nil
+        surveillance.thread.instantane?.routeur(id) != nil || surveillance.thread.appareil(id) != nil
     }
 
     // MARK: Appareil
 
     @ViewBuilder
     private func identiteAppareil(_ a: Appareil) -> some View {
-        let disparu = surveillance.suivi.disparus[a.id] != nil
+        let disparu = surveillance.thread.suivi.disparus[a.id] != nil
         // Trouve par la sonde alors qu'il n'annonce plus d'adresse : joignable.
-        let verifie = surveillance.verification(a.id, a: instant)
-        let maison = surveillance.accessoire(a)
-        Text(surveillance.nom(a)).font(.title3.weight(.semibold))
+        let verifie = surveillance.thread.verification(a.id, a: instant)
+        let maison = surveillance.thread.accessoire(a)
+        Text(surveillance.thread.nom(a)).font(.title3.weight(.semibold))
         let description = Self.ligneDescription(maison: maison, modeleHomeKit: a.hap?.modele)
         if !description.isEmpty {
             Text(description).foregroundStyle(.secondary)
         }
-        if surveillance.associeALaMain(a) {
+        if surveillance.thread.associeALaMain(a) {
             Text("associé à la main").font(.caption).foregroundStyle(.tertiary)
         }
         if Self.couronne(IdNoeud(.thread, a.id), entree: entree) {
@@ -365,7 +365,7 @@ struct FicheNoeud: View {
                 Image(systemName: Self.symboleBatterie(b))
                     .foregroundStyle(b.faible ? orange : b.charge == .enCharge ? Color.green : Color.primary)
                 Text(Self.ligneBatterie(b)).foregroundStyle(b.faible ? orange : Color.primary)
-                if let releve = surveillance.noms.maison?.date {
+                if let releve = surveillance.thread.noms.maison?.date {
                     Text("· relevé \(Self.relatif(releve, instant))").foregroundStyle(.secondary)
                 }
             }
@@ -421,7 +421,7 @@ struct FicheNoeud: View {
     private var orange: Color { apparence == .dark ? .orange : Color(red: 0.72, green: 0.36, blue: 0) }
 
     /// Etat d'un appareil dans la fiche ; `verifie` : il n'annonce plus d'adresse (sans adresse, ou disparu), et la
-    /// sonde l'a trouve (`Surveillance.verification`).
+    /// sonde l'a trouve (`SurveillanceThread.verification`).
     static func texteEtat(_ etat: EtatAppareil, disparu: Bool, verifie: Bool) -> String {
         if verifie { return String(localized: "joignable, adresse plus annoncée") }
         if disparu { return String(localized: "disparu") }
@@ -462,7 +462,7 @@ struct FicheNoeud: View {
     /// Present : l'instantane integre (un releve vide ne compte pas) ; disparu : sa premiere absence.
     private func vuLe(_ a: Appareil, disparu: Bool) -> Date? {
         if disparu { return surveillance.evenements(de: IdNoeud(.thread, a.id)).first { $0.type == .appareilDisparu }?.date }
-        return surveillance.instantane?.date
+        return surveillance.thread.instantane?.date
     }
 
     private func genre(_ a: Appareil) -> String {
@@ -519,7 +519,7 @@ struct FicheNoeud: View {
     /// Noeud a choisir pour un candidat : son annonce, si l'instantane la connait encore (sa
     /// fiche : role, adresses, journal, « Renommer… ») ; nil sinon.
     static func selection(candidat: String, dans surveillance: Surveillance) -> String? {
-        surveillance.instantane?.routeur(candidat) != nil ? candidat : nil
+        surveillance.thread.instantane?.routeur(candidat) != nil ? candidat : nil
     }
 
     /// Ce que la sonde sait d'un noeud qu'elle seule connait.
@@ -542,7 +542,7 @@ struct FicheNoeud: View {
     /// Nom affiche de chaque routeur de bordure du reseau affiche, par instance (candidats d'un
     /// routeur de bordure non identifie).
     private var nomsRouteurs: [String: String] {
-        surveillance.reseau.map(surveillance.nomsRouteurs) ?? [:]
+        surveillance.thread.reseau.map(surveillance.thread.nomsRouteurs) ?? [:]
     }
 
     /// Nom d'un noeud du graphe : routeur de bordure, appareil, ou noeud de la sonde.
@@ -550,7 +550,7 @@ struct FicheNoeud: View {
 
     /// Nom d'un noeud par sa cle Thread (les liens du maillage de la sonde parlent en cles) ; a defaut, la cle.
     private func nomThread(_ cle: String) -> String {
-        surveillance.nomNoeud(cle, maillage: sonde) ?? cle
+        surveillance.thread.nomNoeud(cle, maillage: sonde) ?? cle
     }
 
     /// « RLOC16 5004 · parent HomePod bureau, qualite 3 · diagnostic » ; un enfant resolu sous un routeur Apple, dont le
@@ -620,7 +620,7 @@ struct FicheNoeud: View {
 
     @ViewBuilder
     private func identiteRouteur(_ r: RouteurBordure) -> some View {
-        Text(surveillance.nom(r)).font(.title3.weight(.semibold))
+        Text(surveillance.thread.nom(r)).font(.title3.weight(.semibold))
         let description = [r.fabricant, r.modele, r.versionThread.map { "Thread \($0)" }].compactMap { $0 }
             .joined(separator: " · ")
         if !description.isEmpty {

@@ -17,9 +17,9 @@ struct DossierThreadTests {
         defer { try? FileManager.default.removeItem(at: dossier) }
         let s = AdresseVerifieeAppTests.surveillanceSurDisque(dossier)
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
-        s.recevoir(try SurveillanceTests.maillageGarde(recu.addingTimeInterval(-60)), a: recu)
-        s.noms.maison = AssociationMaisonTests.maison()
-        s.associer(AssociationMaisonTests.muet, a: AssociationMaisonTests.maison().accessoires[1])
+        s.thread.recevoir(try SurveillanceTests.maillageGarde(recu.addingTimeInterval(-60)), a: recu)
+        s.thread.noms.maison = AssociationMaisonTests.maison()
+        s.thread.associer(AssociationMaisonTests.muet, a: AssociationMaisonTests.maison().accessoires[1])
         s.renommer(idt(AssociationMaisonTests.muet), en: "Mon surnom")
 
         let fm = FileManager.default
@@ -37,9 +37,9 @@ struct DossierThreadTests {
 
         // Le lancement suivant relit tout sous Thread/.
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerMaillageGarde()
-        #expect(relu.maillage != nil)
-        #expect(relu.noms.associations == [AssociationMaisonTests.muet: "00000000000000AA"])
+        relu.thread.chargerMaillageGarde()
+        #expect(relu.thread.maillage != nil)
+        #expect(relu.thread.noms.associations == [AssociationMaisonTests.muet: "00000000000000AA"])
         #expect(relu.surnom(de: idt(AssociationMaisonTests.muet)) == "Mon surnom")
     }
 

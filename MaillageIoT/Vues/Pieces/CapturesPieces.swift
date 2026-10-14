@@ -126,7 +126,7 @@ enum CapturesPieces {
     static func ecrire(dans dossier: String, surveillance s: Surveillance, sonde: SondeMaillage,
                        nomsMaison: NomsPasseur) -> [String] {
         try? FileManager.default.createDirectory(atPath: dossier, withIntermediateDirectories: true)
-        guard let r = s.reseau else { return [] }
+        guard let r = s.thread.reseau else { return [] }
         let palette = Palette(sombre: true)
         // Hauteur d'une vue de la fenetre, rendue pour une capture, a la largeur `largeur` (sinon la sienne).
         func hauteur(_ vue: some View, largeur: CGFloat? = nil) -> CGFloat {

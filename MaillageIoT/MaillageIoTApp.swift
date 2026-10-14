@@ -54,13 +54,13 @@ struct MaillageIoTApp: App {
             s.surAlertes = { n.presenter($0) }
             n.demanderAutorisation()
             o.proposerAuPremierLancement()
-            d.surReleve = { [weak s] m in s?.noms.maison = m }
+            d.surReleve = { [weak s] m in s?.thread.noms.maison = m }
             d.demarrer()
-            sm.surMaillage = { [weak s] m, recu in s?.recevoir(m, a: recu) }
-            sm.surTournee = { [weak s] enCours in s?.tourneeEnCours = enCours }
-            sm.surOubli = { [weak s] in s?.oublierMaillage() }
-            sm.appareilsAResoudre = { [weak s] in s?.appareilsAResoudre() ?? [] }
-            sm.reseauConnu = { [weak s] in s?.instantane != nil }
+            sm.surMaillage = { [weak s] m, recu in s?.thread.recevoir(m, a: recu) }
+            sm.surTournee = { [weak s] enCours in s?.thread.tourneeEnCours = enCours }
+            sm.surOubli = { [weak s] in s?.thread.oublierMaillage() }
+            sm.appareilsAResoudre = { [weak s] in s?.thread.appareilsAResoudre() ?? [] }
+            sm.reseauConnu = { [weak s] in s?.thread.instantane != nil }
             sm.demarrer()
         }
         s.demarrer()

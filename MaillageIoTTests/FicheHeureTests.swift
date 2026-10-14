@@ -27,8 +27,8 @@ struct FicheHeureTests {
     /// avec elle (rendu de la fiche a deux heures), et deux rendus a la meme heure sont identiques.
     @Test func ficheSuitSonHeure() throws {
         let s = Surveillance(mode: .direct, dossier: nil)
-        for a in ScenarioPanne.releves.prefix(12) { s.integrer(a) }
-        let vu = try #require(s.instantane?.date)
+        for a in ScenarioPanne.releves.prefix(12) { s.thread.integrer(a) }
+        let vu = try #require(s.thread.instantane?.date)
         func rendu(_ instant: Date) -> Data? {
             let fiche = FicheNoeud(id: idt(Self.appareil), entree: nil, instant: instant, aRenommer: .constant(nil), fermer: {})
                 .environment(s)

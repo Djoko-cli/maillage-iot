@@ -18,27 +18,27 @@ struct SurveillanceTests {
     /// adresse ; aucun sans instantane.
     @Test func appareilsAResoudre() throws {
         let s = Self.demo()
-        let i = try #require(s.instantane)
-        #expect(s.appareilsAResoudre() == AppareilAResoudre.depuis(s.suivi))
-        #expect(Set(AppareilAResoudre.depuis(i)).isStrictSubset(of: Set(s.appareilsAResoudre())))
-        #expect(s.appareilsAResoudre().contains { $0.id == "46F77B36E071F8D0" }, "un disparu de la demo")
-        #expect(Surveillance(mode: .demo, dossier: nil).appareilsAResoudre().isEmpty, "pas encore d'instantane")
+        let i = try #require(s.thread.instantane)
+        #expect(s.thread.appareilsAResoudre() == AppareilAResoudre.depuis(s.thread.suivi))
+        #expect(Set(AppareilAResoudre.depuis(i)).isStrictSubset(of: Set(s.thread.appareilsAResoudre())))
+        #expect(s.thread.appareilsAResoudre().contains { $0.id == "46F77B36E071F8D0" }, "un disparu de la demo")
+        #expect(Surveillance(mode: .demo, dossier: nil).thread.appareilsAResoudre().isEmpty, "pas encore d'instantane")
     }
 
     @Test func modeDemo() throws {
         let s = Self.demo()
-        #expect(s.etatEcoute == .demo)
+        #expect(s.thread.etatEcoute == .demo)
         #expect(s.evenements.count == 10)
         guard case .pertes(let pertes) = s.lignesJournal.first else {
             Issue.record("les pertes regroupees en tete du journal")
             return
         }
         #expect(pertes.count == 5)
-        let resume = try #require(s.resume)
+        let resume = try #require(s.thread.resume)
         #expect(resume == ResumeReseau(nom: "MyHome1482620090", partitions: 2, routeurs: 6, appareils: 24, injoignables: 5))
         #expect(s.alerte, "reseau scinde")
-        let r = try #require(s.reseau)
-        let affiches = s.appareilsAffiches(pour: r)
+        let r = try #require(s.thread.reseau)
+        let affiches = s.thread.appareilsAffiches(pour: r)
         #expect(affiches.filter { $0.etat == .disparu }.map(\.nom).sorted()
                 == ["Ampoule entrée", "Prise bureau", "Prise salon", "Thermo chambre"])
         #expect(affiches.first { $0.id == idt("46F77B36E071F8D0") }?.partition == "73586B68", "disparu a sa derniere place")
@@ -47,28 +47,28 @@ struct SurveillanceTests {
                 == BatterieMaison(niveau: 52, charge: .horsCharge, alerte: false), "batterie de Maison")
         #expect(affiches.filter { $0.batterie?.faible == true }.map(\.nom).sorted() == ["Eve Motion", "Fenêtre chambre"])
         #expect(s.evenements(de: idt("46F77B36E071F8D0")).first?.type == .appareilDisparu)
-        #expect(s.derniereScission(r)?.date == ScenarioPanne.date(4, 14))
-        #expect(s.appareil("46F77B36E071F8D0") != nil, "un disparu reste consultable")
-        #expect(s.routesLisibles == true)
+        #expect(s.thread.derniereScission(r)?.date == ScenarioPanne.date(4, 14))
+        #expect(s.thread.appareil("46F77B36E071F8D0") != nil, "un disparu reste consultable")
+        #expect(s.thread.routesLisibles == true)
     }
 
     @Test func journalEtSurnomsSurDisque() throws {
         let dossier = FileManager.default.temporaryDirectory.appendingPathComponent("maillage-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: dossier) }
         let s = Surveillance(mode: .direct, dossier: dossier)
-        for a in ScenarioPanne.releves.prefix(12) { s.integrer(a) }
+        for a in ScenarioPanne.releves.prefix(12) { s.thread.integrer(a) }
         #expect(s.evenements.map(\.type) == [.surveillanceDemarree, .routeurNouvelleAdresseLien, .prefixeNouveau,
                                              .prefixeRetire])
         let journal = JournalFichiers(dossier: dossier.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal)
         #expect(try journal.lire().count == 4)
 
         s.renommer(idt("56B1E064401F74EF"), en: "  Pont du bureau ")
-        let halo = try #require(s.appareil("56B1E064401F74EF"))
-        #expect(s.nom(halo) == "Pont du bureau")
+        let halo = try #require(s.thread.appareil("56B1E064401F74EF"))
+        #expect(s.thread.nom(halo) == "Pont du bureau")
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        #expect(relu.noms.surnoms == ["56B1E064401F74EF": "Pont du bureau"])
+        #expect(relu.thread.noms.surnoms == ["56B1E064401F74EF": "Pont du bureau"])
         s.renommer(idt("56B1E064401F74EF"), en: "")
-        #expect(s.nom(halo) == "56B1E064401F74EF")
+        #expect(s.thread.nom(halo) == "56B1E064401F74EF")
 
         let capture = try #require(try s.captureJSON())
         let lue = try CodageJSON.decodeur().decode(Annonces.self, from: capture)
@@ -94,23 +94,23 @@ struct SurveillanceTests {
             return a
         }
         let s = Surveillance(mode: .direct, dossier: nil)
-        s.integrer(annonces(0, adresse: true))
-        s.integrer(annonces(60, adresse: false))
-        s.integrer(annonces(180, adresse: false))
-        let i = try #require(s.instantane)
+        s.thread.integrer(annonces(0, adresse: true))
+        s.thread.integrer(annonces(60, adresse: false))
+        s.thread.integrer(annonces(180, adresse: false))
+        let i = try #require(s.thread.instantane)
         #expect(i.reseaux.map(\.nom) == ["MyHome1482620090", "Voisin"])
         #expect(i.appareil("BBBB000000000001")?.etat == .sansAdresse)
         let maison = try #require(i.reseaux.first)
         let voisin = try #require(i.reseaux.last)
-        #expect(!s.appareilsAffiches(pour: maison).contains { $0.id == idt("BBBB000000000001") }, "pas dans le premier reseau")
-        #expect(s.appareilsAffiches(pour: voisin).map(\.id) == [idt("BBBB000000000001")])
-        #expect(s.appareilsAffiches(pour: voisin).first?.partition == "BBBBBBBB")
-        #expect(s.resume?.appareils == 24, "le premier reseau ne compte pas l'appareil du voisin")
+        #expect(!s.thread.appareilsAffiches(pour: maison).contains { $0.id == idt("BBBB000000000001") }, "pas dans le premier reseau")
+        #expect(s.thread.appareilsAffiches(pour: voisin).map(\.id) == [idt("BBBB000000000001")])
+        #expect(s.thread.appareilsAffiches(pour: voisin).first?.partition == "BBBBBBBB")
+        #expect(s.thread.resume?.appareils == 24, "le premier reseau ne compte pas l'appareil du voisin")
     }
 
     @Test func veilleDuMac() {
         let s = Surveillance(mode: .direct, dossier: nil)
-        s.integrer(ScenarioPanne.releves[0])
+        s.thread.integrer(ScenarioPanne.releves[0])
         s.noterVeille(debut: ScenarioPanne.date(3, 56), fin: ScenarioPanne.date(3, 55))
         #expect(s.evenements.last?.type == .veille)
         #expect(s.evenements.last?.periode?.duration == 0, "fin avant le debut : ramenee au debut")
@@ -120,23 +120,23 @@ struct SurveillanceTests {
     /// date du premier releve vide est gardee jusqu'au prochain releve non vide.
     @Test func reseauLocalMuet() throws {
         let s = Surveillance(mode: .direct, dossier: nil)
-        s.integrer(Annonces(date: ScenarioPanne.debut))
-        #expect(s.rienVuDepuis == nil, "pas encore d'instantane")
-        s.integrer(ScenarioPanne.releves[0])
+        s.thread.integrer(Annonces(date: ScenarioPanne.debut))
+        #expect(s.thread.rienVuDepuis == nil, "pas encore d'instantane")
+        s.thread.integrer(ScenarioPanne.releves[0])
         let evenements = s.evenements
-        let date = try #require(s.instantane?.date)
+        let date = try #require(s.thread.instantane?.date)
         let muet = ScenarioPanne.releves[0].date.addingTimeInterval(300)
-        s.integrer(Annonces(date: muet))
+        s.thread.integrer(Annonces(date: muet))
         #expect(s.evenements == evenements, "aucun evenement")
-        #expect(s.rienVuDepuis == muet)
-        #expect(s.instantane?.date == date)
-        #expect(s.dernierReleve?.date == muet, "le dernier releve recu, pour le diagnostic")
-        s.integrer(Annonces(date: muet.addingTimeInterval(60)))
-        #expect(s.rienVuDepuis == muet, "date du premier releve vide")
+        #expect(s.thread.rienVuDepuis == muet)
+        #expect(s.thread.instantane?.date == date)
+        #expect(s.thread.dernierReleve?.date == muet, "le dernier releve recu, pour le diagnostic")
+        s.thread.integrer(Annonces(date: muet.addingTimeInterval(60)))
+        #expect(s.thread.rienVuDepuis == muet, "date du premier releve vide")
         var retour = ScenarioPanne.releves[0]
         retour.date = muet.addingTimeInterval(120)
-        s.integrer(retour)
-        #expect(s.rienVuDepuis == nil)
+        s.thread.integrer(retour)
+        #expect(s.thread.rienVuDepuis == nil)
     }
 
     /// Scissions deja notifiees, gardees d'un lancement a l'autre (mode direct, lues
@@ -154,27 +154,28 @@ struct SurveillanceTests {
             preferences.removePersistentDomain(forName: domaine)
             preferences.synchronize()
         }
-        let cle = Surveillance.cleScissionsNotifiees
+        let cle = SurveillanceThread.cleScissionsNotifiees
         let scinde = Releve20260928.annonces  // l'Aqara seul dans E2E79FFC
         var envoyees: [CategorieAlerte] = []
         /// Un lancement : les scissions notifiees sont lues comme au demarrage, sans ecouter le reseau.
         func lancement() -> Surveillance {
             let s = Surveillance(mode: .direct, dossier: nil, preferences: preferences)
             s.surAlertes = { envoyees += $0.map(\.categorie) }
-            s.chargerScissionsNotifiees()
+            s.thread.chargerScissionsNotifiees()
             return s
         }
 
         Surveillance(mode: .demo, dossier: nil, preferences: preferences).demarrer()
         #expect(preferences.object(forKey: cle) == nil, "la demo (une scission a 04:14) n'ecrit rien")
 
-        lancement().integrer(scinde)
+        let premier = lancement()  // la coque vit tant que son modele verse au journal
+        premier.thread.integrer(scinde)
         #expect(envoyees == [.scission], "premier lancement : constatee et notifiee")
         #expect(preferences.stringArray(forKey: cle) == ["4B36A2B7FEFB200B|73586B68,E2E79FFC"])
 
         envoyees = []
         let second = lancement()
-        second.integrer(scinde)
+        second.thread.integrer(scinde)
         #expect(envoyees.isEmpty, "toujours scinde au lancement suivant : pas de seconde notification")
         #expect(second.evenements.contains { $0.type == .reseauScinde && $0.constate }, "le journal la note toujours")
 
@@ -185,11 +186,12 @@ struct SurveillanceTests {
         var txt = reuni.routeurs[aqara].txt.valeurs
         txt["pt"] = Data([0x73, 0x58, 0x6B, 0x68])
         reuni.routeurs[aqara].txt = ChampsTXT(txt)
-        second.integrer(reuni)
+        second.thread.integrer(reuni)
         #expect(second.evenements.last?.type == .reseauReuni)
         #expect(preferences.stringArray(forKey: cle) == [])
 
-        Surveillance(mode: .direct, dossier: nil, preferences: preferences).integrer(scinde)
+        let coque = Surveillance(mode: .direct, dossier: nil, preferences: preferences)
+        coque.thread.integrer(scinde)
         #expect(preferences.stringArray(forKey: cle) == [], "pas demarree (comme les autres tests) : rien n'est ecrit")
     }
 
@@ -214,24 +216,24 @@ struct SurveillanceTests {
         #expect(!FileManager.default.fileExists(atPath: fichier.path))
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
         let m = try Self.maillageGarde(recu.addingTimeInterval(-60))
-        s.recevoir(m, a: recu)
-        #expect(!s.maillageRelu, "recu pendant que l'app tourne")
+        s.thread.recevoir(m, a: recu)
+        #expect(!s.thread.maillageRelu, "recu pendant que l'app tourne")
         #expect(FileManager.default.fileExists(atPath: fichier.path))
 
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        #expect(relu.maillage == nil, "rien avant le demarrage")
-        relu.chargerMaillageGarde()
-        #expect(relu.maillage == m)
-        #expect(relu.maillageRecu == recu)
-        #expect(relu.maillageRelu)
-        #expect(relu.fraicheurMaillage(a: recu.addingTimeInterval(10 * 60)) == .ancien,
+        #expect(relu.thread.maillage == nil, "rien avant le demarrage")
+        relu.thread.chargerMaillageGarde()
+        #expect(relu.thread.maillage == m)
+        #expect(relu.thread.maillageRecu == recu)
+        #expect(relu.thread.maillageRelu)
+        #expect(relu.thread.fraicheurMaillage(a: recu.addingTimeInterval(10 * 60)) == .ancien,
                 "la pastille « ancien » s'applique")
 
         let suivant = try Self.maillageGarde(recu.addingTimeInterval(840))
-        s.recevoir(suivant, a: recu.addingTimeInterval(900))
+        s.thread.recevoir(suivant, a: recu.addingTimeInterval(900))
         let apres = Surveillance(mode: .direct, dossier: dossier)
-        apres.chargerMaillageGarde()
-        #expect(apres.maillage == suivant && apres.maillageRecu == recu.addingTimeInterval(900))
+        apres.thread.chargerMaillageGarde()
+        #expect(apres.thread.maillage == suivant && apres.thread.maillageRecu == recu.addingTimeInterval(900))
     }
 
     /// Un maillage relu au lancement est montre quel que soit son age (apres une nuit, c'est le cas vise), avec la
@@ -243,25 +245,26 @@ struct SurveillanceTests {
         // Recu il y a une nuit, a l'heure du Mac : `maillageAffiche` compte l'age depuis maintenant.
         let recu = Date().addingTimeInterval(-10 * 3600)
         let m = try Self.maillageGarde(recu)
-        Surveillance(mode: .direct, dossier: dossier).recevoir(m, a: recu)
+        let coque = Surveillance(mode: .direct, dossier: dossier)
+        coque.thread.recevoir(m, a: recu)
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.integrer(Releve20260928.annonces)
-        s.chargerMaillageGarde()
+        s.thread.integrer(Releve20260928.annonces)
+        s.thread.chargerMaillageGarde()
         let matin = recu.addingTimeInterval(10 * 3600)
-        #expect(s.fraicheurMaillage(a: matin) == .ancien, "jamais perime tant qu'il est relu")
-        #expect(Surveillance.fraicheur(recu, maintenant: matin, tourneeEnCours: false) == .perime,
+        #expect(s.thread.fraicheurMaillage(a: matin) == .ancien, "jamais perime tant qu'il est relu")
+        #expect(SurveillanceThread.fraicheur(recu, maintenant: matin, tourneeEnCours: false) == .perime,
                 "la regle normale, elle, ne change pas")
-        let r = try #require(s.reseau)
-        #expect(s.maillageRelu && s.maillageAffiche(pour: r) != nil && s.maillageAncien)
+        let r = try #require(s.thread.reseau)
+        #expect(s.thread.maillageRelu && s.thread.maillageAffiche(pour: r) != nil && s.thread.maillageAncien)
         // Pendant la premiere tournee, il reste « ancien » : la tournee ne le rend pas frais.
-        s.tourneeEnCours = true
-        #expect(s.fraicheurMaillage(a: matin) == .ancien && s.maillageAffiche(pour: r) != nil)
-        s.tourneeEnCours = false
+        s.thread.tourneeEnCours = true
+        #expect(s.thread.fraicheurMaillage(a: matin) == .ancien && s.thread.maillageAffiche(pour: r) != nil)
+        s.thread.tourneeEnCours = false
         // La premiere tournee le remplace : la regle des 15 min reprend.
-        s.recevoir(m, a: Date().addingTimeInterval(-20 * 60))
-        #expect(!s.maillageRelu && s.maillageAffiche(pour: r) == nil, "recu il y a 20 min : perime")
-        s.recevoir(m, a: Date())
-        #expect(s.maillageAffiche(pour: r) != nil && !s.maillageAncien)
+        s.thread.recevoir(m, a: Date().addingTimeInterval(-20 * 60))
+        #expect(!s.thread.maillageRelu && s.thread.maillageAffiche(pour: r) == nil, "recu il y a 20 min : perime")
+        s.thread.recevoir(m, a: Date())
+        #expect(s.thread.maillageAffiche(pour: r) != nil && !s.thread.maillageAncien)
     }
 
     /// Un fichier du dernier maillage illisible est ignore, sans erreur : comme s'il n'y en avait pas. Le maillage
@@ -272,15 +275,15 @@ struct SurveillanceTests {
         try FileManager.default.createDirectory(at: Surveillance.dossierThread(dossier), withIntermediateDirectories: true)
         try Data("{ pas du json".utf8).write(to: Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json"))
         let s = Surveillance(mode: .direct, dossier: dossier)
-        s.chargerMaillageGarde()
-        #expect(s.maillage == nil && s.maillageRecu == nil && !s.maillageRelu)
+        s.thread.chargerMaillageGarde()
+        #expect(s.thread.maillage == nil && s.thread.maillageRecu == nil && !s.thread.maillageRelu)
 
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
         let m = try Self.maillageGarde(recu)
-        s.recevoir(m, a: recu)
+        s.thread.recevoir(m, a: recu)
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerMaillageGarde()
-        #expect(relu.maillage == m)
+        relu.thread.chargerMaillageGarde()
+        #expect(relu.thread.maillage == m)
     }
 
     /// Un fichier trafique ou abime, mais du JSON valide, est ignore lui aussi, sans arreter l'app : un identifiant de
@@ -290,7 +293,8 @@ struct SurveillanceTests {
         defer { try? FileManager.default.removeItem(at: dossier) }
         let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json")
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
-        Surveillance(mode: .direct, dossier: dossier).recevoir(try Self.maillageGarde(recu), a: recu)
+        let coque = Surveillance(mode: .direct, dossier: dossier)
+        coque.thread.recevoir(try Self.maillageGarde(recu), a: recu)
         let original = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: fichier)) as? [String: Any])
         /// Le fichier, une fois le maillage retouche par `retouche`, relu au lancement.
         func relu(_ retouche: (inout [String: Any]) -> Void) throws -> Maillage? {
@@ -300,8 +304,8 @@ struct SurveillanceTests {
             garde["maillage"] = m
             try JSONSerialization.data(withJSONObject: garde).write(to: fichier)
             let s = Surveillance(mode: .direct, dossier: dossier)
-            s.chargerMaillageGarde()
-            return s.maillage
+            s.thread.chargerMaillageGarde()
+            return s.thread.maillage
         }
         #expect(try relu { _ in } != nil, "le fichier intact est relu")
         #expect(try relu { m in
@@ -328,14 +332,14 @@ struct SurveillanceTests {
         let fichier = Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json")
         let s = Surveillance(mode: .direct, dossier: dossier)
         let recu = Date(timeIntervalSince1970: 1_790_000_000)
-        s.recevoir(try Self.maillageGarde(recu), a: recu)
+        s.thread.recevoir(try Self.maillageGarde(recu), a: recu)
         #expect(FileManager.default.fileExists(atPath: fichier.path))
-        s.oublierMaillage()
+        s.thread.oublierMaillage()
         #expect(!FileManager.default.fileExists(atPath: fichier.path))
-        #expect(s.maillage == nil && !s.maillageRelu)
+        #expect(s.thread.maillage == nil && !s.thread.maillageRelu)
         let relu = Surveillance(mode: .direct, dossier: dossier)
-        relu.chargerMaillageGarde()
-        #expect(relu.maillage == nil)
+        relu.thread.chargerMaillageGarde()
+        #expect(relu.thread.maillage == nil)
     }
 
     /// La demo ne garde aucun maillage, meme avec un dossier.
@@ -344,7 +348,57 @@ struct SurveillanceTests {
         defer { try? FileManager.default.removeItem(at: dossier) }
         let s = Surveillance(mode: .demo, dossier: dossier)
         s.demarrer()
-        #expect(s.maillage != nil, "la demo a son maillage")
+        #expect(s.thread.maillage != nil, "la demo a son maillage")
         #expect(!FileManager.default.fileExists(atPath: Surveillance.dossierThread(dossier).appendingPathComponent("dernier-maillage.json").path))
+    }
+
+    /// Etape 3a, tache 6 : la coque (journal, surnoms) se construit et marche sans que le modele de Thread n'ait rien
+    /// demarre : ni ecoute, ni sonde, ni releve. Un evenement ajoute par un modele y prend le protocole du modele, va au
+    /// journal sur disque et se relit ; un surnom se garde sous l'identifiant de noeud, de n'importe quel protocole.
+    @Test func coqueSansProtocole() throws {
+        let dossier = Self.dossierJetable()
+        defer { try? FileManager.default.removeItem(at: dossier) }
+        let s = Surveillance(mode: .direct, dossier: dossier)
+        #expect(s.modeles.map(\.protocole) == [.thread], "Thread seul pour l'instant")
+        #expect(s.evenements.isEmpty && s.lignesJournal.isEmpty && !s.alerte)
+        #expect(s.thread.instantane == nil && s.thread.maillage == nil && s.thread.dernierReleve == nil)
+        let t0 = Date(timeIntervalSince1970: 1_790_000_000)
+        s.ajouter([Evenement(date: t0, type: .parentChange, sujet: Sujet(id: "AAAA000000000001", nom: "Prise"),
+                             avant: "A", apres: "B")], de: .thread)
+        #expect(s.evenements.count == 1 && s.evenements[0].protocole == .thread)
+        let relu = Surveillance(mode: .direct, dossier: dossier)
+        relu.chargerJournal()
+        #expect(relu.evenements == s.evenements, "le journal est celui de la coque")
+        let thread = IdNoeud(.thread, "AAAA000000000001"), zigbee = IdNoeud(.zigbee, "AAAA000000000001")
+        s.renommer(thread, en: " Lampe ")
+        s.renommer(zigbee, en: "Autre")
+        #expect(s.surnom(de: thread) == "Lampe" && s.surnom(de: zigbee) == "Autre")
+        #expect(s.thread.noms.surnoms == ["AAAA000000000001": "Lampe"], "le modele de Thread ne voit que ses cles")
+        #expect(Surveillance(mode: .direct, dossier: dossier).surnom(de: zigbee) == "Autre", "relu du disque")
+    }
+
+    /// Le modele de Thread repond au protocole d'app que la scene et le menu liront : les memes graphe, appareils et
+    /// resume que ceux de la fenetre, l'echelle en dBm, le classement de Thread, une mise en avant propre a Thread.
+    @Test func modeleThreadRepondAuProtocole() throws {
+        let s = Self.demo()
+        let m: any ModeleProtocole = s.thread
+        #expect(m.protocole == .thread)
+        let r = try #require(s.thread.reseau)
+        #expect(m.graphe == s.thread.graphe(pour: r))
+        #expect(!m.graphe.noeuds.isEmpty && m.graphe.noeuds.allSatisfy { $0.id.protocole == .thread })
+        #expect(m.appareils == s.thread.appareilsAffiches(pour: r))
+        #expect(m.echelle.unite == "dBm")
+        let noeud = try #require(m.graphe.noeuds.first)
+        #expect(m.classement(noeud) == classementThread(noeud))
+        let chefs = LibellesNoeuds.chefs(reseau: r, maillage: s.thread.maillage, affiche: s.thread.maillageAffiche(pour: r))
+        #expect(m.miseEnAvant(de: noeud.id, graphe: m.graphe, chefs: chefs, voisins: true)
+                == FocusThread.miseEnAvant(de: noeud.id, graphe: m.graphe, chefs: chefs, voisins: true))
+        #expect(m.miseEnAvant(de: IdNoeud(.zigbee, noeud.id.cle), graphe: m.graphe, chefs: chefs, voisins: true) == nil)
+        let resume = try #require(s.thread.resume)
+        #expect(m.resumeMenu == ResumeMenu(routeurs: resume.routeurs, appareils: resume.appareils,
+                                           injoignables: resume.injoignables))
+        #expect(m.aHistorique == !s.thread.historique.isEmpty && m.alerteReseau == (s.thread.instantane?.reseaux.contains(where: \.estScinde) == true))
+        #expect(m.fraicheurMaillage(a: s.maintenant) == s.thread.fraicheurMaillage(a: s.maintenant))
+        #expect(s.modele(pour: .zigbee) == nil && s.modele(pour: .thread) === s.thread)
     }
 }

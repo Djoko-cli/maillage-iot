@@ -14,14 +14,14 @@ struct NomsSceneTests {
     static func demo() throws -> (Surveillance, Reseau, EntreeScene) {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
+        let r = try #require(s.thread.reseau)
         return (s, r, EntreeScene(surveillance: s, reseau: r, places: PlacesGardees()))
     }
 
     /// La maison de demo sans les accessoires de ses routeurs de bordure : comme chez Djoko, Maison ne
     /// donne ni les HomePod ni l'Apple TV.
     static func maisonSansRouteurs(_ s: Surveillance) -> NomsMaison? {
-        guard var m = s.noms.maison, let r = s.reseau else { return nil }
+        guard var m = s.thread.noms.maison, let r = s.thread.reseau else { return nil }
         let routeurs = Set(r.routeurs.map(\.instance))
         m.accessoires.removeAll { routeurs.contains($0.nom) }
         return m
@@ -32,10 +32,10 @@ struct NomsSceneTests {
     /// (E0000000000000FF), est un appareil que la sonde seule connait.
     static func demoAvecInconnus() throws -> (Surveillance, Reseau) {
         let (s, r, _) = try demo()
-        s.noms.maison = maisonSansRouteurs(s)
-        let m = try #require(s.maillage)
+        s.thread.noms.maison = maisonSansRouteurs(s)
+        let m = try #require(s.thread.maillage)
         let enfants = m.enfants + [EnfantMaillage(rloc16: 0x0420, qualite: 2, source: .tableEnfants)]
-        s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: m.liens,
+        s.thread.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs, liens: m.liens,
                             enfants: enfants.sorted { $0.rloc16 < $1.rloc16 }, signaux: m.signaux), a: s.maintenant)
         return (s, r)
     }
@@ -44,10 +44,10 @@ struct NomsSceneTests {
     /// la sonde seule (« rloc:B400 », E0000000000000F1).
     static func demoAvecRouteurThread() throws -> (Surveillance, Reseau) {
         let (s, r) = try demoAvecInconnus()
-        let m = try #require(s.maillage)
+        let m = try #require(s.thread.maillage)
         var thread = RouteurMaillage(id: 45)
         thread.extMac = "E0000000000000F1"
-        s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs + [thread], liens: m.liens,
+        s.thread.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: m.routeurs + [thread], liens: m.liens,
                             enfants: m.enfants, signaux: m.signaux), a: s.maintenant)
         return (s, r)
     }
@@ -56,9 +56,9 @@ struct NomsSceneTests {
     /// annonce n'a plus d'ExtMac dans le maillage de la sonde ; leurs candidats sont les deux annonces.
     static func demoSansIdentite() throws -> (Surveillance, Reseau) {
         let (s, r, _) = try demo()
-        let i = try #require(s.instantane)
+        let i = try #require(s.thread.instantane)
         let m = try #require(MaillageDemo.maillage(i, date: s.maintenant, sansIdentite: ["HomePod Avant", "HomePod Palier"]))
-        s.recevoir(m, a: s.maintenant)
+        s.thread.recevoir(m, a: s.maintenant)
         return (s, r)
     }
 
@@ -71,8 +71,8 @@ struct NomsSceneTests {
         #expect(e.libelles[idt("7AF0B6D5006CF95F")]?.texte == "Prise salon ☾ ⚠︎", "disparue")
         #expect(e.libelles[idt("3A5DFAFCAB581AAF")]?.pastille == String(localized: "\(12)\u{202F}%"))
         #expect(e.libelles[idt("rloc:041F")]?.texte == String(localized: "Non identifié · \("041F")"))
-        let m = try #require(s.maillageAffiche(pour: r))
-        #expect(LibellesNoeuds.chefs(reseau: r, maillage: s.maillage, affiche: m) == [idt("Apple TV 4K")])
+        let m = try #require(s.thread.maillageAffiche(pour: r))
+        #expect(LibellesNoeuds.chefs(reseau: r, maillage: s.thread.maillage, affiche: m) == [idt("Apple TV 4K")])
         #expect(LibellesNoeuds.pastilleBatterie(BatterieMaison(alerte: true)) == String(localized: "faible"))
         #expect(LibellesNoeuds.pastilleBatterie(BatterieMaison(niveau: 52)) == nil)
         #expect(LibellesNoeuds.inconnu(NoeudSonde(id: "rloc:5000", rloc16: 0x5000, genre: .routeur, reconnu: false,
@@ -102,7 +102,7 @@ struct NomsSceneTests {
     /// routeur de bordure. Noms des etages, des pieces, compte, repere « ailleurs ».
     @Test func piecesEtNoms() throws {
         let (s, r, e) = try Self.demo()
-        let pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.appareilsAffiches(pour: r), maison: s.noms.maison,
+        let pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maison: s.thread.noms.maison,
                                            graphe: e.graphe)
         #expect(pieces[idt("Apple TV 4K")] == "Salon" && pieces[idt("HomePod mini chambre")] == "Chambre")
         #expect(pieces[idt("56B1E064401F74EF")] == "Bureau")
@@ -160,12 +160,12 @@ struct NomsSceneTests {
     /// TV, est au salon. Sans le choix, le jardin est un etage au-dessus : ↓.
     @Test func repereAuMemeNiveau() throws {
         let (s, r, _) = try Self.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Buanderie"]),
                         ZoneMaison(nom: "Jardin", pieces: ["Entrée"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau", "Salle de bain", "Chambre d'amis"]),
                         ZoneMaison(nom: "Combles", pieces: ["Terrasse", "Abri", "Grenier", "Salle de jeux"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         var places = PlacesGardees()
         places.ranger(Rangement(ordre: [], aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée")]),
                       domicile: maison.domicile ?? "")
@@ -184,21 +184,21 @@ struct NomsSceneTests {
         let (s, r, depart) = try Self.demo()
         let maison = try #require(Self.maisonSansRouteurs(s))
         #expect(!maison.accessoires.contains { $0.nom == "Apple TV 4K" })
-        let noms = s.nomsRouteurs(pour: r)
-        var pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.appareilsAffiches(pour: r), maison: maison,
+        let noms = s.thread.nomsRouteurs(pour: r)
+        var pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maison: maison,
                                            nomsRouteurs: noms, graphe: depart.graphe)
         #expect(pieces[idt("HomePod mini chambre")] == "Chambre" && pieces[idt("HomePod mini bureau")] == "Bureau")
         #expect(pieces[idt("HomePod Palier")] == nil && pieces[idt("HomePod Avant")] == nil && pieces[idt("Apple TV 4K")] == nil)
         var choix = PiecesRouteurs()
         choix.choisir("Salon", routeur: idt("HomePod Palier"), domicile: maison.domicile ?? "")
         choix.choisir("Bureau", routeur: idt("HomePod mini chambre"), domicile: maison.domicile ?? "")
-        pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.appareilsAffiches(pour: r), maison: maison,
+        pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maison: maison,
                                        nomsRouteurs: noms, choix: choix, graphe: depart.graphe)
         #expect(pieces[idt("HomePod Palier")] == "Salon" && pieces[idt("HomePod mini chambre")] == "Bureau")
-        let avecMaison = LibellesNoeuds.pieces(reseau: r, appareils: s.appareilsAffiches(pour: r), maison: s.noms.maison,
+        let avecMaison = LibellesNoeuds.pieces(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maison: s.thread.noms.maison,
                                                nomsRouteurs: noms, choix: choix, graphe: depart.graphe)
         #expect(avecMaison[idt("HomePod mini chambre")] == "Chambre", "Maison passe avant le choix")
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees(), choix: choix)
         let gauche = try #require(e.scene.noeud(idt("HomePod Palier")))
         #expect(e.scene.pieces[gauche.piece].nom == .maison("Salon"))
@@ -212,7 +212,7 @@ struct NomsSceneTests {
     /// disposition suit.
     @Test func piecesDesAppareils() throws {
         let (s, r) = try Self.demoAvecInconnus()
-        let domicile = try #require(s.noms.maison?.domicile)
+        let domicile = try #require(s.thread.noms.maison?.domicile)
         var choix = PiecesRouteurs()
         choix.choisir("Cuisine", appareil: idt("E0000000000000FF"), domicile: domicile)
         choix.choisir("Bureau", appareil: idt("1E5019DAC2638F92"), domicile: domicile)
@@ -276,11 +276,11 @@ struct NomsSceneTests {
     @Test func cleDeLaDisposition() throws {
         let (s, r, e) = try Self.demo()
         #expect(EntreeScene(surveillance: s, reseau: r, places: PlacesGardees()).cleDisposition == e.cleDisposition)
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Entrée", "Buanderie"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Chambre d'amis"]),
                         ZoneMaison(nom: "Combles", pieces: ["Bureau", "Salle de bain"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let domicile = maison.domicile ?? ""
         func cle(_ ordre: [String], _ aCote: [String: PlacesGardees.ACote]) -> EntreeScene.CleDisposition {
             var p = PlacesGardees()
@@ -304,10 +304,10 @@ struct NomsSceneTests {
     @Test func unBadgeNeBougeRien() throws {
         let (s, r, e) = try Self.demo()
         let m = MoteurPiecesTests.moteur(e)
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         let k = try #require(maison.accessoires.firstIndex { $0.nom == "Nuki Ultra" })
         maison.accessoires[k].batterie = BatterieMaison(niveau: 5)
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e2 = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let nuki = "86E7BD1A75F28E6D"
         #expect(e2.libelles[idt(nuki)]?.pastille == String(localized: "\(5)\u{202F}%") && e.libelles[idt(nuki)]?.pastille == nil)
@@ -335,7 +335,7 @@ struct NomsSceneTests {
         // Une pile qui devient connue (decision du 05/10) : la cle change, et la carte de la cuisine s'elargit, une fois.
         let k2 = try #require(maison.accessoires.firstIndex { $0.nom == "Interrupteur cuisine" })
         maison.accessoires[k2].batterie = BatterieMaison(niveau: 80)
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e3 = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let cuisine = try MoteurPiecesTests.indice(e, "Cuisine")
         #expect(e3.cleDisposition != e.cleDisposition && e3.scene.noeud(idt("D6ECDD6EF9C0CB0C"))?.pile == true)
@@ -396,10 +396,10 @@ struct NomsSceneTests {
             // Pas de « Placer dans une piece… » : un routeur de bordure que la sonde seule connait (precision 25).
             #expect(PiecesChoisies.placement(n.id, dans: s, entree: e) == nil)
         }
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         let k = try #require(maison.accessoires.firstIndex { $0.nom == "HomePod Avant" })
         maison.accessoires[k].piece = "Cuisine"
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let autre = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         for n in autre.scene.noeuds where n.inconnu && n.bordure {
             #expect(autre.scene.pieces[n.piece].nom == .sansPiece, "\(n.id)")
@@ -411,8 +411,8 @@ struct NomsSceneTests {
     /// eux, ni Maison, ni nom : « Sans piece ».
     @Test func candidatsCables() throws {
         let (s, r) = try Self.demoSansIdentite()
-        s.noms.maison = Self.maisonSansRouteurs(s)
-        let domicile = try #require(s.noms.maison?.domicile)
+        s.thread.noms.maison = Self.maisonSansRouteurs(s)
+        let domicile = try #require(s.thread.noms.maison?.domicile)
         func pieces(_ choix: PiecesRouteurs = PiecesRouteurs()) throws -> [ScenePieces.NomPiece] {
             let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees(), choix: choix)
             let inconnus = e.scene.noeuds.filter { $0.inconnu && $0.bordure }
@@ -440,14 +440,14 @@ struct NomsSceneTests {
     /// reposer par le moteur.
     @Test func constructionDeLaScene() throws {
         let (s, r, e) = try Self.demo()
-        let m = try #require(s.maillageAffiche(pour: r))
+        let m = try #require(s.thread.maillageAffiche(pour: r))
         #expect(e.maillage == m)
-        #expect(e.graphe == GrapheReseau(reseau: r, appareils: s.appareilsAffiches(pour: r), maillage: m))
+        #expect(e.graphe == GrapheReseau(reseau: r, appareils: s.thread.appareilsAffiches(pour: r), maillage: m))
         #expect(e.chefs == [idt("Apple TV 4K")])
         #expect(Set(e.libelles.filter { $0.value.texte.contains("👑") }.keys) == e.chefs, "la couronne suit les chefs")
         #expect(e.appareils[idt("56B1E064401F74EF")]?.piece == "Bureau")
-        let maillage = try #require(s.maillage)
-        s.recevoir(Maillage(date: maillage.date.addingTimeInterval(300), partition: maillage.partition,
+        let maillage = try #require(s.thread.maillage)
+        s.thread.recevoir(Maillage(date: maillage.date.addingTimeInterval(300), partition: maillage.partition,
                             routeurs: maillage.routeurs, liens: maillage.liens, enfants: maillage.enfants,
                             signaux: maillage.signaux), a: s.maintenant)
         let apres = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())

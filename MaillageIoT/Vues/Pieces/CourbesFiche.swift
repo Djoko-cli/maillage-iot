@@ -31,9 +31,9 @@ struct CourbesFiche: View {
     static let largeurSignal: CGFloat = 300
 
     var body: some View {
-        let courbes = surveillance.courbes(noeud: id, periode: periode, fin: instant)
+        let courbes = surveillance.thread.courbes(noeud: id, periode: periode, fin: instant)
         let noms = courbes.map { c in
-            surveillance.nomsHistorique(Set(c.liens.map(\.id) + (c.parents + c.parentsSonde).map(\.parent)))
+            surveillance.thread.nomsHistorique(Set(c.liens.map(\.id) + (c.parents + c.parentsSonde).map(\.parent)))
         } ?? [:]
         let cachees = courbes.map { ChoixCourbes.cachees(cles: $0.liens.map(\.id), prioritaires: $0.prioritaires) } ?? 0
         VStack(alignment: .leading, spacing: 8) {
