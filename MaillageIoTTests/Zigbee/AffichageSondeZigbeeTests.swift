@@ -129,12 +129,54 @@ struct AffichageSondeZigbeeTests {
     }
 
     /// Le nom de la sonde a la place de « Sonde » quand il est donne (celui de la sonde retenue, quand l'etat la
-    /// concerne : `SondeMaillageZigbee.nomEtat`). La ligne du menu (`MenuBarre.ligneSonde`) et l'etat des Reglages
-    /// (`FenetreReglages.texteEtatSonde`) de Zigbee reviennent avec les taches 13 et 10.
+    /// concerne : `SondeMaillageZigbee.nomEtat`). Etat des Reglages : « SONDE-01 · connectee », l'etat seul sans nom. La
+    /// ligne du menu (`MenuBarre.ligneSonde`) de Zigbee revient avec la tache 13.
     @Test func menuEtReglages() {
         let sonde = String(localized: "Sonde")
         #expect(SondeMaillageZigbee.nomAffiche(nil) == sonde)
         #expect(SondeMaillageZigbee.nomAffiche("SONDE-01") == "SONDE-01")
+        guard case .bonjour(let b)? = MessageSondeZigbee.lire(Data(CanalRejoueZigbee.bonjourNomme.utf8)) else {
+            Issue.record("bonjour illisible")
+            return
+        }
+        #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: "SONDE-01")
+                == String(localized: "\("SONDE-01") · \(String(localized: "connectée"))"))
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageZigbee.Etat.absente, nom: "SONDE-01")
+                == String(localized: "\("SONDE-01") · \(String(localized: "absente (débranchée ?)"))"))
+        #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: nil) == String(localized: "connectée"))
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageZigbee.Etat.refusee("pas une sonde"), nom: nil)
+                == String(localized: "refusée : \("pas une sonde")"))
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageZigbee.Etat.sansSonde, nom: nil) == String(localized: "aucune sonde choisie"))
+    }
+
+    /// Sonde injoignable par le reseau : « SONDE-01 · Réseau — sonde injoignable ».
+    @Test func texteInjoignable() {
+        #expect(FenetreReglages.texteEtatSonde(.injoignable, nom: "SONDE-01")
+                == String(localized: "\("SONDE-01") · \(String(localized: "Réseau — sonde injoignable"))"))
+    }
+
+    /// Le reseau de la sonde dans les Reglages (`etat`) : le canal et le parent avec son LQI ; « hors reseau ».
+    @Test func reseauDeLaSonde() {
+        let e = EtatSondeZigbee(membre: true, court: "5E6F", parent: ParentSondeZigbee(court: "1A2B", ieee: nil, lqi: 180, rssi: -71),
+                          canal: 25)
+        #expect(FenetreReglages.texteReseau(e)
+                == [String(localized: "canal \(25)"), String(localized: "parent \("1A2B") (LQI \(180))")].joined(separator: " · "))
+        #expect(FenetreReglages.texteReseau(EtatSondeZigbee(membre: false)) == String(localized: "hors réseau"))
+        #expect(FenetreReglages.texteReseau(EtatSondeZigbee(membre: true))
+                == String(localized: "sans parent (rattachement en cours)"))
+    }
+
+    /// Wi-Fi de la sonde (`etat.reseau`) : « connecté · canal 6 · −58 dBm » ; « non connecté (raison 201) ».
+    @Test func texteReseauSonde() {
+        let connecte = String(localized: "connecté"), canal = 6
+        #expect(FenetreReglages.texteReseauSonde(ReseauSonde(connecte: true, canal: 6, rssi: -58))
+                == "\(connecte) · \(String(localized: "canal \(canal)")) · −58 dBm")
+        #expect(FenetreReglages.texteReseauSonde(ReseauSonde(connecte: true)) == connecte)
+        let raison = 201
+        #expect(FenetreReglages.texteReseauSonde(ReseauSonde(connecte: false, raison: 201))
+                == String(localized: "non connecté (raison \(raison))"))
+        #expect(FenetreReglages.texteReseauSonde(ReseauSonde(connecte: false, raison: 0))
+                == String(localized: "non connecté"))
     }
 
     /// Acces reseau : « autorisé · clé 630DCD29 » ou « non autorisé » ; le bouton autorise, puis regenere une cle,
@@ -143,7 +185,10 @@ struct AffichageSondeZigbeeTests {
         let empreinte = "630DCD29"
         #expect(FenetreReglages.texteAccesReseau(empreinte: empreinte) == String(localized: "autorisé · clé \(empreinte)"))
         #expect(FenetreReglages.texteAccesReseau(empreinte: nil) == String(localized: "non autorisé"))
-        // Le titre du bouton (`titreBoutonAcces(empreinte:envoiWifi:)` de Zigbee) revient avec la tache 10.
+        #expect(FenetreReglages.titreBoutonAcces(empreinte: nil, envoiWifi: true) == String(localized: "Autoriser l'accès réseau"))
+        #expect(FenetreReglages.titreBoutonAcces(empreinte: empreinte, envoiWifi: false) == String(localized: "Régénérer une clé"))
+        #expect(FenetreReglages.titreBoutonAcces(empreinte: empreinte, envoiWifi: true)
+                == String(localized: "Régénérer la clé et changer le Wi-Fi"))
     }
 
     /// Le Wi-Fi part avec la cle si un mot de passe est saisi ou si la sonde n'en a aucun (reseau ouvert) ; mot de
@@ -160,6 +205,31 @@ struct AffichageSondeZigbeeTests {
         #expect(ReglageChemin.allCases.map(\.libelle)
                 == [String(localized: "Automatique"), String(localized: "USB"), String(localized: "Wi-Fi")])
         #expect(Acces.usb.libelle == String(localized: "USB") && Acces.reseau.libelle == String(localized: "Wi-Fi"))
+    }
+
+    /// L'invite « Enregistré dans la sonde » du mot de passe : seulement quand le Wi-Fi de la sonde est joint.
+    @Test func motDePasseEnregistre() {
+        #expect(FenetreReglages.motDePasseEnregistre(ReseauSonde(connecte: true, canal: 6, rssi: -58)))
+        #expect(!FenetreReglages.motDePasseEnregistre(ReseauSonde(connecte: false, raison: 201)))
+        #expect(!FenetreReglages.motDePasseEnregistre(nil))
+    }
+
+    /// Le message de succes de la mise en service s'efface quand la sonde est de retour sur le Wi-Fi apres avoir
+    /// redemarre, et pas avant : ni tant qu'elle n'a pas ete vue redemarrer, ni pendant qu'elle est hors du Wi-Fi.
+    @Test func succesDeLaMiseEnService() {
+        /// Un suivi et ses observations successives (liaison jointe, Wi-Fi joint) : ce que rend chacune.
+        func suite(_ etapes: [(Bool, Bool)]) -> [Bool] {
+            var suivi = SuiviSuccesReseau()
+            return etapes.map { suivi.observer(sondeJointe: $0.0, wifiConnecte: $0.1) }
+        }
+        // Sonde deja sur le Wi-Fi au moment du succes : rien ne s'efface avant le redemarrage (liaison perdue, puis
+        // de retour avec le Wi-Fi pas encore joint, puis joint).
+        #expect(suite([(true, true), (true, true), (false, true), (true, false), (true, true)])
+                == [false, false, false, false, true])
+        // Premiere mise en service : le Wi-Fi n'etait pas joint ; il le devient.
+        #expect(suite([(true, false), (true, true)]) == [false, true])
+        // Liaison perdue puis retrouvee, Wi-Fi joint : la sonde a redemarre.
+        #expect(suite([(true, true), (false, false), (true, true)]) == [false, false, true])
     }
 
     /// L'indicateur « Maillage incomplet » : avec l'heure de la passe complementaire programmee ; sans heure quand le
@@ -202,4 +272,35 @@ struct AffichageSondeZigbeeTests {
         #expect(TexteTournee.duree(90).contains("1") && TexteTournee.duree(90).contains("30"))
     }
 
+    /// Le champ « Nom du Wi-Fi » (banc du 11/10) : le nom garde tant que rien n'est tape ; ce qui est tape ensuite,
+    /// meme un champ efface ; rien sans nom garde ni brouillon. Remis a nil (fermeture de la fenetre, mise en service
+    /// reussie), le brouillon redonne le nom garde.
+    @Test func nomDuWifiAffiche() {
+        #expect(FenetreReglages.nomWifiAffiche(brouillon: nil, garde: "Maison") == "Maison")
+        #expect(FenetreReglages.nomWifiAffiche(brouillon: "", garde: "Maison") == "", "efface a la main : le champ reste vide")
+        #expect(FenetreReglages.nomWifiAffiche(brouillon: "Bureau", garde: "Maison") == "Bureau")
+        #expect(FenetreReglages.nomWifiAffiche(brouillon: nil, garde: nil) == "")
+        #expect(FenetreReglages.nomWifiAffiche(brouillon: "Bureau", garde: nil) == "Bureau")
+    }
+
+    /// A la fermeture de la fenetre des Reglages (gardee, avec son etat), la saisie du Wi-Fi est oubliee : le nom tape,
+    /// et le mot de passe tape mais jamais envoye (constat 10 de la relecture finale).
+    @Test func saisieOublieeALaFermeture() {
+        var s = SaisieWifi(brouillon: "Bureau", motDePasse: "motdepasse")
+        s.fermerFenetre()
+        #expect(s.brouillon == nil)
+        #expect(s.motDePasse.isEmpty, "le mot de passe ne survit pas a la fermeture")
+    }
+
+    /// La fermeture qui remet le brouillon du nom du Wi-Fi a nil est celle de la fenetre des Reglages, pas d'une autre.
+    @Test func fermetureDeLaFenetreDesReglages() async throws {
+        let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
+        defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
+        let sonde = SondeMaillageZigbee(preferences: p, actif: false, trousseau: TrousseauMemoireZigbee())
+        let (fenetre, _) = try await ReglagesHauteurTests.fenetreSonde(sonde)
+        defer { fenetre.orderOut(nil); fenetre.contentViewController = nil }
+        #expect(FenetreReglages.estFenetreDesReglages(fenetre))
+        #expect(!FenetreReglages.estFenetreDesReglages(NSWindow()))
+        #expect(!FenetreReglages.estFenetreDesReglages(nil))
+    }
 }

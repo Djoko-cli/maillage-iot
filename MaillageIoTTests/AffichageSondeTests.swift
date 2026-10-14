@@ -244,12 +244,12 @@ struct AffichageSondeTests {
                 == String(localized: "\(sonde) : \(TexteTourneeThread.etape(.identites))…"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "connectée"))"))
-        #expect(FenetreReglages.texteEtatSonde(.absente, nom: "SONDE-01")
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.absente, nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "absente (débranchée ?)"))"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: nil) == String(localized: "connectée"))
-        #expect(FenetreReglages.texteEtatSonde(.refusee("pas une sonde"), nom: nil)
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.refusee("pas une sonde"), nom: nil)
                 == String(localized: "refusée : \("pas une sonde")"))
-        #expect(FenetreReglages.texteEtatSonde(.sansSonde, nom: nil) == String(localized: "aucune sonde choisie"))
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.sansSonde, nom: nil) == String(localized: "aucune sonde choisie"))
     }
 
     /// Choix du port : la sonde retenue sous son nom seul ; un autre port, un port sans numero

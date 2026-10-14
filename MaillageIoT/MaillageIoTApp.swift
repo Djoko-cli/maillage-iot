@@ -46,7 +46,8 @@ struct MaillageIoTApp: App {
         let mj = MisesAJour(demarrer: MisesAJour.demarrerAuLancement(demo: Self.demo))
         _misesAJour = State(initialValue: mj)
         _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: m.nomsMaison,
-                                                           sonde: m.sondeThread, misesAJour: mj))
+                                                           nomsPont: m.nomsPont, sonde: m.sondeThread,
+                                                           sondeZigbee: m.sondeZigbee, misesAJour: mj))
         let premier = !UserDefaults.standard.bool(forKey: Self.clePremierGraphe)
         ouvrirGraphe = !Surveillance.sousTests && (Self.demo || premier)
         guard !Surveillance.sousTests else { return }

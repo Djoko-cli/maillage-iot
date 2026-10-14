@@ -689,6 +689,22 @@
         }
       }
     },
+    "%lld attentes de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld waits for the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld attentes de la sonde"
+          }
+        }
+      }
+    },
     "%lld bons" : {
       "localizations" : {
         "en" : {
@@ -769,6 +785,38 @@
         }
       }
     },
+    "%lld muets" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld silent"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld muets"
+          }
+        }
+      }
+    },
+    "%lld nommés par Maison · %lld avec le nom de l'app Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld named by Home · %2$lld with their Hue app name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld nommés par Maison · %2$lld avec le nom de l'app Hue"
+          }
+        }
+      }
+    },
     "%lld noms masqués faute de place : rapprochez-vous (molette)" : {
       "localizations" : {
         "en" : {
@@ -781,6 +829,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld noms masqués faute de place : rapprochez-vous (molette)"
+          }
+        }
+      }
+    },
+    "%lld pages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pages"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pages"
+          }
+        }
+      }
+    },
+    "%lld pauses de cadence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld rate-limit pauses"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pauses de cadence"
+          }
+        }
+      }
+    },
+    "%lld rattachements échoués" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld failed rejoins"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld rattachements échoués"
+          }
+        }
+      }
+    },
+    "%lld routes reportées" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routes deferred"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld routes reportées"
           }
         }
       }
@@ -817,6 +929,38 @@
         }
       }
     },
+    "%lld routeurs · %lld appareils finaux · %lld liens radio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld routers · %2$lld end devices · %3$lld radio links"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld routeurs · %2$lld appareils finaux · %3$lld liens radio"
+          }
+        }
+      }
+    },
+    "%lld sans réponse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld without reply"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sans réponse"
+          }
+        }
+      }
+    },
     "%lld voisins" : {
       "localizations" : {
         "en" : {
@@ -829,6 +973,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld voisins"
+          }
+        }
+      }
+    },
+    "%lld/%lld routes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld routes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld routes"
+          }
+        }
+      }
+    },
+    "%lld/%lld tables" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld tables"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld tables"
           }
         }
       }
@@ -1169,6 +1345,22 @@
         }
       }
     },
+    "Accès par le réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network access"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès par le réseau"
+          }
+        }
+      }
+    },
     "Accès réseau" : {
       "localizations" : {
         "en" : {
@@ -1181,6 +1373,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Accès réseau"
+          }
+        }
+      }
+    },
+    "Accès réseau autorisé : la sonde redémarre et rejoint le Wi-Fi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network access allowed: the probe restarts and joins the Wi-Fi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès réseau autorisé : la sonde redémarre et rejoint le Wi-Fi."
           }
         }
       }
@@ -1405,6 +1613,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Appareils IP · %lld"
+          }
+        }
+      }
+    },
+    "Appareils du pont" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bridge devices"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils du pont"
           }
         }
       }
@@ -1757,6 +1981,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "BBR primaire"
+          }
+        }
+      }
+    },
+    "Bilan" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Summary"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilan"
           }
         }
       }
@@ -2225,6 +2465,22 @@
         }
       }
     },
+    "Dernier maillage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last mesh"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier maillage"
+          }
+        }
+      }
+    },
     "Dernier relevé" : {
       "localizations" : {
         "en" : {
@@ -2269,6 +2525,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dernière perte"
+          }
+        }
+      }
+    },
+    "Dernière tournée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last round"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière tournée"
           }
         }
       }
@@ -2477,6 +2749,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer une capture…"
+          }
+        }
+      }
+    },
+    "Enregistré dans la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved in the probe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistré dans la sonde"
           }
         }
       }
@@ -2929,6 +3217,22 @@
         }
       }
     },
+    "La clé passe par l'USB, sonde branchée, et reste dans le trousseau de ce Mac. Avec la liaison « Wi-Fi », la sonde peut être débranchée et alimentée ailleurs. Le mot de passe du Wi-Fi va directement à la sonde : l'app ne le garde pas. Laissé vide, la sonde garde son Wi-Fi, ou rejoint un réseau ouvert si elle n'en a pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The key goes over USB, with the probe plugged in, and stays in this Mac's keychain. With the \"Wi-Fi\" link, the probe can be unplugged and powered elsewhere. The Wi-Fi password goes straight to the probe: the app does not keep it. Left empty, the probe keeps its Wi-Fi, or joins an open network if it has none."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La clé passe par l'USB, sonde branchée, et reste dans le trousseau de ce Mac. Avec la liaison « Wi-Fi », la sonde peut être débranchée et alimentée ailleurs. Le mot de passe du Wi-Fi va directement à la sonde : l'app ne le garde pas. Laissé vide, la sonde garde son Wi-Fi, ou rejoint un réseau ouvert si elle n'en a pas."
+          }
+        }
+      }
+    },
     "La langue change au prochain lancement." : {
       "localizations" : {
         "en" : {
@@ -3021,6 +3325,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La sonde n'est pas encore prête : nouvel essai dans un instant."
+          }
+        }
+      }
+    },
+    "La sonde n'est pas sur le réseau du pont (canal ou identifiant du réseau différent)." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The probe is not on the bridge's network (different channel or network identifier)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La sonde n'est pas sur le réseau du pont (canal ou identifiant du réseau différent)."
           }
         }
       }
@@ -3213,6 +3533,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les chemins des messages vers le pont ; les voisins entendus d'un nœud à sa sélection"
+          }
+        }
+      }
+    },
+    "Les noms, les pièces et les étages (zones) viennent de l'app Maison, lus par Passeur Noms, qui les envoie dès qu'ils changent ; le pont Hue donne les adresses, l'état de connexion et les piles." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Names, rooms and floors (zones) come from the Home app, read by Passeur Noms, which sends them as soon as they change; the Hue bridge gives addresses, connection state and batteries."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les noms, les pièces et les étages (zones) viennent de l'app Maison, lus par Passeur Noms, qui les envoie dès qu'ils changent ; le pont Hue donne les adresses, l'état de connexion et les piles."
           }
         }
       }
@@ -3521,6 +3857,38 @@
         }
       }
     },
+    "Mode démo : le relevé de Maison de la démo, pas de Passeur." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo mode: the demo's Home reading, no Passeur."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : le relevé de Maison de la démo, pas de Passeur."
+          }
+        }
+      }
+    },
+    "Mode démo : les noms de la démo, pas de pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo mode: demo names, no bridge."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mode démo : les noms de la démo, pas de pont."
+          }
+        }
+      }
+    },
     "Mode démo : panne du 27/09 rejouée" : {
       "localizations" : {
         "en" : {
@@ -3585,6 +3953,22 @@
         }
       }
     },
+    "Mot de passe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mot de passe"
+          }
+        }
+      }
+    },
     "Nom d'hôte" : {
       "localizations" : {
         "en" : {
@@ -3597,6 +3981,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nom d'hôte"
+          }
+        }
+      }
+    },
+    "Nom du Wi-Fi (2,4 GHz)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi name (2.4 GHz)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom du Wi-Fi (2,4 GHz)"
           }
         }
       }
@@ -3629,22 +4029,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Noms de Maison"
-          }
-        }
-      }
-    },
-    "Noms lus" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Names read"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noms lus"
           }
         }
       }
@@ -3745,6 +4129,22 @@
         }
       }
     },
+    "Nouvelle clé rangée dans le trousseau. Le Wi-Fi de la sonde n'a pas changé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New key stored in the keychain. The probe's Wi-Fi has not changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouvelle clé rangée dans le trousseau. Le Wi-Fi de la sonde n'a pas changé."
+          }
+        }
+      }
+    },
     "Nœud %@" : {
       "localizations" : {
         "en" : {
@@ -3757,6 +4157,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nœud %@"
+          }
+        }
+      }
+    },
+    "Nœuds" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nodes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nœuds"
           }
         }
       }
@@ -4161,6 +4577,22 @@
         }
       }
     },
+    "Passeur Noms s'installe par outils/passeur.sh : voir le README." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms is installed by outils/passeur.sh: see the README."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passeur Noms s'installe par outils/passeur.sh : voir le README."
+          }
+        }
+      }
+    },
     "Pile et Network Data" : {
       "localizations" : {
         "en" : {
@@ -4205,6 +4637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placer dans une pièce…"
+          }
+        }
+      }
+    },
+    "Pont Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue Bridge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pont Hue"
           }
         }
       }
@@ -4301,6 +4749,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pour le remplacer : sh outils/thread-route/installer.sh (mot de passe administrateur)."
+          }
+        }
+      }
+    },
+    "Prochaine tournée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next round"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prochaine tournée"
           }
         }
       }
@@ -5041,6 +5505,22 @@
         }
       }
     },
+    "Régénérer la clé et changer le Wi-Fi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regenerate the key and change the Wi-Fi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régénérer la clé et changer le Wi-Fi"
+          }
+        }
+      }
+    },
     "Régénérer une clé" : {
       "localizations" : {
         "en" : {
@@ -5345,6 +5825,22 @@
         }
       }
     },
+    "Réseau — sonde injoignable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network — probe unreachable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réseau — sonde injoignable"
+          }
+        }
+      }
+    },
     "Résolution des parents" : {
       "localizations" : {
         "en" : {
@@ -5357,6 +5853,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Résolution des parents"
+          }
+        }
+      }
+    },
+    "Rôle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Role"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rôle"
           }
         }
       }
@@ -5421,6 +5933,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sans pièce"
+          }
+        }
+      }
+    },
+    "Service Bonjour" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonjour service"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Service Bonjour"
           }
         }
       }
@@ -5521,6 +6049,22 @@
         }
       }
     },
+    "Sonde 1.1.0 requise." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe 1.1.0 required."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonde 1.1.0 requise."
+          }
+        }
+      }
+    },
     "Sonde introuvable (%@) : éteinte, hors du réseau Thread, ou routeurs de bordure injoignables." : {
       "localizations" : {
         "en" : {
@@ -5533,6 +6077,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sonde introuvable (%@) : éteinte, hors du réseau Thread, ou routeurs de bordure injoignables."
+          }
+        }
+      }
+    },
+    "Sonde suspendue : pas de relevé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe suspended: no readings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonde suspendue : pas de relevé."
           }
         }
       }
@@ -5645,6 +6205,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tables des routeurs"
+          }
+        }
+      }
+    },
+    "Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread"
           }
         }
       }
@@ -6145,6 +6721,38 @@
         }
       }
     },
+    "Wi-Fi de la sonde" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probe Wi-Fi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi de la sonde"
+          }
+        }
+      }
+    },
+    "Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee"
+          }
+        }
+      }
+    },
     "Zones" : {
       "localizations" : {
         "en" : {
@@ -6353,6 +6961,22 @@
         }
       }
     },
+    "appareil final" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "end device"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "appareil final"
+          }
+        }
+      }
+    },
     "associé à la main" : {
       "localizations" : {
         "en" : {
@@ -6413,6 +7037,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "aucun pont trouvé"
+          }
+        }
+      }
+    },
+    "aucun relevé : noms de l'app Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no reading: Hue app names"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "aucun relevé : noms de l'app Hue"
           }
         }
       }
@@ -6525,6 +7165,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "bonne"
+          }
+        }
+      }
+    },
+    "canal %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "channel %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "canal %lld"
           }
         }
       }
@@ -6685,6 +7341,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "chemins"
+          }
+        }
+      }
+    },
+    "cherche un réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "looking for a network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cherche un réseau"
+          }
+        }
+      }
+    },
+    "connecté" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connected"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "connecté"
           }
         }
       }
@@ -7105,6 +7793,22 @@
         }
       }
     },
+    "hors réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not on a network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hors réseau"
+          }
+        }
+      }
+    },
     "illisible : préfixes tirés des adresses" : {
       "localizations" : {
         "en" : {
@@ -7117,6 +7821,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "illisible : préfixes tirés des adresses"
+          }
+        }
+      }
+    },
+    "incomplète" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "incomplete"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "incomplète"
           }
         }
       }
@@ -7521,6 +8241,22 @@
         }
       }
     },
+    "membre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "member"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "membre"
+          }
+        }
+      }
+    },
     "mode démo" : {
       "localizations" : {
         "en" : {
@@ -7585,6 +8321,22 @@
         }
       }
     },
+    "noms de l'app Hue seulement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hue app names only"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "noms de l'app Hue seulement"
+          }
+        }
+      }
+    },
     "non autorisé" : {
       "localizations" : {
         "en" : {
@@ -7613,6 +8365,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "non connecté"
+          }
+        }
+      }
+    },
+    "non connecté (raison %lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "not connected (reason %lld)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "non connecté (raison %lld)"
           }
         }
       }
@@ -7661,6 +8429,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ouverture de %@"
+          }
+        }
+      }
+    },
+    "parent %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %@"
+          }
+        }
+      }
+    },
+    "parent %@ (LQI %lld)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@ (LQI %2$lld)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "parent %1$@ (LQI %2$lld)"
           }
         }
       }
@@ -7789,6 +8589,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "pas vu par la sonde"
+          }
+        }
+      }
+    },
+    "passe complémentaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "follow-up pass"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "passe complémentaire"
           }
         }
       }
@@ -7969,6 +8785,38 @@
         }
       }
     },
+    "relevé en cours…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reading…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "relevé en cours…"
+          }
+        }
+      }
+    },
+    "relevé reçu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reading received"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "relevé reçu"
+          }
+        }
+      }
+    },
     "replié" : {
       "localizations" : {
         "en" : {
@@ -8097,6 +8945,22 @@
         }
       }
     },
+    "sans parent (rattachement en cours)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no parent (rejoining)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sans parent (rattachement en cours)"
+          }
+        }
+      }
+    },
     "session réseau fermée" : {
       "localizations" : {
         "en" : {
@@ -8157,6 +9021,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "sur batterie"
+          }
+        }
+      }
+    },
+    "suspendue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suspended"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "suspendue"
           }
         }
       }

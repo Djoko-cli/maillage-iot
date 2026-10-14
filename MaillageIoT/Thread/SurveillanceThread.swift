@@ -520,6 +520,11 @@ final class SurveillanceThread: ModeleProtocole {
         }
     }
 
+    /// Dernier releve en JSON (Reglages › Diagnostic, « Enregistrer une capture… ») ; nil sans releve.
+    func captureJSON() throws -> Data? {
+        try dernierReleve.map { try CodageJSON.encodeur(lisible: true).encode($0) }
+    }
+
     // MARK: - Pour les vues
 
     var instantane: Instantane? { suivi.instantane }

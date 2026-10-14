@@ -210,7 +210,7 @@ final class Surveillance {
 
     /// Dernier releve en JSON (option de capture) : celui de Thread, a defaut le dernier maillage de Zigbee.
     func captureJSON() throws -> Data? {
-        if let d = try thread.dernierReleve.map({ try CodageJSON.encodeur(lisible: true).encode($0) }) { return d }
+        if let d = try thread.captureJSON() { return d }
         return try zigbee.captureJSON()
     }
 

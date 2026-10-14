@@ -675,9 +675,43 @@ struct TourneeSondeTests {
         #expect(suite == ["debut", "fin"], "aucun maillage plus tard")
     }
 
-    /// Textes des Reglages : la raison d'une tournee incomplete. Le role, le reseau (parent sous son nom) et le bilan
-    /// d'une tournee (`FenetreReglages.texteRole`, `texteReseau`, `texteBilan` de Zigbee) reviennent avec la tache 10.
+    /// Textes des Reglages : le role, le reseau (parent sous son nom), le bilan d'une tournee, les raisons.
     @Test func textesDesReglages() {
+        let e = EtatSondeZigbee(membre: true, role: "final", parent: ParentSondeZigbee(court: "1A2B", ieee: SondeRejouee.routeur,
+                                                                            lqi: 180, rssi: -71), canal: 25)
+        #expect(FenetreReglages.texteRole(e)
+                == [String(localized: "membre"), String(localized: "appareil final")].joined(separator: ", "))
+        #expect(FenetreReglages.texteRole(EtatSondeZigbee(membre: false, recherche: true, suspendue: true))
+                == [String(localized: "hors réseau"), String(localized: "cherche un réseau"),
+                    String(localized: "suspendue")].joined(separator: ", "))
+        #expect(FenetreReglages.texteReseau(e) { $0 == SondeRejouee.routeur ? "Plafonnier" : nil }
+                == [String(localized: "canal \(25)"), String(localized: "parent \("Plafonnier") (LQI \(180))")]
+                    .joined(separator: " · "))
+        var b = BilanTournee()
+        b.avecTables = true
+        b.tablesDemandees = 36
+        b.tablesLues = 35
+        b.routesRouteursDemandees = 35
+        b.routesRouteursLues = 34
+        b.sansReponse = 1
+        b.muets = 1
+        #expect(FenetreReglages.texteBilan(b, duree: nil)
+                == [String(localized: "\(35)/\(36) tables"), String(localized: "\(34)/\(35) routes"),
+                    String(localized: "\(1) muets")].joined(separator: " · "))
+        b.avecTables = false
+        b.pausesCadence = 2
+        #expect(FenetreReglages.texteBilan(b, duree: nil)
+                == [String(localized: "\(34)/\(35) routes"), String(localized: "\(2) pauses de cadence"),
+                    String(localized: "\(1) muets")].joined(separator: " · "), "sans tables : les routes seules")
+        // Des routes remises a la tournee suivante faute de budget, et les pages envoyees.
+        b.routesReportees = 20
+        b.pages = 547
+        #expect(FenetreReglages.texteBilan(b, duree: nil)
+                == [String(localized: "\(34)/\(35) routes"), String(localized: "\(20) routes reportées"),
+                    String(localized: "\(547) pages"), String(localized: "\(2) pauses de cadence"),
+                    String(localized: "\(1) muets")].joined(separator: " · "))
+        b.lacune = "non_membre"
+        #expect(FenetreReglages.texteBilan(b, duree: 72).hasSuffix(String(localized: "incomplète")))
         #expect(SondeMaillageZigbee.texteLacune("non_membre") == String(localized: "Tournée incomplète : la sonde a quitté le réseau."))
         #expect(SondeMaillageZigbee.texteEmpechement(nil) == nil)
     }
@@ -839,8 +873,15 @@ struct PasseComplementaireTests {
         let heure = passe.formatted(date: .omitted, time: .shortened)
         #expect(TexteTourneeZigbee.heure(passe) == heure)
         #expect(TexteTourneeZigbee.menuPasse(passe, nom: "SONDE-01") == String(localized: "\("SONDE-01") : passe complémentaire à \(heure)"))
-        // La ligne du menu (`MenuBarre.ligneSonde` de Zigbee) et le bilan d'une passe (`FenetreReglages.texteBilan`)
-        // reviennent avec les taches 13 et 10.
+        // La ligne du menu (`MenuBarre.ligneSonde` de Zigbee) revient avec la tache 13.
+        var bilan = BilanTournee()
+        bilan.complementaire = true
+        bilan.routesRouteursDemandees = 20
+        bilan.routesRouteursLues = 20
+        bilan.pages = 100
+        #expect(FenetreReglages.texteBilan(bilan, duree: nil)
+                == [String(localized: "passe complémentaire"), String(localized: "\(20)/\(20) routes"),
+                    String(localized: "\(100) pages")].joined(separator: " · "))
     }
 }
 

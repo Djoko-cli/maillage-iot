@@ -2,7 +2,7 @@ import MaillageCoeur
 import ProtocoleZigbee
 import SwiftUI
 
-/// Reglages › Pont Hue : l'etat du pont ; le pont trouve (modele, adresse, identifiant) ; « Lier… », l'instruction et
+/// Reglages › Zigbee › Pont Hue : l'etat du pont ; le pont trouve (modele, adresse, identifiant) ; « Lier… », l'instruction et
 /// le compte a rebours de l'attente du bouton ; « Oublier le pont » ; la saisie d'une adresse, si Bonjour ne trouve
 /// pas le pont ; la derniere lecture et le nombre d'appareils lus.
 struct ReglagesPont: View {

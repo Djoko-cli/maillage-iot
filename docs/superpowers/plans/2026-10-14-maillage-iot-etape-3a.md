@@ -278,10 +278,10 @@ D'après `inventaire-etape3-interface.md` §3.3 ; spec 3.3, 6.6 (décision 10).
 - Modify: `MaillageIoT/Vues/ControleurReglages.swift` (version de Zigbee, avec le correctif de hauteur du 11/10), `FenetreReglages.swift` : onglets **Général · Notifications · Maison · Thread · Zigbee · Diagnostic** ; Thread = sonde Thread (USB ou réseau) et Thread Route ; Zigbee = pont Hue et sonde Zigbee ; Général = langue, mises à jour, ouverture de session (« Reprendre des données… » est à l'étape 4).
 - Test: `ReglagesHauteurTests` (fenêtre hors écran, les six onglets).
 
-- [ ] **Step 1: RED** — `ReglagesHauteurTests` sur les six onglets ; `OngletReglages.allCases` = les six, dans l'ordre. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reglages : six onglets, Thread et Zigbee chacun le sien ».
+- [x] **Step 1: RED** — `ReglagesHauteurTests` sur les six onglets ; `OngletReglages.allCases` = les six, dans l'ordre. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reglages : six onglets, Thread et Zigbee chacun le sien ».
 
 ---
 

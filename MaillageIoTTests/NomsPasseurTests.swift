@@ -1,9 +1,12 @@
+import AppKit
 import Foundation
 import MaillageCoeur
 import Network
+import SwiftUI
 import Synchronization
 import Testing
 @testable import MaillageIoT
+import ProtocoleZigbee
 
 /// Faux Passeur des tests (repris de Maillage Thread) : un client TCP sur 127.0.0.1. Les tests ne lancent jamais le vrai
 /// Passeur. Il envoie des octets et ferme son
@@ -477,5 +480,25 @@ struct NomsPasseurTests {
         #expect(FenetreReglages.texteZones([ZoneMaison(nom: "Rez-de-chaussée"), ZoneMaison(nom: "Étage")])
                 == "Rez-de-chaussée, Étage")
         #expect(FenetreReglages.texteZones([]) == String(localized: "aucune zone dans Maison"))
+    }
+
+    /// Reglages › Maison : l'etat, le releve, le bilan de la fusion (les zones sont dans `zonesDansLesReglages`).
+    @Test func textesDesReglages() {
+        #expect(ReglagesMaison.texteEtat(releve: nil, enCours: false) == String(localized: "aucun relevé : noms de l'app Hue"))
+        #expect(ReglagesMaison.texteEtat(releve: Self.releve(), enCours: true) == String(localized: "relevé en cours…"))
+        #expect(ReglagesMaison.texteEtat(releve: Self.releve(), enCours: false) == String(localized: "relevé reçu"))
+        #expect(ReglagesMaison.texteBilan(nil) == String(localized: "noms de l'app Hue seulement"))
+        #expect(ReglagesMaison.texteBilan(FusionNoms.Bilan(apparies: 20, nonApparies: 1))
+                == String(localized: "\(20) nommés par Maison · \(1) avec le nom de l'app Hue"))
+        #expect(ReglagesMaison.texteReleve(Self.releve()).hasPrefix(String(localized: "\(1) accessoires · \("")")))
+    }
+
+    /// La page Maison des Reglages se construit, en demo et hors demo, avec et sans releve.
+    @Test func pageDesReglages() {
+        for (s, p) in [(Surveillance(mode: .demo, dossier: nil), NomsPasseur(demo: NomsDemo.releveMaison)),
+                       (Surveillance(mode: .direct, dossier: nil), NomsPasseur())] {
+            let vue = Form { ReglagesMaison() }.formStyle(.grouped).environment(s).environment(p)
+            #expect(NSHostingView(rootView: vue).fittingSize.height > 100)
+        }
     }
 }
