@@ -66,4 +66,23 @@ struct CourbesNoeudTests {
                              parentsSonde: [], prioritaires: [])
         #expect(d.chemins == [ch])
     }
+
+    /// Autres cas du choix generique (repris de Maillage Zigbee, `FocusEtFicheTests`) : au plus six prioritaires, dans
+    /// leur ordre, celles qui ont une courbe ; sans prioritaire, les six premieres ; « tous » : toutes, les prioritaires
+    /// d'abord ; le nombre que la case ajoute ; la pastille qui met une courbe en avant, puis la rend.
+    @Test func choixDesCourbesAutresCas() {
+        let cles = (1...9).map { "k\($0)" }
+        #expect(ChoixCourbes.montrees(cles: cles, prioritaires: ["k9", "zz", "k2"], tous: false) == ["k9", "k2"])
+        #expect(ChoixCourbes.montrees(cles: cles, prioritaires: [], tous: false) == Array(cles.prefix(6)))
+        #expect(ChoixCourbes.montrees(cles: cles, prioritaires: cles.reversed(), tous: false) == ["k9", "k8", "k7", "k6", "k5", "k4"])
+        #expect(ChoixCourbes.montrees(cles: cles, prioritaires: ["k9", "k2"], tous: true)
+                == ["k9", "k2", "k1", "k3", "k4", "k5", "k6", "k7", "k8"])
+        #expect(ChoixCourbes.cachees(cles: cles, prioritaires: ["k9"]) == 8)
+        #expect(ChoixCourbes.cachees(cles: ["a"], prioritaires: ["a"]) == 0)
+        #expect(ChoixCourbes.basculer(nil, "a") == "a" && ChoixCourbes.basculer("a", "a") == nil)
+        #expect(ChoixCourbes.basculer("a", "b") == "b")
+        // Une courbe en avant mais plus montree n'estompe pas les autres.
+        #expect(ChoixCourbes.enAvant("g", parmi: ["a", "b"]) == nil)
+        #expect(ChoixCourbes.enAvant("b", parmi: ["a", "b"]) == "b" && ChoixCourbes.enAvant(nil, parmi: ["a"]) == nil)
+    }
 }

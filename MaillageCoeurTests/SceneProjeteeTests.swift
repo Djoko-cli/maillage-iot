@@ -239,4 +239,26 @@ struct SceneProjeteeTests {
         // Le parent d'avant : son lien vers le parent est trace en pointilles, les autres non.
         #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])
     }
+
+    /// La scene projetee estompe les pastilles (sans changer ce qui se clique) et les liens qui ne sont pas mis en avant,
+    /// et donne le facteur des noms (repris de Maillage Zigbee, `FocusEtFicheTests`).
+    @Test func projectionEstompee() throws {
+        let (scene, net) = try Self.projeter(t: 0)
+        let radio = try #require(scene.liens.first { $0.genre == .radio })
+        let estompe = radio.vers, garde = radio.de
+        let (_, flou) = try Self.projeter(t: 0) {
+            $0.noeudsEstompes = [estompe: 1]
+            $0.liensEstompes = [MiseEnAvant.cle(radio): 1]
+        }
+        let disque = { (p: SceneProjetee, id: String) in p.disques.first { $0.noeud == id } }
+        #expect(disque(net, estompe)?.focus == 1 && disque(flou, estompe)?.focus == MiseEnAvant.opaciteEstompee)
+        #expect(disque(flou, estompe)?.opacite == disque(net, estompe)?.opacite, "un noeud estompe se clique encore")
+        #expect(disque(flou, garde)?.focus == 1)
+        #expect(flou.facteur(noeud: estompe) == MiseEnAvant.opaciteEstompee && flou.facteur(noeud: garde) == 1)
+        let opacites = { (p: SceneProjetee) in p.liensRouteurs.map(\.opacite) }
+        #expect(opacites(net).count == opacites(flou).count && opacites(net).count >= 2)
+        let changes = zip(opacites(net), opacites(flou)).filter { $0 != $1 }
+        #expect(changes.count == 1, "seul le lien estompe change")
+        #expect(changes.allSatisfy { abs($1 - $0 * MiseEnAvant.opaciteEstompee) < 1e-9 })
+    }
 }

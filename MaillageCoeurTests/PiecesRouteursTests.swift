@@ -169,4 +169,22 @@ struct PiecesRouteursTests {
         try Data(#"{"version":1}"#.utf8).write(to: url)
         #expect(PiecesRouteurs.lire(url) == PiecesRouteurs())
     }
+
+    /// Aller-retour sur disque des choix d'un noeud autre qu'un routeur de bordure (sous son ExtMac, en majuscules) ;
+    /// un fichier absent, illisible ou d'une version plus recente donne des choix vides (repris de Maillage Zigbee).
+    @Test func allerRetourDesAppareils() throws {
+        let url = Self.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        var p = PiecesRouteurs()
+        p.choisir("Salon", appareil: "A000000000000010", domicile: "Maison")
+        p.choisir("Bureau", appareil: "A000000000000001", domicile: "")
+        try p.ecrire(dans: url)
+        #expect(PiecesRouteurs.lire(url) == p)
+        #expect(PiecesRouteurs.lire(url).choix(appareil: "A000000000000010", domicile: "Maison") == "Salon")
+        #expect(PiecesRouteurs.lire(url.appendingPathExtension("absent")) == PiecesRouteurs())
+        try Data(#"{"version":2,"appareils":{}}"#.utf8).write(to: url)
+        #expect(PiecesRouteurs.lire(url) == PiecesRouteurs())
+        try Data("pas du json".utf8).write(to: url)
+        #expect(PiecesRouteurs.lire(url) == PiecesRouteurs())
+    }
 }

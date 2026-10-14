@@ -31,4 +31,29 @@ struct MiseEnAvantTests {
         for _ in 0..<40 { e = MiseEnAvant.tendre(e, vers: [:], k: 0.25) }
         #expect(e.isEmpty, "revenue nette : la valeur nulle n'est pas gardee")
     }
+
+    /// Autres cas du mode focus generique (repris de Maillage Zigbee, `FocusEtFicheTests`) : la cle d'un lien ne depend
+    /// ni de l'ordre de ses bouts, ni de son genre ; l'estompement va de net (1) a 18 %, borne ; les cibles estompent ce
+    /// qui n'est pas mis en avant, rien sans focus ; la transition y va en douceur, et ne garde pas les valeurs nulles.
+    @Test func miseEnAvantGenerique() {
+        #expect(MiseEnAvant.cle("B", "A") == MiseEnAvant.cle("A", "B"))
+        #expect(MiseEnAvant.cle(GrapheReseau.Lien(de: "B", vers: "A", genre: .chemin)) == "A|B")
+        #expect(MiseEnAvant.facteur(0) == 1 && MiseEnAvant.facteur(1) == MiseEnAvant.opaciteEstompee)
+        #expect(MiseEnAvant.facteur(2) == MiseEnAvant.opaciteEstompee && MiseEnAvant.facteur(-1) == 1)
+        var m = MiseEnAvant(noeuds: ["A"])
+        m.ajouter(lien: "B", "A")
+        #expect(m.noeuds == ["A", "B"] && m.contient(lien: GrapheReseau.Lien(de: "A", vers: "B", genre: .radio)))
+        let c = MiseEnAvant.cibles(m, noeuds: ["A", "B", "C"], liens: ["A|B", "B|C"])
+        #expect(c.noeuds == ["C": 1] && c.liens == ["B|C": 1])
+        #expect(MiseEnAvant.cibles(nil, noeuds: ["A"], liens: ["A|B"]).noeuds.isEmpty)
+        // Vers l'estompement, puis le retour.
+        var e: [String: Double] = [:]
+        for _ in 0..<3 { e = MiseEnAvant.tendre(e, vers: c.noeuds, k: 0.3) }
+        #expect((e["C"] ?? 0) > 0.5 && (e["C"] ?? 0) < 1, "en route : \(e)")
+        for _ in 0..<40 { e = MiseEnAvant.tendre(e, vers: c.noeuds, k: 0.3) }
+        #expect(e == ["C": 1], "arrive")
+        for _ in 0..<40 { e = MiseEnAvant.tendre(e, vers: [:], k: 0.3) }
+        #expect(e.isEmpty, "revenu net, sans valeur nulle gardee")
+        #expect(MiseEnAvant.tendre(["X": 0.5], vers: [:], k: 1).isEmpty, "d'un coup")
+    }
 }

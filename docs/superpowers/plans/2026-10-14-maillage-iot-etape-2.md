@@ -225,11 +225,11 @@ D'après `inventaire-zigbee-coeur.md` §5 (table fichier par fichier).
 - Modify (portages au cœur, ~250 lignes) : `MaillageCoeurTests/FichiersGardesTests.swift` (`appareilsMalFormes`), tests génériques de `FocusEtFicheTests`, `ChampsTXTCodageTests` (ex-`AnnoncesTests` de Zigbee), cas génériques de `RegroupementParentsTests` restants
 - Test: `ProtocoleZigbeeTests/EvenementsZigbeeTests.swift`
 
-- [ ] **Step 1: Effectifs** — noter le nombre de `@Test` de `Z:MaillageCoeurTests` (`git -C ~/Dev/maillage-zigbee show be6fadf:…` ou archive), et pour chaque fichier sa destination (jeté car identique au cœur IoT / porté au cœur / `ProtocoleZigbeeTests`) dans le rapport : aucune assertion perdue (une assertion « jetée » doit exister à l'identique dans `MaillageCoeurTests`).
-- [ ] **Step 2: Recopier et adapter** — suites suffixées `Zigbee` quand le nom existe déjà dans une autre cible (`GrapheReseauZigbeeTests`, `HistoriqueZigbeeTests`, `TourneeZigbeeTests`…) ; aucune référence à une suite d'une autre cible.
-- [ ] **Step 3: Journal Zigbee** — `EvenementsZigbeeTests` : chaque type de `PolitiqueJournalZigbee().types` se relit avec sa gravité ; `journalZigbeeRelu` (Review Focus 5) : des lignes écrites par Zigbee 1.1.1 (encodées par l'enum fermé de `be6fadf`, recopiées en littéral), avec et sans `gravite`, se relisent avec la politique Zigbee aux mêmes gravités.
-- [ ] **Step 4: Vérifier** — `outils/tester.sh` (code 0) ; effectifs par cible notés ; `bash outils/tester-coeur.sh`.
-- [ ] **Step 5: Commit** — « Tests de ProtocoleZigbee, portages generiques au coeur ».
+- [x] **Step 1: Effectifs** — noter le nombre de `@Test` de `Z:MaillageCoeurTests` (`git -C ~/Dev/maillage-zigbee show be6fadf:…` ou archive), et pour chaque fichier sa destination (jeté car identique au cœur IoT / porté au cœur / `ProtocoleZigbeeTests`) dans le rapport : aucune assertion perdue (une assertion « jetée » doit exister à l'identique dans `MaillageCoeurTests`).
+- [x] **Step 2: Recopier et adapter** — suites suffixées `Zigbee` quand le nom existe déjà dans une autre cible (`GrapheReseauZigbeeTests`, `HistoriqueZigbeeTests`, `TourneeZigbeeTests`…) ; aucune référence à une suite d'une autre cible.
+- [x] **Step 3: Journal Zigbee** — `EvenementsZigbeeTests` : chaque type de `PolitiqueJournalZigbee().types` se relit avec sa gravité ; `journalZigbeeRelu` (Review Focus 5) : des lignes écrites par Zigbee 1.1.1 (encodées par l'enum fermé de `be6fadf`, recopiées en littéral), avec et sans `gravite`, se relisent avec la politique Zigbee aux mêmes gravités.
+- [x] **Step 4: Vérifier** — `outils/tester.sh` (code 0) ; effectifs par cible notés ; `bash outils/tester-coeur.sh`.
+- [x] **Step 5: Commit** — « Tests de ProtocoleZigbee, portages generiques au coeur ».
 
 ---
 
