@@ -29,7 +29,7 @@ struct SurveillanceTests {
         let affiches = s.appareilsAffiches
         #expect(affiches.count == 21)
         #expect(affiches.filter { $0.etat == .disparu }.map(\.nom) == ["Prise salon"])
-        #expect(affiches.first { $0.id == I.lampeBureau }?.piece == "Bureau")
+        #expect(affiches.first { $0.id == idz(I.lampeBureau) }?.piece == "Bureau")
         #expect(affiches.filter { $0.endormi }.count == 7, "les appareils finaux a pile")
         #expect(affiches.filter { $0.batterie?.faible == true }.map(\.nom).sorted() == ["Capteur grenier", "Télécommande chambre"])
         #expect(s.evenements(de: I.priseSalon).first?.type == .routeurDisparu)
@@ -80,9 +80,9 @@ struct SurveillanceTests {
         m.noeuds.append(NoeudZigbee(ieee: NoeudZigbee.cleProvisoire(court: 0x0A13), court: 0x0A13, type: .final))
         s.recevoir(m, a: Date())
         let affiches = s.appareilsAffiches
-        #expect(affiches.first { $0.id == I.capteurGrenier }?.endormi == false, "pile, mais il ecoute")
-        #expect(affiches.first { $0.id == I.detecteurAbri }?.endormi == true)
-        #expect(affiches.first { $0.id == I.lampeBureau }?.endormi == false, "un routeur n'est jamais endormi")
+        #expect(affiches.first { $0.id == idz(I.capteurGrenier) }?.endormi == false, "pile, mais il ecoute")
+        #expect(affiches.first { $0.id == idz(I.detecteurAbri) }?.endormi == true)
+        #expect(affiches.first { $0.id == idz(I.lampeBureau) }?.endormi == false, "un routeur n'est jamais endormi")
         #expect(s.nom("~0A13") == String(localized: "Nœud \("0A13")"))
         #expect(s.cleHistorique(noeud: "~0A13") == nil && s.cleHistorique(noeud: I.lampeBureau) == I.lampeBureau)
         #expect(!(s.historique.last?.noeuds.contains { $0.ieee == "~0A13" } ?? true))
@@ -322,10 +322,10 @@ struct SurveillanceTests {
         changer(I.lampeSalleDeBain, .inconnue)
         s.noms.maison = maison
         let etats = Dictionary(uniqueKeysWithValues: s.appareilsAffiches.map { ($0.id, $0.etat) })
-        #expect(etats[I.priseSalon] == .joignable, "absente du maillage, mais le pont la dit connectee")
-        #expect(etats[I.lampeBureau] == .injoignable && etats[I.lampeChambre] == .injoignable
-                && etats[I.lampeChambreAmis] == .injoignable)
-        #expect(etats[I.lampeSalleDeBain] == .joignable, "etat inconnu de l'app : le maillage decide")
+        #expect(etats[idz(I.priseSalon)] == .joignable, "absente du maillage, mais le pont la dit connectee")
+        #expect(etats[idz(I.lampeBureau)] == .injoignable && etats[idz(I.lampeChambre)] == .injoignable
+                && etats[idz(I.lampeChambreAmis)] == .injoignable)
+        #expect(etats[idz(I.lampeSalleDeBain)] == .joignable, "etat inconnu de l'app : le maillage decide")
         #expect(s.resume?.injoignables == 3)
         let sans = AppareilPont(nom: "X", ieee: I.lampeBureau, connexion: .deconnecte)
         #expect(Surveillance.etat(sans, presents: nil) == .injoignable, "sans maillage, l'etat du pont")
@@ -335,7 +335,7 @@ struct SurveillanceTests {
         let coordinateur = try #require(s.maillage?.noeuds.first { $0.type == .coordinateur })
         #expect(coordinateur.ieee == I.pont && s.nom(I.pont) == "Pont Hue")
         let graphe = GrapheReseau(maillage: s.maillageAffiche, appareils: s.appareilsAffiches)
-        #expect(graphe.noeud(I.pont)?.genre == .centre && graphe.noeud(I.pont)?.inconnu == false)
+        #expect(graphe.noeud(idz(I.pont))?.genre == .centre && graphe.noeud(idz(I.pont))?.inconnu == false)
     }
 
     /// Les noms du pont (minimal a l'etape 1) : un releve integre est garde, et passe a la surveillance par `surNoms`.
@@ -411,7 +411,7 @@ struct SurveillanceTests {
         #expect(lien.dAvant && lien.parent == I.priseTerrasse && lien.date == MaillageDemoZigbee.fin)
         #expect(m.noeud(I.detecteurAbri)?.type == .final && m.noeud(I.detecteurAbri)?.endormi == true)
         #expect(GrapheReseau(maillage: m, appareils: []).liens.contains {
-            $0.genre == .parent && $0.de == I.detecteurAbri && $0.vers == I.priseTerrasse && $0.suppose
+            $0.genre == .parent && $0.de == idz(I.detecteurAbri) && $0.vers == idz(I.priseTerrasse) && $0.suppose
         })
         #expect(s.evenements.map(\.type) == [.surveillanceDemarree], "ni « sans parent » ni changement de parent")
         let releve = try #require(s.historique.last)

@@ -161,7 +161,7 @@ struct AffichageSondeTests {
         let l = try #require(m.liens.first { $0.genre == .radio })
         let o = try #require(l.origine)
         let voisin = l.de == n2.id ? l.vers : l.de
-        #expect(FicheThread.voisins(de: n2.id, maillage: m).map(\.id) == [voisin])
+        #expect(FicheThread.voisins(de: idt(n2.id), maillage: m).map(\.id.cle) == [voisin])
         #expect(FicheNoeud.origineVoisin(voisin, de: n2.id, maillage: m, instant: t)
                 == FicheNoeud.texteQualite(l.qualite) + " · " + FicheNoeud.texteOrigine(o, t))
         #expect(FicheNoeud.origineVoisin("absent", de: n2.id, maillage: m, instant: t) == nil)

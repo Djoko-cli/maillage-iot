@@ -83,9 +83,9 @@ struct CartesPiecesTests {
     /// Une carte par piece de la scene, dans l'ordre de ses lignes ; les largeurs viennent de l'app.
     @Test func cartesDeLaScene() throws {
         let g = try ScenePiecesTests.graphe(sonde: false)
-        let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: ["Apple TV": "Salon"], zones: nil,
+        let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: [idt("Apple TV"): "Salon"], zones: nil,
                             chefs: [], piecesMaison: true, classement: FixturesScene.classement)
-        let cartes = CartesPieces.cartes(s, largeurs: ["Apple TV": 70])
+        let cartes = CartesPieces.cartes(s, largeurs: [idt("Apple TV"): 70])
         #expect(cartes.count == s.pieces.count)
         let salon = try #require(s.pieces.firstIndex { $0.nom == .maison("Salon") })
         let largeur: Double = 14 + 30 + 9 + 70 + 14

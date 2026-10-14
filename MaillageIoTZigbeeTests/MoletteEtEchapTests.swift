@@ -43,7 +43,7 @@ struct MoletteEtEchapTests {
         let (m, e) = try MoteurPiecesTests.moteur()
         let salon = try MoteurPiecesTests.indice(e, "Salon")
         m.poserIsolement(salon)
-        m.selection = NomsDemo.Ieee.pont
+        m.selection = idz(NomsDemo.Ieee.pont)
         #expect(m.sortir() && m.selection == nil && m.estIsolee, "la fiche d'abord")
         #expect(m.sortir() && !m.estIsolee && m.isolement == .maison, "puis la vue remonte")
         let n = MoteurPiecesTests.moteur(e)
@@ -93,15 +93,15 @@ struct MoletteEtEchapTests {
         func echap(_ w: NSWindow) throws -> NSEvent {
             try Self.toucheEnfoncee(w, "\u{1B}", code: 53)
         }
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         #expect(moteur.prendre(try echap(fenetre)) && moteur.selection == nil, "la fiche se ferme")
         #expect(!moteur.prendre(try echap(fenetre)), "a la vue d'ensemble, Echap suit son chemin")
         let autre = NSWindow(contentRect: NSRect(x: -6000, y: -6000, width: 200, height: 200), styleMask: [.titled],
                              backing: .buffered, defer: false)
         autre.isReleasedWhenClosed = false
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         #expect(!moteur.prendre(try echap(autre)) && moteur.selection != nil, "une autre fenetre")
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         #expect(!moteur.prendre(try Self.toucheEnfoncee(fenetre, "q", code: 12)) && moteur.selection != nil,
                 "une autre touche suit son chemin, une fiche ouverte ou non")
         #expect(!moteur.prendre(MoteurPieces.EvenementVue(.autre)), "ce que le moniteur ne lit pas suit son chemin")

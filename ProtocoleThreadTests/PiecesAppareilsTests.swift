@@ -49,7 +49,7 @@ struct PiecesAppareilsTests {
     /// Graphe du reseau, avec la sonde si `m` est donne.
     static func graphe(_ i: Instantane, _ m: Maillage?) throws -> GrapheReseau {
         let r = try #require(i.reseaux.first)
-        let apps = i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
+        let apps = i.appareils.map { AppareilAffiche(id: idt($0.id), nom: $0.id, partition: $0.partition, etat: .joignable) }
         return GrapheReseau(reseau: r, appareils: apps,
                             maillage: m.map { MaillageAffiche(maillage: $0, reseau: r, appareils: i.appareils) })
     }
@@ -67,12 +67,12 @@ struct PiecesAppareilsTests {
         #expect(affiche.extMacs == ["Apple TV": "E0000000000000A1", "rloc:0800": "E0000000000000B2",
                                     "rloc:0C00": "E0000000000000C3", "rloc:0401": "DEADBEEF00000001"])
         let g = try Self.graphe(i, m)
-        let detecteur = try #require(g.noeud("rloc:0401"))
+        let detecteur = try #require(g.noeud(idt("rloc:0401")))
         #expect(detecteur.extMac == "DEADBEEF00000001" && PiecesRouteurs.cle(detecteur) == "DEADBEEF00000001")
-        #expect(PiecesRouteurs.cle(try #require(g.noeud("rloc:0C00"))) == "E0000000000000C3", "routeur Thread")
-        let atv = try #require(g.noeud("Apple TV"))
+        #expect(PiecesRouteurs.cle(try #require(g.noeud(idt("rloc:0C00")))) == "E0000000000000C3", "routeur Thread")
+        let atv = try #require(g.noeud(idt("Apple TV")))
         #expect(atv.extMac == "E0000000000000A1" && PiecesRouteurs.cle(atv) == nil, "routeur de bordure annonce")
-        let inconnu = try #require(g.noeud("rloc:0800"))
+        let inconnu = try #require(g.noeud(idt("rloc:0800")))
         #expect(inconnu.bordure && inconnu.extMac == "E0000000000000B2" && PiecesRouteurs.cle(inconnu) == nil,
                 "routeur de bordure connu de la sonde seule (precision 25)")
         var p = PiecesRouteurs()
@@ -85,10 +85,10 @@ struct PiecesAppareilsTests {
         p.choisir("Cuisine", appareil: "E0000000000000A1", domicile: Self.domicile)
         #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon")
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)
-                == ["rloc:0401": "Salon", "rloc:0C00": "Bureau"])
+                == [idt("rloc:0401"): "Salon", idt("rloc:0C00"): "Bureau"])
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: "Chalet").isEmpty, "une autre maison")
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: ["Bureau", "Cuisine"], domicile: Self.domicile)
-                == ["rloc:0C00": "Bureau"], "le salon n'est plus dans Maison : le choix ne compte plus")
+                == [idt("rloc:0C00"): "Bureau"], "le salon n'est plus dans Maison : le choix ne compte plus")
         #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon", "il reste dans le fichier")
     }
 
@@ -99,21 +99,21 @@ struct PiecesAppareilsTests {
         var p = PiecesRouteurs()
         p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
         func piece(_ g: GrapheReseau, _ id: String) -> String? {
-            p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[id]
+            p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[idt(id)]
         }
         let avant = try Self.graphe(Self.instantane(), Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
         #expect(piece(avant, "rloc:0401") == "Salon")
         let ailleurs = try Self.graphe(Self.instantane(), Self.maillage(routeurs: [(3, nil, false)],
                                                                         enfants: [(0x0C02, "DEADBEEF00000001")]))
-        #expect(ailleurs.noeud("rloc:0401") == nil)
+        #expect(ailleurs.noeud(idt("rloc:0401")) == nil)
         #expect(piece(ailleurs, "rloc:0C02") == "Salon", "autre parent, autre RLOC16")
         let annonce = Self.instantane(annonces: ["DEADBEEF00000001"])
         let reconnu = try Self.graphe(annonce, Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
-        #expect(reconnu.noeud("rloc:0401") == nil && reconnu.noeud("DEADBEEF00000001")?.inconnu == false)
+        #expect(reconnu.noeud(idt("rloc:0401")) == nil && reconnu.noeud(idt("DEADBEEF00000001"))?.inconnu == false)
         #expect(piece(reconnu, "DEADBEEF00000001") == "Salon", "annonce revenue, avec la sonde")
         #expect(piece(try Self.graphe(annonce, nil), "DEADBEEF00000001") == "Salon", "sans la sonde : son nom d'hote")
         let minuscules = try Self.graphe(Self.instantane(annonces: ["deadbeef00000001"]), nil)
-        #expect(minuscules.noeud("deadbeef00000001")?.extMac == "DEADBEEF00000001")
+        #expect(minuscules.noeud(idt("deadbeef00000001"))?.extMac == "DEADBEEF00000001")
         #expect(piece(minuscules, "deadbeef00000001") == "Salon")
     }
 
@@ -123,11 +123,11 @@ struct PiecesAppareilsTests {
         p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
         let g = try Self.graphe(Self.instantane(annonces: ["DEADBEEF00000001"]),
                                 Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
-        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)["DEADBEEF00000001"]
+        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[idt("DEADBEEF00000001")]
                 == "Salon", "sans piece de Maison : le choix")
-        let avecMaison = p.piecesNoeuds(g, deMaison: ["DEADBEEF00000001": "Cuisine"], parmi: Self.pieces,
+        let avecMaison = p.piecesNoeuds(g, deMaison: [idt("DEADBEEF00000001"): "Cuisine"], parmi: Self.pieces,
                                         domicile: Self.domicile)
-        #expect(avecMaison == ["DEADBEEF00000001": "Cuisine"], "Maison l'emporte")
+        #expect(avecMaison == [idt("DEADBEEF00000001"): "Cuisine"], "Maison l'emporte")
         #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon", "le choix reste")
     }
 
@@ -138,12 +138,12 @@ struct PiecesAppareilsTests {
         let g = try Self.graphe(i, Self.maillage(routeurs: [(3, nil, false)],
                                                  enfants: [(0x0401, "DEADBEEF00000001"), (0x0402, nil)]))
         for id in ["rloc:0402", "rloc:0C00", "Eve-Motion-1A2B"] {
-            let n = try #require(g.noeud(id))
+            let n = try #require(g.noeud(idt(id)))
             #expect(n.extMac == nil && PiecesRouteurs.cle(n) == nil, "\(id)")
         }
         var p = PiecesRouteurs()
         p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
-        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == ["rloc:0401": "Salon"],
+        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == [idt("rloc:0401"): "Salon"],
                 "seul le noeud qui a une ExtMac est place")
         #expect(GrapheReseau.extMac(hote: "Eve-Motion-1A2B") == nil && GrapheReseau.extMac(hote: "C4299622387B") == nil)
         #expect(GrapheReseau.extMac(hote: "deadbeef00000001") == "DEADBEEF00000001")
@@ -232,7 +232,7 @@ struct PiecesAppareilsTests {
         p.choisir("Bureau", appareil: "deadbeef00000002", domicile: Self.domicile)
         #expect(p.choix(appareil: "DEADBEEF00000002", domicile: Self.domicile) == "Bureau", "en majuscules")
         let g = try Self.graphe(Self.instantane(), Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
-        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == ["rloc:0401": "Salon"])
+        #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == [idt("rloc:0401"): "Salon"])
         p.choisir(nil, appareil: "DEADBEEF00000001", domicile: Self.domicile)
         #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == nil)
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile).isEmpty, "Sans piece")

@@ -38,8 +38,8 @@ public struct EtatAnime: Hashable, Sendable {
     public var fk: [Double]
     /// Piece isolee (ou qui l'etait, pendant le retour).
     public var focus: Int?
-    public var survol: String?
-    public var selection: String?
+    public var survol: IdNoeud?
+    public var selection: IdNoeud?
     /// Isolement d'un etage (polissage C, section 5) : 0 a 1, lineaire ; part propre a chaque plateau, de 0 a 1. Une
     /// piece isolee isole aussi son etage, le cran « etage » du fil.
     public var se: Double
@@ -52,12 +52,12 @@ public struct EtatAnime: Hashable, Sendable {
     public var voisins: Bool
     /// Mode focus (etape 5, section 1) : l'estompement de chaque noeud, par identifiant, et de chaque lien, par paire
     /// (`MiseEnAvant.cle`), de 0 (net) a 1 (estompe) ; absent : net.
-    public var noeudsEstompes: [String: Double]
+    public var noeudsEstompes: [IdNoeud: Double]
     public var liensEstompes: [String: Double]
 
-    public init(t: Double = 0, s: Double = 0, fk: [Double], focus: Int? = nil, survol: String? = nil,
-                selection: String? = nil, se: Double = 0, ek: [Double] = [], survolEtage: Int? = nil,
-                liens: ModeLiens = .tous, voisins: Bool = true, noeudsEstompes: [String: Double] = [:],
+    public init(t: Double = 0, s: Double = 0, fk: [Double], focus: Int? = nil, survol: IdNoeud? = nil,
+                selection: IdNoeud? = nil, se: Double = 0, ek: [Double] = [], survolEtage: Int? = nil,
+                liens: ModeLiens = .tous, voisins: Bool = true, noeudsEstompes: [IdNoeud: Double] = [:],
                 liensEstompes: [String: Double] = [:]) {
         self.t = t
         self.s = s
@@ -91,8 +91,8 @@ public struct Ailleurs: Hashable, Sendable {
         case memeNiveau, dessous, dessus
     }
 
-    public var enfant: String
-    public var parent: String
+    public var enfant: IdNoeud
+    public var parent: IdNoeud
     public var piece: Int
     public var etage: Int
     public var sens: Sens
@@ -178,7 +178,7 @@ public struct SceneProjetee: Sendable {
     /// Le trace d'un lien : en mode « chemins », les chemins, les liens vers un parent, et les liens radio du noeud
     /// selectionne (en voisins, sauf si `voisins` est faux : ils sont masques) ; en mode « tous », les liens radio et les
     /// liens vers un parent, sans les chemins.
-    public static func trace(_ l: GrapheReseau.Lien, mode: ModeLiens, selection: String?,
+    public static func trace(_ l: GrapheReseau.Lien, mode: ModeLiens, selection: IdNoeud?,
                              voisins: Bool = true) -> Trace? {
         switch (l.genre, mode) {
         case (.parent, _), (.rattachement, _): .normal
@@ -196,7 +196,7 @@ public struct SceneProjetee: Sendable {
     }
 
     public struct Disque: Sendable {
-        public var noeud: String
+        public var noeud: IdNoeud
         public var centre: CGPoint
         public var rayon: Double
         /// Opacite hors du mode focus : elle decide de ce qui se clique, un noeud estompe se clique encore.
@@ -242,24 +242,24 @@ public struct SceneProjetee: Sendable {
     public var niveau: NiveauZoom = .tous
     /// Echelle k du zoom semantique : points par unite a la cible, divises par 24.
     public var echelle = 1.0
-    public var ancresNoeuds: [String: CGRect] = [:]
+    public var ancresNoeuds: [IdNoeud: CGRect] = [:]
     public var ancresPieces: [Int: CGRect] = [:]
     public var ancresEtages: [Int: CGRect] = [:]
     public var ancreMaison: CGRect?
-    public var ancresAilleurs: [String: CGRect] = [:]
+    public var ancresAilleurs: [IdNoeud: CGRect] = [:]
     /// Reperes « ailleurs » de la piece isolee.
     public var ailleurs: [Ailleurs] = []
     /// Centre de chaque noeud dans le monde, y compris ceux qui s'effacent (`fantomes`).
-    public var centresNoeuds: [String: SIMD3<Double>] = [:]
+    public var centresNoeuds: [IdNoeud: SIMD3<Double>] = [:]
     /// Noeuds qui s'effacent pendant une transition (polissage D, section 1) : absents de la scene, ils ne se cliquent
     /// pas et n'ont pas de nom.
-    public var fantomes: Set<String> = []
+    public var fantomes: Set<IdNoeud> = []
     /// Mode focus : le facteur d'opacite des noeuds estompes (et de leurs noms, et de ceux qui s'effacent), par identifiant ;
     /// absent : 1.
-    public var facteursNoeuds: [String: Double] = [:]
+    public var facteursNoeuds: [IdNoeud: Double] = [:]
 
     /// Le facteur d'opacite du mode focus d'un noeud et de son nom : 1 net.
-    public func facteur(noeud id: String) -> Double { facteursNoeuds[id] ?? 1 }
+    public func facteur(noeud id: IdNoeud) -> Double { facteursNoeuds[id] ?? 1 }
 
     public init() {}
 
@@ -312,10 +312,10 @@ public struct SceneProjetee: Sendable {
         let plateaux = Dictionary(scene.etages.indices.map { (scene.etages[$0].id, $0) },
                                   uniquingKeysWith: { a, _ in a })
         var voiles = [Double](repeating: 1, count: scene.pieces.count)
-        var mondes: [String: SIMD3<Double>] = [:]
+        var mondes: [IdNoeud: SIMD3<Double>] = [:]
         var centres = [SIMD3<Double>](repeating: .zero, count: scene.pieces.count)
         var echelles = [Double](repeating: 1, count: scene.pieces.count)
-        var apparitions: [String: Double] = [:]
+        var apparitions: [IdNoeud: Double] = [:]
         func bloc(_ i: Int, centre m: SIMD3<Double>, taille: SIMD2<Double>, f: Double, teinte n: Int, vis: Double) {
             let bx = m.x, bz = m.z
             let y0 = m.y + 0.02, y1 = y0 + h
@@ -461,7 +461,7 @@ public struct SceneProjetee: Sendable {
         // Les liens qui s'effacent, absents de la scene, entre les places affichees de leurs bouts, sous le voile de
         // leurs bouts, comme ceux qui restent : un bout de la scene, celui de sa piece ; un bout qui s'efface, celui
         // de la piece qu'il quitte si elle reste, sinon d'une piece hors du focus, et celui du plateau de son ancre.
-        func voilesBout(_ id: String) -> (piece: Double, etage: Double) {
+        func voilesBout(_ id: IdNoeud) -> (piece: Double, etage: Double) {
             if let n = scene.noeud(id) { return (voiles[n.piece], voileEtage(n.piece)) }
             guard let n = poses.noeuds[id] else { return (1 - es, 1) }
             return (pieceRestante(n).map { voiles[$0] } ?? 1 - es, voileAncres(n.ancres))
@@ -529,8 +529,8 @@ public struct SceneProjetee: Sendable {
     }
 
     /// Noeud sous un point de l'ecran : la pastille la plus proche, a `marge` points pres de son bord.
-    public func noeud(sous p: CGPoint, marge: Double = 8) -> String? {
-        var meilleur: (String, Double)?
+    public func noeud(sous p: CGPoint, marge: Double = 8) -> IdNoeud? {
+        var meilleur: (IdNoeud, Double)?
         for d in disques where d.opacite > 0.5 && !fantomes.contains(d.noeud) {
             let e = hypot(Double(d.centre.x - p.x), Double(d.centre.y - p.y))
             if e <= d.rayon + marge, e < meilleur?.1 ?? .infinity { meilleur = (d.noeud, e) }

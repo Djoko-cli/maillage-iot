@@ -21,7 +21,7 @@ struct TransitionSceneTests {
     }
 
     static func lien(_ de: String, _ vers: String) -> GrapheReseau.Lien {
-        GrapheReseau.Lien(de: de, vers: vers, genre: .radio, qualite: 2)
+        GrapheReseau.Lien(de: idt(de), vers: idt(vers), genre: .radio, qualite: 2)
     }
 
     /// Le centre d'une seule ancre posee, sa place sur x.
@@ -38,14 +38,14 @@ struct TransitionSceneTests {
         var d = PosesScene(), a = PosesScene()
         d.pieces["p"] = Self.piece(x: 0, l: 2)
         a.pieces["p"] = Self.piece(x: 10, l: 4)
-        d.noeuds["n"] = PosesScene.Noeud(ancres: [A(plateau: "a", place: SIMD2(0, 0))], decalage: .zero, rayon: 7)
-        a.noeuds["n"] = PosesScene.Noeud(ancres: [A(plateau: "a", place: SIMD2(8, 4))], decalage: SIMD2(2, -2),
+        d.noeuds[idt("n")] = PosesScene.Noeud(ancres: [A(plateau: "a", place: SIMD2(0, 0))], decalage: .zero, rayon: 7)
+        a.noeuds[idt("n")] = PosesScene.Noeud(ancres: [A(plateau: "a", place: SIMD2(8, 4))], decalage: SIMD2(2, -2),
                                          rayon: 11)
         let t = try #require(TransitionScene(de: d, vers: a, a: 100))
         #expect(TransitionScene.duree == 0.9 && TransitionScene.duree == CameraScene.dureeNiveaux)
         #expect(TransitionScene.dureeFondu == 0.3)
         for (instant, e) in [(100.0, 0.0), (100.225, 0.0625), (100.45, 0.5), (100.675, 0.9375), (100.9, 1.0)] {
-            let n = try #require(t.poses(a: instant).noeuds["n"])
+            let n = try #require(t.poses(a: instant).noeuds[idt("n")])
             #expect(n.ancres.count == 1 && simd_distance(n.ancres[0].place, SIMD2(8, 4) * e) < 1e-9, "a \(e), sa place")
             #expect(simd_distance(n.decalage, SIMD2(2, -2) * e) < 1e-9, "a \(e), sa place dans la carte")
             #expect(abs(n.rayon - (7 + 4 * e)) < 1e-9, "a \(e), le rayon de sa pastille")
@@ -67,23 +67,23 @@ struct TransitionSceneTests {
         var d = PosesScene(), a = PosesScene()
         d.pieces["part"] = Self.piece(x: 1)
         a.pieces["arrive"] = Self.piece("b", x: 2)
-        d.noeuds["n0"] = Self.noeud("a", x: 1)
-        a.noeuds["n1"] = Self.noeud("b", x: 2)
+        d.noeuds[idt("n0")] = Self.noeud("a", x: 1)
+        a.noeuds[idt("n1")] = Self.noeud("b", x: 2)
         d.liens[PosesScene.cle(Self.lien("n0", "x"))] = PosesScene.Lien(Self.lien("n0", "x"))
         a.liens[PosesScene.cle(Self.lien("n1", "x"))] = PosesScene.Lien(Self.lien("n1", "x"))
         let t = try #require(TransitionScene(de: d, vers: a, a: 0))
         let parti = PosesScene.cle(Self.lien("n0", "x")), venu = PosesScene.cle(Self.lien("n1", "x"))
         for (instant, arrivee) in [(-0.1, 0.0), (0.0, 0.0), (0.075, 0.25), (0.15, 0.5), (0.3, 1.0), (0.6, 1.0)] {
             let p = t.poses(a: instant)
-            for o in [p.pieces["arrive"]?.opacite, p.noeuds["n1"]?.opacite, p.liens[venu]?.opacite] {
+            for o in [p.pieces["arrive"]?.opacite, p.noeuds[idt("n1")]?.opacite, p.liens[venu]?.opacite] {
                 #expect(abs((o ?? -1) - arrivee) < 1e-9, "a \(instant) s, ce qui arrive")
             }
-            for o in [p.pieces["part"]?.opacite, p.noeuds["n0"]?.opacite, p.liens[parti]?.opacite] {
+            for o in [p.pieces["part"]?.opacite, p.noeuds[idt("n0")]?.opacite, p.liens[parti]?.opacite] {
                 #expect(abs((o ?? -1) - (1 - arrivee)) < 1e-9, "a \(instant) s, ce qui part")
             }
             #expect(Self.x(p.pieces["part"]) == 1 && Self.x(p.pieces["arrive"]) == 2, "a sa place")
-            #expect(p.noeuds["n0"]?.ancres == d.noeuds["n0"]?.ancres)
-            #expect(p.noeuds["n1"]?.ancres == a.noeuds["n1"]?.ancres)
+            #expect(p.noeuds[idt("n0")]?.ancres == d.noeuds[idt("n0")]?.ancres)
+            #expect(p.noeuds[idt("n1")]?.ancres == a.noeuds[idt("n1")]?.ancres)
         }
     }
 
@@ -121,11 +121,11 @@ struct TransitionSceneTests {
         p1.pieces["arrive"] = Self.piece(x: 7)
         p2.pieces["p"] = Self.piece(x: -10)
         p2.pieces["arrive"] = Self.piece(x: 7)
-        p0.noeuds["n"] = Self.noeud("a", x: 0)
-        p1.noeuds["n"] = Self.noeud("b", x: 4)
-        p2.noeuds["n"] = Self.noeud("b", x: -4)
-        p1.noeuds["nouveau"] = Self.noeud("b", x: 2)
-        p2.noeuds["nouveau"] = Self.noeud("b", x: 2)
+        p0.noeuds[idt("n")] = Self.noeud("a", x: 0)
+        p1.noeuds[idt("n")] = Self.noeud("b", x: 4)
+        p2.noeuds[idt("n")] = Self.noeud("b", x: -4)
+        p1.noeuds[idt("nouveau")] = Self.noeud("b", x: 2)
+        p2.noeuds[idt("nouveau")] = Self.noeud("b", x: 2)
         let parti = PosesScene.cle(Self.lien("n", "x")), venu = PosesScene.cle(Self.lien("nouveau", "x"))
         p0.liens[parti] = PosesScene.Lien(Self.lien("n", "x"))
         p1.liens[venu] = PosesScene.Lien(Self.lien("nouveau", "x"))
@@ -139,21 +139,21 @@ struct TransitionSceneTests {
         }
         #expect(abs((avant.pieces["arrive"]?.opacite ?? -1) - 1.0 / 3) < 1e-9 && (Self.x(avant.pieces["p"]) ?? 0) > 0)
         for k in ["n", "nouveau"] {
-            #expect(apres.noeuds[k] == avant.noeuds[k], "noeud \(k) : pas de saut")
+            #expect(apres.noeuds[idt(k)] == avant.noeuds[idt(k)], "noeud \(k) : pas de saut")
         }
         for k in [parti, venu] {
             #expect(apres.liens[k] == avant.liens[k], "lien \(k) : pas de saut")
         }
-        #expect(avant.noeuds["n"]?.ancres.map(\.plateau) == ["a", "b"], "en route d'un plateau a l'autre")
-        #expect(abs((avant.noeuds["nouveau"]?.opacite ?? -1) - 1.0 / 3) < 1e-9)
+        #expect(avant.noeuds[idt("n")]?.ancres.map(\.plateau) == ["a", "b"], "en route d'un plateau a l'autre")
+        #expect(abs((avant.noeuds[idt("nouveau")]?.opacite ?? -1) - 1.0 / 3) < 1e-9)
         #expect(abs((avant.liens[venu]?.opacite ?? -1) - 1.0 / 3) < 1e-9)
         #expect(abs((avant.liens[parti]?.opacite ?? -1) - 2.0 / 3) < 1e-9)
         for instant in [0.1, 0.3, 0.5, 0.8, 1.0] {
-            let ancres = try #require(t2.poses(a: instant).noeuds["n"]).ancres
+            let ancres = try #require(t2.poses(a: instant).noeuds[idt("n")]).ancres
             #expect(ancres.count <= 2 && Set(ancres.map(\.plateau)).count == ancres.count,
                     "jamais plus d'ancres que de plateaux")
         }
-        #expect(t2.poses(a: 1).noeuds["n"] == p2.noeuds["n"] && t2.poses(a: 0.4).liens[venu]?.opacite == 1)
+        #expect(t2.poses(a: 1).noeuds[idt("n")] == p2.noeuds[idt("n")] && t2.poses(a: 0.4).liens[venu]?.opacite == 1)
         #expect(t2.poses(a: 0.4).liens[parti]?.opacite == 0, "le lien qui s'effacait finit de s'effacer")
         #expect(t2.poses(a: 1).pieces["p"] == p2.pieces["p"] && t2.poses(a: 0.4).pieces["arrive"]?.opacite == 1)
         #expect(t2.poses(a: 0.4).pieces["part"]?.opacite == 0, "ce qui s'effacait finit de s'effacer")
@@ -167,14 +167,14 @@ struct TransitionSceneTests {
         d.pieces["q"] = Self.piece(x: 5)
         let a = d
         d.pieces["part"] = Self.piece(x: 1)
-        d.noeuds["n"] = Self.noeud("a", x: 1)
+        d.noeuds[idt("n")] = Self.noeud("a", x: 1)
         d.liens["l"] = PosesScene.Lien(Self.lien("n", "x"))
         let t = try #require(TransitionScene(de: d, vers: a, a: 0))
         let pendant = a.recouvertes(par: t.poses(a: 0.1))
         #expect(pendant.pieces["part"]?.opacite ?? 0 > 0, "il s'efface encore")
         #expect(TransitionScene(de: pendant, vers: a, a: 0.1) != nil)
         let efface = a.recouvertes(par: t.poses(a: 0.5))
-        #expect(efface.pieces["part"]?.opacite == 0 && efface.noeuds["n"]?.opacite == 0)
+        #expect(efface.pieces["part"]?.opacite == 0 && efface.noeuds[idt("n")]?.opacite == 0)
         #expect(efface.liens["l"]?.opacite == 0)
         #expect(TransitionScene(de: efface, vers: a, a: 0.5) == nil, "plus rien ne change")
     }
@@ -187,14 +187,14 @@ struct TransitionSceneTests {
         d.pieces["p"] = Self.piece(x: 1)
         d.pieces["p"]?.opacite = 0
         a.pieces["p"] = Self.piece(x: 5)
-        d.noeuds["n"] = Self.noeud("a", x: 1)
-        d.noeuds["n"]?.opacite = 0
-        a.noeuds["n"] = Self.noeud("a", x: 5)
+        d.noeuds[idt("n")] = Self.noeud("a", x: 1)
+        d.noeuds[idt("n")]?.opacite = 0
+        a.noeuds[idt("n")] = Self.noeud("a", x: 5)
         let t = try #require(TransitionScene(de: d, vers: a, a: 0), "il revient : un changement")
         let mi = t.poses(a: 0.45)
         #expect(Self.x(mi.pieces["p"]) == 3 && mi.pieces["p"]?.opacite == 1, "la piece, depuis sa derniere place")
-        #expect(mi.noeuds["n"]?.ancres.map(\.place.x) == [3] && mi.noeuds["n"]?.opacite == 1, "le noeud aussi")
-        #expect(t.poses(a: 0).pieces["p"]?.opacite == 0 && t.poses(a: 0).noeuds["n"]?.opacite == 0, "en fondu")
+        #expect(mi.noeuds[idt("n")]?.ancres.map(\.place.x) == [3] && mi.noeuds[idt("n")]?.opacite == 1, "le noeud aussi")
+        #expect(t.poses(a: 0).pieces["p"]?.opacite == 0 && t.poses(a: 0).noeuds[idt("n")]?.opacite == 0, "en fondu")
         var q = PosesScene()
         q.pieces["q"] = Self.piece(x: 5)
         for genre in ["piece", "noeud", "lien"] {
@@ -202,7 +202,7 @@ struct TransitionSceneTests {
             switch genre {
             case "piece": presque.pieces["part"] = PosesScene.Piece(ancres: [A(plateau: "a", place: .zero)],
                                                                    taille: SIMD2(2, 2), teinte: 3, opacite: 1e-9)
-            case "noeud": presque.noeuds["n"] = PosesScene.Noeud(ancres: [A(plateau: "a", place: .zero)],
+            case "noeud": presque.noeuds[idt("n")] = PosesScene.Noeud(ancres: [A(plateau: "a", place: .zero)],
                                                                  decalage: .zero, rayon: 7, opacite: 1e-9)
             default: presque.liens["l"] = PosesScene.Lien(Self.lien("n", "x"), opacite: 1e-9)
             }
@@ -252,14 +252,14 @@ struct TransitionSceneTests {
         var d = PosesScene(), a = PosesScene()
         d.pieces["p"] = Self.piece(x: 0)
         a.pieces["p"] = Self.piece(x: 4)
-        d.noeuds["n"] = Self.noeud("a", x: 0)
-        a.noeuds["n"] = Self.noeud("a", x: 4)
+        d.noeuds[idt("n")] = Self.noeud("a", x: 0)
+        a.noeuds[idt("n")] = Self.noeud("a", x: 4)
         d.pieces["q"] = Self.piece(x: 1)
         a.pieces["q"] = Self.piece(x: 2)
         var t = try #require(TransitionScene(de: d, vers: a, a: 0))
-        t.oublier(pieces: ["p"], noeuds: ["n"])
+        t.oublier(pieces: ["p"], noeuds: [idt("n")])
         let p = t.poses(a: 0.45)
-        #expect(p.pieces["p"] == nil && p.noeuds["n"] == nil && p.pieces["q"] != nil)
+        #expect(p.pieces["p"] == nil && p.noeuds[idt("n")] == nil && p.pieces["q"] != nil)
     }
 
     /// Les poses d'une scene posee : chaque piece a sa place, sur son plateau, de la taille de sa carte, opaque ;
@@ -272,8 +272,8 @@ struct TransitionSceneTests {
         let pose = try #require(p.pieces["piece:Bureau"])
         #expect(pose.ancres == [A(plateau: "zone:Étage", place: d.positions[bureau])] && pose.opacite == 1)
         #expect(pose.taille == SIMD2(c[bureau].largeur, c[bureau].profondeur) && pose.teinte == s.pieces[bureau].teinte)
-        let r = try #require(s.pieces[bureau].noeuds.firstIndex(of: "E000000000000003"))
-        let n = try #require(p.noeuds["E000000000000003"])
+        let r = try #require(s.pieces[bureau].noeuds.firstIndex(of: idt("E000000000000003")))
+        let n = try #require(p.noeuds[idt("E000000000000003")])
         #expect(n.ancres == pose.ancres && n.decalage == c[bureau].places[r] && n.rayon == 7)
     }
 
@@ -296,7 +296,7 @@ struct TransitionSceneTests {
         let arrivee = PosesScene(scene: s, cartes: c, positions: d.positions)
         var depart = arrivee
         depart.pieces["piece:Bureau"]?.ancres[0].place.x -= 2
-        depart.noeuds["E000000000000003"] = PosesScene.Noeud(
+        depart.noeuds[idt("E000000000000003")] = PosesScene.Noeud(
             ancres: [A(plateau: "zone:Rez-de-chaussée", place: d.positions[salon])], decalage: .zero, rayon: 7)
         let t = try #require(TransitionScene(de: depart, vers: arrivee, a: 0))
         let mi = projeter(t.poses(a: 0.45))
@@ -305,21 +305,21 @@ struct TransitionSceneTests {
         let w0 = SIMD3(g.centrePlateau(0, 1).x + d.positions[salon].x,
                        g.centrePlateau(0, 1).y + 0.1 + GeometrieMaison.hauteurBloc(1) / 2,
                        g.centrePlateau(0, 1).z + d.positions[salon].y)
-        let w1 = try #require(sans.centresNoeuds["E000000000000003"])
-        let w = try #require(mi.centresNoeuds["E000000000000003"])
+        let w1 = try #require(sans.centresNoeuds[idt("E000000000000003")])
+        let w = try #require(mi.centresNoeuds[idt("E000000000000003")])
         #expect(simd_distance(w, (w0 + w1) / 2) < 1e-9 && w1.y - w0.y > 4, "d'un etage a l'autre, en ligne droite")
-        let wQuart = try #require(projeter(t.poses(a: 0.225)).centresNoeuds["E000000000000003"])
+        let wQuart = try #require(projeter(t.poses(a: 0.225)).centresNoeuds[idt("E000000000000003")])
         #expect(simd_distance(wQuart, w0 + (w1 - w0) / 16) < 1e-9, "a 6,25 % du chemin, du cote du depart")
-        let e02 = try #require(mi.centresNoeuds["E000000000000002"])
-        let e02Posee = try #require(sans.centresNoeuds["E000000000000002"])
+        let e02 = try #require(mi.centresNoeuds[idt("E000000000000002")])
+        let e02Posee = try #require(sans.centresNoeuds[idt("E000000000000002")])
         #expect(abs((e02Posee.x - e02.x) - 1) < 1e-9 && abs(e02Posee.z - e02.z) < 1e-9,
                 "le bureau, a mi-chemin, 1 unite avant sa place ; un noeud du bureau suit sa piece")
         // Un fondu : la pastille et le bloc a l'opacite de la pose ; les liens aussi.
         var f = PosesScene()
         f.pieces["piece:Salon"] = arrivee.pieces["piece:Salon"]
         f.pieces["piece:Salon"]?.opacite = 0.5
-        f.noeuds["HomePod"] = arrivee.noeuds["HomePod"]
-        f.noeuds["HomePod"]?.opacite = 0.25
+        f.noeuds[idt("HomePod")] = arrivee.noeuds[idt("HomePod")]
+        f.noeuds[idt("HomePod")]?.opacite = 0.25
         let radio = try #require(s.liens.first { $0.genre == .radio })
         f.liens[PosesScene.cle(radio)] = PosesScene.Lien(radio, opacite: 0.5)
         for l in s.liens where l.genre != .radio { f.liens[PosesScene.cle(l)] = PosesScene.Lien(l, opacite: 0.5) }
@@ -328,7 +328,7 @@ struct TransitionSceneTests {
         let blocSans = try #require(sans.blocs.first { $0.piece == salon })
         #expect(abs(blocSalon.opaciteVerre - blocSans.opaciteVerre * 0.5) < 1e-12)
         #expect(abs(blocSalon.opaciteAretes - 0.375) < 1e-12)
-        #expect(fondu.disques.first { $0.noeud == "HomePod" }?.opacite == 0.25)
+        #expect(fondu.disques.first { $0.noeud == idt("HomePod") }?.opacite == 0.25)
         #expect(fondu.liensRouteurs.contains { abs($0.opacite - 0.475) < 1e-12 })
         #expect(fondu.liensRouteurs.count == sans.liensRouteurs.count)
         // Les liens enfants et de rattachement, de meme : la moitie de leur opacite, 0,28 posee.
@@ -353,22 +353,22 @@ struct TransitionSceneTests {
         }
         let sans = projeter(PosesScene()), posee = projeter(PosesScene(scene: s, cartes: c, positions: d.positions))
         let bureau = try SceneProjeteeTests.indice(s, "Bureau")
-        let r = try #require(s.pieces[bureau].noeuds.firstIndex(of: "E000000000000003"))
+        let r = try #require(s.pieces[bureau].noeuds.firstIndex(of: idt("E000000000000003")))
         let carte = c[bureau].places[r], centre = g.centrePlateau(s.pieces[bureau].etage, t)
         let f = 1 + 0.3 * CameraScene.rampe(fk), h = GeometrieMaison.hauteurBloc(t)
         #expect(simd_length(carte) > 0.1, "une place decalee, que l'echelle deplace")
         let attendu = SIMD3(centre.x + d.positions[bureau].x + carte.x * f, centre.y + 0.1 + h * t / 2,
                             centre.z + d.positions[bureau].y + carte.y * f)
         for (nom, p) in [("sans pose", sans), ("posee", posee)] {
-            let w = try #require(p.centresNoeuds["E000000000000003"])
+            let w = try #require(p.centresNoeuds[idt("E000000000000003")])
             #expect(simd_distance(w, attendu) < 1e-9, "\(nom) : a sa place")
         }
         // Un noeud en route, a l'instant de son depart : il est la ou serait le noeud pose.
         var depart = PosesScene(scene: s, cartes: c, positions: d.positions)
-        depart.noeuds["E000000000000003"]?.decalage += SIMD2(1, 1)
+        depart.noeuds[idt("E000000000000003")]?.decalage += SIMD2(1, 1)
         let posees = PosesScene(scene: s, cartes: c, positions: d.positions)
         let transition = try #require(TransitionScene(de: depart, vers: posees, a: 0))
-        let milieu = try #require(projeter(transition.poses(a: 0.45)).centresNoeuds["E000000000000003"])
+        let milieu = try #require(projeter(transition.poses(a: 0.45)).centresNoeuds[idt("E000000000000003")])
         #expect(simd_distance(milieu, attendu + SIMD3(0.5 * f, 0, 0.5 * f)) < 1e-9, "a mi-chemin, a l'echelle f")
     }
 
@@ -387,11 +387,11 @@ struct TransitionSceneTests {
         f.pieces["piece:Garage"] = PosesScene.Piece(ancres: [A(plateau: "zone:Étage", place: .zero)],
                                                     taille: SIMD2(3, 3), teinte: 2, opacite: 0.6)
         for (id, x) in [("E000000000000009", 1.0), ("E00000000000000A", -1.0)] {
-            f.noeuds[id] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(x, 0))], decalage: .zero,
+            f.noeuds[idt(id)] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(x, 0))], decalage: .zero,
                                             rayon: 7, opacite: 0.8)
         }
-        let radio = GrapheReseau.Lien(de: "E000000000000009", vers: "E00000000000000A", genre: .radio, qualite: 1)
-        let enfant = GrapheReseau.Lien(de: "E00000000000000A", vers: "E000000000000003", genre: .parent, qualite: nil)
+        let radio = GrapheReseau.Lien(de: idt("E000000000000009"), vers: idt("E00000000000000A"), genre: .radio, qualite: 1)
+        let enfant = GrapheReseau.Lien(de: idt("E00000000000000A"), vers: idt("E000000000000003"), genre: .parent, qualite: nil)
         f.liens[PosesScene.cle(radio)] = PosesScene.Lien(radio, opacite: 0.4)
         f.liens[PosesScene.cle(enfant)] = PosesScene.Lien(enfant, opacite: 0.4)
         /// Le facteur de chacun, sur son fondu : le bloc, les deux pastilles, le lien radio, le lien enfant.
@@ -428,7 +428,7 @@ struct TransitionSceneTests {
         #expect(posees.noeuds.allSatisfy { k, p in p.piece == s.noeud(k).map { s.pieces[$0.piece].id } },
                 "une pose de noeud porte la cle de sa piece")
         var duSalon = f
-        for id in ["E000000000000009", "E00000000000000A"] { duSalon.noeuds[id]?.piece = s.pieces[salon].id }
+        for id in ["E000000000000009", "E00000000000000A"] { duSalon.noeuds[idt(id)]?.piece = s.pieces[salon].id }
         let partantes = try facteurs(isole, duSalon)
         #expect(egaux(partantes, [0.15, 1, 1, 1, 1]), "elles quittent le salon isole : \(partantes)")
     }
@@ -445,15 +445,15 @@ struct TransitionSceneTests {
                                                     taille: SIMD2(3, 3), teinte: 2, opacite: 0.6)
         f.pieces["piece:Ailleurs"] = PosesScene.Piece(ancres: [A(plateau: "zone:Absente", place: .zero)],
                                                       taille: SIMD2(3, 3), teinte: 2, opacite: 0.6)
-        f.noeuds["E000000000000009"] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(0, 0))],
+        f.noeuds[idt("E000000000000009")] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(0, 0))],
                                                         decalage: .zero, rayon: 7, opacite: 0.8)
-        let parti = GrapheReseau.Lien(de: "E000000000000009", vers: "HomePod", genre: .radio, qualite: 1)
+        let parti = GrapheReseau.Lien(de: idt("E000000000000009"), vers: idt("HomePod"), genre: .radio, qualite: 1)
         f.liens[PosesScene.cle(parti)] = PosesScene.Lien(parti, opacite: 0.4)
-        let partiEnfant = GrapheReseau.Lien(de: "E000000000000009", vers: "HomePod", genre: .parent, qualite: nil)
+        let partiEnfant = GrapheReseau.Lien(de: idt("E000000000000009"), vers: idt("HomePod"), genre: .parent, qualite: nil)
         f.liens[PosesScene.cle(partiEnfant)] = PosesScene.Lien(partiEnfant, opacite: 0.4)
         // Un noeud qui s'efface a la place et au rayon d'un noeud pose : meme centre, meme pastille.
-        f.noeuds["E000000000000008"] = PosesScene(scene: s, cartes: c, positions: d.positions).noeuds["HomePod"]
-        f.noeuds["E000000000000008"]?.opacite = 0.8
+        f.noeuds[idt("E000000000000008")] = PosesScene(scene: s, cartes: c, positions: d.positions).noeuds[idt("HomePod")]
+        f.noeuds[idt("E000000000000008")]?.opacite = 0.8
         let sans = SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e, orbite: o,
                                  cadre: SceneProjeteeTests.cadre)
         let p = SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e, orbite: o,
@@ -463,26 +463,26 @@ struct TransitionSceneTests {
         #expect(p.ancresPieces.count == sans.ancresPieces.count)
         let dessus = SceneProjetee.boite(fantome.faces[0].points)
         #expect(p.piece(sous: CGPoint(x: dessus.midX, y: dessus.midY)) != -1)
-        let disque = try #require(p.disques.first { $0.noeud == "E000000000000009" })
-        #expect(disque.opacite == 0.8 && p.fantomes.contains("E000000000000009"))
-        #expect(p.ancresNoeuds["E000000000000009"] == nil)
-        #expect(p.noeud(sous: disque.centre, marge: 0) != "E000000000000009")
+        let disque = try #require(p.disques.first { $0.noeud == idt("E000000000000009") })
+        #expect(disque.opacite == 0.8 && p.fantomes.contains(idt("E000000000000009")))
+        #expect(p.ancresNoeuds[idt("E000000000000009")] == nil)
+        #expect(p.noeud(sous: disque.centre, marge: 0) != idt("E000000000000009"))
         #expect(p.liensRouteurs.count == sans.liensRouteurs.count + 1)
         #expect(p.liensRouteurs.contains { abs($0.opacite - 0.38) < 1e-12 }, "0,95 x 0,4")
         #expect(p.liensEnfants.count == sans.liensEnfants.count + 1)
         #expect(p.liensEnfants.contains { abs($0.opacite - 0.112) < 1e-12 }, "0,28 x 0,4")
-        let jumeau = try #require(p.disques.first { $0.noeud == "E000000000000008" })
-        let modele = try #require(p.disques.first { $0.noeud == "HomePod" })
-        #expect(p.centresNoeuds["E000000000000008"] == p.centresNoeuds["HomePod"] && jumeau.centre == modele.centre)
-        #expect(jumeau.rayon == modele.rayon && p.fantomes == ["E000000000000009", "E000000000000008"])
+        let jumeau = try #require(p.disques.first { $0.noeud == idt("E000000000000008") })
+        let modele = try #require(p.disques.first { $0.noeud == idt("HomePod") })
+        #expect(p.centresNoeuds[idt("E000000000000008")] == p.centresNoeuds[idt("HomePod")] && jumeau.centre == modele.centre)
+        #expect(jumeau.rayon == modele.rayon && p.fantomes == [idt("E000000000000009"), idt("E000000000000008")])
         // Sous le mode focus, un noeud qui s'efface s'estompe comme les autres (relecture de Maillage Thread).
         #expect(jumeau.focus == 1 && disque.focus == 1)
         let estompes = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count),
-                                 noeudsEstompes: ["E000000000000009": 1, "E000000000000008": 0.5])
+                                 noeudsEstompes: [idt("E000000000000009"): 1, idt("E000000000000008"): 0.5])
         let q = SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: estompes, orbite: o,
                               cadre: SceneProjeteeTests.cadre, poses: f)
-        let flou = try #require(q.disques.first { $0.noeud == "E000000000000009" })
-        let flou2 = try #require(q.disques.first { $0.noeud == "E000000000000008" })
+        let flou = try #require(q.disques.first { $0.noeud == idt("E000000000000009") })
+        let flou2 = try #require(q.disques.first { $0.noeud == idt("E000000000000008") })
         #expect(flou.focus == MiseEnAvant.opaciteEstompee && flou2.focus == MiseEnAvant.facteur(0.5))
         #expect(flou.opacite == disque.opacite, "le focus ne change pas l'opacite du fondu")
     }

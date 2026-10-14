@@ -69,7 +69,7 @@ extension MoteurPieces {
     }
 
     /// Le dessin des pastilles : celles de la scene, et celles qui s'effacent, de la scene d'avant.
-    private var apparences: [String: DessinNoeud.Apparence] {
+    private var apparences: [IdNoeud: DessinNoeud.Apparence] {
         let a = entree?.apparences ?? [:]
         return apparencesParties.isEmpty ? a : a.merging(apparencesParties) { x, _ in x }
     }

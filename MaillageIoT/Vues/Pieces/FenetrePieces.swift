@@ -59,11 +59,17 @@ struct FenetrePieces: View {
     /// `fichierPlaces` : `positions-pieces.json` (`fichierPlaces(demo:sousTests:)`) ; `fichierPieces` :
     /// `pieces-routeurs.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
     /// fichier, celles de depart, en memoire (la demo : `NomsDemo.places()`).
-    /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran).
+    /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran). Forme texte d'un `IdNoeud`
+    /// (`thread:<cle>`) ; une cle brute, sans protocole reconnu, est une cle de Thread.
+    static func selection(argument: String?) -> IdNoeud? {
+        guard let argument, !argument.isEmpty else { return nil }
+        return IdNoeud(texte: argument) ?? IdNoeud(.thread, argument)
+    }
+
     init(fichierPlaces: URL?, fichierPieces: URL? = nil, places: PlacesGardees? = nil) {
         _moteur = State(initialValue: MoteurPieces(troisD: UserDefaults.standard.bool(forKey: Self.cleMode),
                                                    fichierPlaces: fichierPlaces,
-                                                   selection: UserDefaults.standard.string(forKey: "selection"),
+                                                   selection: Self.selection(argument: UserDefaults.standard.string(forKey: "selection")),
                                                    places: places))
         _piecesChoisies = State(initialValue: PiecesChoisies(fichier: fichierPieces))
     }

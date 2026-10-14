@@ -5,10 +5,10 @@ import Testing
 import ProtocoleZigbee
 
 /// Resultat de reference du rejeu (spec de Maillage IoT, section 6.1, etape 0) : la scene de la vue par pieces en
-/// mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/zigbee-demo.json`. Dans
-/// l'app de transition, les identifiants sont bruts et la scene se compare telle quelle ; dans l'app unique (plan de
-/// l'etape 3a, tache 9), ce test passera dans `MaillageIoTTests` et comparera la sous-scene Zigbee de la scene reunie,
-/// prefixe `zigbee:` retire (le fichier de reference, lui, ne change pas). La demo ne lit pas l'horloge du Mac (dates fixes de
+/// mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/zigbee-demo.json`. Les
+/// identifiants sont compares par leur cle (`IdNoeud.cle`), sans le protocole ; dans l'app unique (plan de l'etape 3a,
+/// tache 9), ce test passera dans `MaillageIoTTests` et comparera la sous-scene Zigbee de la scene reunie (le fichier
+/// de reference, lui, ne change pas). La demo ne lit pas l'horloge du Mac (dates fixes de
 /// `MaillageDemoZigbee`, `Surveillance.maintenant` = la fin de la demo). Fichier absent : le test l'ecrit dans son dossier
 /// temporaire (bac a sable) et echoue une fois ; le copier, le controler (controle d'anonymisation), puis relancer.
 @MainActor
@@ -65,28 +65,28 @@ struct ReferenceRejeuTests {
         let sc = e.scene
         let pieces = sc.pieces.map(\.nom.cle)
         let etages = sc.etages.map(\.nom.cle)
-        return Reference(
-            domicile: e.domicile,
-            noeuds: e.graphe.noeuds.map {
-                .init(id: $0.id, genre: $0.genre.rawValue, partition: $0.partition, routeur: $0.routeur,
-                      bordure: $0.bordure, inconnu: $0.inconnu, sonde: $0.id == e.maillage?.sonde, extMac: $0.extMac,
-                      etat: e.appareils[$0.id]?.etat.rawValue, endormi: e.appareils[$0.id]?.endormi ?? false)
-            }.sorted { $0.id < $1.id },
-            liens: e.graphe.liens.map {
-                .init(de: $0.de, vers: $0.vers, genre: $0.genre.rawValue, qualite: $0.qualite, suppose: $0.suppose)
-            }.sorted { ($0.de, $0.vers, $0.genre) < ($1.de, $1.vers, $1.genre) },
-            scene: sc.noeuds.map {
-                .init(id: $0.id, libelle: $0.libelle, genre: $0.genre.rawValue,
-                      piece: pieces.indices.contains($0.piece) ? pieces[$0.piece] : "",
-                      chef: $0.chef, pile: $0.pile, rang: $0.rang, rayon: ($0.rayon * 10_000).rounded() / 10_000)
-            }.sorted { $0.id < $1.id },
-            pieces: sc.pieces.map {
-                .init(cle: $0.nom.cle, etage: etages.indices.contains($0.etage) ? etages[$0.etage] : "",
-                      teinte: $0.teinte, noeuds: $0.noeuds.sorted())
-            }.sorted { $0.cle < $1.cle },
-            etages: sc.etages.map {
-                .init(cle: $0.nom.cle, niveau: $0.niveau, principal: $0.principal, dehors: $0.dehors)
-            }.sorted { $0.cle < $1.cle })
+        // Les identifiants sont ecrits par leur cle : la reference ne porte pas le protocole.
+        let noeuds: [Reference.Noeud] = e.graphe.noeuds.map {
+            .init(id: $0.id.cle, genre: $0.genre.rawValue, partition: $0.partition, routeur: $0.routeur,
+                  bordure: $0.bordure, inconnu: $0.inconnu, sonde: $0.id.cle == e.maillage?.sonde, extMac: $0.extMac,
+                  etat: e.appareils[$0.id]?.etat.rawValue, endormi: e.appareils[$0.id]?.endormi ?? false)
+        }.sorted { $0.id < $1.id }
+        let liens: [Reference.Lien] = e.graphe.liens.map {
+            .init(de: $0.de.cle, vers: $0.vers.cle, genre: $0.genre.rawValue, qualite: $0.qualite, suppose: $0.suppose)
+        }.sorted { ($0.de, $0.vers, $0.genre) < ($1.de, $1.vers, $1.genre) }
+        let scene: [Reference.NoeudScene] = sc.noeuds.map {
+            .init(id: $0.id.cle, libelle: $0.libelle, genre: $0.genre.rawValue,
+                  piece: pieces.indices.contains($0.piece) ? pieces[$0.piece] : "",
+                  chef: $0.chef, pile: $0.pile, rang: $0.rang, rayon: ($0.rayon * 10_000).rounded() / 10_000)
+        }.sorted { $0.id < $1.id }
+        let cartes: [Reference.Piece] = sc.pieces.map {
+            .init(cle: $0.nom.cle, etage: etages.indices.contains($0.etage) ? etages[$0.etage] : "",
+                  teinte: $0.teinte, noeuds: $0.noeuds.map(\.cle).sorted())
+        }.sorted { $0.cle < $1.cle }
+        let plateaux: [Reference.Etage] = sc.etages.map {
+            .init(cle: $0.nom.cle, niveau: $0.niveau, principal: $0.principal, dehors: $0.dehors)
+        }.sorted { $0.cle < $1.cle }
+        return Reference(domicile: e.domicile, noeuds: noeuds, liens: liens, scene: scene, pieces: cartes, etages: plateaux)
     }
 
     static func json(_ r: Reference) throws -> Data {

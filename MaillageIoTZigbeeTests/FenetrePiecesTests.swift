@@ -222,7 +222,7 @@ struct FenetrePiecesTests {
                 try await auDessusDeLaPile(moteur, taille, "legende ouverte, sans fiche")
             }
             for id in [NomsDemo.Ieee.pont, NomsDemo.Ieee.telecommandeChambre] {
-                moteur.selection = id
+                moteur.selection = idz(id)
                 try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil }
                 try await auDessusDeLaPile(moteur, taille, "legende \(repliee ? "repliee" : "ouverte"), fiche de \(id)")
             }
@@ -235,7 +235,7 @@ struct FenetrePiecesTests {
         let (autre, m) = try Self.fenetre(historique, taille: grande, preferences: p)
         defer { Self.fermer(autre) }
         try await MoteurPiecesTests.attendre { m.cadresInterface["legende"] != nil && m.pret }
-        m.selection = JournalMaillageTests.appareil
+        m.selection = idz(JournalMaillageTests.appareil)
         try await MoteurPiecesTests.attendre { m.cadresInterface["fiche"].map { $0.height > 250 } == true }
         let fiche = try #require(m.cadresInterface["fiche"])
         #expect(fiche.height > 250, "la fiche et ses courbes : \(fiche.height) pt")
@@ -259,7 +259,7 @@ struct FenetrePiecesTests {
         defer { Self.fermer(fenetre) }
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["legende"] != nil }
         let ouverte = try #require(moteur.cadresInterface["legende"])
-        moteur.selection = NomsDemo.Ieee.detecteurEntree
+        moteur.selection = idz(NomsDemo.Ieee.detecteurEntree)
         // La fiche arrivee : son cadre suit son glissement, puis s'arrete au bas de la vue.
         try await MoteurPiecesTests.attendre {
             moteur.cadresInterface["fiche"].map { abs($0.maxY - (taille.height - FenetrePieces.bord)) < 0.5 } == true
@@ -307,7 +307,7 @@ struct FenetrePiecesTests {
             // La zone de la grille : la legende telle que Djoko l'a laissee, ouverte (sa hauteur mesuree) ou repliee (30 pt).
             let zone = FenetrePieces.margeBas(pile: repliee ? nil : moteur.cadresInterface["legende"]?.height)
             #expect(moteur.basGrille == zone, "\(id), \(taille) : la legende, sans fiche")
-            moteur.selection = id
+            moteur.selection = idz(id)
             try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil }
             try await Task.sleep(for: .milliseconds(400))
             let ouverte = try #require(moteur.cadresInterface["legende"], "la legende reste, repliee ou non").height
@@ -360,7 +360,7 @@ struct FenetrePiecesTests {
         try await MoteurPiecesTests.attendre { (moteur.cadresInterface["legende"]?.height ?? 0) > 150 }
         #expect((moteur.cadresInterface["legende"]?.height ?? 0) > 150, "ouverte d'un clic")
         let ouverte = try #require(moteur.cadresInterface["legende"]).height
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         try await Task.sleep(for: .milliseconds(1000))
         #expect((moteur.cadresInterface["legende"]?.height ?? 999) < 40,
                 "sous la fiche, dans la plus petite fenetre, la legende se replie : scene de \(moteur.cadre.height) pt")
@@ -427,7 +427,7 @@ struct FenetrePiecesTests {
         #expect(abs(moteur.marges.bas - ouverte) <= 1, "\(cas) : la marge du bas suit la legende ouverte (\(moteur.marges.bas), \(ouverte), \(moteur.cadresInterface))")
 
         // Fiche ouverte : la legende reste au bord, au-dessus de la fiche.
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         try await MoteurPiecesTests.attendre {
             moteur.cadresInterface["fiche"].map { f in moteur.cadresInterface["legende"].map { $0.maxY <= f.minY } == true } == true
         }
@@ -618,7 +618,7 @@ struct FenetrePiecesTests {
         #expect(abs(ouverture - Apparition.dureeLegende) < 0.07, "ouverture par clic : \(ouverture) s")
         try await Task.sleep(for: .milliseconds(600))
         // La fiche, elle, garde ses 0,3 s.
-        moteur.selection = NomsDemo.Ieee.pont
+        moteur.selection = idz(NomsDemo.Ieee.pont)
         let fiche = try #require(try await Self.dureeDuRecadrage(moteur))
         #expect(abs(fiche - Apparition.duree) < 0.07, "fiche : \(fiche) s")
     }
@@ -689,7 +689,7 @@ struct FenetrePiecesTests {
         let legende = try #require(moteur.cadresInterface["legende"], "la legende est ouverte")
 
         // La fiche parait : la legende reste, au-dessus d'elle, et la vue se recadre par un fondu.
-        moteur.selection = NomsDemo.Ieee.detecteurEntree
+        moteur.selection = idz(NomsDemo.Ieee.detecteurEntree)
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil && moteur.margesEnRoute }
         #expect(moteur.margesEnRoute && moteur.margesEnFondu, "la vue se recadre par un fondu")
         let fiche = try #require(moteur.cadresInterface["fiche"])
@@ -706,14 +706,14 @@ struct FenetrePiecesTests {
         for n in e.scene.noeuds {
             #expect(FicheNoeud.couronne(n.id, entree: e) == n.chef, "\(n.id)")
         }
-        #expect(FicheNoeud.couronne(NomsDemo.Ieee.pont, entree: e))
-        #expect(!FicheNoeud.couronne(NomsDemo.Ieee.pont, entree: nil))
-        #expect(e.chefs == [NomsDemo.Ieee.pont])
+        #expect(FicheNoeud.couronne(idz(NomsDemo.Ieee.pont), entree: e))
+        #expect(!FicheNoeud.couronne(idz(NomsDemo.Ieee.pont), entree: nil))
+        #expect(e.chefs == [idz(NomsDemo.Ieee.pont)])
         // Le pont, sans voisins dans ce maillage mais avec une pile : sa colonne, celle de la couronne, est la plus haute.
         let s = try Self.pontAPile()
         let avecPile = try #require(Self.entree(s))
         func taille(_ id: String, _ e: EntreeScene) -> CGSize {
-            let fiche = FicheNoeud(id: id, entree: e, instant: Date(), aRenommer: .constant(nil)) {}
+            let fiche = FicheNoeud(id: idz(id), entree: e, instant: Date(), aRenommer: .constant(nil)) {}
             return NSHostingView(rootView: fiche.environment(s).environment(PiecesChoisies(fichier: nil))).fittingSize
         }
         var sansCouronne = avecPile
@@ -743,7 +743,7 @@ struct FenetrePiecesTests {
     /// davantage.
     @Test func pastilleDuChefSurUneLigne() throws {
         let s = try Self.pontAPile()
-        let id = NomsDemo.Ieee.pont
+        let id = idz(NomsDemo.Ieee.pont)
         let avec = try #require(Self.entree(s))
         #expect(avec.graphe.noeud(id)?.genre == .centre && FicheNoeud.couronne(id, entree: avec), "le coordinateur couronne")
         var sans = avec
@@ -1242,11 +1242,11 @@ struct FenetrePiecesTests {
         typealias I = NomsDemo.Ieee
         let pieces = ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
                       "Salle de bain", "Salle de jeux", "Salon", "Terrasse"]
-        #expect(PiecesChoisies.placement(I.lampeBureau, dans: s, entree: e) == nil, "le pont la place au bureau")
-        let sonde = try #require(PiecesChoisies.placement(I.sonde, dans: s, entree: e))
+        #expect(PiecesChoisies.placement(idz(I.lampeBureau), dans: s, entree: e) == nil, "le pont la place au bureau")
+        let sonde = try #require(PiecesChoisies.placement(idz(I.sonde), dans: s, entree: e))
         #expect(sonde == PiecesChoisies.Placement(cle: I.sonde, pieces: pieces))
-        #expect(PiecesChoisies.placement(I.inconnu, dans: s, entree: e)?.cle == I.inconnu)
-        #expect(PiecesChoisies.placement("A0000000000000EE", dans: s, entree: e) == nil, "absent du graphe")
+        #expect(PiecesChoisies.placement(idz(I.inconnu), dans: s, entree: e)?.cle == I.inconnu)
+        #expect(PiecesChoisies.placement(idz("A0000000000000EE"), dans: s, entree: e) == nil, "absent du graphe")
         #expect(MenuPlacer.articles(sonde).first == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
         #expect(Array(MenuPlacer.articles(sonde).dropFirst()) == pieces.map { MenuPlacer.Article(texte: $0, piece: $0) })
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-routeurs.json")
@@ -1269,7 +1269,7 @@ struct FenetrePiecesTests {
         for k in s.noms.maison?.accessoires.indices ?? 0..<0 { s.noms.maison?.accessoires[k].piece = nil }
         let sansPieces = try #require(Self.entree(s))
         for id in [I.sonde, I.inconnu, I.lampeBureau] {
-            #expect(PiecesChoisies.placement(id, dans: s, entree: sansPieces) == nil, "\(id)")
+            #expect(PiecesChoisies.placement(idz(id), dans: s, entree: sansPieces) == nil, "\(id)")
         }
     }
 
@@ -1281,10 +1281,10 @@ struct FenetrePiecesTests {
     @Test func menuDeLaScene() throws {
         let (s, e) = try NomsSceneTests.demo()
         s.oublierMaillage()
-        #expect(PiecesChoisies.placement(NomsDemo.Ieee.inconnu, dans: s, entree: e)?.cle == NomsDemo.Ieee.inconnu)
+        #expect(PiecesChoisies.placement(idz(NomsDemo.Ieee.inconnu), dans: s, entree: e)?.cle == NomsDemo.Ieee.inconnu)
         let suivante = try #require(Self.entree(s))
-        #expect(suivante.maillage == nil && suivante.graphe.noeud(NomsDemo.Ieee.inconnu) == nil)
-        #expect(PiecesChoisies.placement(NomsDemo.Ieee.inconnu, dans: s, entree: suivante) == nil)
+        #expect(suivante.maillage == nil && suivante.graphe.noeud(idz(NomsDemo.Ieee.inconnu)) == nil)
+        #expect(PiecesChoisies.placement(idz(NomsDemo.Ieee.inconnu), dans: s, entree: suivante) == nil)
     }
 
     /// Un choix perime (sa piece n'est plus une piece de la maison) ne compte plus : la scene l'ignore, et la selection du
@@ -1296,7 +1296,7 @@ struct FenetrePiecesTests {
         let domicile = "Maison (démo)"
         let choisies = PiecesChoisies(fichier: nil)
         for id in [NomsDemo.Ieee.inconnu, NomsDemo.Ieee.sonde] {
-            let placement = try #require(PiecesChoisies.placement(id, dans: s, entree: e), "\(id)")
+            let placement = try #require(PiecesChoisies.placement(idz(id), dans: s, entree: e), "\(id)")
             let menu = MenuPlacer(placement: placement, domicile: domicile, choisies: choisies)
             #expect(menu.selection.wrappedValue == nil, "\(id) : aucun choix")
             menu.selection.wrappedValue = "Cuisine"
@@ -1341,7 +1341,7 @@ struct FenetrePiecesTests {
         let choisi = try #require(m.selection)
         #expect(FicheNoeud.couronne(choisi, entree: e))
         try #require(CapturesPieces.cas.first { $0.nom == "22-2d-fiche-telecommande" }).poser(m, e.scene)
-        #expect(m.selection == NomsDemo.Ieee.telecommandeChambre)
+        #expect(m.selection == idz(NomsDemo.Ieee.telecommandeChambre))
         #expect(e.maillage?.parent(de: NomsDemo.Ieee.telecommandeChambre)?.dAvant == true)
     }
 
@@ -1356,8 +1356,8 @@ struct FenetrePiecesTests {
         let choix = try #require(cas.deplacer)
         let e2 = EntreeScene(surveillance: s, places: PlacesGardees(), choix: choix)
         let id = NomsDemo.Ieee.inconnu
-        #expect(e.scene.noeud(id).map { e.scene.pieces[$0.piece].nom } == .sansPiece)
-        #expect(e2.scene.noeud(id).map { e2.scene.pieces[$0.piece].nom } == .maison("Cuisine"))
+        #expect(e.scene.noeud(idz(id)).map { e.scene.pieces[$0.piece].nom } == .sansPiece)
+        #expect(e2.scene.noeud(idz(id)).map { e2.scene.pieces[$0.piece].nom } == .maison("Cuisine"))
         let marges: (haut: CGFloat, bas: CGFloat) = (84, 50)
         // Le cas, pose en plus a `q` de son glissement (le cas seul : a mi-chemin) ; son moteur et le centre de la pastille.
         func rendre(_ q: Double?) throws -> (m: MoteurPieces, centre: SIMD3<Double>) {
@@ -1371,7 +1371,7 @@ struct FenetrePiecesTests {
             }
             let (m, _) = CapturesPieces.preparer(c, surveillance: s, marges: marges)
             MoteurPiecesTests.dessiner(m, taille: c.taille)
-            return (m, try #require(m.projetee?.centresNoeuds[id]))
+            return (m, try #require(m.projetee?.centresNoeuds[idz(id)]))
         }
         let (mAvant, avant) = try rendre(0)
         let (mApres, apres) = try rendre(1)

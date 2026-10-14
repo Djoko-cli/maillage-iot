@@ -198,18 +198,18 @@ extension LegendePieces {
     /// bordure, la sonde, ceux que la sonde seule connait, les chefs, les endormis, les piles, les noeuds montres avec leurs candidats, les liens, et
     /// si des reperes « ailleurs » sont poses (piece isolee).
     struct Lecture {
-        var couleurs: [String: DessinNoeud.Couleur] = [:]
+        var couleurs: [IdNoeud: DessinNoeud.Couleur] = [:]
         /// Les routeurs qui ne sont pas de bordure (leur cercle).
-        var routeursSimples: Set<String> = []
+        var routeursSimples: Set<IdNoeud> = []
         /// Les appareils joignables que la sonde a trouves alors qu'ils n'annoncent plus d'adresse (leur anneau).
-        var verifies: Set<String> = []
+        var verifies: Set<IdNoeud> = []
         /// La sonde elle-meme (ses ondes).
-        var sondes: Set<String> = []
-        var inconnus: Set<String> = []
-        var chefs: Set<String> = []
-        var endormis: Set<String> = []
-        var piles: Set<String> = []
-        var candidats: Set<String> = []
+        var sondes: Set<IdNoeud> = []
+        var inconnus: Set<IdNoeud> = []
+        var chefs: Set<IdNoeud> = []
+        var endormis: Set<IdNoeud> = []
+        var piles: Set<IdNoeud> = []
+        var candidats: Set<IdNoeud> = []
         var liens: [ScenePieces.Lien] = []
         var ailleurs = false
     }
@@ -288,7 +288,7 @@ extension LegendePieces.Lecture {
             .map(\.id))
         piles = Set(ids.filter { e.libelles[$0]?.pastille != nil })
         candidats = Set(ids.filter { id in
-            e.maillage?.noeud(id).map { $0.genre == .routeur && !$0.candidats.isEmpty } == true
+            e.maillage?.noeud(id.cle).map { $0.genre == .routeur && !$0.candidats.isEmpty } == true
         })
         liens = e.scene.liens
         self.ailleurs = ailleurs

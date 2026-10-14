@@ -29,17 +29,17 @@ struct NomsSceneTests {
     /// (`dernier-maillage.json`) la garde aussi.
     @Test func ondesDeLaSonde() throws {
         let (_, e) = try Self.demo()
-        #expect(e.apparences[I.sonde]?.sonde == true, "la sonde a ses ondes")
-        #expect(e.apparences[I.sonde]?.forme == .pastille, "sa pastille, flanquee d'ondes")
-        #expect(e.apparences.filter { $0.value.sonde }.map(\.key) == [I.sonde], "elle seule")
-        #expect(e.apparences[I.lampeBureau]?.sonde == false && e.apparences[I.pont]?.sonde == false)
+        #expect(e.apparences[idz(I.sonde)]?.sonde == true, "la sonde a ses ondes")
+        #expect(e.apparences[idz(I.sonde)]?.forme == .pastille, "sa pastille, flanquee d'ondes")
+        #expect(e.apparences.filter { $0.value.sonde }.map(\.key) == [idz(I.sonde)], "elle seule")
+        #expect(e.apparences[idz(I.lampeBureau)]?.sonde == false && e.apparences[idz(I.pont)]?.sonde == false)
         // Un maillage dont la sonde est une autre adresse : ses ondes vont a ce noeud-la.
         var autre = MaillageDemoZigbee.maillage
         autre.sonde = I.interrupteurSalon
         let s = Surveillance(mode: .direct, dossier: nil)
         s.recevoir(autre, a: Date())
         let e2 = EntreeScene(surveillance: s, places: PlacesGardees())
-        #expect(e2.apparences.filter { $0.value.sonde }.map(\.key) == [I.interrupteurSalon])
+        #expect(e2.apparences.filter { $0.value.sonde }.map(\.key) == [idz(I.interrupteurSalon)])
         // Sans sonde dans le maillage : aucune onde.
         var sans = MaillageDemoZigbee.maillage
         sans.sonde = nil
@@ -54,7 +54,7 @@ struct NomsSceneTests {
         defer { relu.arreter() }
         #expect(relu.maillageRelu)
         let e3 = EntreeScene(surveillance: relu, places: PlacesGardees())
-        #expect(e3.apparences[I.sonde]?.sonde == true && e3.apparences[I.lampeBureau]?.sonde == false,
+        #expect(e3.apparences[idz(I.sonde)]?.sonde == true && e3.apparences[idz(I.lampeBureau)]?.sonde == false,
                 "le maillage relu garde la sonde")
     }
 
@@ -62,14 +62,14 @@ struct NomsSceneTests {
     /// pastille d'une batterie faible. Un noeud que le pont ne connait pas porte son adresse longue ; la sonde, « Sonde ».
     @Test func libelles() throws {
         let (_, e) = try Self.demo()
-        #expect(e.libelles[I.pont]?.texte == "Pont Hue 👑")
-        #expect(e.libelles[I.interrupteurSalon] == LibellesNoeuds.Libelle(texte: "Interrupteur salon ☾", nom: "Interrupteur salon"))
-        #expect(e.libelles[I.priseSalon]?.texte == "Prise salon ⚠︎", "disparue")
-        #expect(e.libelles[I.telecommandeChambre]?.pastille == String(localized: "\(12)\u{202F}%"))
-        #expect(e.libelles[I.capteurGrenier]?.pastille == String(localized: "faible"))
-        #expect(e.libelles[I.inconnu]?.texte == I.inconnu, "inconnu du pont : son adresse longue")
-        #expect(e.libelles[I.sonde]?.texte == String(localized: "Sonde"))
-        #expect(LibellesNoeuds.chefs(e.graphe) == [I.pont])
+        #expect(e.libelles[idz(I.pont)]?.texte == "Pont Hue 👑")
+        #expect(e.libelles[idz(I.interrupteurSalon)] == LibellesNoeuds.Libelle(texte: "Interrupteur salon ☾", nom: "Interrupteur salon"))
+        #expect(e.libelles[idz(I.priseSalon)]?.texte == "Prise salon ⚠︎", "disparue")
+        #expect(e.libelles[idz(I.telecommandeChambre)]?.pastille == String(localized: "\(12)\u{202F}%"))
+        #expect(e.libelles[idz(I.capteurGrenier)]?.pastille == String(localized: "faible"))
+        #expect(e.libelles[idz(I.inconnu)]?.texte == I.inconnu, "inconnu du pont : son adresse longue")
+        #expect(e.libelles[idz(I.sonde)]?.texte == String(localized: "Sonde"))
+        #expect(LibellesNoeuds.chefs(e.graphe) == [idz(I.pont)])
         #expect(LibellesNoeuds.pastilleBatterie(BatterieMaison(alerte: true)) == String(localized: "faible"))
         #expect(LibellesNoeuds.pastilleBatterie(BatterieMaison(niveau: 52)) == nil)
     }
@@ -83,13 +83,13 @@ struct NomsSceneTests {
         maison.accessoires[k].batterie = BatterieMaison(niveau: 60)
         s.noms.maison = maison
         let e = EntreeScene(surveillance: s, places: PlacesGardees())
-        let n = try #require(e.scene.noeud(I.lampeArcade))
-        #expect(n.routeur && e.appareils[I.lampeArcade]?.endormi == false)
-        let texte = e.libelles[I.lampeArcade]?.texte ?? ""
+        let n = try #require(e.scene.noeud(idz(I.lampeArcade)))
+        #expect(n.routeur && e.appareils[idz(I.lampeArcade)]?.endormi == false)
+        let texte = e.libelles[idz(I.lampeArcade)]?.texte ?? ""
         #expect(!texte.isEmpty && !texte.contains(LibellesNoeuds.lune), "\(texte)")
-        #expect(!LibellesNoeuds.endormi(AppareilAffiche(id: "x", nom: "x", etat: .joignable, endormi: true), routeur: true))
+        #expect(!LibellesNoeuds.endormi(AppareilAffiche(id: idz("x"), nom: "x", etat: .joignable, endormi: true), routeur: true))
         let lecture = LegendePieces.Lecture(e, ailleurs: false)
-        #expect(!lecture.endormis.contains(I.lampeArcade) && lecture.endormis.contains(I.interrupteurSalon),
+        #expect(!lecture.endormis.contains(idz(I.lampeArcade)) && lecture.endormis.contains(idz(I.interrupteurSalon)),
                 "la legende : \(lecture.endormis.sorted())")
     }
 
@@ -98,16 +98,16 @@ struct NomsSceneTests {
     @Test func piecesEtNoms() throws {
         let (s, e) = try Self.demo()
         let pieces = LibellesNoeuds.pieces(appareils: s.appareilsAffiches, maison: s.noms.maison, graphe: e.graphe)
-        #expect(pieces[I.pont] == "Salon" && pieces[I.lampeChambre] == "Chambre" && pieces[I.lampeBureau] == "Bureau")
-        #expect(pieces[I.sonde] == nil && pieces[I.inconnu] == nil)
+        #expect(pieces[idz(I.pont)] == "Salon" && pieces[idz(I.lampeChambre)] == "Chambre" && pieces[idz(I.lampeBureau)] == "Bureau")
+        #expect(pieces[idz(I.sonde)] == nil && pieces[idz(I.inconnu)] == nil)
         #expect(LibellesNoeuds.nom(ScenePieces.NomEtage.zone("Étage")) == "Étage")
         #expect(LibellesNoeuds.nom(ScenePieces.NomEtage.maison) == String(localized: "Maison"))
         #expect(LibellesNoeuds.nom(ScenePieces.NomPiece.sansPiece, libelles: [:]) == String(localized: "Sans pièce"))
-        #expect(LibellesNoeuds.nom(.routeur(I.pont), libelles: e.libelles) == "Pont Hue 👑")
+        #expect(LibellesNoeuds.nom(.routeur(idz(I.pont)), libelles: e.libelles) == "Pont Hue 👑")
         #expect(LibellesNoeuds.compte(1) == String(localized: "1 appareil"))
         #expect(LibellesNoeuds.compte(6) == String(localized: "\(6) appareils"))
         let sans = try #require(e.scene.pieces.firstIndex { $0.nom == .sansPiece })
-        let sonde = try #require(SceneProjetee.reperes(e.scene, focus: sans).first { $0.enfant == I.sonde })
+        let sonde = try #require(SceneProjetee.reperes(e.scene, focus: sans).first { $0.enfant == idz(I.sonde) })
         #expect(LibellesNoeuds.ailleurs(sonde, scene: e.scene, libelles: e.libelles) == "↑ Lampe bureau · Bureau, Étage")
     }
 
@@ -120,21 +120,21 @@ struct NomsSceneTests {
         s.renommer(I.interrupteurSalon, en: interrupteur)
         s.renommer(I.pont, en: pont)
         let e = EntreeScene(surveillance: s, places: PlacesGardees())
-        #expect(e.libelles[I.interrupteurSalon]?.texte == "Interrupteur du salon, près de la baie …" + " ☾")
-        #expect(e.libelles[I.pont]?.texte == "Pont Hue du salon, derrière la télévisi…" + " 👑")
+        #expect(e.libelles[idz(I.interrupteurSalon)]?.texte == "Interrupteur du salon, près de la baie …" + " ☾")
+        #expect(e.libelles[idz(I.pont)]?.texte == "Pont Hue du salon, derrière la télévisi…" + " 👑")
     }
 
     /// Repere « ailleurs » d'un enfant dont le parent est le coordinateur : le nom du parent sans la couronne, avec ☾ ou
     /// ⚠︎ s'il en a (precision 20). Le detecteur de l'entree est sous le pont, au salon.
     @Test func repereAilleursSansCouronne() throws {
         let (_, e) = try Self.demo()
-        #expect(e.libelles[I.pont]?.texte == "Pont Hue 👑")
+        #expect(e.libelles[idz(I.pont)]?.texte == "Pont Hue 👑")
         let reperes = e.scene.pieces.indices.flatMap { SceneProjetee.reperes(e.scene, focus: $0) }
-        let a = try #require(reperes.first { $0.parent == I.pont })
-        #expect(a.enfant == I.detecteurEntree)
+        let a = try #require(reperes.first { $0.parent == idz(I.pont) })
+        #expect(a.enfant == idz(I.detecteurEntree))
         #expect(LibellesNoeuds.ailleurs(a, scene: e.scene, libelles: e.libelles) == "↗ Pont Hue · Salon")
         var disparu = e.libelles
-        disparu[I.pont]?.texte = "Pont Hue 👑 ☾ ⚠︎"
+        disparu[idz(I.pont)]?.texte = "Pont Hue 👑 ☾ ⚠︎"
         #expect(LibellesNoeuds.ailleurs(a, scene: e.scene, libelles: disparu) == "↗ Pont Hue ☾ ⚠︎ · Salon")
     }
 
@@ -155,7 +155,7 @@ struct NomsSceneTests {
         for (p, attendu) in [(places, "↗ Pont Hue · Salon, Rez-de-chaussée"), (PlacesGardees(), "↓ Pont Hue · Salon, Rez-de-chaussée")] {
             let e = EntreeScene(surveillance: s, places: p)
             let entree = try #require(e.scene.pieces.firstIndex { $0.nom == .maison("Entrée") })
-            let a = try #require(SceneProjetee.reperes(e.scene, focus: entree).first { $0.enfant == I.detecteurEntree })
+            let a = try #require(SceneProjetee.reperes(e.scene, focus: entree).first { $0.enfant == idz(I.detecteurEntree) })
             #expect(LibellesNoeuds.ailleurs(a, scene: e.scene, libelles: e.libelles) == attendu)
         }
     }
@@ -172,7 +172,7 @@ struct NomsSceneTests {
         let avant = EntreeScene(surveillance: s, places: PlacesGardees())
         let e = EntreeScene(surveillance: s, places: PlacesGardees(), choix: choix)
         func piece(_ e: EntreeScene, _ id: String) throws -> ScenePieces.NomPiece {
-            e.scene.pieces[try #require(e.scene.noeud(id)).piece].nom
+            e.scene.pieces[try #require(e.scene.noeud(idz(id))).piece].nom
         }
         #expect(try piece(avant, I.inconnu) == .sansPiece && piece(avant, I.sonde) == .sansPiece)
         #expect(try piece(e, I.inconnu) == .maison("Cuisine"), "inconnu du pont")
@@ -197,20 +197,20 @@ struct NomsSceneTests {
         #expect(niveaux.etages.map(\.dehors) == [false, true, false, false])
         // Un routeur dans la salle de jeux et sur la terrasse ; des liens entre niveaux et au meme niveau.
         for (id, piece) in [(I.lampeArcade, "Salle de jeux"), (I.priseTerrasse, "Terrasse")] {
-            let n = try #require(niveaux.noeud(id))
+            let n = try #require(niveaux.noeud(idz(id)))
             #expect(n.routeur && niveaux.pieces[n.piece].nom == .maison(piece))
         }
-        let niveau = { (id: String) in niveaux.noeud(id).map { niveaux.etages[niveaux.pieces[$0.piece].etage].niveau } }
+        let niveau = { (id: IdNoeud) in niveaux.noeud(id).map { niveaux.etages[niveaux.pieces[$0.piece].etage].niveau } }
         let liens = niveaux.liens.filter { $0.genre == .radio }.map { (niveau($0.de), niveau($0.vers)) }
         #expect(liens.contains { $0.0 != $0.1 } && liens.contains { $0.0 == $0.1 })
         #expect(!e.scene.sansPiecesMaison)
         #expect(e.domicile == "Maison (démo)")
-        #expect(e.apparences[I.pont] == DessinNoeud.Apparence(forme: .sphere(halo: 10), couleur: .routeur))
-        #expect(e.apparences[I.lampeBureau] == DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: .routeur))
-        #expect(e.apparences[I.inconnu]?.couleur == .routeurInconnu)
-        #expect(e.apparences[I.priseSalon] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu)))
-        #expect(e.apparences[I.interrupteurSalon] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable)))
-        #expect(e.apparences[I.sonde]?.couleur == .appareil(.inconnu), "la sonde n'est pas un appareil du pont")
+        #expect(e.apparences[idz(I.pont)] == DessinNoeud.Apparence(forme: .sphere(halo: 10), couleur: .routeur))
+        #expect(e.apparences[idz(I.lampeBureau)] == DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: .routeur))
+        #expect(e.apparences[idz(I.inconnu)]?.couleur == .routeurInconnu)
+        #expect(e.apparences[idz(I.priseSalon)] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu)))
+        #expect(e.apparences[idz(I.interrupteurSalon)] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable)))
+        #expect(e.apparences[idz(I.sonde)]?.couleur == .appareil(.inconnu), "la sonde n'est pas un appareil du pont")
     }
 
     /// La demo de l'app a les etages de son releve de Maison (etape 4 bis) : les quatre zones, dans l'ordre garde (le
@@ -268,16 +268,16 @@ struct NomsSceneTests {
         s.noms.maison = maison
         let e2 = EntreeScene(surveillance: s, places: PlacesGardees())
         let inter = I.interrupteurSalon
-        #expect(e2.libelles[inter]?.pastille == String(localized: "\(5)\u{202F}%") && e.libelles[inter]?.pastille == nil)
+        #expect(e2.libelles[idz(inter)]?.pastille == String(localized: "\(5)\u{202F}%") && e.libelles[idz(inter)]?.pastille == nil)
         #expect(e2.scene == e.scene && e2.cleDisposition == e.cleDisposition && e2 != e)
         // La scene ne voit que les noms : ni ☾, ni la couronne du coordinateur.
-        #expect(e.libelles[inter]?.texte == "Interrupteur salon ☾" && e.scene.noeud(inter)?.libelle == "Interrupteur salon")
-        #expect(e.libelles[I.pont]?.texte == "Pont Hue 👑" && e.scene.noeud(I.pont)?.libelle == "Pont Hue")
+        #expect(e.libelles[idz(inter)]?.texte == "Interrupteur salon ☾" && e.scene.noeud(idz(inter))?.libelle == "Interrupteur salon")
+        #expect(e.libelles[idz(I.pont)]?.texte == "Pont Hue 👑" && e.scene.noeud(idz(I.pont))?.libelle == "Pont Hue")
         let (positions, cartes) = (m.positions, m.cartes)
         // Les cartes tiennent le pire cas de chaque nom, tel qu'il s'afficherait : tous les badges qu'il peut porter, et la
         // plus large des pastilles si sa pile est connue. Le noeud route selon le graphe, non selon son rang.
         let mesure = MesureNoms()
-        let pires = Dictionary(uniqueKeysWithValues: e.scene.noeuds.map { n -> (String, Double) in
+        let pires = Dictionary(uniqueKeysWithValues: e.scene.noeuds.map { n -> (IdNoeud, Double) in
             let route = n.bordure || n.routeur
             let texte = CartesPieces.texte(n.libelle, chef: route, endormi: !route, alerte: true)
             let pastille = n.pile ? Self.pastilleLaPlusLarge(mesure) : nil
@@ -289,15 +289,15 @@ struct NomsSceneTests {
         m.recevoir(e2)
         #expect(m.entree == e2, "posee tout de suite, sans calcul")
         #expect(m.positions == positions && m.cartes == cartes && m.transition == nil && m.glissementPlateaux == nil)
-        #expect(m.textes.noeuds[inter]?.pastille == String(localized: "\(5)\u{202F}%"))
+        #expect(m.textes.noeuds[idz(inter)]?.pastille == String(localized: "\(5)\u{202F}%"))
         // Une pile qui devient connue (decision du 05/10) : la cle change, et la carte de la cuisine s'elargit, une fois.
         let k2 = try #require(maison.accessoires.firstIndex { $0.ieee == I.suspensionCuisine })
         maison.accessoires[k2].batterie = BatterieMaison(niveau: 80)
         s.noms.maison = maison
         let e3 = EntreeScene(surveillance: s, places: PlacesGardees())
         let cuisine = try MoteurPiecesTests.indice(e, "Cuisine")
-        #expect(e3.cleDisposition != e.cleDisposition && e3.scene.noeud(I.suspensionCuisine)?.pile == true)
-        #expect(e.scene.noeud(I.suspensionCuisine)?.pile == false && e.scene.noeud(inter)?.pile == true)
+        #expect(e3.cleDisposition != e.cleDisposition && e3.scene.noeud(idz(I.suspensionCuisine))?.pile == true)
+        #expect(e.scene.noeud(idz(I.suspensionCuisine))?.pile == false && e.scene.noeud(idz(inter))?.pile == true)
         #expect(MoteurPiecesTests.moteur(e3).cartes[cuisine].largeur > cartes[cuisine].largeur)
     }
 
@@ -346,9 +346,9 @@ struct NomsSceneTests {
         let m = try #require(s.maillageAffiche)
         #expect(e.maillage == m)
         #expect(e.graphe == GrapheReseau(maillage: m, appareils: s.appareilsAffiches))
-        #expect(e.chefs == [I.pont])
+        #expect(e.chefs == [idz(I.pont)])
         #expect(Set(e.libelles.filter { $0.value.texte.contains("👑") }.keys) == e.chefs, "la couronne suit le coordinateur")
-        #expect(e.appareils[I.lampeBureau]?.piece == "Bureau")
+        #expect(e.appareils[idz(I.lampeBureau)]?.piece == "Bureau")
         var plusTard = m
         plusTard.date = m.date.addingTimeInterval(60)
         s.recevoir(plusTard, a: s.maintenant)

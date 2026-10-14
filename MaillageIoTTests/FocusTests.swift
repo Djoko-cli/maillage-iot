@@ -10,7 +10,7 @@ import Testing
 @MainActor
 @Suite("Mode focus")
 struct FocusTests {
-    static let chef = "Apple TV 4K"
+    static let chef = idt("Apple TV 4K")
 
     /// Un appareil : lui, son parent et son lien vers lui, le chef, et le lien radio direct de son parent vers le chef
     /// s'il existe ; rien d'autre.
@@ -24,7 +24,7 @@ struct FocusTests {
         let m = try #require(e.miseEnAvant(de: lien.de))
         #expect(m.noeuds == [lien.de, lien.vers, Self.chef])
         #expect(m.liens == [MiseEnAvant.cle(lien.de, lien.vers), MiseEnAvant.cle(lien.vers, Self.chef)])
-        #expect(e.miseEnAvant(de: "absent") == nil)
+        #expect(e.miseEnAvant(de: idt("absent")) == nil)
     }
 
     /// Un routeur : ses enfants et leurs liens, ses liens radio et ses voisins, le chef ; un lien radio entre deux autres
@@ -72,7 +72,7 @@ struct FocusTests {
     /// un clic dans le vide le relache.
     @Test func secondClicEtVide() throws {
         let (m, e) = try MoteurPiecesTests.moteur()
-        func centre(_ id: String) throws -> CGPoint {
+        func centre(_ id: IdNoeud) throws -> CGPoint {
             MoteurPiecesTests.dessiner(m)
             return try #require(m.projetee?.disques.first { $0.noeud == id }).centre
         }

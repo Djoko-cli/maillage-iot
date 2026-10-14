@@ -152,10 +152,10 @@ D'après `inventaire-etape3-idnoeud.md` §1, §5 (conception B), §6. Le compila
 - Consumes: `IdNoeud`, `Protocole` (tâche 2).
 - Produces: `GrapheReseau.Noeud.id: IdNoeud`, `Lien.de/vers: IdNoeud`, `AppareilAffiche.id: IdNoeud`, `GrapheReseau.chemin(de: IdNoeud) -> Lien?` ; dictionnaires de scène indexés par `IdNoeud` ; **les quatre points de neutralité** : la teinte hache `cle` (pas `texte`), le tri `(rang, libelle, id)` ordonne par `(protocole, cle)`, le libellé de repli est `cle`, `MiseEnAvant.cle(a,b)` trie sur `IdNoeud`. Les partitions restent du texte brut.
 
-- [ ] **Step 1: RED** — dans `MaillageCoeurTests`, `scenePasDeCollisionEntreProtocoles` : deux nœuds de même clé, l'un `thread`, l'autre `zigbee`, gardent deux disques et deux libellés ; `teinteNeutre` : la teinte d'un nœud ne change pas si seul son protocole change. Échec de compilation attendu.
-- [ ] **Step 2: GREEN** — retyper le cœur ; les constructeurs de graphe emballent (`IdNoeud(.thread, …)`, `IdNoeud(.zigbee, …)`) ; les crochets de fiche et de focus des modules reçoivent un `IdNoeud` et lisent leurs états internes par `id.cle` après avoir vérifié `id.protocole` ; les vues des deux apps suivent. Les tests de rejeu comparent par `.cle` (le JSON de référence ne change pas).
-- [ ] **Step 3: Vérifier** — `outils/tester.sh` (code 0, **deux rejeux exacts**), `bash outils/tester-coeur.sh`, `bash outils/verifier-noms-publics.sh`. Expected : comptes de `@Test` inchangés hors tests ajoutés. Au rapport : la liste des sites de §6 de l'inventaire, chacun avec « ne compile plus sans protocole » ou le test qui le couvre.
-- [ ] **Step 4: Commit** — « Coeur et modules : identifiants de noeud types par protocole, scene neutre ».
+- [x] **Step 1: RED** — dans `MaillageCoeurTests`, `scenePasDeCollisionEntreProtocoles` : deux nœuds de même clé, l'un `thread`, l'autre `zigbee`, gardent deux disques et deux libellés ; `teinteNeutre` : la teinte d'un nœud ne change pas si seul son protocole change. Échec de compilation attendu.
+- [x] **Step 2: GREEN** — retyper le cœur ; les constructeurs de graphe emballent (`IdNoeud(.thread, …)`, `IdNoeud(.zigbee, …)`) ; les crochets de fiche et de focus des modules reçoivent un `IdNoeud` et lisent leurs états internes par `id.cle` après avoir vérifié `id.protocole` ; les vues des deux apps suivent. Les tests de rejeu comparent par `.cle` (le JSON de référence ne change pas).
+- [x] **Step 3: Vérifier** — `outils/tester.sh` (code 0, **deux rejeux exacts**), `bash outils/tester-coeur.sh`, `bash outils/verifier-noms-publics.sh`. Expected : comptes de `@Test` inchangés hors tests ajoutés. Au rapport : la liste des sites de §6 de l'inventaire, chacun avec « ne compile plus sans protocole » ou le test qui le couvre.
+- [x] **Step 4: Commit** — « Coeur et modules : identifiants de noeud types par protocole, scene neutre ».
 
 ---
 

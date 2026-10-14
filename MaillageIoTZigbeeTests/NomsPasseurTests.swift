@@ -586,12 +586,12 @@ struct NomsMaisonAppTests {
         #expect(e.scene.etages.map(\.nom) == NomsDemo.zones.map { .zone($0.nom) })
         #expect(e.domicile == NomsDemo.domicile)
         func etage(_ ieee: String) -> ScenePieces.NomEtage? {
-            e.scene.pieces.first { $0.noeuds.contains(ieee) }.map { e.scene.etages[$0.etage].nom }
+            e.scene.pieces.first { $0.noeuds.contains(idz(ieee)) }.map { e.scene.etages[$0.etage].nom }
         }
         #expect(etage(I.fuiteBuanderie) == .zone("Rez-de-chaussée"), "non apparie, dans une piece de Maison")
         #expect(etage(I.suspensionCuisine) == .zone("Rez-de-chaussée"))
         #expect(etage(I.lampeGrenier) == .zone("Combles"))
-        #expect(e.libelles[I.suspensionCuisine]?.nom == "Suspension de l'îlot")
+        #expect(e.libelles[idz(I.suspensionCuisine)]?.nom == "Suspension de l'îlot")
 
         // Une piece de l'app Hue que Maison n'a pas : « Autres pieces ».
         var pont = NomsDemo.maisonPont
@@ -600,7 +600,7 @@ struct NomsMaisonAppTests {
         let autre = EntreeScene(surveillance: s, places: PlacesGardees())
         let cave = try #require(autre.scene.pieces.first { $0.nom == .maison("Cave") })
         #expect(autre.scene.etages[cave.etage].nom == .autresPieces)
-        #expect(cave.noeuds == [I.fuiteBuanderie])
+        #expect(cave.noeuds == [idz(I.fuiteBuanderie)])
     }
 
     /// La fiche signale un nom venu de l'app Hue (appareil pas trouve dans Maison) ; rien pour un appareil nomme par

@@ -5,19 +5,19 @@ import MaillageCoeur
 /// recoit (`MiseEnAvant`). Thread n'a ni chemin unique ni centre (le chef est elu, le maillage decentralise) : seuls des
 /// liens reels sont mis en avant, jamais un chemin suppose (choix de Djoko du 09/10).
 public enum FocusThread {
-    /// La mise en avant du noeud `id` du graphe `g` : nil s'il n'y est pas. Restent nets :
+    /// La mise en avant du noeud `id` du graphe `g` : nil s'il n'y est pas, ou s'il n'est pas un noeud Thread. Restent nets :
     /// - le noeud lui-meme ;
     /// - son parent et son lien vers lui (ou son rattachement suppose) ;
     /// - ses enfants et leurs liens vers lui ;
     /// - si `voisins` est vrai, ses liens radio et ses voisins radio ;
     /// - le chef de sa partition (`chefs`, les noeuds couronnes), et le lien radio direct vers lui s'il existe : depuis
     ///   le noeud s'il route, sinon depuis son parent.
-    public static func miseEnAvant(de id: String, graphe g: GrapheReseau, chefs: Set<String>,
+    public static func miseEnAvant(de id: IdNoeud, graphe g: GrapheReseau, chefs: Set<IdNoeud>,
                                    voisins: Bool = true) -> MiseEnAvant? {
-        guard let n = g.noeud(id) else { return nil }
+        guard id.protocole == .thread, let n = g.noeud(id) else { return nil }
         var m = MiseEnAvant(noeuds: [id])
         // Ceux dont un lien radio direct vers le chef compte : le noeud s'il route, et son parent.
-        var versLeChef: [String] = n.routeur ? [id] : []
+        var versLeChef: [IdNoeud] = n.routeur ? [id] : []
         for l in g.liens {
             switch l.genre {
             case .parent, .rattachement:
@@ -33,7 +33,7 @@ public enum FocusThread {
                 break
             }
         }
-        for c in chefs.sorted() where g.noeud(c)?.partition == n.partition {
+        for c in chefs.sorted() where c.protocole == .thread && g.noeud(c)?.partition == n.partition {
             m.noeuds.insert(c)
             for r in versLeChef where r != c {
                 let direct = g.liens.contains { $0.genre == .radio && Set([$0.de, $0.vers]) == [r, c] }

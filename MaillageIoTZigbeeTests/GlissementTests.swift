@@ -89,7 +89,7 @@ struct GlissementTests {
 
     /// La place d'un noeud dans le monde, a l'image.
     static func monde(_ m: MoteurPieces, _ id: String) throws -> SIMD3<Double> {
-        try #require(m.projetee?.centresNoeuds[id])
+        try #require(m.projetee?.centresNoeuds[idz(id)])
     }
 
     /// Une image du moteur, dessinee hors fenetre, et ce qu'elle montre de la pastille `id` : son opacite dans la scene
@@ -109,7 +109,7 @@ struct GlissementTests {
                                          bytesPerRow: image.width * 4, space: espace,
                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        let disque = try #require(m.projetee?.disques.first { $0.noeud == id }, "la pastille \(id) est projetee")
+        let disque = try #require(m.projetee?.disques.first { $0.noeud == idz(id) }, "la pastille \(id) est projetee")
         let x = Int(disque.centre.x.rounded()), y = Int(disque.centre.y.rounded())
         #expect(x > 1 && y > 1 && x < image.width - 1 && y < image.height - 1, "le centre est dans l'image")
         var pixel = [Double](repeating: 0, count: 4)
@@ -138,13 +138,13 @@ struct GlissementTests {
         m.installerMaintenant(e2)
         let tr = try #require(m.transition)
         #expect(tr.debut >= instant && tr.debut - instant < 1)
-        #expect(tr.depart.noeuds[Self.prise] != nil && tr.arrivee.noeuds[Self.prise] != nil)
+        #expect(tr.depart.noeuds[idz(Self.prise)] != nil && tr.arrivee.noeuds[idz(Self.prise)] != nil)
         MoteurPiecesTests.dessiner(m)
         #expect(simd_distance(try Self.monde(m, Self.prise), avant) < 1e-9, "pas de saut")
         m.poserTransition(1)
         MoteurPiecesTests.dessiner(m)
         let apres = try Self.monde(m, Self.prise)
-        let f = try #require(MoteurPiecesTests.moteur(e2).projetee?.centresNoeuds[Self.prise])
+        let f = try #require(MoteurPiecesTests.moteur(e2).projetee?.centresNoeuds[idz(Self.prise)])
         if troisD {
             #expect(apres.y - avant.y > 4, "d'un etage a l'autre")
         } else {
@@ -156,7 +156,7 @@ struct GlissementTests {
         let mi = try Self.monde(m, Self.prise)
         let d = simd_distance(avant, apres)
         #expect(simd_distance(mi, avant) > 0.25 * d && simd_distance(mi, apres) > 0.25 * d, "en route")
-        let disque = try #require(m.projetee?.disques.first { $0.noeud == Self.prise })
+        let disque = try #require(m.projetee?.disques.first { $0.noeud == idz(Self.prise) })
         let p = try #require(m.projetee)
         #expect((p.liensEnfants + p.liensRouteurs).contains { $0.a == disque.centre || $0.b == disque.centre },
                 "un lien suit sa pastille")
@@ -197,7 +197,7 @@ struct GlissementTests {
         m.installerMaintenant(e2)
         #expect(m.transition == nil && m.posesAffichees == PosesScene() && m.glissementPlateaux == nil)
         MoteurPiecesTests.dessiner(m)
-        let f = try #require(MoteurPiecesTests.moteur(e2).projetee?.centresNoeuds[Self.prise])
+        let f = try #require(MoteurPiecesTests.moteur(e2).projetee?.centresNoeuds[idz(Self.prise)])
         #expect(simd_distance(try Self.monde(m, Self.prise), f) < 1e-9)
         let (r, _) = try Self.moteur()
         r.reduire = true
@@ -213,7 +213,7 @@ struct GlissementTests {
         g.installerMaintenant(e3)
         #expect(g.transition == nil && g.posesAffichees == PosesScene(), "les poses en route sont remises a zero")
         MoteurPiecesTests.dessiner(g)
-        let arrivee = try #require(MoteurPiecesTests.moteur(e3).projetee?.centresNoeuds[Self.prise])
+        let arrivee = try #require(MoteurPiecesTests.moteur(e3).projetee?.centresNoeuds[idz(Self.prise)])
         #expect(simd_distance(try Self.monde(g, Self.prise), arrivee) < 1e-9, "posee a sa nouvelle place")
     }
 
@@ -339,13 +339,13 @@ struct GlissementTests {
     @Test func pastilleQuiPart() throws {
         let (m, e1) = try Self.moteur()
         let id = Self.inconnu
-        let avant = try #require(e1.apparences[id])
+        let avant = try #require(e1.apparences[idz(id)])
         let e2 = try Self.demoSansInconnu()
-        #expect(e1.scene.noeuds.contains { $0.id == id } && !e2.scene.noeuds.contains { $0.id == id })
+        #expect(e1.scene.noeuds.contains { $0.id == idz(id) } && !e2.scene.noeuds.contains { $0.id == idz(id) })
         m.installerMaintenant(e2)
         let tr = try #require(m.transition)
-        #expect(tr.depart.noeuds[id] != nil && tr.arrivee.noeuds[id] == nil, "il s'efface, a sa place")
-        #expect(m.apparencesParties[id] == avant, "son dessin d'avant est garde")
+        #expect(tr.depart.noeuds[idz(id)] != nil && tr.arrivee.noeuds[idz(id)] == nil, "il s'efface, a sa place")
+        #expect(m.apparencesParties[idz(id)] == avant, "son dessin d'avant est garde")
         // Le fondu dure 0,3 s des 0,9 s du glissement : a 1/20, 1/10, 3/20 et 2/10 de celui-ci, la pastille est a 85,
         // 70, 55 et 40 %.
         func image(_ q: Double) throws -> (opacite: Double, pixel: [Double]) {
@@ -367,12 +367,12 @@ struct GlissementTests {
         let reprise = try Self.pastille(m, id)
         #expect(abs(reprise.opacite - 0.7) < 1e-6, "elle repart de son opacite du moment")
         #expect(Self.ecart(reprise.pixel, a.pixel) < 40, "toujours dessinee, du meme dessin")
-        #expect(m.apparencesParties[id] == avant, "son dessin d'avant est toujours garde")
+        #expect(m.apparencesParties[idz(id)] == avant, "son dessin d'avant est toujours garde")
         // Au bout : plus de pastille, plus de dessin garde.
         m.fige = false
         m.reculerTransition(de: 1)
         MoteurPiecesTests.dessiner(m)
-        #expect(m.transition == nil && m.projetee?.disques.contains { $0.noeud == id } == false)
+        #expect(m.transition == nil && m.projetee?.disques.contains { $0.noeud == idz(id) } == false)
         #expect(m.apparencesParties.isEmpty, "fini : plus rien d'efface a garder")
     }
 
@@ -438,7 +438,7 @@ struct GlissementTests {
         #expect(m.transition?.arrivee.pieces["piece:Cuisine"] != nil, "a moins de 5 points : pas encore un glisser")
         m.glisser(CGPoint(x: p.x + 5, y: p.y), depart: p)
         #expect(m.transition?.arrivee.pieces["piece:Cuisine"] == nil && m.posesAffichees.pieces["piece:Cuisine"] == nil)
-        #expect(m.transition?.arrivee.noeuds[Self.prise] == nil, "ses noeuds avec elle")
+        #expect(m.transition?.arrivee.noeuds[idz(Self.prise)] == nil, "ses noeuds avec elle")
         #expect(m.transition?.arrivee.pieces["piece:Salon"] != nil, "les autres glissent encore")
         m.glisser(CGPoint(x: p.x + 10, y: p.y), depart: p)
         #expect(m.transition?.arrivee.pieces["piece:Cuisine"] == nil)
@@ -817,19 +817,19 @@ struct GlissementTests {
     @Test func pastilleQuiPartDeLaPieceIsolee() throws {
         let (m, e1) = try Self.moteur()
         let id = Self.inconnu
-        let i = try #require(e1.scene.pieces.firstIndex { $0.noeuds.contains(id) })
+        let i = try #require(e1.scene.pieces.firstIndex { $0.noeuds.contains(idz(id)) })
         m.poserIsolement(i)
         MoteurPiecesTests.dessiner(m)
-        let avant = try #require(m.projetee?.disques.first { $0.noeud == id }).opacite
+        let avant = try #require(m.projetee?.disques.first { $0.noeud == idz(id) }).opacite
         #expect(m.estIsolee && avant == 1, "dans la piece isolee, pleinement opaque")
         m.installerMaintenant(try Self.demoSansInconnu())
         let tr = try #require(m.transition)
-        #expect(tr.depart.noeuds[id]?.piece == e1.scene.pieces[i].id && tr.arrivee.noeuds[id] == nil,
+        #expect(tr.depart.noeuds[idz(id)]?.piece == e1.scene.pieces[i].id && tr.arrivee.noeuds[idz(id)] == nil,
                 "il s'efface, de sa piece")
         for (q, attendu) in [(0.0, 1.0), (0.05, 0.85), (0.1, 0.7)] {
             m.poserTransition(q)
             MoteurPiecesTests.dessiner(m)
-            let o = try #require(m.projetee?.disques.first { $0.noeud == id }).opacite
+            let o = try #require(m.projetee?.disques.first { $0.noeud == idz(id) }).opacite
             #expect(abs(o - attendu) < 1e-9, "a \(q) du glissement : \(o)")
         }
     }

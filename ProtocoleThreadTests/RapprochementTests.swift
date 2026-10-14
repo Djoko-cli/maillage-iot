@@ -46,7 +46,7 @@ struct RapprochementTests {
     }
 
     static func affiches(_ i: Instantane) -> [AppareilAffiche] {
-        i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
+        i.appareils.map { AppareilAffiche(id: idt($0.id), nom: $0.id, partition: $0.partition, etat: .joignable) }
     }
 
     /// Routeurs : par `xa`, BBR principal, appareil qui route, inconnu ; enfants : par
@@ -168,7 +168,7 @@ struct RapprochementTests {
         let m = MaillageAffiche(maillage: try await Self.maillage(entendus: entendus), reseau: r, appareils: avecXa.appareils)
         #expect(m.routeurs[1] == NoeudSonde(id: "rloc:0400", rloc16: 0x0400, genre: .routeur, reconnu: false, bordure: true))
         #expect(m.annoncesCandidates.isEmpty)
-        #expect(GrapheReseau(reseau: r, appareils: Self.affiches(avecXa), maillage: m).noeud("HomePod avant") != nil)
+        #expect(GrapheReseau(reseau: r, appareils: Self.affiches(avecXa), maillage: m).noeud(idt("HomePod avant")) != nil)
 
         let sansXa = Self.instantane(autres: [("HomePod bureau", "E000000000000007"), ("HomePod chambre", "E0000000000000E4"),
                                               ("HomePod avant", nil), ("HomePod salon", "E0000000000000CC")])
@@ -192,7 +192,7 @@ struct RapprochementTests {
         let m = MaillageAffiche(maillage: c.maillage(), reseau: r, appareils: i.appareils)
         #expect(m.routeurs[2] == NoeudSonde(id: "rloc:0800", rloc16: 0x0800, genre: .routeur, reconnu: false, bordure: false))
         #expect(m.annoncesCandidates.isEmpty)
-        #expect(GrapheReseau(reseau: r, appareils: [], maillage: m).noeud("HomePod avant") != nil)
+        #expect(GrapheReseau(reseau: r, appareils: [], maillage: m).noeud(idt("HomePod avant")) != nil)
     }
 
     /// Mini-maillage de deux routeurs de bordure sans ExtMac (0400, le chef, et 0800) ;

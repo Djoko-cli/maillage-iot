@@ -7,8 +7,8 @@ import Testing
 /// de `ScenePiecesZigbee.grapheZigbee`. Le reste de la scene est generique et teste au coeur (`ScenePiecesTests`).
 @Suite("Scene Zigbee : rang, rayon et lignes d'une carte")
 struct ScenePiecesZigbeeTests {
-    static let libelles = ["Apple TV": "Apple TV 👑", "HomePod": "HomePod", "E000000000000002": "Lampe salon",
-                           "E000000000000003": "Capteur", "E000000000000004": "Prise", "E000000000000005": "Bouton"]
+    static let libelles = [idz("Apple TV"): "Apple TV 👑", idz("HomePod"): "HomePod", idz("E000000000000002"): "Lampe salon",
+                           idz("E000000000000003"): "Capteur", idz("E000000000000004"): "Prise", idz("E000000000000005"): "Bouton"]
 
     static func piece(_ s: ScenePieces, _ nom: ScenePieces.NomPiece) throws -> ScenePieces.Piece {
         try #require(s.pieces.first { $0.nom == nom })
@@ -27,7 +27,7 @@ struct ScenePiecesZigbeeTests {
         for n in s.noeuds {
             #expect(!n.bordure && n.route == n.routeur, "\(n.id) : le graphe")
             #expect(n.route == (n.rang == 1 || n.rang == 2), "\(n.id) : le rang")
-            let cle = try #require(cles.first { $0.hasPrefix(n.id + "|") }).split(separator: "|", omittingEmptySubsequences: false)
+            let cle = try #require(cles.first { $0.hasPrefix(n.id.cle + "|") }).split(separator: "|", omittingEmptySubsequences: false)
             #expect(cle[2] == (n.route ? "R" : ""), "\(n.id) : la cle")
         }
     }
@@ -37,15 +37,15 @@ struct ScenePiecesZigbeeTests {
     @Test func lignesEtRayons() throws {
         let g = try ScenePiecesZigbee.grapheZigbee(sonde: true)
         let tous = Dictionary(uniqueKeysWithValues: g.noeuds.map { ($0.id, "Salon") })
-        let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: ["HomePod"],
+        let s = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [idz("HomePod")],
                             piecesMaison: true, classement: ScenePieces.classementZigbee)
         #expect(try Self.piece(s, .maison("Salon")).noeuds
-                == ["Apple TV", "HomePod", "E000000000000004", "E000000000000005", "E000000000000003", "E000000000000002"])
-        #expect(s.noeud("HomePod")?.rang == 2 && s.noeud("HomePod")?.rayon == 8 && s.noeud("HomePod")?.chef == true)
-        #expect(s.noeud("Apple TV")?.rang == 1 && s.noeud("Apple TV")?.rayon == 15)
-        #expect(s.noeud("E000000000000004")?.rang == 2 && s.noeud("E000000000000004")?.rayon == 8)
-        #expect(s.noeud("E000000000000002")?.rang == 3 && s.noeud("E000000000000002")?.rayon == 7)
-        #expect(s.noeud("E000000000000002")?.libelle == "Lampe salon")
+                == [idz("Apple TV"), idz("HomePod"), idz("E000000000000004"), idz("E000000000000005"), idz("E000000000000003"), idz("E000000000000002")])
+        #expect(s.noeud(idz("HomePod"))?.rang == 2 && s.noeud(idz("HomePod"))?.rayon == 8 && s.noeud(idz("HomePod"))?.chef == true)
+        #expect(s.noeud(idz("Apple TV"))?.rang == 1 && s.noeud(idz("Apple TV"))?.rayon == 15)
+        #expect(s.noeud(idz("E000000000000004"))?.rang == 2 && s.noeud(idz("E000000000000004"))?.rayon == 8)
+        #expect(s.noeud(idz("E000000000000002"))?.rang == 3 && s.noeud(idz("E000000000000002"))?.rayon == 7)
+        #expect(s.noeud(idz("E000000000000002"))?.libelle == "Lampe salon")
         #expect(s.liens == g.liens)
     }
 
@@ -61,9 +61,9 @@ struct ScenePiecesZigbeeTests {
         })
         let zigbee = ScenePieces(graphe: g, libelles: Self.libelles, piecesNoeuds: tous, zones: nil, chefs: [],
                                  piecesMaison: true, classement: ScenePieces.classementZigbee)
-        #expect(parBordure.noeud("Apple TV")?.rang == 2 && zigbee.noeud("Apple TV")?.rang == 1)
+        #expect(parBordure.noeud(idz("Apple TV"))?.rang == 2 && zigbee.noeud(idz("Apple TV"))?.rang == 1)
         for id in ["HomePod", "E000000000000004", "E000000000000002"] {
-            #expect(parBordure.noeud(id)?.rang == zigbee.noeud(id)?.rang, "\(id)")
+            #expect(parBordure.noeud(idz(id))?.rang == zigbee.noeud(idz(id))?.rang, "\(id)")
         }
     }
 }

@@ -12,7 +12,7 @@ struct LegendePiecesTests {
     typealias Lecture = LegendePieces.Lecture
 
     static func radio(_ qualite: Int?) -> ScenePieces.Lien {
-        ScenePieces.Lien(de: "rloc:0400", vers: "rloc:5000", genre: .radio, qualite: qualite)
+        ScenePieces.Lien(de: idt("rloc:0400"), vers: idt("rloc:5000"), genre: .radio, qualite: qualite)
     }
 
     /// Une scene inventee par signe : chacune ne contient que lui, et la legende n'a que son entree. Un
@@ -20,30 +20,30 @@ struct LegendePiecesTests {
     /// inconnu, gris lui aussi, n'a pas d'entree.
     @Test func uneEntreeParSigne() {
         let cas: [(Lecture, Set<Entree>)] = [
-            (Lecture(couleurs: ["Apple TV 4K": .routeur(principale: true)]), [.routeur]),
-            (Lecture(routeursSimples: ["E000000000000008"]), [.routeurSimple]),
-            (Lecture(sondes: ["E000000000000009"]), [.sonde]),
-            (Lecture(couleurs: ["rloc:5000": .routeurInconnu], inconnus: ["rloc:5000"]), [.nonIdentifie]),
-            (Lecture(couleurs: ["rloc:041F": .appareil(.inconnu)], inconnus: ["rloc:041F"]), [.nonIdentifie]),
-            (Lecture(couleurs: ["Aqara": .routeur(principale: false)]), [.autrePartition]),
-            (Lecture(chefs: ["Apple TV 4K"]), [.chef]),
-            (Lecture(couleurs: ["E000000000000001": .appareil(.joignable)]), [.joignable]),
-            (Lecture(couleurs: ["E000000000000002": .appareil(.partitionCoupee)]), [.partitionCoupee]),
-            (Lecture(couleurs: ["E000000000000003": .appareil(.sansAdresse)]), [.sansAdresse]),
-            (Lecture(couleurs: ["E000000000000004": .appareil(.disparu)]), [.disparu]),
-            (Lecture(endormis: ["E000000000000005"]), [.endormi]),
-            (Lecture(piles: ["E000000000000006"]), [.pile]),
+            (Lecture(couleurs: [idt("Apple TV 4K"): .routeur(principale: true)]), [.routeur]),
+            (Lecture(routeursSimples: [idt("E000000000000008")]), [.routeurSimple]),
+            (Lecture(sondes: [idt("E000000000000009")]), [.sonde]),
+            (Lecture(couleurs: [idt("rloc:5000"): .routeurInconnu], inconnus: [idt("rloc:5000")]), [.nonIdentifie]),
+            (Lecture(couleurs: [idt("rloc:041F"): .appareil(.inconnu)], inconnus: [idt("rloc:041F")]), [.nonIdentifie]),
+            (Lecture(couleurs: [idt("Aqara"): .routeur(principale: false)]), [.autrePartition]),
+            (Lecture(chefs: [idt("Apple TV 4K")]), [.chef]),
+            (Lecture(couleurs: [idt("E000000000000001"): .appareil(.joignable)]), [.joignable]),
+            (Lecture(couleurs: [idt("E000000000000002"): .appareil(.partitionCoupee)]), [.partitionCoupee]),
+            (Lecture(couleurs: [idt("E000000000000003"): .appareil(.sansAdresse)]), [.sansAdresse]),
+            (Lecture(couleurs: [idt("E000000000000004"): .appareil(.disparu)]), [.disparu]),
+            (Lecture(endormis: [idt("E000000000000005")]), [.endormi]),
+            (Lecture(piles: [idt("E000000000000006")]), [.pile]),
             (Lecture(liens: [Self.radio(3)]), [.bonne]),
             (Lecture(liens: [Self.radio(2)]), [.moyenne]),
             (Lecture(liens: [Self.radio(1)]), [.faible]),
             (Lecture(liens: [Self.radio(nil)]), [.inconnue]),
             (Lecture(liens: [Self.radio(0)]), [.inconnue]),
-            (Lecture(liens: [ScenePieces.Lien(de: "E000000000000001", vers: "rloc:5000", genre: .parent, qualite: 3)]),
+            (Lecture(liens: [ScenePieces.Lien(de: idt("E000000000000001"), vers: idt("rloc:5000"), genre: .parent, qualite: 3)]),
              [.versParent]),
-            (Lecture(liens: [ScenePieces.Lien(de: "E000000000000001", vers: "Apple TV 4K")]), [.rattachement]),
+            (Lecture(liens: [ScenePieces.Lien(de: idt("E000000000000001"), vers: idt("Apple TV 4K"))]), [.rattachement]),
             (Lecture(ailleurs: true), [.ailleurs]),
-            (Lecture(candidats: ["rloc:0400"]), [.candidats]),
-            (Lecture(couleurs: ["E000000000000007": .appareil(.inconnu)]), []),
+            (Lecture(candidats: [idt("rloc:0400")]), [.candidats]),
+            (Lecture(couleurs: [idt("E000000000000007"): .appareil(.inconnu)]), []),
             (Lecture(), []),
         ]
         for (lecture, attendu) in cas {
@@ -54,21 +54,21 @@ struct LegendePiecesTests {
     /// Les groupes dans l'ordre de la grille (routeurs, appareils, liens radio, autres), leurs entrees
     /// dans l'ordre de la spec ; un groupe sans entree disparait, et une scene vide n'a pas de legende.
     @Test func groupesEtOrdre() {
-        let tout = Lecture(couleurs: ["a": .routeur(principale: true), "b": .routeur(principale: false),
-                                      "c": .appareil(.joignable), "d": .appareil(.partitionCoupee),
-                                      "e": .appareil(.sansAdresse), "f": .appareil(.disparu),
-                                      "h": .appareil(.joignable)],
-                           routeursSimples: ["c"], verifies: ["h"], sondes: ["c"], inconnus: ["g"], chefs: ["a"],
-                           endormis: ["c"], piles: ["c"], candidats: ["g"],
+        let tout = Lecture(couleurs: [idt("a"): .routeur(principale: true), idt("b"): .routeur(principale: false),
+                                      idt("c"): .appareil(.joignable), idt("d"): .appareil(.partitionCoupee),
+                                      idt("e"): .appareil(.sansAdresse), idt("f"): .appareil(.disparu),
+                                      idt("h"): .appareil(.joignable)],
+                           routeursSimples: [idt("c")], verifies: [idt("h")], sondes: [idt("c")], inconnus: [idt("g")], chefs: [idt("a")],
+                           endormis: [idt("c")], piles: [idt("c")], candidats: [idt("g")],
                            liens: [Self.radio(3), Self.radio(2), Self.radio(1), Self.radio(nil),
-                                   ScenePieces.Lien(de: "c", vers: "a", genre: .parent),
-                                   ScenePieces.Lien(de: "d", vers: "a")],
+                                   ScenePieces.Lien(de: idt("c"), vers: idt("a"), genre: .parent),
+                                   ScenePieces.Lien(de: idt("d"), vers: idt("a"))],
                            ailleurs: true)
         #expect(LegendePieces.rubriques(tout) == LegendePieces.Groupe.allCases.map {
             LegendePieces.Rubrique(groupe: $0, entrees: $0.entrees)
         })
         #expect(Set(LegendePieces.Groupe.allCases.flatMap(\.entrees)) == Set(Entree.allCases), "chaque entree a son groupe")
-        let sansLiens = Lecture(couleurs: ["c": .appareil(.joignable)], chefs: ["a"], ailleurs: true)
+        let sansLiens = Lecture(couleurs: [idt("c"): .appareil(.joignable)], chefs: [idt("a")], ailleurs: true)
         #expect(LegendePieces.rubriques(sansLiens) == [
             LegendePieces.Rubrique(groupe: .routeurs, entrees: [.chef]),
             LegendePieces.Rubrique(groupe: .appareils, entrees: [.joignable]),
@@ -158,7 +158,7 @@ struct LegendePiecesTests {
             let rangee = hauteur(LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: repliee))
             let pile = hauteur(VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: repliee)
-                FicheNoeud(id: "Apple TV 4K", entree: e, instant: Date(), aRenommer: .constant(nil)) {}
+                FicheNoeud(id: idt("Apple TV 4K"), entree: e, instant: Date(), aRenommer: .constant(nil)) {}
             }.frame(width: 1100 - 2 * FenetrePieces.bord))
             #expect(pile > rangee + FenetrePieces.espacement + 80, "repliee : \(repliee) ; la fiche sous la rangee (\(pile) pt)")
             #expect(FenetrePieces.margeBas(pile: pile) == FenetrePieces.bord + ceil(pile) + FenetrePieces.espacement)

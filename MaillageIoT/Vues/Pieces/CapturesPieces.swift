@@ -74,8 +74,8 @@ enum CapturesPieces {
             m.poserIsolement(piece(sc, "Salon"))
         },
         Cas(nom: "11-2d-isolee-chambre") { m, sc in m.poserIsolement(piece(sc, "Chambre")) },
-        Cas(nom: "12-2d-survol") { m, _ in m.poserSurvol("9A28601B74FF90A7") },
-        Cas(nom: "13-2d-fiche-du-chef") { m, _ in m.selection = "Apple TV 4K" },
+        Cas(nom: "12-2d-survol") { m, _ in m.poserSurvol(IdNoeud(.thread, "9A28601B74FF90A7")) },
+        Cas(nom: "13-2d-fiche-du-chef") { m, _ in m.selection = IdNoeud(.thread, "Apple TV 4K") },
         Cas(nom: "14-2d-legende-repliee", poser: { _, _ in }, legendeRepliee: true),
         Cas(nom: "15-2d-carree-2x2", poser: { _, _ in }, taille: CapturesPieces.carree),
         Cas(nom: "16-2d-carree-en-rangee", poser: { _, _ in }, taille: CapturesPieces.carree, grille: false),

@@ -20,22 +20,22 @@ struct FocusFicheTests {
         let (m, e) = try MoteurPiecesTests.moteur()
         m.fige = true
         #expect(m.miseEnAvant == nil && m.noeudsEstompes.isEmpty)
-        m.selection = I.lampeBureau
+        m.selection = idz(I.lampeBureau)
         let focus = try #require(m.miseEnAvant)
-        #expect(focus == e.miseEnAvant(de: I.lampeBureau, voisins: true))
-        #expect(m.noeudsEstompes[I.lampeGrenier] == 1 && m.noeudsEstompes[I.lampeBureau] == nil)
+        #expect(focus == e.miseEnAvant(de: idz(I.lampeBureau), voisins: true))
+        #expect(m.noeudsEstompes[idz(I.lampeGrenier)] == 1 && m.noeudsEstompes[idz(I.lampeBureau)] == nil)
         #expect(m.noeudsEstompes.count == e.scene.noeuds.count - focus.noeuds.count)
         MoteurPiecesTests.dessiner(m)
         let p = try #require(m.projetee)
-        #expect(p.disques.first { $0.noeud == I.lampeGrenier }?.focus == MiseEnAvant.opaciteEstompee)
-        #expect(p.disques.first { $0.noeud == I.lampadaireSalon }?.focus == 1, "son prochain saut reste net")
-        #expect(p.facteur(noeud: I.lampeGrenier) < 1 && p.facteur(noeud: I.pont) == 1)
+        #expect(p.disques.first { $0.noeud == idz(I.lampeGrenier) }?.focus == MiseEnAvant.opaciteEstompee)
+        #expect(p.disques.first { $0.noeud == idz(I.lampadaireSalon) }?.focus == 1, "son prochain saut reste net")
+        #expect(p.facteur(noeud: idz(I.lampeGrenier)) < 1 && p.facteur(noeud: idz(I.pont)) == 1)
         // Sans les voisins : le lien vers le pont, un voisin, s'estompe ; en mode « tous », les voisins reviennent.
         m.voisins = false
-        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(I.lampeBureau, I.pont)) == false)
-        #expect(m.liensEstompes[MiseEnAvant.cle(I.lampeBureau, I.pont)] == 1)
+        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))) == false)
+        #expect(m.liensEstompes[MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))] == 1)
         m.liens = .tous
-        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(I.lampeBureau, I.pont)) == true, "« tous » : voisins montres")
+        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))) == true, "« tous » : voisins montres")
         m.liens = .chemins
         m.voisins = true
         // Echap : la vue normale.
@@ -59,16 +59,16 @@ struct FocusFicheTests {
         let (m, _) = try MoteurPiecesTests.moteur()
         func centre(_ id: String) throws -> CGPoint {
             MoteurPiecesTests.dessiner(m)
-            return try #require(m.projetee?.disques.first { $0.noeud == id }).centre
+            return try #require(m.projetee?.disques.first { $0.noeud == idz(id) }).centre
         }
         let pont = try centre(I.pont)
         m.cliquer(pont)
-        #expect(m.selection == I.pont && m.miseEnAvant != nil)
+        #expect(m.selection == idz(I.pont) && m.miseEnAvant != nil)
         m.cliquer(pont)
         #expect(m.selection == nil && m.miseEnAvant == nil, "second clic : la vue normale")
         m.cliquer(pont)
         m.cliquer(try centre(I.plafonnierSalon))
-        #expect(m.selection == I.plafonnierSalon && m.miseEnAvant?.noeuds.contains(I.plafonnierSalon) == true)
+        #expect(m.selection == idz(I.plafonnierSalon) && m.miseEnAvant?.noeuds.contains(idz(I.plafonnierSalon)) == true)
         m.cliquer(CGPoint(x: 5, y: MoteurPiecesTests.taille.height / 2))
         #expect(m.selection == nil && m.miseEnAvant == nil, "clic dans le vide")
     }
@@ -77,25 +77,25 @@ struct FocusFicheTests {
     /// (`avancer`) l'approche de sa cible sans la depasser, et il arrive : l'horloge peut alors s'arreter.
     @Test func transitionDouce() throws {
         let (m, _) = try MoteurPiecesTests.moteur()
-        m.selection = I.lampeChambre
+        m.selection = idz(I.lampeChambre)
         let debut = MoteurPieces.maintenant()
         #expect(m.focusEnRoute && m.doitContinuer(debut), "la selection lance l'estompement")
         #expect(m.noeudsEstompes.isEmpty, "rien n'a encore avance")
         m.avancer(debut)
         m.avancer(debut + 0.05)
-        let mi = m.noeudsEstompes[I.lampeGrenier] ?? 0
+        let mi = m.noeudsEstompes[idz(I.lampeGrenier)] ?? 0
         #expect(mi > 0 && mi < 1, "en route : \(mi)")
         #expect(m.focusEnRoute && m.doitContinuer(debut + 0.05))
         var avant = mi
         for i in 2..<80 {
             m.avancer(debut + 0.05 * Double(i))
-            let v = m.noeudsEstompes[I.lampeGrenier] ?? 0
+            let v = m.noeudsEstompes[idz(I.lampeGrenier)] ?? 0
             #expect(v >= avant && v <= 1, "monte sans reculer ni depasser sa cible : \(avant) puis \(v)")
             avant = v
         }
         #expect(!m.focusEnRoute, "arrive en 4 s au plus")
         #expect(m.noeudsEstompes == m.ciblesFocus.noeuds && m.liensEstompes == m.ciblesFocus.liens)
-        #expect(m.noeudsEstompes[I.lampeGrenier] == 1)
+        #expect(m.noeudsEstompes[idz(I.lampeGrenier)] == 1)
         // Le retour (Echap) est aussi doux, et ne garde aucun zero.
         #expect(m.sortir() && m.focusEnRoute)
         for i in 80..<160 { m.avancer(debut + 0.05 * Double(i)) }
@@ -165,16 +165,16 @@ struct FocusFicheTests {
                 == [String(localized: "parent \("Lampe chambre"), \(FicheNoeud.texteQualite(2))\(" (LQI 112)")"),
                     String(localized: "vers le pont : via \("Lampe chambre") · \(4) sauts")])
         #expect(FicheNoeud.lignesChemin("A0000000000000EE", maillage: m, nom: s.nom, maintenant: m.date).isEmpty)
-        let r = ResumeVoisins(FicheZigbee.voisins(de: I.lampeChambre, maillage: m))
+        let r = ResumeVoisins(FicheZigbee.voisins(de: idz(I.lampeChambre), maillage: m))
         #expect(FicheNoeud.ligneResume(r) == [String(localized: "\(3) voisins"), String(localized: "\(2) bons"),
                                               String(localized: "1 faible")].joined(separator: " · "))
-        let un = ResumeVoisins([VoisinFiche(id: "a", qualite: 2), VoisinFiche(id: "b", qualite: nil)])
+        let un = ResumeVoisins([VoisinFiche(id: idz("a"), qualite: 2), VoisinFiche(id: idz("b"), qualite: nil)])
         #expect(FicheNoeud.ligneResume(un) == [String(localized: "\(2) voisins"), String(localized: "1 moyen"),
                                                String(localized: "1 inconnu")].joined(separator: " · "))
-        let d = FicheZigbee.dependants(de: I.lampeChambre, maillage: m)
+        let d = FicheZigbee.dependants(de: idz(I.lampeChambre), maillage: m)
         #expect(FicheNoeud.ligneDependants(d) == [String(localized: "\(2) routeurs"), String(localized: "\(2) appareils")]
             .joined(separator: " · "))
-        #expect(FicheNoeud.ligneDependants([DependantFiche(id: "a", qualite: 3, routeur: true)])
+        #expect(FicheNoeud.ligneDependants([DependantFiche(id: idz("a"), qualite: 3, routeur: true)])
                 == String(localized: "1 routeur"))
     }
 
@@ -204,7 +204,7 @@ struct FocusFicheTests {
     @Test func ficheRepliableEtEtroite() throws {
         let (s, e) = try NomsSceneTests.demo()
         func hauteur(_ largeur: CGFloat, deplie: Bool) -> CGFloat {
-            let v = FicheNoeud(id: I.lampeBureau, entree: e, instant: s.maintenant, aRenommer: .constant(nil),
+            let v = FicheNoeud(id: idz(I.lampeBureau), entree: e, instant: s.maintenant, aRenommer: .constant(nil),
                                listeDepliee: deplie) {}
                 .frame(width: largeur)
                 .environment(s)

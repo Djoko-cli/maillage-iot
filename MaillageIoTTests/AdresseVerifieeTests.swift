@@ -92,8 +92,8 @@ struct AdresseVerifieeAppTests {
 
         let r = try #require(s.reseau)
         let affiches = s.appareilsAffiches(pour: r)
-        #expect(affiches.first { $0.id == Self.matter }?.etat == .joignable)
-        #expect(affiches.first { $0.id == Self.hap }?.etat == .joignable)
+        #expect(affiches.first { $0.id == idt(Self.matter) }?.etat == .joignable)
+        #expect(affiches.first { $0.id == idt(Self.hap) }?.etat == .joignable)
         #expect(s.resume?.injoignables == 0)
         #expect(s.verification(Self.matter, a: maintenant) == trouve)
         #expect(s.verification(Self.temoin, a: maintenant) == nil, "il annonce son adresse : rien a verifier")
@@ -101,8 +101,8 @@ struct AdresseVerifieeAppTests {
         #expect(m.parent(de: Self.matter) == Self.routeur, "par son ExtMac")
         #expect(m.parent(de: Self.hap) == Self.routeur, "par sa derniere adresse")
         let graphe = GrapheReseau(reseau: r, appareils: affiches, maillage: m)
-        #expect(graphe.parent(de: Self.hap) == Self.routeur)
-        #expect(graphe.liens.contains { $0.de == Self.hap && $0.genre == .parent })
+        #expect(graphe.parent(de: idt(Self.hap)) == idt(Self.routeur))
+        #expect(graphe.liens.contains { $0.de == idt(Self.hap) && $0.genre == .parent })
 
         #expect(FicheNoeud.texteEtat(.sansAdresse, disparu: false, verifie: true)
                 == String(localized: "joignable, adresse plus annoncée"))
@@ -123,10 +123,10 @@ struct AdresseVerifieeAppTests {
         let s = Self.surveillance(muets: [Self.hap], maintenant: maintenant)
         let r = try #require(s.reseau)
         #expect(s.verification(Self.hap, a: maintenant) == nil, "sans sonde")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
         s.recevoir(Self.maillage(maintenant - 150, resolus: [:]), a: maintenant - 60)
         #expect(s.verification(Self.hap, a: maintenant) == nil)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
         #expect(s.resume?.injoignables == 1)
         #expect(s.maillageAffiche(pour: r)?.parent(de: Self.hap) == nil)
         #expect(FicheNoeud.texteEtat(.sansAdresse, disparu: false, verifie: false)
@@ -137,7 +137,7 @@ struct AdresseVerifieeAppTests {
         #expect(s.verification(Self.hap, a: maintenant) == nil, "resolution trop ancienne")
         s.recevoir(Self.maillage(maintenant - 1100, resolus: [Self.hap: maintenant - 1100]), a: maintenant - 16 * 60)
         #expect(s.verification(Self.hap, a: maintenant) == nil, "maillage perime")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
     }
 
     /// Le cache d'adresses seul ne verifie pas : un appareil trouve mais qui n'a pas repondu a la sonde (repondu faux,
@@ -161,8 +161,8 @@ struct AdresseVerifieeAppTests {
                                  repondus: [Self.matter]), a: maintenant - 60)
         #expect(s.verification(Self.matter, a: maintenant) == trouve)
         #expect(s.verification(Self.hap, a: maintenant) == nil)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.matter }?.etat == .joignable)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
         #expect(s.resume?.injoignables == 1)
     }
 
@@ -182,7 +182,7 @@ struct AdresseVerifieeAppTests {
         s.integrer(a)
         #expect(!s.appareilsAResoudre().contains { $0.id == Self.hap }, "plus demande")
         #expect(s.verification(Self.hap, a: maintenant) == nil, "plus verifie")
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
     }
 
     /// Un disparu demande a la sonde avec sa derniere adresse, et trouve : joignable, a sa place, sans alerte.
@@ -195,9 +195,9 @@ struct AdresseVerifieeAppTests {
                                      adresse: try #require(AdresseIPv6(Self.adresse(1))),
                                      derniereAnnonce: s.suivi.dernieresAnnonces[Self.matter], disparu: true))
         let r = try #require(s.reseau)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.matter }?.etat == .disparu)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
         s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: maintenant - 120]), a: maintenant - 60)
-        let affiche = try #require(s.appareilsAffiches(pour: r).first { $0.id == Self.matter })
+        let affiche = try #require(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) })
         #expect(affiche.etat == .joignable && affiche.partition == Self.partition)
         #expect(s.maillageAffiche(pour: r)?.parent(de: Self.matter) == Self.routeur)
         #expect(FicheNoeud.texteEtat(.joignable, disparu: true, verifie: true)
@@ -222,8 +222,8 @@ struct AdresseVerifieeAppTests {
                        a: maintenant - 60)
             #expect(s.verification(Self.hap, a: maintenant) == nil)
             #expect(s.verification(Self.matter, a: maintenant) == nil)
-            #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .sansAdresse)
-            #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.matter }?.etat == .disparu)
+            #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .sansAdresse)
+            #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .disparu)
             #expect(s.resume?.injoignables == 2)
             let carte = s.maillageAffiche(pour: r)
             #expect(carte?.parent(de: Self.hap) == nil && carte?.parent(de: Self.matter) == nil)
@@ -234,8 +234,8 @@ struct AdresseVerifieeAppTests {
         s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.hap: apres, Self.matter: apres]), a: maintenant - 60)
         #expect(s.verification(Self.hap, a: maintenant) == apres)
         #expect(s.verification(Self.matter, a: maintenant) == apres)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.hap }?.etat == .joignable)
-        #expect(s.appareilsAffiches(pour: r).first { $0.id == Self.matter }?.etat == .joignable)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.hap) }?.etat == .joignable)
+        #expect(s.appareilsAffiches(pour: r).first { $0.id == idt(Self.matter) }?.etat == .joignable)
         #expect(s.resume?.injoignables == 0)
     }
 
@@ -496,20 +496,20 @@ struct AdresseVerifieeAppTests {
         s.recevoir(Self.maillage(maintenant - 150, resolus: [Self.matter: trouve, Self.hap: trouve]),
                    a: maintenant - 60)
         let affiches = s.appareilsAffiches(pour: r)
-        #expect(Set(affiches.filter(\.verifie).map(\.id)) == [Self.matter, Self.hap])
-        #expect(affiches.first { $0.id == Self.temoin }?.verifie == false, "il annonce son adresse")
+        #expect(Set(affiches.filter(\.verifie).map(\.id)) == [idt(Self.matter), idt(Self.hap)])
+        #expect(affiches.first { $0.id == idt(Self.temoin) }?.verifie == false, "il annonce son adresse")
         #expect(affiches.filter(\.verifie).allSatisfy { $0.etat == .joignable }, "le point reste joignable, donc vert")
         let entree = try #require(FenetrePiecesTests.entree(s))
-        #expect(Set(entree.apparences.filter { $0.value.verifie }.keys) == [Self.matter, Self.hap])
-        #expect(entree.apparences[Self.matter]?.couleur == .appareil(.joignable))
-        #expect(entree.apparences[Self.temoin]?.verifie == false)
+        #expect(Set(entree.apparences.filter { $0.value.verifie }.keys) == [idt(Self.matter), idt(Self.hap)])
+        #expect(entree.apparences[idt(Self.matter)]?.couleur == .appareil(.joignable))
+        #expect(entree.apparences[idt(Self.temoin)]?.verifie == false)
         let entrees = LegendePieces.entrees(LegendePieces.Lecture(entree, ailleurs: false))
         #expect(entrees.isSuperset(of: [.joignable, .verifiee]), "le temoin reste « joignable »")
         let rubriques = LegendePieces.rubriques(LegendePieces.Lecture(entree, ailleurs: false))
         let appareils = try #require(rubriques.first { $0.groupe == .appareils })
         #expect(Array(appareils.entrees.prefix(2)) == [.joignable, .verifiee], "juste apres « joignable »")
         // Tous verifies : plus de « joignable » simple.
-        #expect(LegendePieces.entrees(LegendePieces.Lecture(couleurs: ["a": .appareil(.joignable)], verifies: ["a"]))
+        #expect(LegendePieces.entrees(LegendePieces.Lecture(couleurs: [idt("a"): .appareil(.joignable)], verifies: [idt("a")]))
                 == [.verifiee])
 
         // Les valeurs de la maquette.

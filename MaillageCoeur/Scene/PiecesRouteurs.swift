@@ -114,8 +114,8 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
     /// noeud qui a une cle (`cle(_:)`), la piece choisie sous cette cle, si elle est encore une piece de
     /// la maison (`pieces`). Un noeud qui n'y est pas va dans « Sans piece ». La piece d'un routeur de
     /// bordure se calcule a part (`piece(routeur:nom:parmi:domicile:)`).
-    public func piecesNoeuds(_ graphe: GrapheReseau, deMaison: [String: String], parmi pieces: [String],
-                             domicile: String) -> [String: String] {
+    public func piecesNoeuds(_ graphe: GrapheReseau, deMaison: [IdNoeud: String], parmi pieces: [String],
+                             domicile: String) -> [IdNoeud: String] {
         var resultat = deMaison.filter { !$0.value.isEmpty }
         for n in graphe.noeuds where resultat[n.id] == nil {
             if let x = Self.cle(n), let c = choix(appareil: x, domicile: domicile), pieces.contains(c) {

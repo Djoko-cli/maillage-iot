@@ -10,8 +10,8 @@ import SwiftUI
 /// scene.
 struct EntreeScene: Equatable {
     var scene: ScenePieces
-    var libelles: [String: LibellesNoeuds.Libelle]
-    var apparences: [String: DessinNoeud.Apparence]
+    var libelles: [IdNoeud: LibellesNoeuds.Libelle]
+    var apparences: [IdNoeud: DessinNoeud.Apparence]
     /// Domicile de Maison ("" sans nom) : la cle de ses places gardees.
     var domicile: String
     /// Noeuds et liens du reseau.
@@ -20,9 +20,9 @@ struct EntreeScene: Equatable {
     var maillage: MaillageAffiche?
     /// Noeuds couronnes (le chef de chaque partition, celui du maillage de la sonde) : ceux des
     /// libelles ; la couronne suit ceux-ci partout ou elle parait.
-    var chefs: Set<String>
+    var chefs: Set<IdNoeud>
     /// Appareils affiches, par id.
-    var appareils: [String: AppareilAffiche]
+    var appareils: [IdNoeud: AppareilAffiche]
 
     /// `places` : les places gardees, dont l'ordre des etages de la maison et ses choix de niveau ; `choix` :
     /// les pieces choisies pour les noeuds que Maison ne place pas, routeurs de bordure (sous leur instance)
@@ -58,8 +58,9 @@ struct EntreeScene: Equatable {
         self.chefs = chefs
         appareils = parId
         apparences = Dictionary(scene.noeuds.map { n in
-            (n.id, DessinNoeud.apparence(n, etat: parId[n.id]?.etat, principale: n.partition == principale,
-                                         sonde: n.id == maillage?.sonde, verifie: parId[n.id]?.verifie == true))
+            (n.id, DessinNoeud.apparence(n, etat: parId[n.id]?.etat,
+                                         principale: n.id.protocole == .thread && n.partition == principale,
+                                         sonde: n.id.protocole == .thread && n.id.cle == maillage?.sonde, verifie: parId[n.id]?.verifie == true))
         }, uniquingKeysWith: { a, _ in a })
     }
 
@@ -73,7 +74,7 @@ struct EntreeScene: Equatable {
     /// Mode focus du graphe : ce qui reste net a la selection du noeud `id`, calcule par la fonction propre a Thread
     /// (`FocusThread`) sur le graphe de cette scene et ses chefs. Le moteur, generique, ne fait que l'appeler
     /// (`MoteurPieces.majMiseEnAvant`).
-    func miseEnAvant(de id: String) -> MiseEnAvant? {
+    func miseEnAvant(de id: IdNoeud) -> MiseEnAvant? {
         FocusThread.miseEnAvant(de: id, graphe: graphe, chefs: chefs)
     }
 

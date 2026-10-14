@@ -50,10 +50,10 @@ struct AffichageSondeTests {
                 == String(localized: "parent \("Prise terrasse"), \(FicheNoeud.texteQualite(1))\(" (LQI 72)")"))
         #expect(FicheNoeud.ligneParent(I.priseTerrasse, maillage: m, nom: s.nom) == nil, "un routeur n'a pas de parent")
         // Les voisins entendus, chacun avec les LQI des deux sens (le noeud, puis le voisin).
-        let terrasse = FicheZigbee.voisins(de: I.priseTerrasse, maillage: m)
-        #expect(terrasse == [VoisinFiche(id: I.rubanCuisine, qualite: 1, lqiIci: 61, lqiLa: 88)])
+        let terrasse = FicheZigbee.voisins(de: idz(I.priseTerrasse), maillage: m)
+        #expect(terrasse == [VoisinFiche(id: idz(I.rubanCuisine), qualite: 1, lqiIci: 61, lqiLa: 88)])
         #expect(FicheNoeud.texteLQIs(terrasse[0]) == String(localized: "LQI \("61") / \("88")"))
-        let inconnu = try #require(FicheZigbee.voisins(de: I.inconnu, maillage: m).first)
+        let inconnu = try #require(FicheZigbee.voisins(de: idz(I.inconnu), maillage: m).first)
         #expect(FicheNoeud.texteLQIs(inconnu) == String(localized: "LQI \("?") / \("66")"))
         #expect(FicheNoeud.lignesTable(I.inconnu, maillage: m) == [String(localized: "muet : sans réponse à deux tournées de suite")])
         #expect(FicheNoeud.lignesTable(I.lampeGrenier, maillage: m).isEmpty)
@@ -109,7 +109,7 @@ struct AffichageSondeTests {
 
     /// Etat d'un noeud dans sa fiche : celui de son appareil ; « inconnu du pont », « la sonde ».
     @Test func etatDansLaFiche() {
-        let joignable = AppareilAffiche(id: "x", nom: "x", etat: .joignable)
+        let joignable = AppareilAffiche(id: idz("x"), nom: "x", etat: .joignable)
         #expect(FicheNoeud.etat(joignable, inconnu: false, sonde: false) == String(localized: "joignable"))
         #expect(FicheNoeud.etat(nil, inconnu: true, sonde: false) == String(localized: "inconnu du pont"))
         #expect(FicheNoeud.etat(nil, inconnu: false, sonde: true) == String(localized: "la sonde"))
@@ -121,11 +121,11 @@ struct AffichageSondeTests {
     @Test func renommable() throws {
         let (_, e) = try NomsSceneTests.demo()
         for id in [I.pont, I.interrupteurSalon, I.sonde, I.inconnu, I.priseSalon] {
-            #expect(FicheNoeud.renommable(id, entree: e), "\(id)")
+            #expect(FicheNoeud.renommable(idz(id), entree: e), "\(id)")
         }
-        #expect(!FicheNoeud.renommable("A0000000000000EE", entree: e))
-        #expect(!FicheNoeud.renommable("~0A13", entree: e), "une cle provisoire n'est pas une adresse longue")
-        #expect(!FicheNoeud.renommable(I.pont, entree: nil))
+        #expect(!FicheNoeud.renommable(idz("A0000000000000EE"), entree: e))
+        #expect(!FicheNoeud.renommable(idz("~0A13"), entree: e), "une cle provisoire n'est pas une adresse longue")
+        #expect(!FicheNoeud.renommable(idz(I.pont), entree: nil))
     }
 
     /// Le reseau de la sonde dans les Reglages (`etat`) : le canal et le parent avec son LQI ; « hors reseau ».

@@ -759,7 +759,7 @@ final class Surveillance {
         func partitionDerniere(_ a: Appareil, verifie: Bool) -> String? { partitionAffichee(a, verifie: verifie) }
         func affiche(_ a: Appareil, _ etat: EtatAffiche, verifie: Bool = false) -> AppareilAffiche {
             let maison = accessoire(a)
-            return AppareilAffiche(id: a.id, nom: nom(a), piece: maison?.piece,
+            return AppareilAffiche(id: IdNoeud(.thread, a.id), nom: nom(a), piece: maison?.piece,
                                    partition: a.partition ?? partitionDerniere(a, verifie: verifie), etat: etat,
                                    endormi: a.endormi, batterie: maison?.batterie, verifie: verifie)
         }

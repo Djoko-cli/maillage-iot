@@ -41,9 +41,9 @@ struct SurveillanceTests {
         let affiches = s.appareilsAffiches(pour: r)
         #expect(affiches.filter { $0.etat == .disparu }.map(\.nom).sorted()
                 == ["Ampoule entrée", "Prise bureau", "Prise salon", "Thermo chambre"])
-        #expect(affiches.first { $0.id == "46F77B36E071F8D0" }?.partition == "73586B68", "disparu a sa derniere place")
-        #expect(affiches.first { $0.id == "56B1E064401F74EF" }?.piece == "Bureau")
-        #expect(affiches.first { $0.id == "86E7BD1A75F28E6D" }?.batterie
+        #expect(affiches.first { $0.id == idt("46F77B36E071F8D0") }?.partition == "73586B68", "disparu a sa derniere place")
+        #expect(affiches.first { $0.id == idt("56B1E064401F74EF") }?.piece == "Bureau")
+        #expect(affiches.first { $0.id == idt("86E7BD1A75F28E6D") }?.batterie
                 == BatterieMaison(niveau: 52, charge: .horsCharge, alerte: false), "batterie de Maison")
         #expect(affiches.filter { $0.batterie?.faible == true }.map(\.nom).sorted() == ["Eve Motion", "Fenêtre chambre"])
         #expect(s.evenements(de: "46F77B36E071F8D0").first?.type == .appareilDisparu)
@@ -102,8 +102,8 @@ struct SurveillanceTests {
         #expect(i.appareil("BBBB000000000001")?.etat == .sansAdresse)
         let maison = try #require(i.reseaux.first)
         let voisin = try #require(i.reseaux.last)
-        #expect(!s.appareilsAffiches(pour: maison).contains { $0.id == "BBBB000000000001" }, "pas dans le premier reseau")
-        #expect(s.appareilsAffiches(pour: voisin).map(\.id) == ["BBBB000000000001"])
+        #expect(!s.appareilsAffiches(pour: maison).contains { $0.id == idt("BBBB000000000001") }, "pas dans le premier reseau")
+        #expect(s.appareilsAffiches(pour: voisin).map(\.id) == [idt("BBBB000000000001")])
         #expect(s.appareilsAffiches(pour: voisin).first?.partition == "BBBBBBBB")
         #expect(s.resume?.appareils == 24, "le premier reseau ne compte pas l'appareil du voisin")
     }

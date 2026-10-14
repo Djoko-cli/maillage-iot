@@ -13,7 +13,7 @@ struct LegendePiecesTests {
     typealias Lecture = LegendePieces.Lecture
 
     static func radio(_ qualite: Int?) -> ScenePieces.Lien {
-        ScenePieces.Lien(de: "A0000000000000A1", vers: "A0000000000000A2", genre: .radio, qualite: qualite)
+        ScenePieces.Lien(de: idz("A0000000000000A1"), vers: idz("A0000000000000A2"), genre: .radio, qualite: qualite)
     }
 
     /// Une scene inventee par signe : chacune ne contient que lui, et la legende n'a que son entree. Un noeud que le
@@ -21,26 +21,26 @@ struct LegendePiecesTests {
     /// n'a pas d'entree. Une qualite de 0 (un LQI sous 50) est un lien faible : Zigbee le mesure (`NiveauQualite`).
     @Test func uneEntreeParSigne() {
         let cas: [(Lecture, Set<Entree>)] = [
-            (Lecture(couleurs: ["A000000000000001": .routeur]), [.routeur]),
-            (Lecture(couleurs: ["A0000000000000FD": .routeurInconnu], inconnus: ["A0000000000000FD"]), [.nonIdentifie]),
-            (Lecture(couleurs: ["A0000000000000FC": .appareil(.inconnu)], inconnus: ["A0000000000000FC"]), [.nonIdentifie]),
-            (Lecture(chefs: ["A000000000000001"]), [.coordinateur]),
-            (Lecture(sondes: ["A0000000000000FE"]), [.sonde]),
-            (Lecture(couleurs: ["A000000000000021": .appareil(.joignable)]), [.joignable]),
-            (Lecture(couleurs: ["A000000000000022": .appareil(.injoignable)]), [.injoignable]),
-            (Lecture(couleurs: ["A000000000000023": .appareil(.disparu)]), [.disparu]),
-            (Lecture(endormis: ["A000000000000024"]), [.endormi]),
-            (Lecture(piles: ["A000000000000025"]), [.pile]),
+            (Lecture(couleurs: [idz("A000000000000001"): .routeur]), [.routeur]),
+            (Lecture(couleurs: [idz("A0000000000000FD"): .routeurInconnu], inconnus: [idz("A0000000000000FD")]), [.nonIdentifie]),
+            (Lecture(couleurs: [idz("A0000000000000FC"): .appareil(.inconnu)], inconnus: [idz("A0000000000000FC")]), [.nonIdentifie]),
+            (Lecture(chefs: [idz("A000000000000001")]), [.coordinateur]),
+            (Lecture(sondes: [idz("A0000000000000FE")]), [.sonde]),
+            (Lecture(couleurs: [idz("A000000000000021"): .appareil(.joignable)]), [.joignable]),
+            (Lecture(couleurs: [idz("A000000000000022"): .appareil(.injoignable)]), [.injoignable]),
+            (Lecture(couleurs: [idz("A000000000000023"): .appareil(.disparu)]), [.disparu]),
+            (Lecture(endormis: [idz("A000000000000024")]), [.endormi]),
+            (Lecture(piles: [idz("A000000000000025")]), [.pile]),
             (Lecture(liens: [Self.radio(3)]), [.bonne]),
             (Lecture(liens: [Self.radio(2)]), [.moyenne]),
             (Lecture(liens: [Self.radio(1)]), [.faible]),
             (Lecture(liens: [Self.radio(0)]), [.faible]),
             (Lecture(liens: [Self.radio(nil)]), [.inconnue]),
-            (Lecture(liens: [ScenePieces.Lien(de: "A000000000000021", vers: "A0000000000000A1", genre: .parent, qualite: 3)]),
+            (Lecture(liens: [ScenePieces.Lien(de: idz("A000000000000021"), vers: idz("A0000000000000A1"), genre: .parent, qualite: 3)]),
              [.versParent]),
-            (Lecture(liens: [ScenePieces.Lien(de: "A000000000000021", vers: "A000000000000001")]), []),
+            (Lecture(liens: [ScenePieces.Lien(de: idz("A000000000000021"), vers: idz("A000000000000001"))]), []),
             (Lecture(ailleurs: true), [.ailleurs]),
-            (Lecture(couleurs: ["A000000000000027": .appareil(.inconnu)]), []),
+            (Lecture(couleurs: [idz("A000000000000027"): .appareil(.inconnu)]), []),
             (Lecture(), []),
         ]
         for (lecture, attendu) in cas {
@@ -51,14 +51,14 @@ struct LegendePiecesTests {
     /// Les groupes dans l'ordre de la grille (routeurs, appareils, liens radio, autres), leurs entrees
     /// dans l'ordre de la spec ; un groupe sans entree disparait, et une scene vide n'a pas de legende.
     @Test func groupesEtOrdre() {
-        let tout = Lecture(couleurs: ["a": .routeur, "c": .appareil(.joignable), "d": .appareil(.injoignable),
-                                      "f": .appareil(.disparu)],
-                           inconnus: ["g"], chefs: ["a"], sondes: ["c"], endormis: ["c"], piles: ["c"],
+        let tout = Lecture(couleurs: [idz("a"): .routeur, idz("c"): .appareil(.joignable), idz("d"): .appareil(.injoignable),
+                                      idz("f"): .appareil(.disparu)],
+                           inconnus: [idz("g")], chefs: [idz("a")], sondes: [idz("c")], endormis: [idz("c")], piles: [idz("c")],
                            liens: [Self.radio(3), Self.radio(2), Self.radio(1), Self.radio(nil),
-                                   ScenePieces.Lien(de: "c", vers: "a", genre: .parent),
-                                   ScenePieces.Lien(de: "g", vers: "a", genre: .parent, suppose: true),
-                                   ScenePieces.Lien(de: "A0000000000000A2", vers: "a", genre: .chemin, qualite: 3),
-                                   ScenePieces.Lien(de: "A0000000000000A1", vers: "a", genre: .chemin, suppose: true)],
+                                   ScenePieces.Lien(de: idz("c"), vers: idz("a"), genre: .parent),
+                                   ScenePieces.Lien(de: idz("g"), vers: idz("a"), genre: .parent, suppose: true),
+                                   ScenePieces.Lien(de: idz("A0000000000000A2"), vers: idz("a"), genre: .chemin, qualite: 3),
+                                   ScenePieces.Lien(de: idz("A0000000000000A1"), vers: idz("a"), genre: .chemin, suppose: true)],
                            ailleurs: true, mode: .chemins)
         #expect(LegendePieces.rubriques(tout) == LegendePieces.Groupe.allCases.map {
             LegendePieces.Rubrique(groupe: $0, entrees: $0.entrees)
@@ -76,15 +76,15 @@ struct LegendePiecesTests {
         #expect(sansVoisins.first { $0.groupe == .liens }?.entrees == [.bonne, .inconnue])
         #expect(LegendePieces.entrees(masques).contains(.voisinEntendu) == false)
         // Un parent d'avant (pointille) a son entree, a cote de « vers son parent ».
-        let davant = Lecture(liens: [ScenePieces.Lien(de: "c", vers: "a", genre: .parent, suppose: true)])
+        let davant = Lecture(liens: [ScenePieces.Lien(de: idz("c"), vers: idz("a"), genre: .parent, suppose: true)])
         #expect(LegendePieces.entrees(davant) == [.parentDAvant])
         #expect(LegendePieces.signe(.parentDAvant) == .lienEnfant(rattachement: true))
         #expect(Entree.parentDAvant.texte == String(localized: "parent d'avant (pointillé)"))
         // En mode « chemins » sans liens radio : les chemins et leurs qualites seulement.
-        let chemins = Lecture(liens: [ScenePieces.Lien(de: "x", vers: "a", genre: .chemin, qualite: 2)], mode: .chemins)
+        let chemins = Lecture(liens: [ScenePieces.Lien(de: idz("x"), vers: idz("a"), genre: .chemin, qualite: 2)], mode: .chemins)
         #expect(LegendePieces.entrees(chemins) == [.chemin, .moyenne])
         #expect(Set(LegendePieces.Groupe.allCases.flatMap(\.entrees)) == Set(Entree.allCases), "chaque entree a son groupe")
-        let sansLiens = Lecture(couleurs: ["c": .appareil(.joignable)], chefs: ["a"], ailleurs: true)
+        let sansLiens = Lecture(couleurs: [idz("c"): .appareil(.joignable)], chefs: [idz("a")], ailleurs: true)
         #expect(LegendePieces.rubriques(sansLiens) == [
             LegendePieces.Rubrique(groupe: .routeurs, entrees: [.coordinateur]),
             LegendePieces.Rubrique(groupe: .appareils, entrees: [.joignable]),
@@ -173,7 +173,7 @@ struct LegendePiecesTests {
             let rangee = hauteur(LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: repliee))
             let pile = hauteur(VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: repliee)
-                FicheNoeud(id: NomsDemo.Ieee.pont, entree: e, instant: Date(), aRenommer: .constant(nil)) {}
+                FicheNoeud(id: idz(NomsDemo.Ieee.pont), entree: e, instant: Date(), aRenommer: .constant(nil)) {}
             }.frame(width: FenetrePieces.largeurParDefaut - 2 * FenetrePieces.bord))
             #expect(pile > rangee + FenetrePieces.espacement + 80, "repliee : \(repliee) ; la fiche sous la rangee (\(pile) pt)")
             #expect(FenetrePieces.margeBas(pile: pile) == FenetrePieces.bord + ceil(pile) + FenetrePieces.espacement)

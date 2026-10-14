@@ -384,7 +384,7 @@ struct IsolementTests {
         #expect(p.sphere == nil && t.ligneNiveau == .etageIsole("Étage"))
         t.poserZoom(echelle: 1, vers: t.geometrie.centrePlateau(etage, t.t))
         MoteurPiecesTests.dessiner(t)
-        let voulus = t.etiquettes.compactMap { l -> String? in if case .noeud(let id) = l.genre, l.voulu { id } else { nil } }
+        let voulus = t.etiquettes.compactMap { l -> IdNoeud? in if case .noeud(let id) = l.genre, l.voulu { id } else { nil } }
         #expect(t.projetee?.niveau == .tous && !voulus.isEmpty, "\(voulus.count) noms voulus")
         #expect(voulus.allSatisfy { id in e.scene.noeud(id).map { e.scene.pieces[$0.piece].etage == etage } == true },
                 "seuls les noms des appareils de l'etage isole : \(voulus)")
@@ -566,7 +566,7 @@ struct IsolementTests {
         let part = try #require(m.fk["piece:Salon"]), partEtage = try #require(m.ek["zone:Rez-de-chaussée"])
         #expect(part > 0 && part < 1 && partEtage > 0 && partEtage < 1, "en plein fondu : \(part), \(partEtage)")
         var autre = e
-        autre.apparences[NomsDemo.Ieee.pont] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         m.installerMaintenant(autre)
         #expect(m.entree == autre && m.fk["piece:Salon"] == part && m.ek["zone:Rez-de-chaussée"] == partEtage && m.estIsolee)
     }

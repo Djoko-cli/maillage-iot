@@ -10,7 +10,7 @@ extension MoteurPieces {
     // MARK: Souris et clavier
 
     /// Noeud sous un point : sa pastille, a 8 points pres, sinon son nom.
-    func noeudSous(_ p: CGPoint) -> String? {
+    func noeudSous(_ p: CGPoint) -> IdNoeud? {
         if let n = projetee?.noeud(sous: p, marge: 8) { return n }
         for l in etiquettes where l.vu && l.rect.contains(p) {
             if case .noeud(let id) = l.genre { return id }
@@ -25,7 +25,7 @@ extension MoteurPieces {
         optionTenue = option
         let libre = envol == nil && fondu == nil
         let c = libre ? p.map(cibleClic(en:)) ?? .fond : .fond
-        let n: String? = if case .appareil(let id) = c { id } else { nil }
+        let n: IdNoeud? = if case .appareil(let id) = c { id } else { nil }
         let disque: Int? = if case .disque(let e) = c, disqueCliquable(e) { e } else { nil }
         let nom: Int? = if case .nomEtage(let e) = c { e } else { nil }
         if n != survol || disque != survolEtage || nom != survolNomEtage {

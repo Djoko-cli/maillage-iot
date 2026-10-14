@@ -20,7 +20,9 @@ struct FicheNoeud: View {
     @Environment(\.capturePieces) private var capture
     /// Pieces choisies pour les noeuds que Maison ne place pas : la vue par pieces seule les donne.
     @Environment(PiecesChoisies.self) private var piecesChoisies: PiecesChoisies?
-    let id: String
+    /// Le noeud choisi, au-dessus des modules ; ce qui interroge Thread (instantane, sonde, journal, courbes) le lit par
+    /// `cle`, la cle de Thread.
+    let id: IdNoeud
     /// La scene du meme rendu (`EntreeScene`), avec ce dont elle est faite : la fiche y lit le maillage
     /// rapproche, et « Placer dans une piece… » le graphe, sans rien reconstruire ; nil sans reseau.
     let entree: EntreeScene?
@@ -29,19 +31,22 @@ struct FicheNoeud: View {
     let instant: Date
     @Binding var aRenommer: NoeudChoisi?
     /// Choisit un autre noeud (la fiche d'un candidat, d'un enfant, d'un voisin).
-    var choisir: (String) -> Void = { _ in }
+    var choisir: (IdNoeud) -> Void = { _ in }
     var fermer: () -> Void
     /// La liste des voisins radio, depliee d'un clic ; repliee par defaut, et de nouveau a chaque autre noeud.
     @State private var voisinsDeplies = false
 
     private var deplies: Bool { voisinsDeplies }
 
+    /// La cle du noeud pour Thread : la fiche n'ouvre que des noeuds Thread (`id.protocole`), le reste n'a pas de fiche ici.
+    private var cle: String { id.cle }
+
     /// Les couleurs des qualites, celles de la legende (la fenetre reste sombre).
     private static let palette = Palette(sombre: true)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if Self.connu(id, dans: surveillance, maillage: sonde) {
+            if Self.connu(cle, dans: surveillance, maillage: sonde) {
                 ColonnesFiche {
                     colonneIdentite()
                     colonneRole()
@@ -58,7 +63,7 @@ struct FicheNoeud: View {
             }
             if Self.courbesVisibles(dans: surveillance) {
                 Divider().opacity(0.5)
-                CourbesFiche(id: id, instant: instant)
+                CourbesFiche(id: cle, instant: instant)
             }
         }
         .padding(16)
@@ -87,11 +92,11 @@ struct FicheNoeud: View {
 
     private func colonneIdentite() -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            if let r = surveillance.instantane?.routeur(id) {
+            if let r = surveillance.instantane?.routeur(cle) {
                 identiteRouteur(r)
-            } else if let a = surveillance.appareil(id) {
+            } else if let a = surveillance.appareil(cle) {
                 identiteAppareil(a)
-            } else if let m = sonde, let n = m.noeud(id) {
+            } else if let m = sonde, let n = m.noeud(cle) {
                 identiteSonde(n)
             }
             boutonsIdentite
@@ -105,16 +110,16 @@ struct FicheNoeud: View {
     /// accessoire de Maison (`BoutonIdentifier`), sous l'identite.
     private var boutonsIdentite: some View {
         RangeesFluides(espacement: 8, interligne: 6) {
-            if Self.renommable(id, dans: surveillance) {
-                Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
+            if Self.renommable(cle, dans: surveillance) {
+                Button("Renommer…") { aRenommer = NoeudChoisi(id: cle) }
                     .boutonDeFiche()
             }
-            if let a = surveillance.appareil(id) {
+            if let a = surveillance.appareil(cle) {
                 if surveillance.associeALaMain(a) {
-                    Button("Dissocier") { surveillance.dissocier(id) }
+                    Button("Dissocier") { surveillance.dissocier(cle) }
                         .boutonDeFiche()
                 } else if MenuAssocier.propose(a, dans: surveillance) {
-                    MenuAssocier(id: id)
+                    MenuAssocier(id: cle)
                 }
                 if let accessoire = surveillance.accessoire(a) {
                     BoutonIdentifier(accessoire: accessoire)
@@ -133,10 +138,10 @@ struct FicheNoeud: View {
     private func colonneRole() -> some View {
         VStack(alignment: .leading, spacing: 4) {
             TitreColonne(titre: "Rôle et parent")
-            if let r = surveillance.instantane?.routeur(id) {
+            if let r = surveillance.instantane?.routeur(cle) {
                 roleRouteur(r)
                 lignesPartition(partition: r.partition, prefixe: r.prefixeOMR)
-            } else if let a = surveillance.appareil(id) {
+            } else if let a = surveillance.appareil(cle) {
                 let genre = genre(a)
                 if !genre.isEmpty { Text(genre).foregroundStyle(.secondary) }
                 if !a.fabriques.isEmpty {
@@ -146,7 +151,7 @@ struct FicheNoeud: View {
                 let verifie = surveillance.verification(a.id, a: surveillance.maintenant) != nil
                 lignesPartition(partition: surveillance.partitionAffichee(a, verifie: verifie), prefixe: a.prefixe,
                                 incertaine: surveillance.instantane?.partitionIncertaine(a) == true)
-            } else if let m = sonde, let n = m.noeud(id) {
+            } else if let m = sonde, let n = m.noeud(cle) {
                 ligneSonde
                 Text(Self.explication(n)).font(.caption).foregroundStyle(.secondary)
             }
@@ -163,7 +168,7 @@ struct FicheNoeud: View {
             TitreColonne(titre: "Enfants")
             if sonde == nil {
                 Text(Self.texteSansSonde).font(.caption).foregroundStyle(.secondary)
-            } else if sonde?.noeud(id) == nil {
+            } else if sonde?.noeud(cle) == nil {
                 Text(Self.textePasVuParLaSonde).font(.caption).foregroundStyle(.secondary)
             } else if enfants.isEmpty {
                 Text("aucun").font(.caption).foregroundStyle(.secondary)
@@ -189,12 +194,12 @@ struct FicheNoeud: View {
         let resume = ResumeVoisins(voisins)
         // Routeur ou enfant : ce que la sonde en sait ; un noeud qu'elle n'a pas (une autre partition, un reseau scinde)
         // n'est ni l'un ni l'autre pour elle.
-        let routeur = sonde?.noeud(id)?.genre == .routeur
+        let routeur = sonde?.noeud(cle)?.genre == .routeur
         return VStack(alignment: .leading, spacing: 5) {
             TitreColonne(titre: "Voisins radio")
             if sonde == nil {
                 Text(Self.texteSansSonde).font(.caption).foregroundStyle(.secondary)
-            } else if sonde?.noeud(id) == nil {
+            } else if sonde?.noeud(cle) == nil {
                 Text(Self.textePasVuParLaSonde).font(.caption).foregroundStyle(.secondary)
             } else if !routeur {
                 Text(Self.texteEnfantSeul).font(.caption).foregroundStyle(.secondary)
@@ -215,10 +220,10 @@ struct FicheNoeud: View {
                     .buttonStyle(.link)
                 }
             }
-            if routeur, Self.trel(id, maillage: sonde, graphe: entree?.graphe, dans: surveillance) {
+            if routeur, Self.trel(cle, maillage: sonde, graphe: entree?.graphe, dans: surveillance) {
                 Text(Self.texteTrel).font(.caption).foregroundStyle(.secondary)
             }
-            if sonde?.jamaisEntendu(id) == true {
+            if sonde?.jamaisEntendu(cle) == true {
                 Text(Self.texteJamaisEntendu).font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -255,7 +260,7 @@ struct FicheNoeud: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(Self.origineVoisin(v.id, de: id, maillage: m, instant: instant) ?? "")
+                .help(Self.origineVoisin(v.id.cle, de: cle, maillage: m, instant: instant) ?? "")
             }
         }
     }
@@ -264,7 +269,7 @@ struct FicheNoeud: View {
     /// (`Instantane.trel`) ; ses liens avec les autres routeurs TREL ne sont pas sur la carte.
     static func trel(_ id: String, maillage: MaillageAffiche?, graphe: GrapheReseau?,
                      dans surveillance: Surveillance) -> Bool {
-        guard let ext = maillage?.extMacs[id] ?? graphe?.noeud(id)?.extMac else { return false }
+        guard let ext = maillage?.extMacs[id] ?? graphe?.noeud(IdNoeud(.thread, id))?.extMac else { return false }
         return surveillance.instantane?.trel.contains(ext.uppercased()) == true
     }
 
@@ -309,7 +314,7 @@ struct FicheNoeud: View {
 
     /// Le noeud est couronne : un chef de la scene du meme rendu (`EntreeScene.chefs`), routeur de
     /// bordure ou noeud que la sonde seule connait ; la fiche couronne les memes noeuds que la scene.
-    static func couronne(_ id: String, entree: EntreeScene?) -> Bool {
+    static func couronne(_ id: IdNoeud, entree: EntreeScene?) -> Bool {
         entree?.chefs.contains(id) == true
     }
 
@@ -342,7 +347,7 @@ struct FicheNoeud: View {
         if surveillance.associeALaMain(a) {
             Text("associé à la main").font(.caption).foregroundStyle(.tertiary)
         }
-        if Self.couronne(a.id, entree: entree) {
+        if Self.couronne(IdNoeud(.thread, a.id), entree: entree) {
             PastilleChef()
         }
         HStack(spacing: 6) {
@@ -483,8 +488,8 @@ struct FicheNoeud: View {
     /// ou ses nombres de voisins et d'enfants (routeur) (spec de la sonde tout-en-un, section 2.4).
     @ViewBuilder
     private var ligneSonde: some View {
-        if let m = sonde, let n = m.noeud(id) {
-            Text(Self.ligneSonde(n, maillage: m, nom: nomNoeud, instant: instant)).foregroundStyle(.secondary)
+        if let m = sonde, let n = m.noeud(cle) {
+            Text(Self.ligneSonde(n, maillage: m, nom: nomThread, instant: instant)).foregroundStyle(.secondary)
         }
     }
 
@@ -492,7 +497,7 @@ struct FicheNoeud: View {
     @ViewBuilder
     private func identiteSonde(_ n: NoeudSonde) -> some View {
         Text(LibellesNoeuds.inconnu(n, noms: nomsRouteurs)).font(.title3.weight(.semibold))
-        if Self.couronne(n.id, entree: entree) {
+        if Self.couronne(IdNoeud(.thread, n.id), entree: entree) {
             PastilleChef()
         }
         if !n.candidats.isEmpty {
@@ -502,7 +507,7 @@ struct FicheNoeud: View {
                 ForEach(n.candidats, id: \.self) { c in
                     let choix = Self.selection(candidat: c, dans: surveillance)
                     Button(nomsRouteurs[c] ?? c) {
-                        if let choix { choisir(choix) }
+                        if let choix { choisir(IdNoeud(.thread, choix)) }
                     }
                     .buttonStyle(.link)
                     .disabled(choix == nil)
@@ -541,8 +546,11 @@ struct FicheNoeud: View {
     }
 
     /// Nom d'un noeud du graphe : routeur de bordure, appareil, ou noeud de la sonde.
-    private func nomNoeud(_ id: String) -> String {
-        surveillance.nomNoeud(id, maillage: sonde) ?? id
+    private func nomNoeud(_ id: IdNoeud) -> String { nomThread(id.cle) }
+
+    /// Nom d'un noeud par sa cle Thread (les liens du maillage de la sonde parlent en cles) ; a defaut, la cle.
+    private func nomThread(_ cle: String) -> String {
+        surveillance.nomNoeud(cle, maillage: sonde) ?? cle
     }
 
     /// « RLOC16 5004 · parent HomePod bureau, qualite 3 · diagnostic » ; un enfant resolu sous un routeur Apple, dont le
@@ -618,7 +626,7 @@ struct FicheNoeud: View {
         if !description.isEmpty {
             Text(description).foregroundStyle(.secondary)
         }
-        if Self.couronne(r.instance, entree: entree) {
+        if Self.couronne(IdNoeud(.thread, r.instance), entree: entree) {
             PastilleChef()
         }
         HStack(spacing: 6) {
@@ -672,7 +680,7 @@ struct FicheNoeud: View {
     /// regroupes (`Surveillance.lignesJournal`).
     @ViewBuilder
     private var journal: some View {
-        let lignes = surveillance.lignesJournal(de: id)
+        let lignes = surveillance.lignesJournal(de: cle)
         if !lignes.isEmpty {
             TitreColonne(titre: "Journal")
                 .padding(.top, 6)

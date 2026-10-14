@@ -226,7 +226,7 @@ struct FenetrePiecesTests {
             } else {
                 try await auDessusDeLaPile(moteur, taille, "legende ouverte, sans fiche")
             }
-            for id in ["Apple TV 4K", "3A5DFAFCAB581AAF"] {
+            for id in [idt("Apple TV 4K"), idt("3A5DFAFCAB581AAF")] {
                 moteur.selection = id
                 try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil }
                 try await auDessusDeLaPile(moteur, taille, "legende \(repliee ? "repliee" : "ouverte"), fiche de \(id)")
@@ -240,7 +240,7 @@ struct FenetrePiecesTests {
         let (autre, m) = try Self.fenetre(historique, taille: grande, preferences: p)
         defer { Self.fermer(autre) }
         try await MoteurPiecesTests.attendre { m.cadresInterface["legende"] != nil && m.pret }
-        m.selection = JournalMaillageTests.appareil
+        m.selection = idt(JournalMaillageTests.appareil)
         try await MoteurPiecesTests.attendre { m.cadresInterface["fiche"].map { $0.height > 250 } == true }
         let fiche = try #require(m.cadresInterface["fiche"])
         #expect(fiche.height > 250, "la fiche et ses courbes : \(fiche.height) pt")
@@ -266,7 +266,7 @@ struct FenetrePiecesTests {
         defer { Self.fermer(fenetre) }
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["legende"] != nil }
         let ouverte = try #require(moteur.cadresInterface["legende"])
-        moteur.selection = "Apple TV 4K"
+        moteur.selection = idt("Apple TV 4K")
         // La fiche arrivee : son cadre suit son glissement, puis s'arrete au bas de la vue.
         try await MoteurPiecesTests.attendre {
             moteur.cadresInterface["fiche"].map { abs($0.maxY - (taille.height - FenetrePieces.bord)) < 0.5 } == true
@@ -315,7 +315,7 @@ struct FenetrePiecesTests {
             // La zone de la grille : la legende telle que Djoko l'a laissee, ouverte (sa hauteur mesuree) ou repliee (30 pt).
             let zone = FenetrePieces.margeBas(pile: repliee ? nil : moteur.cadresInterface["legende"]?.height)
             #expect(moteur.basGrille == zone, "\(id), \(taille) : la legende, sans fiche")
-            moteur.selection = id
+            moteur.selection = idt(id)
             try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil }
             try await Task.sleep(for: .milliseconds(400))
             let ouverte = try #require(moteur.cadresInterface["legende"], "la legende reste, repliee ou non").height
@@ -368,7 +368,7 @@ struct FenetrePiecesTests {
         try await MoteurPiecesTests.attendre { (moteur.cadresInterface["legende"]?.height ?? 0) > 150 }
         #expect((moteur.cadresInterface["legende"]?.height ?? 0) > 150, "ouverte d'un clic")
         let ouverte = try #require(moteur.cadresInterface["legende"]).height
-        moteur.selection = "Apple TV 4K"
+        moteur.selection = idt("Apple TV 4K")
         try await Task.sleep(for: .milliseconds(1000))
         #expect((moteur.cadresInterface["legende"]?.height ?? 999) < 40,
                 "sous la fiche, dans la plus petite fenetre, la legende se replie : scene de \(moteur.cadre.height) pt")
@@ -436,7 +436,7 @@ struct FenetrePiecesTests {
         #expect(abs(moteur.marges.bas - ouverte) <= 1, "\(cas) : la marge du bas suit la legende ouverte (\(moteur.marges.bas), \(ouverte), \(moteur.cadresInterface))")
 
         // Fiche ouverte : la legende reste au bord, au-dessus de la fiche.
-        moteur.selection = "Apple TV 4K"
+        moteur.selection = idt("Apple TV 4K")
         try await MoteurPiecesTests.attendre {
             moteur.cadresInterface["fiche"].map { f in moteur.cadresInterface["legende"].map { $0.maxY <= f.minY } == true } == true
         }
@@ -629,7 +629,7 @@ struct FenetrePiecesTests {
         #expect(abs(ouverture - Apparition.dureeLegende) < 0.07, "ouverture par clic : \(ouverture) s")
         try await Task.sleep(for: .milliseconds(600))
         // La fiche, elle, garde ses 0,3 s.
-        moteur.selection = "Apple TV 4K"
+        moteur.selection = idt("Apple TV 4K")
         let fiche = try #require(try await Self.dureeDuRecadrage(moteur))
         #expect(abs(fiche - Apparition.duree) < 0.07, "fiche : \(fiche) s")
     }
@@ -702,7 +702,7 @@ struct FenetrePiecesTests {
         let legende = try #require(moteur.cadresInterface["legende"], "la legende est ouverte")
 
         // La fiche parait : la legende reste, au-dessus d'elle, et la vue se recadre par un fondu.
-        moteur.selection = "Apple TV 4K"
+        moteur.selection = idt("Apple TV 4K")
         try await MoteurPiecesTests.attendre { moteur.cadresInterface["fiche"] != nil && moteur.margesEnRoute }
         #expect(moteur.margesEnRoute && moteur.margesEnFondu, "la vue se recadre par un fondu")
         let fiche = try #require(moteur.cadresInterface["fiche"])
@@ -720,8 +720,8 @@ struct FenetrePiecesTests {
         for n in e.scene.noeuds {
             #expect(FicheNoeud.couronne(n.id, entree: e) == n.chef, "\(n.id)")
         }
-        #expect(FicheNoeud.couronne("Apple TV 4K", entree: e))
-        #expect(!FicheNoeud.couronne("Apple TV 4K", entree: nil))
+        #expect(FicheNoeud.couronne(idt("Apple TV 4K"), entree: e))
+        #expect(!FicheNoeud.couronne(idt("Apple TV 4K"), entree: nil))
         let (s, _) = try NomsSceneTests.demoAvecRouteurThread()
         let m = try #require(s.maillage)
         let routeurs = m.routeurs.map { r in
@@ -732,12 +732,12 @@ struct FenetrePiecesTests {
         s.recevoir(Maillage(date: m.date, partition: m.partition, routeurs: routeurs, liens: m.liens, enfants: m.enfants,
                             signaux: m.signaux), a: s.maintenant)
         let thread = try #require(Self.entree(s))
-        #expect(thread.chefs == ["Apple TV 4K", "rloc:B400"], "le chef de la partition, et celui du maillage")
+        #expect(thread.chefs == [idt("Apple TV 4K"), idt("rloc:B400")], "le chef de la partition, et celui du maillage")
         for n in thread.scene.noeuds {
             #expect(FicheNoeud.couronne(n.id, entree: thread) == n.chef, "\(n.id)")
         }
         func taille(_ id: String, _ e: EntreeScene) -> CGSize {
-            let fiche = FicheNoeud(id: id, entree: e, instant: Date(), aRenommer: .constant(nil)) {}
+            let fiche = FicheNoeud(id: idt(id), entree: e, instant: Date(), aRenommer: .constant(nil)) {}
             return NSHostingView(rootView: fiche.frame(width: 400).environment(s).environment(PiecesChoisies(fichier: nil)))
                 .fittingSize
         }
@@ -1211,13 +1211,13 @@ struct FenetrePiecesTests {
     /// pieces de la maison, par nom ; le choix se garde sur disque, ou en memoire sans fichier (demo).
     @Test func placerUnRouteur() throws {
         let (s, _, e) = try NomsSceneTests.demo()
-        #expect(PiecesChoisies.placement("HomePod Palier", dans: s, entree: e) == nil, "Maison le place au salon")
+        #expect(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: e) == nil, "Maison le place au salon")
         s.noms.maison = NomsSceneTests.maisonSansRouteurs(s)
         let entree = try #require(Self.entree(s))
-        let pieces = try #require(PiecesChoisies.placement("HomePod Palier", dans: s, entree: entree)?.pieces)
+        let pieces = try #require(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: entree)?.pieces)
         #expect(pieces == ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
                            "Salle de bain", "Salle de jeux", "Salon", "Terrasse"])
-        #expect(PiecesChoisies.placement("56B1E064401F74EF", dans: s, entree: entree) == nil, "un appareil")
+        #expect(PiecesChoisies.placement(idt("56B1E064401F74EF"), dans: s, entree: entree) == nil, "un appareil")
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-routeurs.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let choisies = PiecesChoisies(fichier: url)
@@ -1243,12 +1243,12 @@ struct FenetrePiecesTests {
         let e = try #require(Self.entree(s))
         let pieces = ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
                       "Salle de bain", "Salle de jeux", "Salon", "Terrasse"]
-        let appareil = try #require(PiecesChoisies.placement("rloc:041F", dans: s, entree: e))
+        let appareil = try #require(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e))
         #expect(appareil == PiecesChoisies.Placement(cle: .appareil("E0000000000000FF"), pieces: pieces))
-        #expect(PiecesChoisies.placement("1E5019DAC2638F92", dans: s, entree: e)?.cle == .appareil("1E5019DAC2638F92"))
-        #expect(PiecesChoisies.placement("rloc:0420", dans: s, entree: e) == nil, "sans ExtMac")
-        #expect(PiecesChoisies.placement("56B1E064401F74EF", dans: s, entree: e) == nil, "Maison le place au bureau")
-        let routeur = try #require(PiecesChoisies.placement("HomePod Palier", dans: s, entree: e))
+        #expect(PiecesChoisies.placement(idt("1E5019DAC2638F92"), dans: s, entree: e)?.cle == .appareil("1E5019DAC2638F92"))
+        #expect(PiecesChoisies.placement(idt("rloc:0420"), dans: s, entree: e) == nil, "sans ExtMac")
+        #expect(PiecesChoisies.placement(idt("56B1E064401F74EF"), dans: s, entree: e) == nil, "Maison le place au bureau")
+        let routeur = try #require(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: e))
         #expect(routeur == PiecesChoisies.Placement(cle: .routeur("HomePod Palier"), pieces: pieces))
         #expect(MenuPlacer.articles(appareil).first
                 == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
@@ -1278,16 +1278,16 @@ struct FenetrePiecesTests {
     @Test func placerUnRouteurThread() throws {
         let (s, _) = try NomsSceneTests.demoAvecRouteurThread()
         let e = try #require(Self.entree(s))
-        let noeud = try #require(e.graphe.noeud("rloc:B400"))
+        let noeud = try #require(e.graphe.noeud(idt("rloc:B400")))
         #expect(noeud.inconnu && noeud.routeur && !noeud.bordure)
-        let routeur = try #require(PiecesChoisies.placement("rloc:B400", dans: s, entree: e))
+        let routeur = try #require(PiecesChoisies.placement(idt("rloc:B400"), dans: s, entree: e))
         #expect(routeur.cle == .appareil("E0000000000000F1"))
         #expect(MenuPlacer.articles(routeur).first == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
         s.noms.maison?.zones = nil
         for k in s.noms.maison?.accessoires.indices ?? 0..<0 { s.noms.maison?.accessoires[k].piece = nil }
         let sansPieces = try #require(Self.entree(s))
         for id in ["rloc:B400", "rloc:041F", "1E5019DAC2638F92", "HomePod Palier"] {
-            #expect(PiecesChoisies.placement(id, dans: s, entree: sansPieces) == nil, "\(id)")
+            #expect(PiecesChoisies.placement(idt(id), dans: s, entree: sansPieces) == nil, "\(id)")
         }
     }
 
@@ -1298,10 +1298,10 @@ struct FenetrePiecesTests {
         let (s, _) = try NomsSceneTests.demoAvecInconnus()
         let e = try #require(Self.entree(s))
         s.oublierMaillage()
-        #expect(PiecesChoisies.placement("rloc:041F", dans: s, entree: e)?.cle == .appareil("E0000000000000FF"))
+        #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e)?.cle == .appareil("E0000000000000FF"))
         let suivante = try #require(Self.entree(s))
-        #expect(suivante.maillage == nil && suivante.graphe.noeud("rloc:041F") == nil)
-        #expect(PiecesChoisies.placement("rloc:041F", dans: s, entree: suivante) == nil)
+        #expect(suivante.maillage == nil && suivante.graphe.noeud(idt("rloc:041F")) == nil)
+        #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: suivante) == nil)
     }
 
     /// Un choix perime (sa piece n'est plus dans Maison) ne compte plus : la scene l'ignore, et la
@@ -1314,7 +1314,7 @@ struct FenetrePiecesTests {
         let domicile = "Maison (démo)"
         let choisies = PiecesChoisies(fichier: nil)
         for id in ["rloc:041F", "HomePod Palier"] {
-            let placement = try #require(PiecesChoisies.placement(id, dans: s, entree: e), "\(id)")
+            let placement = try #require(PiecesChoisies.placement(idt(id), dans: s, entree: e), "\(id)")
             let menu = MenuPlacer(placement: placement, domicile: domicile, choisies: choisies)
             #expect(menu.selection.wrappedValue == nil, "\(id) : aucun choix")
             menu.selection.wrappedValue = "Cuisine"
@@ -1361,8 +1361,8 @@ struct FenetrePiecesTests {
         let choix = try #require(cas.deplacer)
         let e2 = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees(), choix: choix)
         let id = "rloc:041F"
-        #expect(e.scene.noeud(id).map { e.scene.pieces[$0.piece].nom } == .sansPiece)
-        #expect(e2.scene.noeud(id).map { e2.scene.pieces[$0.piece].nom } == .maison("Cuisine"))
+        #expect(e.scene.noeud(idt(id)).map { e.scene.pieces[$0.piece].nom } == .sansPiece)
+        #expect(e2.scene.noeud(idt(id)).map { e2.scene.pieces[$0.piece].nom } == .maison("Cuisine"))
         let marges: (haut: CGFloat, bas: CGFloat) = (84, 50)
         // Le cas, pose en plus a `q` de son glissement (le cas seul : a mi-chemin) ; son moteur et le centre de la pastille.
         func rendre(_ q: Double?) throws -> (m: MoteurPieces, centre: SIMD3<Double>) {
@@ -1376,7 +1376,7 @@ struct FenetrePiecesTests {
             }
             let (m, _) = CapturesPieces.preparer(c, surveillance: s, reseau: r, marges: marges)
             MoteurPiecesTests.dessiner(m, taille: c.taille)
-            return (m, try #require(m.projetee?.centresNoeuds[id]))
+            return (m, try #require(m.projetee?.centresNoeuds[idt(id)]))
         }
         let (mAvant, avant) = try rendre(0)
         let (mApres, apres) = try rendre(1)

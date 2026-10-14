@@ -83,8 +83,8 @@ enum CapturesPieces {
             m.poserIsolement(piece(sc, "Salon"))
         },
         Cas(nom: "11-2d-isolee-chambre") { m, sc in m.poserIsolement(piece(sc, "Chambre")) },
-        Cas(nom: "12-2d-survol") { m, _ in m.poserSurvol(NomsDemo.Ieee.lampeChambreAmis) },
-        Cas(nom: "13-2d-fiche-du-pont") { m, _ in m.selection = NomsDemo.Ieee.pont },
+        Cas(nom: "12-2d-survol") { m, _ in m.poserSurvol(IdNoeud(.zigbee, NomsDemo.Ieee.lampeChambreAmis)) },
+        Cas(nom: "13-2d-fiche-du-pont") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.pont) },
         Cas(nom: "14-2d-legende-repliee", poser: { _, _ in }, legendeRepliee: true),
         Cas(nom: "15-2d-carree-2x2", poser: { _, _ in }, taille: CapturesPieces.carree),
         Cas(nom: "16-2d-carree-en-rangee", poser: { _, _ in }, taille: CapturesPieces.carree, grille: false),
@@ -104,26 +104,26 @@ enum CapturesPieces {
             m.poserZoom(echelle: 1, vers: m.centrePiece(sansPiece))
         }, deplacer: appareilDansLaCuisine),
         // La fiche d'un appareil final endormi, avec son parent d'avant (pointille).
-        Cas(nom: "22-2d-fiche-telecommande") { m, _ in m.selection = NomsDemo.Ieee.telecommandeChambre },
+        Cas(nom: "22-2d-fiche-telecommande") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.telecommandeChambre) },
         // Le mode focus (etape 5) : la lampe de la chambre, son chemin jusqu'au pont, ses dependants et ses voisins
         // restent nets, le reste s'estompe ; en 2D puis en 3D.
-        Cas(nom: "25-2d-focus-lampe-chambre") { m, _ in m.selection = NomsDemo.Ieee.lampeChambre },
+        Cas(nom: "25-2d-focus-lampe-chambre") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeChambre) },
         Cas(nom: "26-3d-focus-lampe-chambre") { m, _ in
             m.poserBascule(1)
-            m.selection = NomsDemo.Ieee.lampeChambre
+            m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeChambre)
         },
         // La fiche d'un routeur, la liste de ses voisins depliee, et son historique : le changement de chemin marque.
-        Cas(nom: "27-2d-fiche-lampe-bureau", poser: { m, _ in m.selection = NomsDemo.Ieee.lampeBureau },
+        Cas(nom: "27-2d-fiche-lampe-bureau", poser: { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeBureau) },
             listeVoisins: true),
         // La meme fiche sur 7 j : les changements de chemin proches se fondent en un repere marque de leur nombre.
-        Cas(nom: "28-2d-fiche-lampe-bureau-7j", poser: { m, _ in m.selection = NomsDemo.Ieee.lampeBureau },
+        Cas(nom: "28-2d-fiche-lampe-bureau-7j", poser: { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeBureau) },
             periode: .semaine),
         // Le journal de la fiche, ses changements de chemin d'une meme heure en une ligne : repliee, puis depliee ; et
         // l'alternance de deux relais, celle du detecteur de l'abri (journal regroupe).
-        Cas(nom: "5c-fiche-lampe-bureau-journal-replie", poser: { m, _ in m.selection = NomsDemo.Ieee.lampeBureau }),
-        Cas(nom: "5c-fiche-lampe-bureau-journal-deplie", poser: { m, _ in m.selection = NomsDemo.Ieee.lampeBureau },
+        Cas(nom: "5c-fiche-lampe-bureau-journal-replie", poser: { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeBureau) }),
+        Cas(nom: "5c-fiche-lampe-bureau-journal-deplie", poser: { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeBureau) },
             changementsDeplies: true),
-        Cas(nom: "5c-fiche-detecteur-abri-journal-deplie", poser: { m, _ in m.selection = NomsDemo.Ieee.detecteurAbri },
+        Cas(nom: "5c-fiche-detecteur-abri-journal-deplie", poser: { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.detecteurAbri) },
             changementsDeplies: true),
     ]
 

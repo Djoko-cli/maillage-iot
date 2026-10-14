@@ -21,7 +21,7 @@ enum FixturesScene {
                    "E000000000000003": "E000000000000003", "E000000000000004": "E000000000000004",
                    "E000000000000005": "E000000000000005"]
         func noeud(_ id: String, _ genre: GrapheReseau.Genre, routeur: Bool = false, bordure: Bool = false) -> GrapheReseau.Noeud {
-            .init(id: id, genre: genre, partition: partition, routeur: routeur, bordure: bordure, inconnu: false,
+            .init(id: idt(id), genre: genre, partition: partition, routeur: routeur, bordure: bordure, inconnu: false,
                   extMac: ext[id])
         }
         let noeuds = [noeud("Apple TV", .centre, routeur: true, bordure: true),
@@ -32,13 +32,13 @@ enum FixturesScene {
                       noeud("E000000000000005", .appareil)]
         guard sonde else {
             let tous = ["HomePod", "E000000000000002", "E000000000000003", "E000000000000004", "E000000000000005"]
-            return GrapheReseau(noeuds: noeuds, liens: tous.map { .init(de: $0, vers: "Apple TV") })
+            return GrapheReseau(noeuds: noeuds, liens: tous.map { .init(de: idt($0), vers: idt("Apple TV")) })
         }
         return GrapheReseau(noeuds: noeuds, liens: [
-            .init(de: "Apple TV", vers: "HomePod", genre: .radio, qualite: 2),
-            .init(de: "Apple TV", vers: "E000000000000004", genre: .radio, qualite: 2),
-            .init(de: "E000000000000002", vers: "Apple TV", genre: .parent, qualite: 3),
-            .init(de: "E000000000000003", vers: "HomePod", genre: .parent, qualite: 2),
-            .init(de: "E000000000000005", vers: "Apple TV")])
+            .init(de: idt("Apple TV"), vers: idt("HomePod"), genre: .radio, qualite: 2),
+            .init(de: idt("Apple TV"), vers: idt("E000000000000004"), genre: .radio, qualite: 2),
+            .init(de: idt("E000000000000002"), vers: idt("Apple TV"), genre: .parent, qualite: 3),
+            .init(de: idt("E000000000000003"), vers: idt("HomePod"), genre: .parent, qualite: 2),
+            .init(de: idt("E000000000000005"), vers: idt("Apple TV"))])
     }
 }

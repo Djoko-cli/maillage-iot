@@ -57,8 +57,8 @@ public struct PosesScene: Hashable, Sendable {
     }
 
     public struct Lien: Hashable, Sendable {
-        public var de: String
-        public var vers: String
+        public var de: IdNoeud
+        public var vers: IdNoeud
         public var genre: GrapheReseau.Lien.Genre
         public var qualite: Int?
         public var suppose: Bool
@@ -80,7 +80,7 @@ public struct PosesScene: Hashable, Sendable {
     }
 
     public var pieces: [String: Piece] = [:]
-    public var noeuds: [String: Noeud] = [:]
+    public var noeuds: [IdNoeud: Noeud] = [:]
     public var liens: [String: Lien] = [:]
 
     public init() {}
@@ -103,7 +103,7 @@ public struct PosesScene: Hashable, Sendable {
 
     /// Cle d'un lien : ses deux bouts et son genre ; sa qualite peut changer sans en faire un autre.
     public static func cle(_ l: GrapheReseau.Lien) -> String {
-        l.de + ">" + l.vers + ">" + l.genre.rawValue
+        l.de.texte + ">" + l.vers.texte + ">" + l.genre.rawValue
     }
 
     /// Ces poses, recouvertes par `autres` : la pose affichee d'une scene, celles en transition l'emportant.
@@ -247,7 +247,7 @@ public struct TransitionScene: Hashable, Sendable {
 
     /// Ces pieces et ces noeuds ne glissent plus : poses, a leur place d'arrivee (une piece que Djoko prend pour la
     /// glisser, et ses noeuds).
-    public mutating func oublier(pieces: Set<String>, noeuds: Set<String>) {
+    public mutating func oublier(pieces: Set<String>, noeuds: Set<IdNoeud>) {
         for k in pieces {
             depart.pieces[k] = nil
             arrivee.pieces[k] = nil

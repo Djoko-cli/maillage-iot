@@ -6,7 +6,7 @@ import Testing
 @Suite("Classement des noeuds Thread dans la vue par pieces")
 struct ClassementThreadTests {
     private func noeud(_ genre: GrapheReseau.Genre, routeur: Bool, bordure: Bool) -> GrapheReseau.Noeud {
-        GrapheReseau.Noeud(id: "N", genre: genre, partition: "P1", routeur: routeur, bordure: bordure, inconnu: false)
+        GrapheReseau.Noeud(id: idt("N"), genre: genre, partition: "P1", routeur: routeur, bordure: bordure, inconnu: false)
     }
 
     /// Routeur de bordure : rang 1, rayon 13 (15 pour le centre) ; autre routeur : rang 2, rayon 8 ; autre noeud :

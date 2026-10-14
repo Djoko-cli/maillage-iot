@@ -414,7 +414,7 @@ final class Surveillance {
         return (noms.maison?.accessoires ?? []).compactMap { a in
             guard let ieee = a.ieee?.uppercased() else { return nil }
             let etat = Self.etat(a, presents: presents)
-            return AppareilAffiche(id: ieee, nom: nom(ieee), piece: a.piece, etat: etat,
+            return AppareilAffiche(id: IdNoeud(.zigbee, ieee), nom: nom(ieee), piece: a.piece, etat: etat,
                                    endormi: m?.noeud(ieee)?.endormi == true, batterie: a.batterie)
         }
     }
@@ -465,12 +465,12 @@ final class Surveillance {
         guard aUnReseau else { return nil }
         let affiches = appareilsAffiches
         let m = maillageAffiche
-        let connus = Set(affiches.map(\.id))
+        let connus = Set(affiches.map(\.id.cle))
         let routeurs = m?.noeuds.filter(\.route).count ?? 0
         let finauxInconnus = m?.noeuds.filter { !$0.route && !connus.contains($0.ieee) }.count ?? 0
         let appareilsRoutant = Set(m?.noeuds.filter(\.route).map(\.ieee) ?? [])
         return ResumeReseau(routeurs: routeurs,
-                            appareils: affiches.filter { !appareilsRoutant.contains($0.id) }.count + finauxInconnus,
+                            appareils: affiches.filter { !appareilsRoutant.contains($0.id.cle) }.count + finauxInconnus,
                             injoignables: affiches.filter { $0.etat == .disparu || $0.etat == .injoignable }.count)
     }
 

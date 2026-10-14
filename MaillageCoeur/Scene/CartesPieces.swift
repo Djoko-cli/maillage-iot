@@ -97,7 +97,7 @@ public enum CartesPieces {
 
     /// Carte de chaque piece de la scene ; `largeurs` : largeur du nom de chaque noeud (px), 0 a
     /// defaut.
-    public static func cartes(_ scene: ScenePieces, largeurs: [String: Double]) -> [Carte] {
+    public static func cartes(_ scene: ScenePieces, largeurs: [IdNoeud: Double]) -> [Carte] {
         scene.pieces.map { p in
             carte(p.noeuds.map { id in
                 Ligne(rayon: scene.noeud(id)?.rayon ?? 7, largeurNom: largeurs[id] ?? 0)

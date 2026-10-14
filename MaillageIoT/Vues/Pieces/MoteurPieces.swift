@@ -28,7 +28,7 @@ enum CibleMenu: Equatable {
 /// Ce que vise un clic, du plus fort au plus faible (polissage C, section 5.1) : un appareil, une piece (son bloc ou
 /// son nom), le nom d'un etage, son disque (en 3D, le plus proche sur le rayon), le fond.
 enum CibleClic: Equatable {
-    case appareil(String)
+    case appareil(IdNoeud)
     case piece(Int)
     case nomEtage(Int)
     case disque(Int)
@@ -105,7 +105,7 @@ final class MoteurPieces {
     var fil = Fil()
     var curseurForme = Curseur.fleche
     /// Le noeud choisi, dont la fiche est ouverte : le graphe passe en mode focus (`majMiseEnAvant`).
-    var selection: String? {
+    var selection: IdNoeud? {
         didSet { if selection != oldValue { majMiseEnAvant() } }
     }
     var ligneNiveau = LigneNiveau.lisibles
@@ -157,7 +157,7 @@ final class MoteurPieces {
     /// Les poses de l'image, de ce qui est en transition : la scene projetee les prend, la camera les suit.
     @ObservationIgnored var posesAffichees = PosesScene()
     /// Le dessin des pastilles qui s'effacent, absentes de la scene : celui de la scene d'avant.
-    @ObservationIgnored var apparencesParties: [String: DessinNoeud.Apparence] = [:]
+    @ObservationIgnored var apparencesParties: [IdNoeud: DessinNoeud.Apparence] = [:]
     /// La politique de la grille 2D (polissage C, section 3 ; dans le coeur depuis le polissage D, section 5) : le
     /// reglage « Etages en 2D », pose par la fenetre, les colonnes choisies, une demande qui attend la vue d'ensemble
     /// 2D (`aLaVueDEnsemble2D`).
@@ -218,7 +218,7 @@ final class MoteurPieces {
     @ObservationIgnored var survolNomEtage: Int?
     @ObservationIgnored var vol: Vol?
     @ObservationIgnored var debutVol = 0.0
-    @ObservationIgnored var survol: String?
+    @ObservationIgnored var survol: IdNoeud?
     @ObservationIgnored var curseur: CGPoint?
     @ObservationIgnored var zoomEnAttente = 0.0
     @ObservationIgnored var ancreZoom: SIMD3<Double>?
@@ -241,7 +241,7 @@ final class MoteurPieces {
     @ObservationIgnored var etiquettes: [Etiquette] = []
     @ObservationIgnored var textes = TextesScene()
     /// Noeuds routeurs (leur nom en 12 points) et teinte de chaque piece, pour le dessin.
-    @ObservationIgnored var routeurs: Set<String> = []
+    @ObservationIgnored var routeurs: Set<IdNoeud> = []
     @ObservationIgnored var teintes: [Int: Int] = [:]
     @ObservationIgnored var projetee: SceneProjetee?
     @ObservationIgnored var traits: [PlacementNoms.Trait] = []
@@ -262,8 +262,8 @@ final class MoteurPieces {
     /// Mode focus (repris de Maillage Zigbee, 09/10) : ce qui reste net autour du noeud choisi (nil : pas de focus),
     /// l'estompement vise de chaque noeud et de chaque lien, et celui de l'image, qui le rejoint en douceur (`avancer`).
     @ObservationIgnored var miseEnAvant: MiseEnAvant?
-    @ObservationIgnored var ciblesFocus: (noeuds: [String: Double], liens: [String: Double]) = ([:], [:])
-    @ObservationIgnored var noeudsEstompes: [String: Double] = [:]
+    @ObservationIgnored var ciblesFocus: (noeuds: [IdNoeud: Double], liens: [String: Double]) = ([:], [:])
+    @ObservationIgnored var noeudsEstompes: [IdNoeud: Double] = [:]
     @ObservationIgnored var liensEstompes: [String: Double] = [:]
 
     /// Dernier clic sur le fond (instant, point) : un second, assez pres et assez tot, est un double-clic.
@@ -334,7 +334,7 @@ final class MoteurPieces {
 
     /// `troisD` : le mode garde ; `fichierPlaces` : `positions-pieces.json` (nil : ni lu ni ecrit) ; `places` : sans
     /// fichier, les places de depart, en memoire (la demo et son choix de niveau).
-    init(troisD: Bool = false, fichierPlaces: URL? = nil, selection: String? = nil,
+    init(troisD: Bool = false, fichierPlaces: URL? = nil, selection: IdNoeud? = nil,
          places depart: PlacesGardees? = nil) {
         self.troisD = troisD
         t = troisD ? 1 : 0

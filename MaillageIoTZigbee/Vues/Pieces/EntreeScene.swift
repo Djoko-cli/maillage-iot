@@ -9,8 +9,8 @@ import SwiftUI
 /// memes cles et la meme couronne que la scene.
 struct EntreeScene: Equatable {
     var scene: ScenePieces
-    var libelles: [String: LibellesNoeuds.Libelle]
-    var apparences: [String: DessinNoeud.Apparence]
+    var libelles: [IdNoeud: LibellesNoeuds.Libelle]
+    var apparences: [IdNoeud: DessinNoeud.Apparence]
     /// Domicile du pont ("" sans nom) : la cle de ses places gardees.
     var domicile: String
     /// Noeuds et liens du reseau.
@@ -18,9 +18,9 @@ struct EntreeScene: Equatable {
     /// Maillage de la sonde ; nil sans sonde, ou s'il est perime.
     var maillage: MaillageZigbee?
     /// Noeuds couronnes : le coordinateur ; la couronne le suit partout ou elle parait.
-    var chefs: Set<String>
-    /// Appareils affiches, par id (adresse longue).
-    var appareils: [String: AppareilAffiche]
+    var chefs: Set<IdNoeud>
+    /// Appareils affiches, par id.
+    var appareils: [IdNoeud: AppareilAffiche]
 
     /// `places` : les places gardees, dont l'ordre des etages de la maison et ses choix de niveau ; `choix` : les pieces
     /// choisies pour les noeuds que le pont ne place pas (sous leur adresse longue).
@@ -50,7 +50,7 @@ struct EntreeScene: Equatable {
         self.chefs = chefs
         appareils = parId
         apparences = Dictionary(scene.noeuds.map { n in
-            (n.id, DessinNoeud.apparence(n, etat: parId[n.id]?.etat, sonde: n.id == maillage?.sonde))
+            (n.id, DessinNoeud.apparence(n, etat: parId[n.id]?.etat, sonde: n.id.protocole == .zigbee && n.id.cle == maillage?.sonde))
         }, uniquingKeysWith: { a, _ in a })
     }
 
@@ -64,7 +64,7 @@ struct EntreeScene: Equatable {
     /// Mode focus du graphe (etape 5, section 1) : ce qui reste net a la selection du noeud `id`, calcule par la fonction
     /// propre a Zigbee (`FocusZigbee`) sur le graphe de cette scene ; `voisins` : ses voisins entendus aussi. Le moteur,
     /// generique, ne fait que l'appeler (`MoteurPieces.majMiseEnAvant`).
-    func miseEnAvant(de id: String, voisins: Bool) -> MiseEnAvant? {
+    func miseEnAvant(de id: IdNoeud, voisins: Bool) -> MiseEnAvant? {
         FocusZigbee.miseEnAvant(de: id, graphe: graphe, voisins: voisins)
     }
 

@@ -47,7 +47,7 @@ struct IdentifierMaisonTests {
         s.demarrer()
         let e = EntreeScene(surveillance: s, places: PlacesGardees())
         for passeur in [NomsPasseur(demo: NomsDemo.releveMaison), nil] {
-            let fiche = FicheNoeud(id: NomsDemo.Ieee.lampeBureau, entree: e, instant: s.maintenant,
+            let fiche = FicheNoeud(id: idz(NomsDemo.Ieee.lampeBureau), entree: e, instant: s.maintenant,
                                    aRenommer: .constant(nil), fermer: {})
                 .environment(s)
                 .environment(PiecesChoisies(fichier: nil))

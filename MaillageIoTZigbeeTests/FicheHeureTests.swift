@@ -31,7 +31,7 @@ struct FicheHeureTests {
         let entree = EntreeScene(surveillance: s, places: PlacesGardees())
         let vu = NomsDemo.maisonPont.date
         func rendu(_ instant: Date) -> Data? {
-            let fiche = FicheNoeud(id: Self.appareil, entree: entree, instant: instant, aRenommer: .constant(nil), fermer: {})
+            let fiche = FicheNoeud(id: idz(Self.appareil), entree: entree, instant: instant, aRenommer: .constant(nil), fermer: {})
                 .environment(s)
                 .frame(width: 1000)
             return ImageRenderer(content: fiche).nsImage?.tiffRepresentation

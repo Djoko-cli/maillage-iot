@@ -5,7 +5,7 @@ import Testing
 
 /// Resultat de reference du rejeu (spec de Maillage IoT, section 6.1, etape 0) : la scene de la vue par pieces en
 /// mode demo, telle que `EntreeScene` la construit, ecrite en JSON trie dans `docs/rejeu/thread-demo.json`. Maillage
-/// IoT rejoue la meme demo et compare, prefixes `thread:` retires. Fichier absent : le test l'ecrit dans son dossier
+/// IoT rejoue la meme demo et compare par la cle des identifiants (`IdNoeud.cle`), sans le protocole. Fichier absent : le test l'ecrit dans son dossier
 /// temporaire (bac a sable) et echoue une fois ; le copier, le controler (controle d'anonymisation), puis relancer.
 @MainActor
 @Suite("Reference du rejeu : la scene de la demo")
@@ -55,26 +55,27 @@ struct ReferenceRejeuTests {
         let sc = e.scene
         let pieces = sc.pieces.map(\.nom.cle)
         let etages = sc.etages.map(\.nom.cle)
-        return Reference(
-            noeuds: e.graphe.noeuds.map {
-                .init(id: $0.id, genre: $0.genre.rawValue, partition: $0.partition, routeur: $0.routeur,
-                      bordure: $0.bordure, inconnu: $0.inconnu, extMac: $0.extMac)
-            }.sorted { $0.id < $1.id },
-            liens: e.graphe.liens.map {
-                .init(de: $0.de, vers: $0.vers, genre: $0.genre.rawValue, qualite: $0.qualite)
-            }.sorted { ($0.de, $0.vers, $0.genre) < ($1.de, $1.vers, $1.genre) },
-            scene: sc.noeuds.map {
-                .init(id: $0.id, libelle: $0.libelle,
-                      piece: pieces.indices.contains($0.piece) ? pieces[$0.piece] : "",
-                      chef: $0.chef, pile: $0.pile, rang: $0.rang, rayon: ($0.rayon * 10_000).rounded() / 10_000)
-            }.sorted { $0.id < $1.id },
-            pieces: sc.pieces.map {
-                .init(cle: $0.nom.cle, etage: etages.indices.contains($0.etage) ? etages[$0.etage] : "",
-                      noeuds: $0.noeuds.sorted())
-            }.sorted { $0.cle < $1.cle },
-            etages: sc.etages.map {
-                .init(cle: $0.nom.cle, niveau: $0.niveau, principal: $0.principal, dehors: $0.dehors)
-            }.sorted { $0.cle < $1.cle })
+        // Les identifiants sont ecrits par leur cle : la reference ne porte pas le protocole.
+        let noeuds: [Reference.Noeud] = e.graphe.noeuds.map {
+            .init(id: $0.id.cle, genre: $0.genre.rawValue, partition: $0.partition, routeur: $0.routeur,
+                  bordure: $0.bordure, inconnu: $0.inconnu, extMac: $0.extMac)
+        }.sorted { $0.id < $1.id }
+        let liens: [Reference.Lien] = e.graphe.liens.map {
+            .init(de: $0.de.cle, vers: $0.vers.cle, genre: $0.genre.rawValue, qualite: $0.qualite)
+        }.sorted { ($0.de, $0.vers, $0.genre) < ($1.de, $1.vers, $1.genre) }
+        let scene: [Reference.NoeudScene] = sc.noeuds.map {
+            .init(id: $0.id.cle, libelle: $0.libelle,
+                  piece: pieces.indices.contains($0.piece) ? pieces[$0.piece] : "",
+                  chef: $0.chef, pile: $0.pile, rang: $0.rang, rayon: ($0.rayon * 10_000).rounded() / 10_000)
+        }.sorted { $0.id < $1.id }
+        let cartes: [Reference.Piece] = sc.pieces.map {
+            .init(cle: $0.nom.cle, etage: etages.indices.contains($0.etage) ? etages[$0.etage] : "",
+                  noeuds: $0.noeuds.map(\.cle).sorted())
+        }.sorted { $0.cle < $1.cle }
+        let plateaux: [Reference.Etage] = sc.etages.map {
+            .init(cle: $0.nom.cle, niveau: $0.niveau, principal: $0.principal, dehors: $0.dehors)
+        }.sorted { $0.cle < $1.cle }
+        return Reference(noeuds: noeuds, liens: liens, scene: scene, pieces: cartes, etages: plateaux)
     }
 
     static func json(_ r: Reference) throws -> Data {

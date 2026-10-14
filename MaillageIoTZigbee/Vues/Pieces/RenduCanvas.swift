@@ -8,13 +8,13 @@ struct TextesScene: Equatable {
         var compte: String
     }
 
-    var noeuds: [String: LibellesNoeuds.Libelle] = [:]
+    var noeuds: [IdNoeud: LibellesNoeuds.Libelle] = [:]
     /// Nom et compte de chaque piece, par indice.
     var pieces: [Int: Piece] = [:]
     var etages: [Int: String] = [:]
     var maison = ""
     /// Repere « ailleurs », par id de l'enfant.
-    var ailleurs: [String: String] = [:]
+    var ailleurs: [IdNoeud: String] = [:]
 }
 
 /// Ce qu'une image dessine : la scene projetee, les noms poses et leurs textes.
@@ -23,11 +23,11 @@ struct ImagePieces {
     var etiquettes: [Etiquette]
     var traits: [PlacementNoms.Trait]
     var textes: TextesScene
-    var apparences: [String: DessinNoeud.Apparence]
+    var apparences: [IdNoeud: DessinNoeud.Apparence]
     /// Noeuds routeurs : leur nom en 12 points.
-    var routeurs: Set<String>
+    var routeurs: Set<IdNoeud>
     var teintesPieces: [Int: Int]
-    var selection: String?
+    var selection: IdNoeud?
     /// Pixels par point de l'ecran.
     var echelle: Double
 }

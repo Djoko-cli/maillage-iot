@@ -66,7 +66,7 @@ extension MoteurPieces {
     /// Cartes des pieces d'une scene, d'apres les noms mesures des noeuds, avec la place de tous leurs badges possibles
     /// (polissage D, section 2) : un badge qui change ne change pas la carte.
     private func cartesPour(_ e: EntreeScene) -> [CartesPieces.Carte] {
-        var largeurs: [String: Double] = [:]
+        var largeurs: [IdNoeud: Double] = [:]
         for n in e.scene.noeuds {
             largeurs[n.id] = mesure.reserve(n.libelle, routeur: n.route, pile: n.pile).width
         }
@@ -238,11 +238,11 @@ extension MoteurPieces {
     /// Cle d'un nom, qui ne depend pas des indices de la scene.
     private func cle(_ g: Etiquette.Genre) -> String {
         switch g {
-        case .noeud(let id): "n:" + id
+        case .noeud(let id): "n:" + id.texte
         case .piece(let i): "p:" + (i < clesPieces.count ? clesPieces[i] : "")
         case .etage(let i): "e:" + (i < clesEtages.count ? clesEtages[i] : "")
         case .maison: "m"
-        case .ailleurs(let id): "a:" + id
+        case .ailleurs(let id): "a:" + id.texte
         }
     }
 
@@ -267,7 +267,7 @@ extension MoteurPieces {
             l.append(e)
         }
         for n in scene.noeuds {
-            let libelle = textes.noeuds[n.id] ?? LibellesNoeuds.Libelle(texte: n.id)
+            let libelle = textes.noeuds[n.id] ?? LibellesNoeuds.Libelle(texte: n.id.cle)
             ajouter(.noeud(n.id), mesure.noeud(libelle, routeur: n.route))
         }
         for i in scene.etages.indices { ajouter(.etage(i), mesure.etage(textes.etages[i] ?? "")) }

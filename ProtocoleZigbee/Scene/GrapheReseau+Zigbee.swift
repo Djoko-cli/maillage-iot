@@ -13,7 +13,7 @@ public extension GrapheReseau {
     init(maillage m: MaillageZigbee?, appareils: [AppareilAffiche]) {
         var noeuds: [Noeud] = []
         var liens: [Lien] = []
-        let connus = Set(appareils.map { $0.id.uppercased() })
+        let connus = Set(appareils.map { $0.id.cle.uppercased() })
         func rang(_ t: TypeNoeud) -> Int {
             switch t {
             case .coordinateur: 0
@@ -22,9 +22,9 @@ public extension GrapheReseau {
             case .inconnu: 3
             }
         }
-        var presents = Set<String>()
+        var presents = Set<IdNoeud>()
         for n in (m?.noeuds ?? []).sorted(by: { (rang($0.type), $0.ieee) < (rang($1.type), $1.ieee) })
-        where presents.insert(n.ieee).inserted {
+        where presents.insert(IdNoeud(.zigbee, n.ieee)).inserted {
             let genre: Genre = switch n.type {
             case .coordinateur: .centre
             case .routeur: .routeur
@@ -35,20 +35,21 @@ public extension GrapheReseau {
                                 inconnu: !connus.contains(n.ieee.uppercased()) && n.ieee != m?.sonde,
                                 extMac: n.ieeeConnue ? n.ieee : nil))
         }
-        for a in appareils.sorted(by: { $0.id < $1.id }) where presents.insert(a.id).inserted {
-            noeuds.append(Noeud(zigbee: a.id, genre: .appareil, routeur: false, inconnu: false,
-                                extMac: a.id.uppercased()))
+        for a in appareils.sorted(by: { $0.id.cle < $1.id.cle }) where presents.insert(IdNoeud(.zigbee, a.id.cle)).inserted {
+            noeuds.append(Noeud(zigbee: a.id.cle, genre: .appareil, routeur: false, inconnu: false,
+                                extMac: a.id.cle.uppercased()))
         }
         if let m {
-            for l in MaillageZigbee.reunir(m.liens) where presents.contains(l.a) && presents.contains(l.b) {
-                liens.append(Lien(de: l.a, vers: l.b, genre: .radio, qualite: l.qualite))
+            func id(_ cle: String) -> IdNoeud { IdNoeud(.zigbee, cle) }
+            for l in MaillageZigbee.reunir(m.liens) where presents.contains(id(l.a)) && presents.contains(id(l.b)) {
+                liens.append(Lien(de: id(l.a), vers: id(l.b), genre: .radio, qualite: l.qualite))
             }
             for p in m.parents.sorted(by: { $0.enfant < $1.enfant })
-            where presents.contains(p.enfant) && presents.contains(p.parent) {
-                liens.append(Lien(de: p.enfant, vers: p.parent, genre: .parent, qualite: p.qualite, suppose: p.dAvant))
+            where presents.contains(id(p.enfant)) && presents.contains(id(p.parent)) {
+                liens.append(Lien(de: id(p.enfant), vers: id(p.parent), genre: .parent, qualite: p.qualite, suppose: p.dAvant))
             }
-            for c in m.chemins where presents.contains(c.routeur) && presents.contains(c.prochain) {
-                liens.append(Lien(de: c.routeur, vers: c.prochain, genre: .chemin,
+            for c in m.chemins where presents.contains(id(c.routeur)) && presents.contains(id(c.prochain)) {
+                liens.append(Lien(de: id(c.routeur), vers: id(c.prochain), genre: .chemin,
                                   qualite: m.lien(entre: c.routeur, et: c.prochain)?.qualite, suppose: c.suppose))
             }
         }
@@ -58,8 +59,8 @@ public extension GrapheReseau {
 
 public extension GrapheReseau.Noeud {
     /// Un noeud Zigbee : de la partition unique (`GrapheReseau.partitionUnique`), jamais routeur de bordure.
-    init(zigbee id: String, genre: GrapheReseau.Genre, routeur: Bool, inconnu: Bool, extMac: String? = nil) {
-        self.init(id: id, genre: genre, partition: GrapheReseau.partitionUnique, routeur: routeur, bordure: false,
+    init(zigbee cle: String, genre: GrapheReseau.Genre, routeur: Bool, inconnu: Bool, extMac: String? = nil) {
+        self.init(id: IdNoeud(.zigbee, cle), genre: genre, partition: GrapheReseau.partitionUnique, routeur: routeur, bordure: false,
                   inconnu: inconnu, extMac: extMac)
     }
 }

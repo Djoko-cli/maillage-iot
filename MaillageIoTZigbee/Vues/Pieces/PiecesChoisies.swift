@@ -51,7 +51,7 @@ extension PiecesChoisies {
     /// « Placer dans une piece… » pour un noeud, dans une maison qui a des pieces : un noeud sans piece sur le pont dont
     /// l'adresse longue est connue. Nil pour un noeud que le pont place. `entree` : la scene du meme rendu, dont le graphe
     /// et les appareils servent tels quels.
-    static func placement(_ id: String, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
+    static func placement(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
         let pieces = PiecesRouteurs.pieces(de: surveillance.noms.maison)
             .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         guard !pieces.isEmpty else { return nil }

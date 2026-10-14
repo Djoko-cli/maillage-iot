@@ -20,12 +20,12 @@ public enum NiveauQualite: Int, CaseIterable, Hashable, Sendable {
 /// Un voisin entendu du noeud de la fiche : la qualite de leur lien (0 a 3, nil inconnue) et le LQI de chaque sens,
 /// celui que le noeud mesure (`lqiIci`) puis celui que le voisin mesure (`lqiLa`).
 public struct VoisinFiche: Hashable, Sendable, Identifiable {
-    public var id: String
+    public var id: IdNoeud
     public var qualite: Int?
     public var lqiIci: Int?
     public var lqiLa: Int?
 
-    public init(id: String, qualite: Int?, lqiIci: Int? = nil, lqiLa: Int? = nil) {
+    public init(id: IdNoeud, qualite: Int?, lqiIci: Int? = nil, lqiLa: Int? = nil) {
         self.id = id
         self.qualite = qualite
         self.lqiIci = lqiIci
@@ -56,7 +56,7 @@ public struct ResumeVoisins: Hashable, Sendable {
 
     /// Les voisins de la meilleure qualite a la plus faible (l'inconnue a la fin) ; a qualite egale, le meilleur LQI
     /// (le moins bon des deux sens ; sans mesure, apres), puis le nom.
-    public static func trier(_ voisins: [VoisinFiche], nom: (String) -> String) -> [VoisinFiche] {
+    public static func trier(_ voisins: [VoisinFiche], nom: (IdNoeud) -> String) -> [VoisinFiche] {
         voisins.map { (v: $0, nom: nom($0.id)) }.sorted { a, b in
             let qa = a.v.qualite ?? -1, qb = b.v.qualite ?? -1
             if qa != qb { return qa > qb }
@@ -70,19 +70,19 @@ public struct ResumeVoisins: Hashable, Sendable {
 /// Un dependant du noeud de la fiche : un noeud qui passe par lui (en Thread, un enfant dont il est le parent), avec
 /// la qualite de son lien vers lui.
 public struct DependantFiche: Hashable, Sendable, Identifiable {
-    public var id: String
+    public var id: IdNoeud
     public var qualite: Int?
     /// Un routeur (sinon un appareil) : les routeurs viennent d'abord.
     public var routeur: Bool
 
-    public init(id: String, qualite: Int?, routeur: Bool) {
+    public init(id: IdNoeud, qualite: Int?, routeur: Bool) {
         self.id = id
         self.qualite = qualite
         self.routeur = routeur
     }
 
     /// Les routeurs d'abord, puis les appareils, chacun par nom.
-    public static func trier(_ d: [DependantFiche], nom: (String) -> String) -> [DependantFiche] {
+    public static func trier(_ d: [DependantFiche], nom: (IdNoeud) -> String) -> [DependantFiche] {
         d.map { (d: $0, nom: nom($0.id)) }.sorted { a, b in
             if a.d.routeur != b.d.routeur { return a.d.routeur }
             return a.nom.localizedStandardCompare(b.nom) == .orderedAscending

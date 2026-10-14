@@ -38,7 +38,7 @@ enum LibellesNoeuds {
     }
 
     /// Noeuds couronnes : le coordinateur (le pont).
-    static func chefs(_ graphe: GrapheReseau) -> Set<String> {
+    static func chefs(_ graphe: GrapheReseau) -> Set<IdNoeud> {
         Set(graphe.noeuds.filter { $0.genre == .centre }.map(\.id))
     }
 
@@ -51,12 +51,13 @@ enum LibellesNoeuds {
     /// Libelle de chaque noeud : son nom (`nom`, par adresse longue ; coupe a 40 caracteres), la couronne du
     /// coordinateur, ☾ endormi (pas pour un noeud qui route), ⚠︎ injoignable ou disparu ; la pastille d'une batterie
     /// faible.
-    static func libelles(graphe: GrapheReseau, appareils: [String: AppareilAffiche], nom: (String) -> String,
-                         chefs: Set<String>) -> [String: Libelle] {
-        var libelles: [String: Libelle] = [:]
+    static func libelles(graphe: GrapheReseau, appareils: [IdNoeud: AppareilAffiche], nom: (String) -> String,
+                         chefs: Set<IdNoeud>) -> [IdNoeud: Libelle] {
+        var libelles: [IdNoeud: Libelle] = [:]
         for n in graphe.noeuds {
             let a = appareils[n.id]
-            let coupe = CartesPieces.couper(a?.nom ?? nom(n.id))
+            // `nom` lit le pont par adresse longue (la cle) ; sans nom, le repli est la cle, jamais le texte.
+            let coupe = CartesPieces.couper(a?.nom ?? nom(n.id.cle))
             let texte = CartesPieces.texte(coupe, chef: chefs.contains(n.id), endormi: endormi(a, routeur: n.routeur),
                                            alerte: a?.etat == .injoignable || a?.etat == .disparu)
             libelles[n.id] = Libelle(texte: texte, pastille: pastilleBatterie(a?.batterie), nom: coupe)
@@ -67,8 +68,8 @@ enum LibellesNoeuds {
     /// Piece de chaque noeud : celle que le pont donne a son appareil ; pour un noeud que le pont ne place pas, la piece
     /// choisie pour son adresse longue (`PiecesRouteurs`).
     static func pieces(appareils: [AppareilAffiche], maison: NomsZigbee?, choix: PiecesRouteurs = PiecesRouteurs(),
-                       graphe: GrapheReseau) -> [String: String] {
-        var pieces: [String: String] = [:]
+                       graphe: GrapheReseau) -> [IdNoeud: String] {
+        var pieces: [IdNoeud: String] = [:]
         for a in appareils {
             if let p = a.piece, !p.isEmpty { pieces[a.id] = p }
         }
@@ -84,10 +85,10 @@ enum LibellesNoeuds {
         }
     }
 
-    static func nom(_ p: ScenePieces.NomPiece, libelles: [String: Libelle]) -> String {
+    static func nom(_ p: ScenePieces.NomPiece, libelles: [IdNoeud: Libelle]) -> String {
         switch p {
         case .maison(let n): n
-        case .routeur(let id): libelles[id]?.texte ?? id
+        case .routeur(let id): libelles[id]?.texte ?? id.cle
         case .sansPiece: String(localized: "Sans pièce")
         }
     }
@@ -101,13 +102,13 @@ enum LibellesNoeuds {
     /// plateau, « ↗ … · Terrasse, Jardin » pour un parent au meme niveau, dans une autre zone ; « ↓ … · Salon,
     /// Rez-de-chaussee » ou ↑ pour un parent a un autre niveau, avec le nom de son plateau (sans la couronne du
     /// coordinateur).
-    static func ailleurs(_ a: Ailleurs, scene: ScenePieces, libelles: [String: Libelle]) -> String {
+    static func ailleurs(_ a: Ailleurs, scene: ScenePieces, libelles: [IdNoeud: Libelle]) -> String {
         let fleche = switch a.sens {
         case .memeNiveau: "↗"
         case .dessous: "↓"
         case .dessus: "↑"
         }
-        let parent = (libelles[a.parent]?.texte ?? a.parent).replacingOccurrences(of: " " + couronne, with: "")
+        let parent = (libelles[a.parent]?.texte ?? a.parent.cle).replacingOccurrences(of: " " + couronne, with: "")
         let piece = nom(scene.pieces[a.piece].nom, libelles: libelles)
         let ici = scene.noeud(a.enfant).map { scene.pieces[$0.piece].etage }
         guard a.etage != ici else { return "\(fleche) \(parent) · \(piece)" }

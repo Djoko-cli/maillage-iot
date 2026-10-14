@@ -6,11 +6,11 @@ import Foundation
 /// `FocusThread.miseEnAvant`).
 public struct MiseEnAvant: Hashable, Sendable {
     /// Noeuds nets, par identifiant.
-    public var noeuds: Set<String>
+    public var noeuds: Set<IdNoeud>
     /// Liens nets, par paire de bouts, sans ordre ni genre (`cle(_:_:)`).
     public var liens: Set<String>
 
-    public init(noeuds: Set<String> = [], liens: Set<String> = []) {
+    public init(noeuds: Set<IdNoeud> = [], liens: Set<String> = []) {
         self.noeuds = noeuds
         self.liens = liens
     }
@@ -27,15 +27,15 @@ public struct MiseEnAvant: Hashable, Sendable {
     }
 
     /// La cle d'un lien entre `a` et `b`, dans un ordre ou dans l'autre.
-    public static func cle(_ a: String, _ b: String) -> String {
-        a < b ? a + "|" + b : b + "|" + a
+    public static func cle(_ a: IdNoeud, _ b: IdNoeud) -> String {
+        a < b ? a.texte + "|" + b.texte : b.texte + "|" + a.texte
     }
 
     /// La cle d'un lien du graphe.
     public static func cle(_ l: GrapheReseau.Lien) -> String { cle(l.de, l.vers) }
 
     /// Met en avant le lien entre `a` et `b`, et ses deux bouts.
-    public mutating func ajouter(lien a: String, _ b: String) {
+    public mutating func ajouter(lien a: IdNoeud, _ b: IdNoeud) {
         noeuds.insert(a)
         noeuds.insert(b)
         liens.insert(Self.cle(a, b))
@@ -45,10 +45,10 @@ public struct MiseEnAvant: Hashable, Sendable {
 
     /// L'estompement vise de chaque noeud et de chaque lien de `noeuds` et `liens` sous `m` : 0 (net) pour ce qui est
     /// mis en avant, 1 pour le reste ; tout a 0 sans mise en avant (nil).
-    public static func cibles(_ m: MiseEnAvant?, noeuds: [String], liens: [String])
-        -> (noeuds: [String: Double], liens: [String: Double]) {
+    public static func cibles(_ m: MiseEnAvant?, noeuds: [IdNoeud], liens: [String])
+        -> (noeuds: [IdNoeud: Double], liens: [String: Double]) {
         guard let m else { return ([:], [:]) }
-        var n: [String: Double] = [:], l: [String: Double] = [:]
+        var n: [IdNoeud: Double] = [:], l: [String: Double] = [:]
         for id in noeuds where !m.noeuds.contains(id) { n[id] = 1 }
         for c in liens where !m.liens.contains(c) { l[c] = 1 }
         return (n, l)
@@ -57,8 +57,8 @@ public struct MiseEnAvant: Hashable, Sendable {
     /// Un pas de la transition douce des estompements `actuels` vers `cibles` (absents : 0), comme les parts de
     /// l'isolement d'une piece : `k` la part du chemin faite a cette image ; une valeur a moins de 0,001 de sa cible la
     /// prend, et une valeur nulle n'est pas gardee.
-    public static func tendre(_ actuels: [String: Double], vers cibles: [String: Double], k: Double) -> [String: Double] {
-        var r: [String: Double] = [:]
+    public static func tendre<K: Hashable>(_ actuels: [K: Double], vers cibles: [K: Double], k: Double) -> [K: Double] {
+        var r: [K: Double] = [:]
         for cle in Set(actuels.keys).union(cibles.keys) {
             let c = cibles[cle] ?? 0
             var f = actuels[cle] ?? 0

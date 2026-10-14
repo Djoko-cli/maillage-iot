@@ -256,7 +256,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.coeur.tests
         GENERATE_INFOPLIST_FILE: YES
   # Les tests Thread compilent aussi deux fixtures neutres du coeur (sans test), pour les equivalences
-  # entre graphe bati a la main et graphe Thread.
+  # entre graphe bati a la main et graphe Thread, et l'assistant `idt` (identifiant de noeud d'apres sa cle), que
+  # toutes les cibles de test partagent.
   ProtocoleThreadTests:
     type: bundle.unit-test
     platform: macOS
@@ -264,6 +265,7 @@ targets:
       - path: ProtocoleThreadTests
       - path: MaillageCoeurTests/MaisonInventee.swift
       - path: MaillageCoeurTests/FixturesScene.swift
+      - path: MaillageCoeurTests/AssistantIdNoeud.swift
     dependencies:
       - target: ProtocoleThread
       - target: MaillageCoeur
@@ -279,6 +281,7 @@ targets:
       - path: ProtocoleZigbeeTests
       - path: MaillageCoeurTests/MaisonInventee.swift
       - path: MaillageCoeurTests/FixturesScene.swift
+      - path: MaillageCoeurTests/AssistantIdNoeud.swift
     dependencies:
       - target: ProtocoleZigbee
       - target: MaillageCoeur
@@ -293,6 +296,7 @@ targets:
     sources:
       - path: MaillageIoTTests
       - path: MaillageCoeurTests/VecteursH1.swift
+      - path: MaillageCoeurTests/AssistantIdNoeud.swift
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur
@@ -311,6 +315,7 @@ targets:
     platform: macOS
     sources:
       - path: MaillageIoTZigbeeTests
+      - path: MaillageCoeurTests/AssistantIdNoeud.swift
     dependencies:
       - target: MaillageIoTZigbee
       - target: MaillageCoeur

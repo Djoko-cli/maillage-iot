@@ -26,7 +26,9 @@ struct FicheNoeud: View {
     @Environment(NomsPont.self) private var nomsPont: NomsPont?
     /// Le demon Passeur Noms : « Identifier par Maison » passe par lui. nil dans les vues de test sans demon.
     @Environment(NomsPasseur.self) private var nomsPasseur: NomsPasseur?
-    let id: String
+    /// Le noeud choisi, au-dessus des modules ; ce qui interroge Zigbee (pont, sonde, journal, courbes) le lit par `cle`,
+    /// son adresse longue.
+    let id: IdNoeud
     /// La scene du meme rendu (`EntreeScene`), avec ce dont elle est faite : la fiche y lit le maillage, et « Placer
     /// dans une piece… » le graphe, sans rien reconstruire ; nil sans reseau.
     let entree: EntreeScene?
@@ -34,8 +36,10 @@ struct FicheNoeud: View {
     /// la fiche (« releve il y a... ») suivent l'heure sans autre evenement.
     let instant: Date
     @Binding var aRenommer: NoeudChoisi?
+    /// L'adresse longue du noeud : sa cle Zigbee.
+    private var cle: String { id.cle }
     /// Choisit un autre noeud (un dependant, un voisin).
-    var choisir: (String) -> Void = { _ in }
+    var choisir: (IdNoeud) -> Void = { _ in }
     /// La liste des voisins entendus depliee d'office (captures) ; sinon, au clic.
     var listeDepliee = false
     /// Les lignes de changements regroupes du journal depliees d'office (captures) ; sinon, repliees, au clic.
@@ -68,7 +72,7 @@ struct FicheNoeud: View {
             }
             if Self.courbesVisibles(dans: surveillance) {
                 Divider().opacity(0.5)
-                CourbesFiche(id: id, instant: instant)
+                CourbesFiche(id: cle, instant: instant)
             }
         }
         .padding(16)
@@ -89,7 +93,7 @@ struct FicheNoeud: View {
 
     /// Le noeud est couronne : le coordinateur de la scene du meme rendu (`EntreeScene.chefs`) ; la fiche couronne le
     /// meme noeud que la scene.
-    static func couronne(_ id: String, entree: EntreeScene?) -> Bool {
+    static func couronne(_ id: IdNoeud, entree: EntreeScene?) -> Bool {
         entree?.chefs.contains(id) == true
     }
 
@@ -101,19 +105,19 @@ struct FicheNoeud: View {
 
     /// « Renommer… » : tout noeud du graphe, dont le surnom est garde sous son adresse longue ; pas un noeud sans
     /// adresse longue (cle provisoire).
-    static func renommable(_ id: String, entree: EntreeScene?) -> Bool {
-        entree?.graphe.noeud(id) != nil && NoeudZigbee.cleConnue(id)
+    static func renommable(_ id: IdNoeud, entree: EntreeScene?) -> Bool {
+        entree?.graphe.noeud(id) != nil && NoeudZigbee.cleConnue(id.cle)
     }
 
     // MARK: Colonne 1 : identite
 
     private func colonneIdentite(_ n: GrapheReseau.Noeud) -> some View {
         let a = entree?.appareils[id]
-        let accessoire = surveillance.accessoire(id)
+        let accessoire = surveillance.accessoire(cle)
         let m = entree?.maillage
-        let noeud = m?.noeud(id)
+        let noeud = m?.noeud(cle)
         return VStack(alignment: .leading, spacing: 4) {
-            Text(surveillance.nom(id)).font(.title3.weight(.semibold))
+            Text(surveillance.nom(cle)).font(.title3.weight(.semibold))
             let description = Self.ligneDescription(maison: accessoire)
             if !description.isEmpty {
                 Text(description).foregroundStyle(.secondary)
@@ -125,7 +129,7 @@ struct FicheNoeud: View {
                 PastilleChef()
             }
             HStack(spacing: 6) {
-                let etat = Self.etat(a, inconnu: n.inconnu, sonde: id == m?.sonde)
+                let etat = Self.etat(a, inconnu: n.inconnu, sonde: cle == m?.sonde)
                 PointEtat(couleur: Self.couleur(a?.etat, inconnu: n.inconnu), pulse: a?.etat == .joignable)
                 Text(etat)
                 Text(verbatim: "· " + Self.texteRole(noeud?.type, endormi: a?.endormi == true))
@@ -151,12 +155,12 @@ struct FicheNoeud: View {
             .foregroundStyle(.secondary)
             HStack(spacing: 6) {
                 if Self.renommable(id, entree: entree) {
-                    Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
+                    Button("Renommer…") { aRenommer = NoeudChoisi(id: cle) }
                         .boutonDeFiche()
                 }
-                if let nomsPont, nomsPont.peutIdentifier(ieee: id) {
-                    BoutonIdentifier(enCours: nomsPont.identification(ieee: id) == .enCours) {
-                        nomsPont.identifier(ieee: id)
+                if let nomsPont, nomsPont.peutIdentifier(ieee: cle) {
+                    BoutonIdentifier(enCours: nomsPont.identification(ieee: cle) == .enCours) {
+                        nomsPont.identifier(ieee: cle)
                     }
                 }
                 // Par Maison : toujours offert pour un appareil du pont, grise tant qu'il n'a pas ete retrouve dans Maison
@@ -171,7 +175,7 @@ struct FicheNoeud: View {
                 }
             }
             .padding(.top, 4)
-            if let nomsPont, case .erreur(let message)? = nomsPont.identification(ieee: id) {
+            if let nomsPont, case .erreur(let message)? = nomsPont.identification(ieee: cle) {
                 Text(message).font(.caption).foregroundStyle(orange).fixedSize(horizontal: false, vertical: true)
             }
             if let nomsPasseur, let texte = BoutonIdentifierMaison.texte(nomsPasseur.identification,
@@ -186,7 +190,7 @@ struct FicheNoeud: View {
     /// L'adresse longue, selectionnable, puis l'adresse courte.
     @ViewBuilder
     private func adresses(_ court: UInt16?) -> some View {
-        Text(verbatim: id).textSelection(.enabled).fixedSize()
+        Text(verbatim: cle).textSelection(.enabled).fixedSize()
         if let court {
             Text(Self.texteCourt(court)).fixedSize()
         }
@@ -195,9 +199,9 @@ struct FicheNoeud: View {
     // MARK: Colonne 2 : chemin
 
     private func colonneChemin() -> some View {
-        let lignes = entree?.maillage.map { Self.lignesChemin(id, maillage: $0, nom: surveillance.nom, maintenant: instant) }
+        let lignes = entree?.maillage.map { Self.lignesChemin(cle, maillage: $0, nom: surveillance.nom, maintenant: instant) }
             ?? []
-        let journal = surveillance.lignesJournal(de: id)
+        let journal = surveillance.lignesJournal(de: cle)
         return VStack(alignment: .leading, spacing: 4) {
             TitreColonne(titre: "Chemin")
             if lignes.isEmpty {
@@ -240,17 +244,17 @@ struct FicheNoeud: View {
 
     private func colonneDependants() -> some View {
         let dependants = entree?.maillage.map {
-            DependantFiche.trier(FicheZigbee.dependants(de: id, maillage: $0), nom: surveillance.nom)
+            DependantFiche.trier(FicheZigbee.dependants(de: id, maillage: $0), nom: { surveillance.nom($0.cle) })
         } ?? []
         return VStack(alignment: .leading, spacing: 6) {
             TitreColonne(titre: "Dépendants")
             if dependants.isEmpty {
-                texteAucun(vu: Self.vuParLaSonde(id, maillage: entree?.maillage))
+                texteAucun(vu: Self.vuParLaSonde(cle, maillage: entree?.maillage))
             } else {
                 Text(Self.ligneDependants(dependants)).font(.caption).foregroundStyle(.secondary)
                 RangeesFluides {
                     ForEach(dependants) { d in
-                        PastilleNoeud(nom: surveillance.nom(d.id), couleur: Self.palette.lienSonde(d.qualite),
+                        PastilleNoeud(nom: surveillance.nom(d.id.cle), couleur: Self.palette.lienSonde(d.qualite),
                                       valeur: Self.valeurPastille(qualite: d.qualite)) {
                             choisir(d.id)
                         }
@@ -270,7 +274,7 @@ struct FicheNoeud: View {
         return VStack(alignment: .leading, spacing: 5) {
             TitreColonne(titre: "Voisins entendus")
             if voisins.isEmpty {
-                texteAucun(vu: Self.vuParLaSonde(id, maillage: m))
+                texteAucun(vu: Self.vuParLaSonde(cle, maillage: m))
             } else {
                 Text(Self.ligneResume(resume)).font(.caption)
                 BarreRepartition(parts: resume.parts.map { (Self.palette.couleur($0.niveau), $0.nombre) })
@@ -286,11 +290,11 @@ struct FicheNoeud: View {
                     .buttonStyle(.link)
                 }
             }
-            if let m, m.noeud(id) != nil, !voisins.isEmpty || m.noeud(id)?.route == true {
+            if let m, m.noeud(cle) != nil, !voisins.isEmpty || m.noeud(cle)?.route == true {
                 Text(Self.ligneQualites(FicheZigbee.dateQualites(m))).font(.caption).foregroundStyle(.secondary)
             }
             if let m {
-                ForEach(Self.lignesTable(id, maillage: m), id: \.self) { ligne in
+                ForEach(Self.lignesTable(cle, maillage: m), id: \.self) { ligne in
                     Text(ligne).font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -312,7 +316,7 @@ struct FicheNoeud: View {
     /// meilleure qualite a la plus faible, chacun avec son point de couleur et « LQI 230 / 224 » (le noeud, puis le
     /// voisin) ; un clic le choisit.
     private func listeVoisins(_ m: MaillageZigbee) -> some View {
-        let voisins = ResumeVoisins.trier(FicheZigbee.voisins(de: id, maillage: m), nom: surveillance.nom)
+        let voisins = ResumeVoisins.trier(FicheZigbee.voisins(de: id, maillage: m), nom: { surveillance.nom($0.cle) })
         return GrilleListe {
             ForEach(voisins) { v in
                 Button {
@@ -320,7 +324,7 @@ struct FicheNoeud: View {
                 } label: {
                     HStack(spacing: 6) {
                         Circle().fill(Self.palette.lienSonde(v.qualite)).frame(width: 7, height: 7)
-                        Text(verbatim: surveillance.nom(v.id)).lineLimit(1)
+                        Text(verbatim: surveillance.nom(v.id.cle)).lineLimit(1)
                         Spacer(minLength: 4)
                         Text(Self.texteLQIs(v)).monospacedDigit().foregroundStyle(.secondary)
                     }

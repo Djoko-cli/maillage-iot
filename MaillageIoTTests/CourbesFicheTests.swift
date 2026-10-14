@@ -173,7 +173,7 @@ struct CourbesFicheTests {
         func pile(_ id: String) -> CGFloat {
             let v = VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 LigneDuBas(moteur: MoteurPieces(), entree: entree, legendeForcee: true)
-                FicheNoeud(id: id, entree: entree, instant: Date(), aRenommer: .constant(nil)) {}
+                FicheNoeud(id: idt(id), entree: entree, instant: Date(), aRenommer: .constant(nil)) {}
             }.frame(width: 1100 - 2 * FenetrePieces.bord)
             return NSHostingView(rootView: v.environment(s).environment(PiecesChoisies(fichier: nil))).fittingSize.height
         }

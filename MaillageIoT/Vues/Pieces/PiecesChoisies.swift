@@ -69,13 +69,13 @@ extension PiecesChoisies {
     /// piece de Maison dont l'ExtMac est connue (precision 27). Nil pour un noeud que Maison place, un
     /// routeur de bordure que la sonde seule connait (precision 25), un noeud sans ExtMac. `entree` : la
     /// scene du meme rendu, dont le graphe et les appareils servent tels quels.
-    static func placement(_ id: String, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
+    static func placement(_ id: IdNoeud, dans surveillance: Surveillance, entree: EntreeScene) -> Placement? {
         let maison = surveillance.noms.maison
         let pieces = PiecesRouteurs.pieces(de: maison).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
         guard !pieces.isEmpty else { return nil }
-        if surveillance.instantane?.routeur(id) != nil {
-            guard PiecesRouteurs.pieceDeMaison(routeur: id, maison: maison) == nil else { return nil }
-            return Placement(cle: .routeur(id), pieces: pieces)
+        if id.protocole == .thread, surveillance.instantane?.routeur(id.cle) != nil {
+            guard PiecesRouteurs.pieceDeMaison(routeur: id.cle, maison: maison) == nil else { return nil }
+            return Placement(cle: .routeur(id.cle), pieces: pieces)
         }
         // Un autre noeud : par le graphe de la scene, donc sous la meme cle.
         if let p = entree.appareils[id]?.piece, !p.isEmpty { return nil }

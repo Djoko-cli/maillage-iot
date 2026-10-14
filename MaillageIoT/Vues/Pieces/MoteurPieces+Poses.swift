@@ -48,7 +48,7 @@ extension MoteurPieces {
         orbite = volVersEtage(e).orbite(1, depuis: orbite)
     }
 
-    func poserSurvol(_ id: String?) { survol = id }
+    func poserSurvol(_ id: IdNoeud?) { survol = id }
 
     /// Le glissement d'une disposition, pose a `q` (de 0 a 1) de son temps, sans horloge : les poses des pieces et des
     /// noeuds, et les plateaux qui glissent avec eux.

@@ -191,13 +191,13 @@ extension LegendePieces {
     /// Ce que la legende lit de la scene affichee : la couleur de chaque noeud, ceux que le pont ne connait pas, le
     /// coordinateur, la sonde, les endormis, les piles, les liens, et si des reperes « ailleurs » sont poses (piece isolee).
     struct Lecture {
-        var couleurs: [String: DessinNoeud.Couleur] = [:]
-        var inconnus: Set<String> = []
-        var chefs: Set<String> = []
+        var couleurs: [IdNoeud: DessinNoeud.Couleur] = [:]
+        var inconnus: Set<IdNoeud> = []
+        var chefs: Set<IdNoeud> = []
         /// La sonde elle-meme (ses ondes).
-        var sondes: Set<String> = []
-        var endormis: Set<String> = []
-        var piles: Set<String> = []
+        var sondes: Set<IdNoeud> = []
+        var endormis: Set<IdNoeud> = []
+        var piles: Set<IdNoeud> = []
         var liens: [ScenePieces.Lien] = []
         var ailleurs = false
         /// Les liens montres.

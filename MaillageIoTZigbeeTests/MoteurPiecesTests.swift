@@ -80,7 +80,7 @@ struct MoteurPiecesTests {
     @Test func voisinsALaSelection() throws {
         let (m, _) = try Self.moteur()
         #expect(m.liens == .chemins && m.voisins, "par defaut : chemins, voisins montres")
-        m.selection = NomsDemo.Ieee.lampeBureau
+        m.selection = idz(NomsDemo.Ieee.lampeBureau)
         func compte() throws -> (voisins: Int, chemins: Int, radio: Int) {
             Self.dessiner(m)
             let l = try #require(m.projetee).liensRouteurs
@@ -250,9 +250,9 @@ struct MoteurPiecesTests {
         let salon = try Self.indice(e, "Salon")
         m.cliquer(try Self.pointDePiece(m, salon))
         #expect(m.estIsolee && m.focus == salon && m.isolee == "Salon")
-        let disque = try #require(m.projetee?.disques.first { $0.noeud == NomsDemo.Ieee.pont })
+        let disque = try #require(m.projetee?.disques.first { $0.noeud == idz(NomsDemo.Ieee.pont) })
         m.cliquer(disque.centre)
-        #expect(m.selection == NomsDemo.Ieee.pont)
+        #expect(m.selection == idz(NomsDemo.Ieee.pont))
         m.cliquer(CGPoint(x: 5, y: Self.taille.height / 2))
         #expect(m.selection == nil && !m.estIsolee && m.isolee == nil && m.focus == nil)
     }
@@ -301,7 +301,7 @@ struct MoteurPiecesTests {
         let a = moteur()
         a.poserZoom(echelle: 1.6, vers: a.centrePiece(try Self.indice(e, "Salon")))
         for _ in 0..<2 { Self.dessiner(a) }
-        let appareil = a.etiquettes.compactMap { l -> (String, CGPoint)? in
+        let appareil = a.etiquettes.compactMap { l -> (IdNoeud, CGPoint)? in
             guard l.vu, case .noeud(let id) = l.genre else { return nil }
             let c = CGPoint(x: l.rect.midX, y: l.rect.midY)
             return a.projetee?.noeud(sous: c) == nil ? (id, c) : nil
@@ -396,7 +396,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences[NomsDemo.Ieee.pont] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         #expect(autre != e && autre.cleDisposition == e.cleDisposition)
         let cuisine = try Self.indice(e, "Cuisine")
         let avant = m.positions[cuisine]
@@ -516,7 +516,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences[NomsDemo.Ieee.pont] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         let cuisine = try Self.indice(e, "Cuisine")
         let depart = try Self.pointDePiece(m, cuisine)
         m.glisser(depart, depart: depart)
@@ -594,7 +594,7 @@ struct MoteurPiecesTests {
         m.basculer(troisD: true)
         #expect(m.troisD && m.enMouvement && m.focus == nil && m.isolee == nil)
         var autre = e
-        autre.libelles[NomsDemo.Ieee.lampeBureau] = LibellesNoeuds.Libelle(texte: "Pont Halo")
+        autre.libelles[idz(NomsDemo.Ieee.lampeBureau)] = LibellesNoeuds.Libelle(texte: "Pont Halo")
         m.recevoir(autre)
         #expect(m.entree == e, "pendant l'envol, la scene attend")
         let r = MoteurPieces(troisD: true)
@@ -710,7 +710,7 @@ struct MoteurPiecesTests {
         // Piece isolee et fiche ouverte : le premier clic les ferme, le second ne relance rien.
         let (n, _) = try Self.moteur()
         n.cliquer(try Self.pointDePiece(n, try Self.indice(e, "Salon")))
-        n.selection = NomsDemo.Ieee.pont
+        n.selection = idz(NomsDemo.Ieee.pont)
         n.relacher(fond, a: 200)
         #expect(n.selection == nil && !n.estIsolee && n.isolee == nil && n.focus == nil)
         n.relacher(fond, a: 200.1)
