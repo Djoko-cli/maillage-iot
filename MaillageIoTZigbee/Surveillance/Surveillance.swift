@@ -85,6 +85,11 @@ final class Surveillance {
     /// disque.
     func evenementsDeCapture(_ nouveaux: [Evenement]) {
         guard mode == .demo else { return }
+        let nouveaux = nouveaux.map { e in
+            var e = e
+            e.protocole = e.protocole ?? Self.protocole
+            return e
+        }
         let tous = (evenements + nouveaux).enumerated()
         evenements = tous.sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }.map(\.element)
     }
@@ -100,6 +105,9 @@ final class Surveillance {
     @ObservationIgnored var surAlertes: (([AlerteAEnvoyer]) -> Void)?
     @ObservationIgnored private let journal: JournalFichiers?
     @ObservationIgnored private let fichierSurnoms: URL?
+    /// Les surnoms de `surnoms.json`, de tous les protocoles : ceux de Zigbee sont aussi dans `noms.surnoms` (cles
+    /// brutes, pour le resolveur de noms du module) ; les autres sont gardes tels quels dans le fichier.
+    @ObservationIgnored private var surnomsCommuns: [IdNoeud: String] = [:]
     /// Le dernier maillage garde (`MaillageGarde`) : mode direct avec un dossier ; nil : nulle part (demo, tests).
     @ObservationIgnored private let fichierMaillage: URL?
     /// Les appariements de Maison memorises (`MemoireAppariements`) : mode direct avec un dossier ; nil : nulle part.
@@ -126,8 +134,12 @@ final class Surveillance {
     nonisolated static let agePerime: TimeInterval = 45 * 60
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
     nonisolated static let journalMac = Logger(subsystem: "fr.djoko.maillage.iot", category: "historique")
-    /// Les types d'evenements de Zigbee, leurs pertes, leurs categories de notification et leurs regroupements.
-    nonisolated static let politiqueJournal = PolitiqueJournalZigbee()
+    /// Le protocole que cette app porte : ses evenements le portent (`ajouter`), ses surnoms sont sous ce protocole.
+    nonisolated static let protocole = Protocole.zigbee
+    /// Les types d'evenements de Zigbee, leurs pertes, leurs categories de notification et leurs regroupements. Composee
+    /// par protocole : Zigbee seul pour l'instant. Une ligne sans protocole est de Thread : les journaux de Zigbee 1.1.1 se
+    /// relisent a l'import (etape 4).
+    nonisolated static let politiqueJournal = PolitiqueJournalComposee([.zigbee: PolitiqueJournalZigbee()])
 
     /// Lance par les tests (heberges dans l'app) : ne rien ecouter ni ecrire.
     static var sousTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }
@@ -157,7 +169,10 @@ final class Surveillance {
             fichierMaillage = dossier.map { Self.dossierZigbee($0).appendingPathComponent("dernier-maillage.json") }
             fichierAppariements = dossier.map { MemoireAppariements.fichier(dossier: Self.dossierZigbee($0)) }
             appariements = fichierAppariements.map(MemoireAppariements.lire) ?? MemoireAppariements()
-            noms = ResolveurNomsZigbee(surnoms: fichierSurnoms.map(Surnoms.lire) ?? [:])
+            // Le surnoms.json d'avant (cles brutes) etait celui de Zigbee : ses cles se lisent `zigbee:`.
+            let surnoms = fichierSurnoms.map { Surnoms.lire($0, protocoleParDefaut: Surveillance.protocole) } ?? [:]
+            surnomsCommuns = surnoms
+            noms = ResolveurNomsZigbee(surnoms: Surnoms.cles(de: surnoms, protocole: Surveillance.protocole))
             fichiersHistorique = dossier.map { HistoriqueFichiersZigbee(dossier: Self.dossierZigbee($0)) }
         case .demo:
             journal = nil
@@ -336,25 +351,36 @@ final class Surveillance {
         ajouter(suiviMaillage.noterVeille(DateInterval(start: debut, end: max(fin, debut))))
     }
 
-    /// Donne (ou retire, avec nil ou "") un surnom a un noeud.
-    func renommer(_ id: String, en surnom: String?) {
+    /// Donne (ou retire, avec nil ou "") un surnom a un noeud. L'identifiant porte son protocole : le fichier garde les
+    /// surnoms de tous les protocoles, le resolveur de Zigbee ne voit que les siens.
+    func renommer(_ id: IdNoeud, en surnom: String?) {
         let s = surnom?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        noms.surnoms[id] = s.isEmpty ? nil : s
+        surnomsCommuns[id] = s.isEmpty ? nil : s
+        if id.protocole == Self.protocole { noms.surnoms[id.cle] = s.isEmpty ? nil : s }
         guard let fichierSurnoms else { return }
         do {
-            try Surnoms.ecrire(noms.surnoms, dans: fichierSurnoms)
+            try Surnoms.ecrire(surnomsCommuns, dans: fichierSurnoms)
         } catch {
             erreurJournal = error.localizedDescription
         }
     }
+
+    /// Le surnom d'un noeud ; nil sans surnom.
+    func surnom(de id: IdNoeud) -> String? { surnomsCommuns[id] }
 
     /// Dernier maillage en JSON (Reglages › Diagnostic, « Enregistrer une capture… ») ; nil sans maillage.
     func captureJSON() throws -> Data? {
         try maillage.map { try CodageJSON.encodeur(lisible: true).encode($0) }
     }
 
-    private func ajouter(_ nouveaux: [Evenement]) {
-        guard !nouveaux.isEmpty else { return }
+    private func ajouter(_ evenementsDuModule: [Evenement]) {
+        guard !evenementsDuModule.isEmpty else { return }
+        // Les evenements du module portent le protocole de l'app des qu'ils entrent au journal.
+        let nouveaux = evenementsDuModule.map { e in
+            var e = e
+            e.protocole = Self.protocole
+            return e
+        }
         evenements.append(contentsOf: nouveaux)
         do {
             try journal?.ajouter(nouveaux)
@@ -484,15 +510,24 @@ final class Surveillance {
 
     /// 5 derniers evenements d'un noeud (son adresse longue), du plus recent au plus ancien : ceux dont il est le sujet,
     /// ou qui portent son adresse longue (`details["ieee"]`).
-    func evenements(de id: String) -> [Evenement] {
-        Array(evenements.reversed().filter { $0.sujet?.id == id || $0.details["ieee"] == id }.prefix(5))
+    func evenements(de id: IdNoeud) -> [Evenement] {
+        Array(evenements.reversed().filter(concernant(id)).prefix(5))
+    }
+
+    /// Un evenement concerne le noeud `id` s'il est de son protocole (sans protocole : Thread) et si son sujet est ce noeud
+    /// (`Sujet.id`, la cle brute) ou s'il porte son adresse longue (`details["ieee"]`) : un noeud d'un autre protocole
+    /// qui aurait la meme cle n'est pas concerne.
+    private func concernant(_ id: IdNoeud) -> (Evenement) -> Bool {
+        { e in
+            (e.protocole ?? .thread) == id.protocole && (e.sujet?.id == id.cle || e.details["ieee"] == id.cle)
+        }
     }
 
     /// Lignes du journal d'un noeud (son adresse longue), de la plus recente a la plus ancienne, 5 au plus : ses
     /// evenements regroupes comme ceux de la fenetre du journal (`Regroupement.lignes`), ses changements de parent ou de
     /// chemin d'une meme heure en une seule ligne.
-    func lignesJournal(de id: String) -> [LigneJournal] {
-        let siens = evenements.filter { $0.sujet?.id == id || $0.details["ieee"] == id }
+    func lignesJournal(de id: IdNoeud) -> [LigneJournal] {
+        let siens = evenements.filter(concernant(id))
         return Array(Regroupement.lignes(siens, politique: Self.politiqueJournal).prefix(5))
     }
 

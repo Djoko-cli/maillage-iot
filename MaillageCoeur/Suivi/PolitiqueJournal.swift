@@ -19,10 +19,15 @@ public protocol PolitiqueJournal: Sendable {
     /// Evenement qui est un changement de chemin (un routeur change de prochain saut), regroupe comme un changement de
     /// parent mais sur sa propre ligne ; `cleParent` donne alors le routeur. Faux par defaut.
     func estChemin(_ e: Evenement) -> Bool
+    /// Les types de chaque protocole, par nom, quand la politique en porte plusieurs (`PolitiqueJournalComposee`) : un meme
+    /// nom de type peut y avoir une gravite par defaut propre a chaque protocole. Vide par defaut : tous les types sont
+    /// ceux de `types`.
+    var typesParProtocole: [Protocole: [String: TypeEvenement]] { get }
 }
 
 public extension PolitiqueJournal {
     func estChemin(_ e: Evenement) -> Bool { false }
+    var typesParProtocole: [Protocole: [String: TypeEvenement]] { [:] }
 
     /// Les types par nom, tels que `CodingUserInfoKey.typesEvenement` les attend.
     var typesParNom: [String: TypeEvenement] {

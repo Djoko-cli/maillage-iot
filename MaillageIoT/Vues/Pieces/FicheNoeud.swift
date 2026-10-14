@@ -111,7 +111,7 @@ struct FicheNoeud: View {
     private var boutonsIdentite: some View {
         RangeesFluides(espacement: 8, interligne: 6) {
             if Self.renommable(cle, dans: surveillance) {
-                Button("Renommer…") { aRenommer = NoeudChoisi(id: cle) }
+                Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
                     .boutonDeFiche()
             }
             if let a = surveillance.appareil(cle) {
@@ -461,7 +461,7 @@ struct FicheNoeud: View {
 
     /// Present : l'instantane integre (un releve vide ne compte pas) ; disparu : sa premiere absence.
     private func vuLe(_ a: Appareil, disparu: Bool) -> Date? {
-        if disparu { return surveillance.evenements(de: a.id).first { $0.type == .appareilDisparu }?.date }
+        if disparu { return surveillance.evenements(de: IdNoeud(.thread, a.id)).first { $0.type == .appareilDisparu }?.date }
         return surveillance.instantane?.date
     }
 
@@ -680,7 +680,7 @@ struct FicheNoeud: View {
     /// regroupes (`Surveillance.lignesJournal`).
     @ViewBuilder
     private var journal: some View {
-        let lignes = surveillance.lignesJournal(de: cle)
+        let lignes = surveillance.lignesJournal(de: id)
         if !lignes.isEmpty {
             TitreColonne(titre: "Journal")
                 .padding(.top, 6)

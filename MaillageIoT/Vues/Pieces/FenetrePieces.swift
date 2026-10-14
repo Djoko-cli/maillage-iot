@@ -57,7 +57,7 @@ struct FenetrePieces: View {
     static let espacementNiveau: CGFloat = 4
 
     /// `fichierPlaces` : `positions-pieces.json` (`fichierPlaces(demo:sousTests:)`) ; `fichierPieces` :
-    /// `pieces-routeurs.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
+    /// `pieces-noeuds.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
     /// fichier, celles de depart, en memoire (la demo : `NomsDemo.places()`).
     /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran). Forme texte d'un `IdNoeud`
     /// (`thread:<cle>`) ; une cle brute, sans protocole reconnu, est une cle de Thread.

@@ -68,8 +68,8 @@ struct PiecesAppareilsTests {
                                     "rloc:0C00": "E0000000000000C3", "rloc:0401": "DEADBEEF00000001"])
         let g = try Self.graphe(i, m)
         let detecteur = try #require(g.noeud(idt("rloc:0401")))
-        #expect(detecteur.extMac == "DEADBEEF00000001" && PiecesRouteurs.cle(detecteur) == "DEADBEEF00000001")
-        #expect(PiecesRouteurs.cle(try #require(g.noeud(idt("rloc:0C00")))) == "E0000000000000C3", "routeur Thread")
+        #expect(detecteur.extMac == "DEADBEEF00000001" && PiecesRouteurs.cle(detecteur) == idt("DEADBEEF00000001"))
+        #expect(PiecesRouteurs.cle(try #require(g.noeud(idt("rloc:0C00")))) == idt("E0000000000000C3"), "routeur Thread")
         let atv = try #require(g.noeud(idt("Apple TV")))
         #expect(atv.extMac == "E0000000000000A1" && PiecesRouteurs.cle(atv) == nil, "routeur de bordure annonce")
         let inconnu = try #require(g.noeud(idt("rloc:0800")))
@@ -77,19 +77,19 @@ struct PiecesAppareilsTests {
                 "routeur de bordure connu de la sonde seule (precision 25)")
         var p = PiecesRouteurs()
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile).isEmpty, "sans choix")
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
-        p.choisir("Bureau", appareil: "E0000000000000C3", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
+        p.choisir("Bureau", appareil: idt("E0000000000000C3"), domicile: Self.domicile)
         // Un choix sous l'ExtMac d'un routeur de bordure (le drapeau des Network Data peut changer d'une
         // tournee a l'autre) ne le place pas : il suit les precisions 23 a 25.
-        p.choisir("Cuisine", appareil: "E0000000000000B2", domicile: Self.domicile)
-        p.choisir("Cuisine", appareil: "E0000000000000A1", domicile: Self.domicile)
-        #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon")
+        p.choisir("Cuisine", appareil: idt("E0000000000000B2"), domicile: Self.domicile)
+        p.choisir("Cuisine", appareil: idt("E0000000000000A1"), domicile: Self.domicile)
+        #expect(p.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == "Salon")
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)
                 == [idt("rloc:0401"): "Salon", idt("rloc:0C00"): "Bureau"])
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: "Chalet").isEmpty, "une autre maison")
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: ["Bureau", "Cuisine"], domicile: Self.domicile)
                 == [idt("rloc:0C00"): "Bureau"], "le salon n'est plus dans Maison : le choix ne compte plus")
-        #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon", "il reste dans le fichier")
+        #expect(p.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == "Salon", "il reste dans le fichier")
     }
 
     /// Le meme appareil garde son choix sous un autre parent (autre RLOC16), puis quand son annonce
@@ -97,7 +97,7 @@ struct PiecesAppareilsTests {
     /// majuscules ou en minuscules.
     @Test func memeAppareilAutreRloc16OuAnnonce() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
         func piece(_ g: GrapheReseau, _ id: String) -> String? {
             p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[idt(id)]
         }
@@ -120,7 +120,7 @@ struct PiecesAppareilsTests {
     /// La piece de Maison passe avant le choix ; le choix reste, sans effet.
     @Test func maisonLEmporte() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
         let g = try Self.graphe(Self.instantane(annonces: ["DEADBEEF00000001"]),
                                 Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[idt("DEADBEEF00000001")]
@@ -128,7 +128,7 @@ struct PiecesAppareilsTests {
         let avecMaison = p.piecesNoeuds(g, deMaison: [idt("DEADBEEF00000001"): "Cuisine"], parmi: Self.pieces,
                                         domicile: Self.domicile)
         #expect(avecMaison == [idt("DEADBEEF00000001"): "Cuisine"], "Maison l'emporte")
-        #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon", "le choix reste")
+        #expect(p.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == "Salon", "le choix reste")
     }
 
     /// Un noeud sans ExtMac connue n'a ni cle, ni choix, ni menu : un enfant ou un routeur Thread que
@@ -142,18 +142,19 @@ struct PiecesAppareilsTests {
             #expect(n.extMac == nil && PiecesRouteurs.cle(n) == nil, "\(id)")
         }
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == [idt("rloc:0401"): "Salon"],
                 "seul le noeud qui a une ExtMac est place")
         #expect(GrapheReseau.extMac(hote: "Eve-Motion-1A2B") == nil && GrapheReseau.extMac(hote: "C4299622387B") == nil)
         #expect(GrapheReseau.extMac(hote: "deadbeef00000001") == "DEADBEEF00000001")
     }
 
-    /// Un fichier d'avant les appareils (version 1, les routeurs seuls) se lit sans perte ; il se
-    /// reecrit avec les choix d'appareils sans perdre ceux des routeurs ; une app d'avant lit encore
-    /// les choix des routeurs du nouveau fichier.
+    /// Un fichier d'avant les appareils (`pieces-routeurs.json`, version 1, les routeurs seuls) se lit sans perte, ses cles
+    /// prenant le protocole de l'app (Thread) ; il se reecrit au nouveau fichier (`pieces-noeuds.json`, version 2) avec les
+    /// choix d'appareils sans perdre ceux des routeurs ; l'ancien fichier reste tel quel pour une app d'avant.
     @Test func ancienFormat() throws {
         let url = AidesThread.fichierPieces()
+        let ancienUrl = url.deletingLastPathComponent().appendingPathComponent("pieces-routeurs.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let ancien = """
             {
@@ -170,74 +171,72 @@ struct PiecesAppareilsTests {
             }
             """
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data(ancien.utf8).write(to: url)
-        let routeurs = ["": ["HomePod": "Cuisine"], Self.domicile: ["Apple TV": "Salon", "HomePod Palier": "Bureau"]]
-        var p = PiecesRouteurs.lire(url)
-        #expect(p.maisons == routeurs && p.appareils.isEmpty && p.version == 1)
-        #expect(p.choix(routeur: "HomePod Palier", domicile: Self.domicile) == "Bureau")
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
+        try Data(ancien.utf8).write(to: ancienUrl)
+        let routeurs = ["": [idt("HomePod"): "Cuisine"],
+                        Self.domicile: [idt("Apple TV"): "Salon", idt("HomePod Palier"): "Bureau"]]
+        var p = PiecesRouteurs.lire(url, ancien: ancienUrl, protocoleParDefaut: .thread)
+        #expect(p.maisons == routeurs && p.appareils.isEmpty && p.version == 2)
+        #expect(p.choix(routeur: idt("HomePod Palier"), domicile: Self.domicile) == "Bureau")
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
         try p.ecrire(dans: url)
         let relu = PiecesRouteurs.lire(url)
         #expect(relu == p && relu.maisons == routeurs)
-        #expect(relu.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon")
-        // Ce que lisait l'app d'avant : la version (au plus 1) et les routeurs ; elle ignore le reste.
-        struct Avant: Decodable {
-            var version: Int
-            var maisons: [String: [String: String]]
-        }
-        let avant = try JSONDecoder().decode(Avant.self, from: Data(contentsOf: url))
-        #expect(avant.version <= 1 && avant.maisons == routeurs)
+        #expect(relu.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == "Salon")
+        #expect(try Data(contentsOf: ancienUrl) == Data(ancien.utf8), "l'app d'avant relit son fichier, intact")
     }
 
     /// Un `appareils` mal forme (champ facultatif que l'app n'ecrit jamais ainsi : fichier edite a la
     /// main ou abime) ne fait pas perdre les choix des routeurs : le champ seul est ignore, et le
-    /// prochain choix reecrit un fichier sain. `null` vaut un champ absent (deja le cas avant).
+    /// prochain choix reecrit un fichier sain. `null` vaut un champ absent (deja le cas avant). Pour l'ancien fichier
+    /// (version 1) comme pour le nouveau (version 2).
     @Test(arguments: [#"["x"]"#, #""texte""#, #"{"Maison inventée": ["x"]}"#,
-                      #"{"Maison inventée": {"DEADBEEF00000001": 5}}"#, "null"])
-    func appareilsMalForme(champ: String) throws {
+                      #"{"Maison inventée": {"DEADBEEF00000001": 5}}"#, "null"], [1, 2])
+    func appareilsMalForme(champ: String, version: Int) throws {
         let url = AidesThread.fichierPieces()
+        let ancienUrl = url.deletingLastPathComponent().appendingPathComponent("pieces-routeurs.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let cle = version == 1 ? "" : "thread:"
         let json = """
             {
               "appareils" : \(champ),
               "maisons" : {
                 "Maison inventée" : {
-                  "Apple TV" : "Salon",
-                  "HomePod Palier" : "Bureau"
+                  "\(cle)Apple TV" : "Salon",
+                  "\(cle)HomePod Palier" : "Bureau"
                 }
               },
-              "version" : 1
+              "version" : \(version)
             }
             """
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data(json.utf8).write(to: url)
-        let routeurs = [Self.domicile: ["Apple TV": "Salon", "HomePod Palier": "Bureau"]]
-        var p = PiecesRouteurs.lire(url)
-        #expect(p.maisons == routeurs && p.version == 1, "les choix des routeurs restent")
+        try Data(json.utf8).write(to: version == 1 ? ancienUrl : url)
+        let routeurs = [Self.domicile: [idt("Apple TV"): "Salon", idt("HomePod Palier"): "Bureau"]]
+        var p = PiecesRouteurs.lire(url, ancien: ancienUrl, protocoleParDefaut: .thread)
+        #expect(p.maisons == routeurs && p.version == 2, "les choix des routeurs restent")
         #expect(p.appareils.isEmpty, "le champ mal forme est ignore")
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
         try p.ecrire(dans: url)
         let relu = PiecesRouteurs.lire(url)
         #expect(relu == p && relu.maisons == routeurs, "le fichier reecrit est sain")
-        #expect(relu.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == "Salon")
+        #expect(relu.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == "Salon")
     }
 
     /// « Sans piece » (nil) efface le choix d'un appareil ; la cle est l'ExtMac en majuscules ; les
     /// choix des routeurs restent.
     @Test func sansPieceEffaceLeChoix() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", routeur: "HomePod Palier", domicile: Self.domicile)
+        p.choisir("Salon", routeur: idt("HomePod Palier"), domicile: Self.domicile)
         let routeurs = p
-        p.choisir("Salon", appareil: "DEADBEEF00000001", domicile: Self.domicile)
-        p.choisir("Bureau", appareil: "deadbeef00000002", domicile: Self.domicile)
-        #expect(p.choix(appareil: "DEADBEEF00000002", domicile: Self.domicile) == "Bureau", "en majuscules")
+        p.choisir("Salon", appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
+        p.choisir("Bureau", appareil: idt("deadbeef00000002"), domicile: Self.domicile)
+        #expect(p.choix(appareil: idt("DEADBEEF00000002"), domicile: Self.domicile) == "Bureau", "en majuscules")
         let g = try Self.graphe(Self.instantane(), Self.maillage(enfants: [(0x0401, "DEADBEEF00000001")]))
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile) == [idt("rloc:0401"): "Salon"])
-        p.choisir(nil, appareil: "DEADBEEF00000001", domicile: Self.domicile)
-        #expect(p.choix(appareil: "DEADBEEF00000001", domicile: Self.domicile) == nil)
+        p.choisir(nil, appareil: idt("DEADBEEF00000001"), domicile: Self.domicile)
+        #expect(p.choix(appareil: idt("DEADBEEF00000001"), domicile: Self.domicile) == nil)
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile).isEmpty, "Sans piece")
-        p.choisir(nil, appareil: "DEADBEEF00000002", domicile: Self.domicile)
+        p.choisir(nil, appareil: idt("DEADBEEF00000002"), domicile: Self.domicile)
         #expect(p == routeurs, "plus aucun choix d'appareil pour cette maison")
-        #expect(p.choix(routeur: "HomePod Palier", domicile: Self.domicile) == "Salon")
+        #expect(p.choix(routeur: idt("HomePod Palier"), domicile: Self.domicile) == "Salon")
     }
 }

@@ -124,4 +124,41 @@ struct RegroupementParentsTests {
         }
         #expect(g.count == 3)
     }
+
+    static func parent(_ minutes: Double, _ noeud: String, _ protocole: Protocole?) -> Evenement {
+        var e = parent(minutes, noeud)
+        e.protocole = protocole
+        return e
+    }
+
+    /// Deux appareils de deux protocoles qui ont la meme cle de parent ne se regroupent jamais : la cle du groupe est
+    /// `<protocole>|parent|<cle>` (`<protocole>|chemin|<cle>`). Sans protocole, un evenement est de Thread.
+    @Test func regroupementSepareLesProtocoles() throws {
+        let compose = PolitiqueJournalComposee([.thread: PolitiqueEssai(), .zigbee: PolitiqueEssai()])
+        let melange = Regroupement.lignes([Self.parent(0, "x", .thread), Self.parent(5, "x", .zigbee),
+                                           Self.parent(10, "x", .thread), Self.parent(15, "x", .zigbee),
+                                           Self.parent(20, "x", nil)], politique: compose)
+        try #require(melange.count == 2, "un groupe par protocole : \(melange.map(\.evenements.count))")
+        let parProtocole = melange.map { Set($0.evenements.map { $0.protocole ?? .thread }) }
+        #expect(parProtocole.allSatisfy { $0.count == 1 }, "aucun groupe ne melange les protocoles")
+        let thread = try #require(melange.first { $0.evenements.first?.protocole != .zigbee })
+        let zigbee = try #require(melange.first { $0.evenements.first?.protocole == .zigbee })
+        #expect(thread.evenements.count == 3, "Thread : deux evenements marques et un sans protocole")
+        #expect(zigbee.evenements.count == 2)
+        // Seul dans son protocole, un evenement reste une ligne a lui, meme avec la cle d'un autre.
+        let seuls = Regroupement.lignes([Self.parent(0, "x", .thread), Self.parent(5, "x", .zigbee)], politique: compose)
+        #expect(seuls.map(\.evenements.count) == [1, 1])
+        // Les changements de chemin se separent de meme.
+        var c1 = Self.chemin(0, "x")
+        c1.protocole = .thread
+        var c2 = Self.chemin(5, "x")
+        c2.protocole = .zigbee
+        #expect(Regroupement.lignes([c1, c2], politique: compose).map(\.evenements.count) == [1, 1])
+        // Thread seul : le regroupement est celui d'avant.
+        let avant = Regroupement.lignes([Self.parent(0, "x"), Self.parent(10, "x"), Self.parent(20, "y")],
+                                        politique: PolitiqueEssai())
+        let apres = Regroupement.lignes([Self.parent(0, "x", .thread), Self.parent(10, "x", .thread),
+                                         Self.parent(20, "y", .thread)], politique: compose)
+        #expect(avant.map(\.evenements.count) == apres.map(\.evenements.count) && apres.map(\.evenements.count) == [1, 2])
+    }
 }

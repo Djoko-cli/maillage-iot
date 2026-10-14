@@ -49,7 +49,7 @@ enum CapturesPieces {
     /// Le routeur inconnu de la demo, que le pont ne connait pas (sans piece), place dans la cuisine.
     static var appareilDansLaCuisine: PiecesRouteurs {
         var p = PiecesRouteurs()
-        p.choisir("Cuisine", appareil: NomsDemo.Ieee.inconnu, domicile: NomsDemo.domicile)
+        p.choisir("Cuisine", appareil: IdNoeud(.zigbee, NomsDemo.Ieee.inconnu), domicile: NomsDemo.domicile)
         return p
     }
 

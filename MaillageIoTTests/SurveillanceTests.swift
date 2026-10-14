@@ -46,7 +46,7 @@ struct SurveillanceTests {
         #expect(affiches.first { $0.id == idt("86E7BD1A75F28E6D") }?.batterie
                 == BatterieMaison(niveau: 52, charge: .horsCharge, alerte: false), "batterie de Maison")
         #expect(affiches.filter { $0.batterie?.faible == true }.map(\.nom).sorted() == ["Eve Motion", "Fenêtre chambre"])
-        #expect(s.evenements(de: "46F77B36E071F8D0").first?.type == .appareilDisparu)
+        #expect(s.evenements(de: idt("46F77B36E071F8D0")).first?.type == .appareilDisparu)
         #expect(s.derniereScission(r)?.date == ScenarioPanne.date(4, 14))
         #expect(s.appareil("46F77B36E071F8D0") != nil, "un disparu reste consultable")
         #expect(s.routesLisibles == true)
@@ -62,12 +62,12 @@ struct SurveillanceTests {
         let journal = JournalFichiers(dossier: dossier.appendingPathComponent("Journal"), politique: Surveillance.politiqueJournal)
         #expect(try journal.lire().count == 4)
 
-        s.renommer("56B1E064401F74EF", en: "  Pont du bureau ")
+        s.renommer(idt("56B1E064401F74EF"), en: "  Pont du bureau ")
         let halo = try #require(s.appareil("56B1E064401F74EF"))
         #expect(s.nom(halo) == "Pont du bureau")
         let relu = Surveillance(mode: .direct, dossier: dossier)
         #expect(relu.noms.surnoms == ["56B1E064401F74EF": "Pont du bureau"])
-        s.renommer("56B1E064401F74EF", en: "")
+        s.renommer(idt("56B1E064401F74EF"), en: "")
         #expect(s.nom(halo) == "56B1E064401F74EF")
 
         let capture = try #require(try s.captureJSON())

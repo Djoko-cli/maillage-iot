@@ -137,10 +137,10 @@ struct NomsTests {
         let dossier = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: dossier) }
         let url = dossier.appendingPathComponent("sous/surnoms.json")
-        #expect(Surnoms.lire(url) == [:], "absent")
-        try Surnoms.ecrire(["56B1E064401F74EF": "Halo"], dans: url)
-        #expect(Surnoms.lire(url) == ["56B1E064401F74EF": "Halo"])
+        #expect(Surnoms.lire(url, protocoleParDefaut: .thread) == [:], "absent")
+        try Surnoms.ecrire([idt("56B1E064401F74EF"): "Halo"], dans: url)
+        #expect(Surnoms.lire(url, protocoleParDefaut: .thread) == [idt("56B1E064401F74EF"): "Halo"])
         try Data("pas du json".utf8).write(to: url)
-        #expect(Surnoms.lire(url) == [:], "illisible")
+        #expect(Surnoms.lire(url, protocoleParDefaut: .thread) == [:], "illisible")
     }
 }

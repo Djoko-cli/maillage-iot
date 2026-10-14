@@ -88,7 +88,7 @@ struct CourbesFicheTests {
             _ = s.courbes(noeud: "rloc:0400", periode: .jour, fin: Date())
             _ = s.nomsHistorique(["rloc:0400", x])
             _ = s.cleHistorique(noeud: "rloc:0400")
-            _ = s.evenements(de: "rloc:0400")
+            _ = s.evenements(de: idt("rloc:0400"))
         }
         fiche()
         fiche()
@@ -98,7 +98,7 @@ struct CourbesFicheTests {
         #expect(s.cleHistorique(noeud: "rloc:0400") == x, "refaite avec les releves relus")
         #expect(s.constructionsCles == 2)
         s.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(600), parent: 5), a: t.addingTimeInterval(600))
-        _ = s.evenements(de: "rloc:0400")
+        _ = s.evenements(de: idt("rloc:0400"))
         #expect(s.constructionsCles == 2, "les evenements ne resolvent rien")
         fiche()
         fiche()

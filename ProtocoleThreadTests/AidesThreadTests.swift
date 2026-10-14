@@ -7,7 +7,7 @@ import Testing
 /// les tests Thread ne dependent plus des suites du coeur pour ces deux aides.
 enum AidesThread {
     static func fichierPieces() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-routeurs.json")
+        FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-noeuds.json")
     }
 
     static var calendrier: Calendar {

@@ -155,7 +155,7 @@ struct FicheNoeud: View {
             .foregroundStyle(.secondary)
             HStack(spacing: 6) {
                 if Self.renommable(id, entree: entree) {
-                    Button("Renommer…") { aRenommer = NoeudChoisi(id: cle) }
+                    Button("Renommer…") { aRenommer = NoeudChoisi(id: id) }
                         .boutonDeFiche()
                 }
                 if let nomsPont, nomsPont.peutIdentifier(ieee: cle) {
@@ -201,7 +201,7 @@ struct FicheNoeud: View {
     private func colonneChemin() -> some View {
         let lignes = entree?.maillage.map { Self.lignesChemin(cle, maillage: $0, nom: surveillance.nom, maintenant: instant) }
             ?? []
-        let journal = surveillance.lignesJournal(de: cle)
+        let journal = surveillance.lignesJournal(de: id)
         return VStack(alignment: .leading, spacing: 4) {
             TitreColonne(titre: "Chemin")
             if lignes.isEmpty {

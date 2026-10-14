@@ -40,7 +40,7 @@ enum CapturesPieces {
     /// cuisine.
     static var appareilDansLaCuisine: PiecesRouteurs {
         var p = PiecesRouteurs()
-        p.choisir("Cuisine", appareil: "E0000000000000FF", domicile: NomsDemo.maison.domicile ?? "")
+        p.choisir("Cuisine", appareil: IdNoeud(.thread, "E0000000000000FF"), domicile: NomsDemo.maison.domicile ?? "")
         return p
     }
 

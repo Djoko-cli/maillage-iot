@@ -7,7 +7,7 @@ import SwiftUI
 
 /// Noeud choisi pour une feuille (surnom).
 struct NoeudChoisi: Identifiable {
-    let id: String
+    let id: IdNoeud
 }
 
 /// Capsule de gauche du haut de la fenetre : journal, rafraichir.
@@ -147,12 +147,12 @@ struct EtatVide: View {
 struct FeuilleRenommer: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(\.dismiss) private var fermer
-    let id: String
+    let id: IdNoeud
     @State private var texte = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Renommer « \(id) »").font(.headline)
+            Text("Renommer « \(id.cle) »").font(.headline)
             TextField("Surnom", text: $texte)
             Text("Le surnom reste sur ce Mac et passe avant le nom donné par le pont.")
                 .font(.caption)
@@ -173,6 +173,6 @@ struct FeuilleRenommer: View {
         }
         .padding(20)
         .frame(width: 400)
-        .onAppear { texte = surveillance.noms.surnoms[id] ?? "" }
+        .onAppear { texte = surveillance.surnom(de: id) ?? "" }
     }
 }

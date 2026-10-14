@@ -495,7 +495,7 @@ struct MoteurPiecesTests {
     @Test(.timeLimit(.minutes(1))) func replacerGardeLeReleveEnAttente() async throws {
         let (s, e) = try NomsSceneTests.demo()
         let m = Self.moteur(e)
-        s.renommer(NomsDemo.Ieee.lampeBureau, en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idz(NomsDemo.Ieee.lampeBureau), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, places: m.places)
         let fond = CGPoint(x: 5, y: Self.taille.height / 2)
         m.glisser(fond, depart: fond)
@@ -634,7 +634,7 @@ struct MoteurPiecesTests {
         s.noms.maison = maison
         let e = EntreeScene(surveillance: s, places: PlacesGardees())
         let m = Self.moteur(e)
-        s.renommer(NomsDemo.Ieee.lampeBureau, en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idz(NomsDemo.Ieee.lampeBureau), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, places: m.places)
         #expect(autre.cleDisposition != e.cleDisposition)
         m.recevoir(autre)
@@ -664,7 +664,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (s, e) = try NomsSceneTests.demo()
         let m = Self.moteur(e, fichier: url)
-        s.renommer(NomsDemo.Ieee.lampeBureau, en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idz(NomsDemo.Ieee.lampeBureau), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, places: m.places)
         m.recevoir(autre)
         let cuisine = try Self.indice(e, "Cuisine")

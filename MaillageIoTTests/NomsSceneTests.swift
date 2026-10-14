@@ -126,8 +126,8 @@ struct NomsSceneTests {
         let serrure = "Serrure connectée de la porte arrière, garage"
         let atv = "Apple TV du salon, sous la télévision murale"
         #expect(serrure.count == 45 && atv.count == 44)
-        s.renommer("86E7BD1A75F28E6D", en: serrure)
-        s.renommer("Apple TV 4K", en: atv)
+        s.renommer(idt("86E7BD1A75F28E6D"), en: serrure)
+        s.renommer(idt("Apple TV 4K"), en: atv)
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         #expect(e.libelles[idt("86E7BD1A75F28E6D")]?.texte == "Serrure connectée de la porte arrière, …" + " ☾")
         #expect(e.libelles[idt("Apple TV 4K")]?.texte == "Apple TV du salon, sous la télévision m…" + " 👑")
@@ -190,8 +190,8 @@ struct NomsSceneTests {
         #expect(pieces[idt("HomePod mini chambre")] == "Chambre" && pieces[idt("HomePod mini bureau")] == "Bureau")
         #expect(pieces[idt("HomePod Palier")] == nil && pieces[idt("HomePod Avant")] == nil && pieces[idt("Apple TV 4K")] == nil)
         var choix = PiecesRouteurs()
-        choix.choisir("Salon", routeur: "HomePod Palier", domicile: maison.domicile ?? "")
-        choix.choisir("Bureau", routeur: "HomePod mini chambre", domicile: maison.domicile ?? "")
+        choix.choisir("Salon", routeur: idt("HomePod Palier"), domicile: maison.domicile ?? "")
+        choix.choisir("Bureau", routeur: idt("HomePod mini chambre"), domicile: maison.domicile ?? "")
         pieces = LibellesNoeuds.pieces(reseau: r, appareils: s.appareilsAffiches(pour: r), maison: maison,
                                        nomsRouteurs: noms, choix: choix, graphe: depart.graphe)
         #expect(pieces[idt("HomePod Palier")] == "Salon" && pieces[idt("HomePod mini chambre")] == "Bureau")
@@ -214,9 +214,9 @@ struct NomsSceneTests {
         let (s, r) = try Self.demoAvecInconnus()
         let domicile = try #require(s.noms.maison?.domicile)
         var choix = PiecesRouteurs()
-        choix.choisir("Cuisine", appareil: "E0000000000000FF", domicile: domicile)
-        choix.choisir("Bureau", appareil: "1E5019DAC2638F92", domicile: domicile)
-        choix.choisir("Salon", appareil: "56B1E064401F74EF", domicile: domicile)
+        choix.choisir("Cuisine", appareil: idt("E0000000000000FF"), domicile: domicile)
+        choix.choisir("Bureau", appareil: idt("1E5019DAC2638F92"), domicile: domicile)
+        choix.choisir("Salon", appareil: idt("56B1E064401F74EF"), domicile: domicile)
         let avant = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees(), choix: choix)
         func piece(_ e: EntreeScene, _ id: String) throws -> ScenePieces.NomPiece {
@@ -294,7 +294,7 @@ struct NomsSceneTests {
         #expect(cle([rdc, combles, etage], [:]) == depart, "l'ordre des niveaux")
         #expect(cle([rdc, etage, combles], [combles: PlacesGardees.ACote(etage: etage, dehors: true)]) == aCote,
                 "hors de la maison")
-        s.renommer("56B1E064401F74EF", en: "Pont Halo")
+        s.renommer(idt("56B1E064401F74EF"), en: "Pont Halo")
         #expect(cle([rdc, etage, combles], [:]) != depart)
     }
 
@@ -421,16 +421,16 @@ struct NomsSceneTests {
         }
         #expect(try pieces() == [.sansPiece, .sansPiece], "ni Maison, ni choix, ni piece dans le nom")
         var choix = PiecesRouteurs()
-        choix.choisir("Salon", routeur: "HomePod Avant", domicile: domicile)
+        choix.choisir("Salon", routeur: idt("HomePod Avant"), domicile: domicile)
         #expect(try pieces(choix) == [.sansPiece, .sansPiece], "un seul candidat choisi : l'autre n'a pas de piece")
         var autreMaison = choix
-        autreMaison.choisir("Salon", routeur: "HomePod Palier", domicile: "Autre maison")
-        autreMaison.choisir("Salon", routeur: "HomePod Palier", domicile: "")
+        autreMaison.choisir("Salon", routeur: idt("HomePod Palier"), domicile: "Autre maison")
+        autreMaison.choisir("Salon", routeur: idt("HomePod Palier"), domicile: "")
         #expect(try pieces(autreMaison) == [.sansPiece, .sansPiece], "le choix d'une autre maison ne compte pas")
-        choix.choisir("Salon", routeur: "HomePod Palier", domicile: domicile)
+        choix.choisir("Salon", routeur: idt("HomePod Palier"), domicile: domicile)
         #expect(try pieces(choix) == [.maison("Salon"), .maison("Salon")], "le choix garde sous l'instance")
-        s.renommer("HomePod Avant", en: "HomePod du salon")
-        s.renommer("HomePod Palier", en: "HomePod du salon, a gauche")
+        s.renommer(idt("HomePod Avant"), en: "HomePod du salon")
+        s.renommer(idt("HomePod Palier"), en: "HomePod du salon, a gauche")
         #expect(try pieces() == [.maison("Salon"), .maison("Salon")], "le surnom")
     }
 

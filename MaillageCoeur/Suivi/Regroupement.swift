@@ -48,6 +48,11 @@ public enum Regroupement {
     /// sonde, section 6 : « X a change 4 fois de parent en 1 h »).
     public static let fenetreParents: TimeInterval = 3600
 
+    /// Le genre (« parent » ou « chemin ») d'une cle de regroupement `<protocole>|<genre>|<cle>`.
+    private static func genre(_ cle: String) -> Substring {
+        cle.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)[1]
+    }
+
     /// Lignes du journal, les plus recentes d'abord : les pertes survenues dans
     /// une meme fenetre de 10 min forment une seule ligne ; les changements de parent d'un meme
     /// noeud dans une fenetre de 1 h aussi, comme les changements de chemin d'un meme routeur.
@@ -57,8 +62,9 @@ public enum Regroupement {
             .map(\.element)
         var lignes: [LigneJournal] = []
         var groupe: [Evenement] = []
-        // Changements de parent (ou de chemin) en cours de regroupement, par genre et par noeud
-        // (« parent| » ou « chemin| » + `politique.cleParent`).
+        // Changements de parent (ou de chemin) en cours de regroupement, par protocole, genre et noeud :
+        // « <protocole>|parent|<cle> » ou « <protocole>|chemin|<cle> », la cle etant `politique.cleParent`. Deux
+        // noeuds de deux protocoles qui ont la meme cle ne se regroupent jamais (sans protocole : Thread).
         var parents: [String: [Evenement]] = [:]
         func fermer() {
             if groupe.count >= 2 {
@@ -71,7 +77,7 @@ public enum Regroupement {
         func fermerParents(_ noeud: String) {
             guard let g = parents.removeValue(forKey: noeud) else { return }
             if g.count >= 2 {
-                lignes.append(noeud.hasPrefix("chemin|") ? .chemins(g) : .parents(g))
+                lignes.append(genre(noeud) == "chemin" ? .chemins(g) : .parents(g))
             } else if let e = g.first {
                 lignes.append(.evenement(e))
             }
@@ -81,7 +87,7 @@ public enum Regroupement {
                 if let premiere = groupe.first, e.date.timeIntervalSince(premiere.date) >= fenetre { fermer() }
                 groupe.append(e)
             } else if let cle = politique.cleParent(e) {
-                let noeud = (politique.estChemin(e) ? "chemin|" : "parent|") + cle
+                let noeud = "\((e.protocole ?? .thread).rawValue)|\(politique.estChemin(e) ? "chemin" : "parent")|\(cle)"
                 if let premier = parents[noeud]?.first, e.date.timeIntervalSince(premier.date) >= fenetreParents {
                     fermerParents(noeud)
                 }

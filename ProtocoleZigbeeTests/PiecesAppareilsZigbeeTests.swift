@@ -33,24 +33,24 @@ struct PiecesAppareilsZigbeeTests {
     @Test func choixParAdresseLongue() throws {
         let g = Self.graphe()
         let detecteur = try #require(g.noeud(idz(Self.detecteur)))
-        #expect(detecteur.inconnu && PiecesRouteurs.cle(detecteur) == Self.detecteur)
-        #expect(PiecesRouteurs.cle(try #require(g.noeud(idz(Self.pont)))) == Self.pont)
+        #expect(detecteur.inconnu && PiecesRouteurs.cle(detecteur) == idz(Self.detecteur))
+        #expect(PiecesRouteurs.cle(try #require(g.noeud(idz(Self.pont)))) == idz(Self.pont))
         var p = PiecesRouteurs()
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile).isEmpty, "sans choix")
-        p.choisir("Salon", appareil: Self.detecteur, domicile: Self.domicile)
-        p.choisir("Bureau", appareil: Self.routeur, domicile: Self.domicile)
+        p.choisir("Salon", appareil: idz(Self.detecteur), domicile: Self.domicile)
+        p.choisir("Bureau", appareil: idz(Self.routeur), domicile: Self.domicile)
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)
                 == [idz(Self.detecteur): "Salon", idz(Self.routeur): "Bureau"])
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: "Chalet").isEmpty, "une autre maison")
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: ["Bureau", "Cuisine"], domicile: Self.domicile)
                 == [idz(Self.routeur): "Bureau"], "le salon n'est plus une piece de la maison : le choix ne compte plus")
-        #expect(p.choix(appareil: Self.detecteur, domicile: Self.domicile) == "Salon", "il reste dans le fichier")
+        #expect(p.choix(appareil: idz(Self.detecteur), domicile: Self.domicile) == "Salon", "il reste dans le fichier")
     }
 
     /// Le meme noeud garde son choix sous un autre parent (une autre adresse courte), et quand le pont le connait.
     @Test func memeNoeudAutreParent() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: Self.detecteur, domicile: Self.domicile)
+        p.choisir("Salon", appareil: idz(Self.detecteur), domicile: Self.domicile)
         for g in [Self.graphe(), Self.graphe(parent: Self.pont), Self.graphe(connu: true)] {
             #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile)[idz(Self.detecteur)] == "Salon")
         }
@@ -59,11 +59,11 @@ struct PiecesAppareilsZigbeeTests {
     /// La piece du pont passe avant le choix ; le choix reste, sans effet.
     @Test func lePontLEmporte() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: Self.detecteur, domicile: Self.domicile)
+        p.choisir("Salon", appareil: idz(Self.detecteur), domicile: Self.domicile)
         let g = Self.graphe(connu: true)
         let avecPont = p.piecesNoeuds(g, deMaison: [idz(Self.detecteur): "Cuisine"], parmi: Self.pieces, domicile: Self.domicile)
         #expect(avecPont == [idz(Self.detecteur): "Cuisine"], "le pont l'emporte")
-        #expect(p.choix(appareil: Self.detecteur, domicile: Self.domicile) == "Salon", "le choix reste")
+        #expect(p.choix(appareil: idz(Self.detecteur), domicile: Self.domicile) == "Salon", "le choix reste")
     }
 
     /// Un noeud sans adresse longue connue n'a ni cle, ni choix.
@@ -72,7 +72,7 @@ struct PiecesAppareilsZigbeeTests {
         let n = try #require(g.noeud(idz("x")))
         #expect(PiecesRouteurs.cle(n) == nil)
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: "x", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idz("x"), domicile: Self.domicile)
         #expect(p.piecesNoeuds(g, deMaison: [:], parmi: Self.pieces, domicile: Self.domicile).isEmpty)
     }
 
@@ -84,25 +84,25 @@ struct PiecesAppareilsZigbeeTests {
         let url = AidesZigbee.fichierPieces()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try Data(#"{"appareils" : \#(champ), "version" : 1}"#.utf8).write(to: url)
+        try Data(#"{"appareils" : \#(champ), "version" : 2}"#.utf8).write(to: url)
         var p = PiecesRouteurs.lire(url)
-        #expect(p.appareils.isEmpty && p.version == 1, "le champ mal forme est ignore")
-        p.choisir("Salon", appareil: Self.detecteur, domicile: Self.domicile)
+        #expect(p.appareils.isEmpty && p.version == 2, "le champ mal forme est ignore")
+        p.choisir("Salon", appareil: idz(Self.detecteur), domicile: Self.domicile)
         try p.ecrire(dans: url)
         let relu = PiecesRouteurs.lire(url)
-        #expect(relu == p && relu.choix(appareil: Self.detecteur, domicile: Self.domicile) == "Salon")
+        #expect(relu == p && relu.choix(appareil: idz(Self.detecteur), domicile: Self.domicile) == "Salon")
     }
 
     /// « Sans piece » (nil) efface le choix ; la cle est l'adresse longue en majuscules ; une maison sans choix
     /// disparait du fichier.
     @Test func sansPieceEffaceLeChoix() throws {
         var p = PiecesRouteurs()
-        p.choisir("Salon", appareil: Self.detecteur, domicile: Self.domicile)
-        p.choisir("Bureau", appareil: "a0000000000000c4", domicile: Self.domicile)
-        #expect(p.choix(appareil: "A0000000000000C4", domicile: Self.domicile) == "Bureau", "en majuscules")
-        p.choisir(nil, appareil: Self.detecteur, domicile: Self.domicile)
-        #expect(p.choix(appareil: Self.detecteur, domicile: Self.domicile) == nil)
-        p.choisir(nil, appareil: "A0000000000000C4", domicile: Self.domicile)
+        p.choisir("Salon", appareil: idz(Self.detecteur), domicile: Self.domicile)
+        p.choisir("Bureau", appareil: idz("a0000000000000c4"), domicile: Self.domicile)
+        #expect(p.choix(appareil: idz("A0000000000000C4"), domicile: Self.domicile) == "Bureau", "en majuscules")
+        p.choisir(nil, appareil: idz(Self.detecteur), domicile: Self.domicile)
+        #expect(p.choix(appareil: idz(Self.detecteur), domicile: Self.domicile) == nil)
+        p.choisir(nil, appareil: idz("A0000000000000C4"), domicile: Self.domicile)
         #expect(p == PiecesRouteurs(), "plus aucun choix pour cette maison")
     }
 }

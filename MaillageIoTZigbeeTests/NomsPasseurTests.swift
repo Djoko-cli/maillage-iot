@@ -554,7 +554,7 @@ struct NomsMaisonAppTests {
         #expect(s.noms.maison == NomsDemo.maisonFusionnee)
         #expect(s.bilanFusion == FusionNoms.Bilan(apparies: 20, nonApparies: 1))
         #expect(s.nom(I.suspensionCuisine) == "Suspension de l'îlot")
-        s.renommer(I.suspensionCuisine, en: "Mon surnom")
+        s.renommer(idz(I.suspensionCuisine), en: "Mon surnom")
         #expect(s.nom(I.suspensionCuisine) == "Mon surnom", "le surnom l'emporte toujours")
         s.releveMaison = nil
         #expect(s.noms.maison == NomsDemo.maisonPont && s.bilanFusion == nil, "sans Maison : les noms du pont")

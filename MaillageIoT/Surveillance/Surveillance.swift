@@ -96,6 +96,9 @@ final class Surveillance {
     @ObservationIgnored private let recenseur: Recenseur?
     @ObservationIgnored private let journal: JournalFichiers?
     @ObservationIgnored private let fichierSurnoms: URL?
+    /// Les surnoms de `surnoms.json`, de tous les protocoles : ceux de Thread sont aussi dans `noms.surnoms` (cles
+    /// brutes, pour le resolveur de noms du module) ; les autres sont gardes tels quels dans le fichier.
+    @ObservationIgnored private var surnomsCommuns: [IdNoeud: String] = [:]
     /// Les associations a la main appareil -> accessoire de Maison (`associations.json`) : mode direct avec un
     /// dossier ; nil : nulle part (demo, tests sans dossier).
     @ObservationIgnored private let fichierAssociations: URL?
@@ -121,8 +124,11 @@ final class Surveillance {
     @ObservationIgnored private var debutVeille: Date?
     @ObservationIgnored private var observateurs: [NSObjectProtocol] = []
 
-    /// Ce que le journal sait de Thread : types d'evenements, pertes, notifications, changements de parent.
-    nonisolated static let politiqueJournal = PolitiqueJournalThread()
+    /// Le protocole que cette app porte : ses evenements le portent (`ajouter`), ses surnoms sont sous ce protocole.
+    nonisolated static let protocole = Protocole.thread
+    /// Ce que le journal sait de Thread : types d'evenements, pertes, notifications, changements de parent. Composee par
+    /// protocole : Thread seul pour l'instant (une ligne sans protocole est de Thread).
+    nonisolated static let politiqueJournal = PolitiqueJournalComposee([.thread: PolitiqueJournalThread()])
     /// Signatures des scissions deja notifiees (`[String]`), d'un lancement a l'autre.
     static let cleScissionsNotifiees = "thread.scissionsNotifiees"
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
@@ -155,7 +161,9 @@ final class Surveillance {
             fichierAssociations = dossier?.appendingPathComponent("associations.json")
             fichierMaillage = dossier?.appendingPathComponent("dernier-maillage.json")
             fichierAdresses = dossier?.appendingPathComponent("dernieres-adresses.json")
-            noms = ResolveurNoms(surnoms: fichierSurnoms.map(Surnoms.lire) ?? [:],
+            let surnoms = fichierSurnoms.map { Surnoms.lire($0, protocoleParDefaut: Surveillance.protocole) } ?? [:]
+            surnomsCommuns = surnoms
+            noms = ResolveurNoms(surnoms: Surnoms.cles(de: surnoms, protocole: Surveillance.protocole),
                                  associations: fichierAssociations.map(Associations.lire) ?? [:])
             fichiersHistorique = dossier.map { HistoriqueFichiers(dossier: $0) }
         case .demo:
@@ -513,17 +521,22 @@ final class Surveillance {
         ajouter(suivi.noterVeille(DateInterval(start: debut, end: max(fin, debut))))
     }
 
-    /// Donne (ou retire, avec nil ou "") un surnom a un noeud.
-    func renommer(_ id: String, en surnom: String?) {
+    /// Donne (ou retire, avec nil ou "") un surnom a un noeud. L'identifiant porte son protocole : le fichier garde les
+    /// surnoms de tous les protocoles, le resolveur de Thread ne voit que les siens.
+    func renommer(_ id: IdNoeud, en surnom: String?) {
         let s = surnom?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        noms.surnoms[id] = s.isEmpty ? nil : s
+        surnomsCommuns[id] = s.isEmpty ? nil : s
+        if id.protocole == Self.protocole { noms.surnoms[id.cle] = s.isEmpty ? nil : s }
         guard let fichierSurnoms else { return }
         do {
-            try Surnoms.ecrire(noms.surnoms, dans: fichierSurnoms)
+            try Surnoms.ecrire(surnomsCommuns, dans: fichierSurnoms)
         } catch {
             erreurJournal = error.localizedDescription
         }
     }
+
+    /// Le surnom d'un noeud ; nil sans surnom.
+    func surnom(de id: IdNoeud) -> String? { surnomsCommuns[id] }
 
     /// Associe l'appareil `id` a un accessoire de Maison (« Associer a un accessoire de Maison… ») : il en prend le nom
     /// et la piece, comme s'il etait trouve par son noeud. Garde dans `associations.json`, en mode direct avec un
@@ -555,8 +568,14 @@ final class Surveillance {
         try dernierReleve.map { try CodageJSON.encodeur(lisible: true).encode($0) }
     }
 
-    private func ajouter(_ nouveaux: [Evenement]) {
-        guard !nouveaux.isEmpty else { return }
+    private func ajouter(_ evenementsDuModule: [Evenement]) {
+        guard !evenementsDuModule.isEmpty else { return }
+        // Les evenements du module portent le protocole de l'app des qu'ils entrent au journal.
+        let nouveaux = evenementsDuModule.map { e in
+            var e = e
+            e.protocole = Self.protocole
+            return e
+        }
         evenements.append(contentsOf: nouveaux)
         do {
             try journal?.ajouter(nouveaux)
@@ -837,24 +856,27 @@ final class Surveillance {
     /// sujet d'un enfant sans appareil (« rloc:XXXX ») change avec son parent. Sinon (evenement
     /// plus ancien, noeud sans ExtMac), l'id du sujet. Seuls les evenements d'un enfant portent une ExtMac : la cle
     /// d'un routeur n'a pas a etre resolue dans l'historique.
-    func evenements(de id: String) -> [Evenement] {
+    func evenements(de id: IdNoeud) -> [Evenement] {
         Array(evenements.reversed().filter(concernant(id)).prefix(5))
     }
 
     /// Lignes du journal d'un noeud, de la plus recente a la plus ancienne, 5 au plus : ses evenements regroupes comme
     /// ceux de la fenetre du journal (`Regroupement.lignes`), ses changements de parent d'une meme heure en une seule
     /// ligne (reprise de Maillage Zigbee, 09/10).
-    func lignesJournal(de id: String) -> [LigneJournal] {
+    func lignesJournal(de id: IdNoeud) -> [LigneJournal] {
         Array(Regroupement.lignes(evenements.filter(concernant(id)), politique: Self.politiqueJournal).prefix(5))
     }
 
-    /// Un evenement concerne le noeud `id` : par son ExtMac s'il la porte (l'id du sujet d'un enfant sans appareil
-    /// change avec son parent), sinon par l'id de son sujet.
-    private func concernant(_ id: String) -> (Evenement) -> Bool {
-        let ext = cleHistorique(noeud: id, resoudre: false)
+    /// Un evenement concerne le noeud `id` s'il est de son protocole (sans protocole : Thread) et, par son ExtMac s'il la
+    /// porte (l'id du sujet d'un enfant sans appareil change avec son parent), sinon par l'id de son sujet (la cle brute
+    /// du noeud) : un noeud d'un autre protocole qui aurait la meme cle n'est pas concerne.
+    private func concernant(_ id: IdNoeud) -> (Evenement) -> Bool {
+        guard id.protocole == Self.protocole else { return { _ in false } }
+        let ext = cleHistorique(noeud: id.cle, resoudre: false)
         return { e in
+            guard (e.protocole ?? .thread) == id.protocole else { return false }
             if let x = e.details["extMac"], let ext { return x == ext }
-            return e.sujet?.id == id
+            return e.sujet?.id == id.cle
         }
     }
 }

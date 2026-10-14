@@ -123,8 +123,8 @@ struct JournalMaillageTests {
                 "aucun appareil : id « rloc: », ExtMac dans les details")
         #expect(Set(changements.compactMap(\.sujet?.id)).count == 2, "l'id du sujet change avec le parent")
         let noeud = String(format: "rloc:%04X", UInt16(1 << 10 | 2))
-        #expect(s.evenements(de: noeud) == changements.reversed(), "tous ses changements, le plus recent d'abord")
-        #expect(s.evenements(de: "rloc:ABCD").isEmpty)
+        #expect(s.evenements(de: idt(noeud)) == changements.reversed(), "tous ses changements, le plus recent d'abord")
+        #expect(s.evenements(de: idt("rloc:ABCD")).isEmpty)
     }
 
     /// Une purge qui echoue (vieux fichier dans un dossier sans droit d'ecriture) n'empeche ni la

@@ -1218,18 +1218,18 @@ struct FenetrePiecesTests {
         #expect(pieces == ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
                            "Salle de bain", "Salle de jeux", "Salon", "Terrasse"])
         #expect(PiecesChoisies.placement(idt("56B1E064401F74EF"), dans: s, entree: entree) == nil, "un appareil")
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-routeurs.json")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-noeuds.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let choisies = PiecesChoisies(fichier: url)
-        choisies.choisir("Salon", .routeur("HomePod Palier"), domicile: "Maison (démo)")
-        #expect(PiecesChoisies(fichier: url).choix.choix(routeur: "HomePod Palier", domicile: "Maison (démo)") == "Salon")
+        choisies.choisir("Salon", .routeur(idt("HomePod Palier")), domicile: "Maison (démo)")
+        #expect(PiecesChoisies(fichier: url).choix.choix(routeur: idt("HomePod Palier"), domicile: "Maison (démo)") == "Salon")
         let memoire = PiecesChoisies(fichier: nil)
-        memoire.choisir("Salon", .routeur("HomePod Palier"), domicile: "")
-        #expect(memoire.choix.choix(routeur: "HomePod Palier", domicile: "") == "Salon")
+        memoire.choisir("Salon", .routeur(idt("HomePod Palier")), domicile: "")
+        #expect(memoire.choix.choix(routeur: idt("HomePod Palier"), domicile: "") == "Salon")
         #expect(PiecesChoisies.fichier(demo: true, sousTests: false) == nil)
         #expect(PiecesChoisies.fichier(demo: false, sousTests: true) == nil)
         #expect(PiecesChoisies.fichier(demo: false, sousTests: false)
-                == Surveillance.dossierParDefaut.appendingPathComponent("pieces-routeurs.json"))
+                == Surveillance.dossierParDefaut.appendingPathComponent("pieces-noeuds.json"))
     }
 
     /// « Placer dans une piece… » pour un noeud que Maison ne place pas et dont l'ExtMac est connue
@@ -1244,12 +1244,12 @@ struct FenetrePiecesTests {
         let pieces = ["Abri", "Buanderie", "Bureau", "Chambre", "Chambre d'amis", "Cuisine", "Entrée", "Grenier",
                       "Salle de bain", "Salle de jeux", "Salon", "Terrasse"]
         let appareil = try #require(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e))
-        #expect(appareil == PiecesChoisies.Placement(cle: .appareil("E0000000000000FF"), pieces: pieces))
-        #expect(PiecesChoisies.placement(idt("1E5019DAC2638F92"), dans: s, entree: e)?.cle == .appareil("1E5019DAC2638F92"))
+        #expect(appareil == PiecesChoisies.Placement(cle: .appareil(idt("E0000000000000FF")), pieces: pieces))
+        #expect(PiecesChoisies.placement(idt("1E5019DAC2638F92"), dans: s, entree: e)?.cle == .appareil(idt("1E5019DAC2638F92")))
         #expect(PiecesChoisies.placement(idt("rloc:0420"), dans: s, entree: e) == nil, "sans ExtMac")
         #expect(PiecesChoisies.placement(idt("56B1E064401F74EF"), dans: s, entree: e) == nil, "Maison le place au bureau")
         let routeur = try #require(PiecesChoisies.placement(idt("HomePod Palier"), dans: s, entree: e))
-        #expect(routeur == PiecesChoisies.Placement(cle: .routeur("HomePod Palier"), pieces: pieces))
+        #expect(routeur == PiecesChoisies.Placement(cle: .routeur(idt("HomePod Palier")), pieces: pieces))
         #expect(MenuPlacer.articles(appareil).first
                 == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
         #expect(MenuPlacer.articles(routeur).first
@@ -1257,19 +1257,19 @@ struct FenetrePiecesTests {
         #expect(Array(MenuPlacer.articles(appareil).dropFirst())
                 == pieces.map { MenuPlacer.Article(texte: $0, piece: $0) })
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("appareils-\(UUID().uuidString)/pieces-routeurs.json")
+            .appendingPathComponent("appareils-\(UUID().uuidString)/pieces-noeuds.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let domicile = "Maison (démo)"
         let choisies = PiecesChoisies(fichier: url)
-        choisies.choisir("Salon", .routeur("HomePod Palier"), domicile: domicile)
+        choisies.choisir("Salon", .routeur(idt("HomePod Palier")), domicile: domicile)
         choisies.choisir("Cuisine", appareil.cle, domicile: domicile)
         let relu = PiecesChoisies(fichier: url)
-        #expect(relu.pieceChoisie(.appareil("E0000000000000FF"), domicile: domicile) == "Cuisine")
-        #expect(relu.choix.choix(appareil: "E0000000000000FF", domicile: domicile) == "Cuisine")
-        #expect(relu.pieceChoisie(.routeur("HomePod Palier"), domicile: domicile) == "Salon")
+        #expect(relu.pieceChoisie(.appareil(idt("E0000000000000FF")), domicile: domicile) == "Cuisine")
+        #expect(relu.choix.choix(appareil: idt("E0000000000000FF"), domicile: domicile) == "Cuisine")
+        #expect(relu.pieceChoisie(.routeur(idt("HomePod Palier")), domicile: domicile) == "Salon")
         relu.choisir(nil, appareil.cle, domicile: domicile)
         #expect(PiecesChoisies(fichier: url).pieceChoisie(appareil.cle, domicile: domicile) == nil, "Sans piece")
-        #expect(PiecesChoisies(fichier: url).choix.choix(routeur: "HomePod Palier", domicile: domicile) == "Salon")
+        #expect(PiecesChoisies(fichier: url).choix.choix(routeur: idt("HomePod Palier"), domicile: domicile) == "Salon")
     }
 
     /// Un routeur Thread qui n'est pas de bordure, connu de la sonde seule, se place sous son ExtMac
@@ -1281,7 +1281,7 @@ struct FenetrePiecesTests {
         let noeud = try #require(e.graphe.noeud(idt("rloc:B400")))
         #expect(noeud.inconnu && noeud.routeur && !noeud.bordure)
         let routeur = try #require(PiecesChoisies.placement(idt("rloc:B400"), dans: s, entree: e))
-        #expect(routeur.cle == .appareil("E0000000000000F1"))
+        #expect(routeur.cle == .appareil(idt("E0000000000000F1")))
         #expect(MenuPlacer.articles(routeur).first == MenuPlacer.Article(texte: String(localized: "Sans pièce"), piece: nil))
         s.noms.maison?.zones = nil
         for k in s.noms.maison?.accessoires.indices ?? 0..<0 { s.noms.maison?.accessoires[k].piece = nil }
@@ -1298,7 +1298,7 @@ struct FenetrePiecesTests {
         let (s, _) = try NomsSceneTests.demoAvecInconnus()
         let e = try #require(Self.entree(s))
         s.oublierMaillage()
-        #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e)?.cle == .appareil("E0000000000000FF"))
+        #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: e)?.cle == .appareil(idt("E0000000000000FF")))
         let suivante = try #require(Self.entree(s))
         #expect(suivante.maillage == nil && suivante.graphe.noeud(idt("rloc:041F")) == nil)
         #expect(PiecesChoisies.placement(idt("rloc:041F"), dans: s, entree: suivante) == nil)

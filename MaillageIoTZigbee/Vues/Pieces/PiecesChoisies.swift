@@ -4,39 +4,45 @@ import ProtocoleZigbee
 import SwiftUI
 
 /// Pieces choisies pour les noeuds que le pont ne place pas (« Placer dans une piece… », dans leur fiche), sous leur
-/// adresse longue ; par maison, dans `pieces-routeurs.json`, a cote des places des pieces ; en memoire seulement en
-/// demo et sous les tests. Le calcul est dans le coeur (`PiecesRouteurs`).
+/// adresse longue prefixee du protocole (`zigbee:<IEEE>`) ; par maison, dans `pieces-noeuds.json` (version 2), a cote des
+/// places des pieces, qui relit `pieces-routeurs.json` (version 1, cles brutes de Zigbee) tant que le premier n'existe
+/// pas ; en memoire seulement en demo et sous les tests. Le calcul est dans le coeur (`PiecesRouteurs`).
 @MainActor
 @Observable
 final class PiecesChoisies {
-    /// « Placer dans une piece… » d'un noeud : son adresse longue (16 hexa majuscules), et les pieces de la maison, par
-    /// nom.
+    /// « Placer dans une piece… » d'un noeud : son adresse longue (16 hexa majuscules) sous son protocole, et les pieces
+    /// de la maison, par nom.
     struct Placement: Equatable {
-        var cle: String
+        var cle: IdNoeud
         var pieces: [String]
     }
 
     private(set) var choix: PiecesRouteurs
     @ObservationIgnored private let fichier: URL?
 
-    /// `fichier` : `pieces-routeurs.json` (`fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit.
+    /// `fichier` : `pieces-noeuds.json` (`fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. Tant qu'il n'existe pas, le
+    /// `pieces-routeurs.json` d'avant (meme dossier, version 1) est relu, ses cles etant celles de Zigbee.
     init(fichier: URL?) {
         self.fichier = fichier
-        choix = fichier.map(PiecesRouteurs.lire) ?? PiecesRouteurs()
+        choix = fichier.map {
+            PiecesRouteurs.lire($0, ancien: $0.deletingLastPathComponent().appendingPathComponent("pieces-routeurs.json"),
+                                protocoleParDefaut: Surveillance.protocole)
+        } ?? PiecesRouteurs()
     }
 
     /// A cote des places des pieces ; ni en demo ni sous les tests.
     static func fichier(demo: Bool, sousTests: Bool) -> URL? {
-        demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("pieces-routeurs.json")
+        demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("pieces-noeuds.json")
     }
 
-    /// Piece choisie pour un noeud (son adresse longue) ; nil : « Sans piece ».
-    func pieceChoisie(_ cle: String, domicile: String) -> String? {
+    /// Piece choisie pour un noeud (son adresse longue, sous son protocole) ; nil : « Sans piece ».
+    func pieceChoisie(_ cle: IdNoeud, domicile: String) -> String? {
         choix.choix(appareil: cle, domicile: domicile)
     }
 
-    /// Place un noeud (son adresse longue) dans une piece de la maison ; nil : « Sans piece » (son choix s'efface).
-    func choisir(_ piece: String?, _ cle: String, domicile: String) {
+    /// Place un noeud (son adresse longue, sous son protocole) dans une piece de la maison ; nil : « Sans piece » (son
+    /// choix s'efface).
+    func choisir(_ piece: String?, _ cle: IdNoeud, domicile: String) {
         choix.choisir(piece, appareil: cle, domicile: domicile)
         guard let fichier else { return }
         do {

@@ -169,10 +169,10 @@ D'après `inventaire-etape3-idnoeud.md` §1, §5 (conception B), §6. Le compila
 - Consumes: `IdNoeud` (tâche 2).
 - Produces: `surnoms.json` = `{"version": 1, "surnoms": {"thread:<cle>": "…"}}`, qui lit aussi l'ancien dictionnaire plat (clés brutes = `thread`) ; `pieces-noeuds.json` version 2 (clés `IdNoeud`), qui lit `pieces-routeurs.json` version 1 (clés brutes = `thread`) ; `Evenement.protocole: Protocole?` (absent au décodage = `nil`, lu comme `.thread`) ; `PolitiqueJournalComposee(_ politiques: [Protocole: any PolitiqueJournal])` qui délègue selon `e.protocole ?? .thread` ; clé de regroupement `<protocole>|parent|<cle>`.
 
-- [ ] **Step 1: RED** — tests : `ancienFormatPlatRelu` (dictionnaire plat → surnoms `thread:`), `formatInconnuJamaisEcrase` (surnoms et pièces), `piecesRouteursVersion1Relu`, `ligneSansProtocoleEstThread`, `memeTypeDeuxGravites` (un même type, écrit avec `protocole: zigbee` puis `thread`, prend la gravité de la politique de son protocole ; la relecture des journaux de Zigbee 1.1.1, sans `protocole`, se règle à l'import, étape 4) (un type présent dans les deux politiques prend la gravité de son protocole), `regroupementSepareLesProtocoles`. Échec attendu.
-- [ ] **Step 2: GREEN** — implémenter ; l'app Thread passe à `pieces-noeuds.json` et à la politique composée (avec Thread seul pour l'instant).
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
-- [ ] **Step 4: Commit** — « Fichiers communs versionnes par IdNoeud, journal et regroupement par protocole ».
+- [x] **Step 1: RED** — tests : `ancienFormatPlatRelu` (dictionnaire plat → surnoms `thread:`), `formatInconnuJamaisEcrase` (surnoms et pièces), `piecesRouteursVersion1Relu`, `ligneSansProtocoleEstThread`, `memeTypeDeuxGravites` (un même type, écrit avec `protocole: zigbee` puis `thread`, prend la gravité de la politique de son protocole ; la relecture des journaux de Zigbee 1.1.1, sans `protocole`, se règle à l'import, étape 4) (un type présent dans les deux politiques prend la gravité de son protocole), `regroupementSepareLesProtocoles`. Échec attendu.
+- [x] **Step 2: GREEN** — implémenter ; l'app Thread passe à `pieces-noeuds.json` et à la politique composée (avec Thread seul pour l'instant).
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
+- [x] **Step 4: Commit** — « Fichiers communs versionnes par IdNoeud, journal et regroupement par protocole ».
 
 ---
 

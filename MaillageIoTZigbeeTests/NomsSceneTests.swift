@@ -117,8 +117,8 @@ struct NomsSceneTests {
         let interrupteur = "Interrupteur du salon, près de la baie vitrée"
         let pont = "Pont Hue du salon, derrière la télévision"
         #expect(interrupteur.count == 45 && pont.count == 41)
-        s.renommer(I.interrupteurSalon, en: interrupteur)
-        s.renommer(I.pont, en: pont)
+        s.renommer(idz(I.interrupteurSalon), en: interrupteur)
+        s.renommer(idz(I.pont), en: pont)
         let e = EntreeScene(surveillance: s, places: PlacesGardees())
         #expect(e.libelles[idz(I.interrupteurSalon)]?.texte == "Interrupteur du salon, près de la baie …" + " ☾")
         #expect(e.libelles[idz(I.pont)]?.texte == "Pont Hue du salon, derrière la télévisi…" + " 👑")
@@ -166,9 +166,9 @@ struct NomsSceneTests {
         let (s, _) = try Self.demo()
         let domicile = try #require(s.noms.maison?.domicile)
         var choix = PiecesRouteurs()
-        choix.choisir("Cuisine", appareil: I.inconnu, domicile: domicile)
-        choix.choisir("Bureau", appareil: I.sonde, domicile: domicile)
-        choix.choisir("Salon", appareil: I.lampeBureau, domicile: domicile)
+        choix.choisir("Cuisine", appareil: idz(I.inconnu), domicile: domicile)
+        choix.choisir("Bureau", appareil: idz(I.sonde), domicile: domicile)
+        choix.choisir("Salon", appareil: idz(I.lampeBureau), domicile: domicile)
         let avant = EntreeScene(surveillance: s, places: PlacesGardees())
         let e = EntreeScene(surveillance: s, places: PlacesGardees(), choix: choix)
         func piece(_ e: EntreeScene, _ id: String) throws -> ScenePieces.NomPiece {
@@ -252,7 +252,7 @@ struct NomsSceneTests {
         #expect(cle([rdc, combles, etage], [:]) == depart, "l'ordre des niveaux")
         #expect(cle([rdc, etage, combles], [combles: PlacesGardees.ACote(etage: etage, dehors: true)]) == aCote,
                 "hors de la maison")
-        s.renommer(I.lampeBureau, en: "Lampe de travail")
+        s.renommer(idz(I.lampeBureau), en: "Lampe de travail")
         #expect(cle([rdc, etage, combles], [:]) != depart)
     }
 

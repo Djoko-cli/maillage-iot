@@ -4,18 +4,19 @@ import SwiftUI
 
 /// Pieces choisies pour les noeuds que Maison ne place pas (« Placer dans une piece… », dans leur
 /// fiche) : un routeur de bordure sous l'instance de son annonce (precision 24 du plan 4b), un autre
-/// noeud sous son ExtMac (precision 27, spec de la vue par pieces, section 2.3) ; par maison, dans
-/// `pieces-routeurs.json`, a cote des places des pieces ; en memoire seulement en demo et sous les
+/// noeud sous son ExtMac (precision 27, spec de la vue par pieces, section 2.3), l'un et l'autre par identifiant de
+/// noeud (`thread:<cle>`) ; par maison, dans `pieces-noeuds.json` (version 2), a cote des places des pieces, qui relit
+/// `pieces-routeurs.json` (version 1) tant que le premier n'existe pas ; en memoire seulement en demo et sous les
 /// tests. Le calcul est dans le coeur (`PiecesRouteurs`).
 @MainActor
 @Observable
 final class PiecesChoisies {
     /// Ce sous quoi le choix d'un noeud est garde.
     enum Cle: Hashable {
-        /// Routeur de bordure : l'instance de son annonce.
-        case routeur(String)
-        /// Autre noeud : son ExtMac, en 16 hexa majuscules.
-        case appareil(String)
+        /// Routeur de bordure : l'instance de son annonce, sous son identifiant de noeud.
+        case routeur(IdNoeud)
+        /// Autre noeud : son ExtMac, en 16 hexa majuscules, sous le protocole du noeud (`PiecesRouteurs.cle`).
+        case appareil(IdNoeud)
     }
 
     /// « Placer dans une piece… » d'un noeud : la cle de son choix, et les pieces de la maison, par nom.
@@ -27,23 +28,27 @@ final class PiecesChoisies {
     private(set) var choix: PiecesRouteurs
     @ObservationIgnored private let fichier: URL?
 
-    /// `fichier` : `pieces-routeurs.json` (`fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit.
+    /// `fichier` : `pieces-noeuds.json` (`fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. Tant qu'il n'existe pas, le
+    /// `pieces-routeurs.json` d'avant (meme dossier, version 1) est relu, ses cles etant celles de Thread.
     init(fichier: URL?) {
         self.fichier = fichier
-        choix = fichier.map(PiecesRouteurs.lire) ?? PiecesRouteurs()
+        choix = fichier.map {
+            PiecesRouteurs.lire($0, ancien: $0.deletingLastPathComponent().appendingPathComponent("pieces-routeurs.json"),
+                                protocoleParDefaut: Surveillance.protocole)
+        } ?? PiecesRouteurs()
     }
 
     /// A cote des places des pieces ; ni en demo ni sous les tests.
     static func fichier(demo: Bool, sousTests: Bool) -> URL? {
-        demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("pieces-routeurs.json")
+        demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("pieces-noeuds.json")
     }
 
     /// Piece choisie pour un noeud (sa cle) ; nil : « D'apres son nom » pour un routeur de bordure,
     /// « Sans piece » pour un autre noeud.
     func pieceChoisie(_ cle: Cle, domicile: String) -> String? {
         switch cle {
-        case .routeur(let instance): choix.choix(routeur: instance, domicile: domicile)
-        case .appareil(let extMac): choix.choix(appareil: extMac, domicile: domicile)
+        case .routeur(let id): choix.choix(routeur: id, domicile: domicile)
+        case .appareil(let id): choix.choix(appareil: id, domicile: domicile)
         }
     }
 
@@ -51,8 +56,8 @@ final class PiecesChoisies {
     /// bordure, « Sans piece » pour un autre noeud (son choix s'efface).
     func choisir(_ piece: String?, _ cle: Cle, domicile: String) {
         switch cle {
-        case .routeur(let instance): choix.choisir(piece, routeur: instance, domicile: domicile)
-        case .appareil(let extMac): choix.choisir(piece, appareil: extMac, domicile: domicile)
+        case .routeur(let id): choix.choisir(piece, routeur: id, domicile: domicile)
+        case .appareil(let id): choix.choisir(piece, appareil: id, domicile: domicile)
         }
         guard let fichier else { return }
         do {
@@ -75,7 +80,7 @@ extension PiecesChoisies {
         guard !pieces.isEmpty else { return nil }
         if id.protocole == .thread, surveillance.instantane?.routeur(id.cle) != nil {
             guard PiecesRouteurs.pieceDeMaison(routeur: id.cle, maison: maison) == nil else { return nil }
-            return Placement(cle: .routeur(id.cle), pieces: pieces)
+            return Placement(cle: .routeur(id), pieces: pieces)
         }
         // Un autre noeud : par le graphe de la scene, donc sous la meme cle.
         if let p = entree.appareils[id]?.piece, !p.isEmpty { return nil }

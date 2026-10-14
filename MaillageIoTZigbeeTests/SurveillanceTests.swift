@@ -32,8 +32,8 @@ struct SurveillanceTests {
         #expect(affiches.first { $0.id == idz(I.lampeBureau) }?.piece == "Bureau")
         #expect(affiches.filter { $0.endormi }.count == 7, "les appareils finaux a pile")
         #expect(affiches.filter { $0.batterie?.faible == true }.map(\.nom).sorted() == ["Capteur grenier", "Télécommande chambre"])
-        #expect(s.evenements(de: I.priseSalon).first?.type == .routeurDisparu)
-        #expect(s.evenements(de: I.detecteurAbri).first?.type == .parentChange)
+        #expect(s.evenements(de: idz(I.priseSalon)).first?.type == .routeurDisparu)
+        #expect(s.evenements(de: idz(I.detecteurAbri)).first?.type == .parentChange)
         #expect(s.historique.isEmpty, "la demo ne garde pas d'historique")
         #expect(s.nom(I.sonde) == String(localized: "Sonde") && s.nom(I.inconnu) == I.inconnu)
     }
@@ -44,9 +44,9 @@ struct SurveillanceTests {
     @Test func lignesJournalDUnNoeud() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        #expect(s.lignesJournal(de: I.lampeBureau).map(\.evenements.count) == [1], "le changement de la demo, seul")
+        #expect(s.lignesJournal(de: idz(I.lampeBureau)).map(\.evenements.count) == [1], "le changement de la demo, seul")
         s.evenementsDeCapture(CapturesPieces.evenementsHesitants)
-        let bureau = s.lignesJournal(de: I.lampeBureau)
+        let bureau = s.lignesJournal(de: idz(I.lampeBureau))
         try #require(bureau.count == 1)
         guard case .chemins(let groupe) = bureau[0] else {
             Issue.record("4 changements de chemin dans l'heure : une ligne")
@@ -56,13 +56,13 @@ struct SurveillanceTests {
         let resume = Regroupement.resumeRelais(groupe)
         #expect(resume.relais == ["Lampadaire salon", "Lampe chambre", "Plafonnier salon", "Pont Hue"]
                 && resume.dernier == "Lampadaire salon")
-        guard case .parents(let abri)? = s.lignesJournal(de: I.detecteurAbri).first else {
+        guard case .parents(let abri)? = s.lignesJournal(de: idz(I.detecteurAbri)).first else {
             Issue.record("les changements de parent du detecteur : une ligne")
             return
         }
         #expect(abri.count == 4 && Regroupement.resumeRelais(abri).alternent)
-        #expect(s.lignesJournal(de: I.priseSalon).map(\.evenements.count) == [1], "un evenement isole")
-        #expect(s.lignesJournal(de: I.lampeChambre).isEmpty)
+        #expect(s.lignesJournal(de: idz(I.priseSalon)).map(\.evenements.count) == [1], "un evenement isole")
+        #expect(s.lignesJournal(de: idz(I.lampeChambre)).isEmpty)
         let direct = Surveillance(mode: .direct, dossier: nil)
         direct.evenementsDeCapture(CapturesPieces.evenementsHesitants)
         #expect(direct.evenements.isEmpty, "sans effet hors demo")
@@ -126,11 +126,11 @@ struct SurveillanceTests {
         #expect(courbes.signal.map(\.valeur) == [188, 188], "le LQI que la sonde recoit de la lampe du bureau")
         #expect(s.nomsHistorique([I.lampeBureau, I.sonde]) == [I.lampeBureau: "Lampe bureau", I.sonde: String(localized: "Sonde")])
 
-        s.renommer(I.lampeBureau, en: "  Lampe de travail ")
+        s.renommer(idz(I.lampeBureau), en: "  Lampe de travail ")
         #expect(s.nom(I.lampeBureau) == "Lampe de travail")
         let relu = Surveillance(mode: .direct, dossier: dossier)
         #expect(relu.noms.surnoms == [I.lampeBureau: "Lampe de travail"])
-        s.renommer(I.lampeBureau, en: "")
+        s.renommer(idz(I.lampeBureau), en: "")
         #expect(s.nom(I.lampeBureau) == "Lampe bureau")
 
         let capture = try #require(try s.captureJSON())
@@ -380,7 +380,7 @@ struct SurveillanceTests {
         if case .pertes(let p) = ligne { #expect(p.count == 3) } else { Issue.record("une ligne de pertes") }
         lire(lecture(15, [.connecte, .deconnecte, .problemeConnexion, .entrantSeul]))
         #expect(s.evenements.last?.type == .appareilRevenu && s.evenements.last?.sujet?.nom == "Lampe 0")
-        #expect(s.evenements(de: "A0000000000000D0").first?.type == .appareilRevenu)
+        #expect(s.evenements(de: idz("A0000000000000D0")).first?.type == .appareilRevenu)
         // Le pont oublie, puis lu de nouveau : etat initial, rien.
         let avant = s.evenements.count
         s.nomsPont = nil

@@ -53,7 +53,7 @@ struct AffichageSondeTests {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
         let r = try #require(s.reseau)
-        s.renommer("HomePod Avant", en: "Enceinte droite")
+        s.renommer(idt("HomePod Avant"), en: "Enceinte droite")
         let noms = s.nomsRouteurs(pour: r)
         #expect(noms["HomePod Avant"] == "Enceinte droite")
         #expect(noms["HomePod Palier"] == "HomePod Palier")
