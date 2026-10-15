@@ -1,10 +1,33 @@
 import MaillageCoeur
 import SwiftUI
 
+/// Le contenu d'un onglet de protocole (Thread, Zigbee) : « Activer ce protocole » en tete, puis la page. Protocole eteint,
+/// tout ce qui suit l'interrupteur est grise, et lui seul reste actif pour rallumer (spec 6.7, decision 5 : une seule regle
+/// pour les deux protocoles). Le grisage est pose UNE fois, sur tout le contenu : un controle ajoute plus tard a la page
+/// est grise sans qu'on y pense, et les `.disabled` propres a un controle (un bouton sans sonde) restent en plus. En demo,
+/// aucun module n'est branche : rien n'est grise.
+struct PageProtocole<Contenu: View>: View {
+    @Environment(Surveillance.self) private var surveillance
+    let protocole: Protocole
+    @ViewBuilder let contenu: Contenu
+
+    var body: some View {
+        ActivationProtocole(protocole: protocole)
+        Group { contenu }
+            .disabled(!actif)
+    }
+
+    private var actif: Bool {
+        guard surveillance.mode == .direct, let m = surveillance.modele(pour: protocole) else { return true }
+        return m.actif
+    }
+}
+
 /// « Activer ce protocole », en tete de l'onglet Thread ou Zigbee des Reglages (spec 3.3) : decoche, le protocole est
 /// vraiment arrete (sonde et port, Bonjour ou pont, tournees, notifications : `ModeleProtocole.actif`) et ses noeuds
 /// quittent la scene ; coche, il repart comme au lancement. Actif mais sans rien a montrer, l'onglet le dit simplement,
-/// sans alerte ni notification. Rien en demo (les modules n'y sont pas branches). Le grisage des vues est a l'etape 3b.
+/// sans alerte ni notification. Rien en demo (les modules n'y sont pas branches). Le grisage de l'onglet eteint est
+/// `PageProtocole`.
 struct ActivationProtocole: View {
     @Environment(Surveillance.self) private var surveillance
     let protocole: Protocole

@@ -122,10 +122,10 @@ D'après `registre-etape-3a.md` (T12 m3, T11 M5) ; spec 6.7, décision 5.
 - Modify: pages Thread et Zigbee des Réglages (tout grisé sauf « Activer ce protocole »).
 - Test: `ongletGriseProtocoleEteint` pour chacun ; « Activer ce protocole » reste actif.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; `ReglagesHauteurTests` vert.
-- [ ] **Step 4: Commit** — « Reglages : onglet d'un protocole eteint grise ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche ; `ReglagesHauteurTests` vert.
+- [x] **Step 4: Commit** — « Reglages : onglet d'un protocole eteint grise ».
 
 ---
 

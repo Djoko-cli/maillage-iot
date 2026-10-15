@@ -96,9 +96,10 @@ struct FenetreReglages: View {
             case .maison: page { ReglagesMaison() }
             case .thread:
                 page {
-                    ActivationProtocole(protocole: .thread)
-                    reglagesSonde
-                    threadRoute
+                    PageProtocole(protocole: .thread) {
+                        reglagesSonde
+                        threadRoute
+                    }
                 }
             case .zigbee: ReglagesZigbee()
             case .diagnostic:

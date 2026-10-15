@@ -11,6 +11,9 @@ cd "$(dirname "$0")/.."
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot}
 JOURNAL=${TMPDIR:-/tmp}/maillage-iot-tests.log
 xcodegen generate --quiet || exit 1
+# La porte complete compile l'app : elle verifie toujours son catalogue (la variable du coeur seul, posee par
+# tester-coeur.sh, ne doit pas la faire sauter).
+unset TEST_RUNNER_MAILLAGE_COEUR_SEUL
 FILTRES=""
 for t in "$@"; do FILTRES="$FILTRES -only-testing:$t"; done
 # shellcheck disable=SC2086

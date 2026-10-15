@@ -23,9 +23,10 @@ struct ReglagesZigbee: View {
 
     var body: some View {
         FenetreReglages.page {
-            ActivationProtocole(protocole: .zigbee)
-            pontHue
-            reglagesSonde
+            PageProtocole(protocole: .zigbee) {
+                pontHue
+                reglagesSonde
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) {
             if FenetreReglages.estFenetreDesReglages($0.object) { saisie.fermerFenetre() }
