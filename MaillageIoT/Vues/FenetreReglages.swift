@@ -23,7 +23,7 @@ enum OngletReglages: String, CaseIterable {
         }
     }
 
-    /// Symbole SF de l'onglet.
+    /// Symbole SF de l'onglet (le repli des deux onglets a logo).
     var symbole: String {
         switch self {
         case .general: "gearshape"
@@ -33,6 +33,27 @@ enum OngletReglages: String, CaseIterable {
         case .zigbee: "antenna.radiowaves.left.and.right"
         case .diagnostic: "stethoscope"
         }
+    }
+
+    /// Le logo redessine de Thread ou de Zigbee, en vectoriel monochrome (`Logos.xcassets`, trace par
+    /// `outils/icone/generer.swift`) : une image modele, teintee par la barre d'outils comme les symboles voisins
+    /// (bleu quand l'onglet est choisi, clair en mode sombre). Les autres onglets n'en ont pas.
+    var logo: NSImage? {
+        let nom: String
+        switch self {
+        case .thread: nom = "LogoThread"
+        case .zigbee: nom = "LogoZigbee"
+        default: return nil
+        }
+        guard let image = NSImage(named: nom) else { return nil }
+        image.isTemplate = true
+        image.accessibilityDescription = titre
+        return image
+    }
+
+    /// L'image de l'onglet dans la barre d'outils : son logo, sinon son symbole SF.
+    var image: NSImage {
+        logo ?? NSImage(systemSymbolName: symbole, accessibilityDescription: titre) ?? NSImage()
     }
 }
 

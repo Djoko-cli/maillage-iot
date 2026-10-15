@@ -92,10 +92,10 @@ D'après `inventaire-etape3b.md` §11 ; spec 6.7.
 - Modify: `MaillageIoT/Ressources` (icône de l'app, logos), `IconeBarre` (barre des menus : le seul symbole du maillage, sans `MarqueThread`), onglets Thread et Zigbee des Réglages (logos en images modèles), README (crédits des marques, anglais puis français) ; supprimer `MarqueThread` s'il n'a plus d'usage.
 - Test: `MenuTests.icone` réécrit (aucun badge) ; un test que les onglets chargent leurs logos (images modèles).
 
-- [ ] **Step 1: RED** — tests ci-dessus.
-- [ ] **Step 2: GREEN** — générer l'icône par l'outil (commande au rapport), brancher logos et icône. Les images ne contiennent aucun texte ni donnée réelle.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; images jointes au rapport (chemins), pour le banc.
-- [ ] **Step 4: Commit** — « Icones : constellation sans badge generee, logos de Thread et de Zigbee ».
+- [x] **Step 1: RED** — tests ci-dessus.
+- [x] **Step 2: GREEN** — générer l'icône par l'outil (commande au rapport), brancher logos et icône. Les images ne contiennent aucun texte ni donnée réelle.
+- [x] **Step 3: Vérifier** — porte de la tâche ; images jointes au rapport (chemins), pour le banc.
+- [x] **Step 4: Commit** — « Icones : constellation sans badge generee, logos de Thread et de Zigbee ».
 
 ---
 

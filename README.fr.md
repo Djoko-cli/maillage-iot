@@ -24,3 +24,11 @@ ensemble, depuis la barre des menus du Mac.
 
 La conception est dans [docs/superpowers/specs/2026-10-13-maillage-iot-design.md](docs/superpowers/specs/2026-10-13-maillage-iot-design.md),
 et le travail est planifié étape par étape dans [docs/superpowers/plans](docs/superpowers/plans).
+
+## Crédits et marques
+
+Thread est une marque du Thread Group, et Zigbee est une marque de la Connectivity Standards Alliance. Elles
+appartiennent à leurs titulaires. Les glyphes de Thread et de Zigbee des onglets des Réglages sont des redessins
+simplifiés, faits pour cette app, et ne servent qu'à identifier ces deux réseaux. Ils ne signifient pas que Maillage IoT
+est fait, soutenu ou approuvé par le Thread Group ou par la Connectivity Standards Alliance. L'icône de l'app est
+générée par [outils/icone/generer.swift](outils/icone/generer.swift).
