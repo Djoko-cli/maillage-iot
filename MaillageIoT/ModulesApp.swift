@@ -56,11 +56,15 @@ struct ModulesApp {
         decouverte = DecouvertePont()
         // Inertes en demo et sous tests : aucun port ouvert, ni trousseau du Mac lu, aucune identite de routeur lue ni
         // ecrite ; ils gardent un trousseau en memoire. Hors demo, la cle de l'acces reseau de chaque sonde vit dans le
-        // trousseau du Mac (Zigbee reprend les cles de l'ancienne app, `TrousseauRepris`).
+        // trousseau du Mac (Thread et Zigbee reprennent les cles des anciennes apps : `TrousseauReprisThread`, `TrousseauRepris`).
         let cartes = CartesRetenues()
         self.cartes = cartes
         sondeThread = SondeMaillageThread(
-            actif: !inerte, trousseau: inerte ? TrousseauMemoireThread() : TrousseauSystemeThread(),
+            actif: !inerte,
+            trousseau: inerte ? TrousseauMemoireThread()
+                : TrousseauReprisThread(actuel: TrousseauSystemeThread(),
+                                        ancien: TrousseauSystemeThread(service: TrousseauReprisThread.serviceAncien),
+                                        reprises: .preferences(cle: "thread.repriseTrousseauSonde")),
             fichierIdentites: SondeMaillageThread.fichierIdentites(demo: demo != nil, sousTests: sousTests),
             cartes: cartes)
         sondeZigbee = SondeMaillageZigbee(
@@ -112,6 +116,7 @@ struct ModulesApp {
         nomsPont.surLecture = { [weak s] n in s?.zigbee.lecturePont(n) }
         b.surPont = { [weak nomsPont] p in nomsPont?.pontDecouvert(p) }
         b.surRefus = { [weak nomsPont] refus in nomsPont?.reseauLocalRefuse = refus }
+        b.surNonDeclare = { [weak nomsPont] refus in nomsPont?.bonjourNonDeclare = refus }
         nomsPont.surEchecReseau = { [weak b] in b?.relancer() }
         // Incomplet : la tournee qui vient de finir a reporte des routes (son bilan est pose avant le maillage).
         sz.surMaillage = { [weak s, weak sz] m, recu in

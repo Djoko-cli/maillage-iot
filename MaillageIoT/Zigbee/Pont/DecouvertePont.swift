@@ -13,6 +13,8 @@ final class DecouvertePont {
     var surPont: ((PontDecouvert) -> Void)?
     /// Bonjour est refuse (reseau local refuse a l'app), ou de nouveau permis.
     var surRefus: ((Bool) -> Void)?
+    /// macOS refuse `_hue._tcp` a l'app (type absent de la liste NSBonjourServices qu'il connait : NoAuth), ou de nouveau permis.
+    var surNonDeclare: ((Bool) -> Void)?
     private let navigateur: any EcouteBonjour
     /// Instance -> TXT deja resolu.
     private var resolues: [String: Data] = [:]
@@ -52,6 +54,7 @@ final class DecouvertePont {
 
     private func examiner() {
         surRefus?(navigateur.etat == .refuse)
+        surNonDeclare?(navigateur.etat == .nonDeclare)
         for (instance, txt) in navigateur.instances where resolues[instance] != txt {
             resolues[instance] = txt
             let e = epoque

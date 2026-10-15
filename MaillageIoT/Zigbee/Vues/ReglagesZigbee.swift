@@ -92,6 +92,11 @@ struct ReglagesZigbee: View {
                     }
                 }
                 LabeledContent("État", value: FenetreReglages.texteEtatSonde(sonde.etat, nom: sonde.nomEtat))
+                if sonde.bonjourNonDeclare {
+                    Text("macOS refuse la recherche de la sonde Zigbee à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou branchez la sonde en USB.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
                 // Le chemin en service ne s'apprend que dans Automatique : les deux autres liaisons l'imposent.
                 if sonde.reglageChemin == .automatique, let a = sonde.acces {
                     LabeledContent("Chemin", value: a.libelle)

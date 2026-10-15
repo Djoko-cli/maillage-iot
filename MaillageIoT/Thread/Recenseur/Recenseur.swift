@@ -158,12 +158,21 @@ final class Recenseur {
         }
     }
 
+    /// Le message d'un navigateur en erreur ; un type non declare pour macOS (NoAuth) en est une, avec son remede.
+    private static func messageErreur(_ e: NavigateurBonjour.Etat) -> String? {
+        switch e {
+        case .erreur(let m): m
+        case .nonDeclare: String(localized: "macOS refuse la recherche Bonjour à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac.")
+        case .demarrage, .pret, .refuse: nil
+        }
+    }
+
     private func mettreAJourEtat() {
         let etats = navigateurs.map(\.etat)
         let nouveau: Etat
         if etats.contains(.refuse) {
             nouveau = .reseauLocalRefuse
-        } else if let e = etats.lazy.compactMap({ if case .erreur(let m) = $0 { m } else { nil } }).first {
+        } else if let e = etats.lazy.compactMap({ Self.messageErreur($0) }).first {
             nouveau = .erreur(e)
         } else if !etats.isEmpty && etats.allSatisfy({ $0 == .pret }) {
             nouveau = .actif

@@ -28,6 +28,11 @@ struct ReglagesPont: View {
                 .font(.caption)
                 .foregroundStyle(.red)
         }
+        if pont.bonjourNonDeclare {
+            Text(Self.texteNonDeclare)
+                .font(.caption)
+                .foregroundStyle(.red)
+        }
         if let m = Self.message(pont.etat) {
             Text(m).font(.caption).foregroundStyle(pont.etat == .aLier ? .orange : .red)
         }
@@ -45,6 +50,11 @@ struct ReglagesPont: View {
             Button("Oublier le pont") { pont.oublier() }
                 .disabled(Self.enLiaison(pont.etat))
         }
+    }
+
+    /// Bonjour refuse `_hue._tcp` (NoAuth) : la liste des services Bonjour que macOS connait pour l'app est perimee.
+    static var texteNonDeclare: String {
+        String(localized: "macOS refuse la recherche du pont Hue à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou saisissez l'adresse du pont.")
     }
 
     /// « Lier… » et son explication ; pendant l'attente, l'instruction, le compte a rebours et « Annuler ».

@@ -117,6 +117,9 @@ final class SondeMaillageZigbee {
     private(set) var nomWifi: String?
     /// La sonde retenue est annoncee par Bonjour sur le reseau local.
     private(set) var annoncee = false
+    /// macOS refuse `_maillage-zigbee._tcp` a l'app : type absent de la liste NSBonjourServices qu'il connait (NoAuth). La sonde
+    /// reste joignable par l'USB.
+    private(set) var bonjourNonDeclare = false
     /// Le nom de son instance Bonjour, celui que vise la connexion par le reseau : le nom de la sonde, ou ce nom renomme
     /// apres un conflit (`CheminSonde.instance`).
     @ObservationIgnored private var instanceAnnoncee: String?
@@ -347,6 +350,7 @@ final class SondeMaillageZigbee {
         let n = fabriqueBonjour(TransportTCP.typeBonjour)
         n.surChangement = { [weak self, weak n] in
             guard let self, let n else { return }
+            self.bonjourNonDeclare = n.etat == .nonDeclare
             self.annoncesChangees(Set(n.instances.keys))
         }
         n.demarrer()
@@ -366,6 +370,7 @@ final class SondeMaillageZigbee {
         navigateur?.surChangement = nil
         navigateur?.arreter()
         navigateur = nil
+        bonjourNonDeclare = false
         annoncee = false
         instanceAnnoncee = nil
         nouvelEssai?.cancel()

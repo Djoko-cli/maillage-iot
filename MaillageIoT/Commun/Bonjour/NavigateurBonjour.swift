@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import dnssd
+import os
 
 /// Ce que le recenseur de Thread, la decouverte du pont Hue et la sonde Zigbee demandent a une ecoute Bonjour : les tests
 /// en donnent une factice (aucun reseau), et y comptent les demarrages et les arrets.
@@ -21,9 +22,17 @@ protocol EcouteBonjour: AnyObject {
 @MainActor
 final class NavigateurBonjour: EcouteBonjour {
     enum Etat: Equatable, Sendable {
-        case demarrage, pret, refuse
+        case demarrage, pret
+        /// Reseau local refuse a l'app (PolicyDenied).
+        case refuse
+        /// Type de service absent de la liste NSBonjourServices que macOS connait pour l'app (NoAuth, -65555) : le plus
+        /// souvent un enregistrement de l'app perime (un type ajoute depuis le premier lancement), pas un refus de
+        /// l'utilisateur.
+        case nonDeclare
         case erreur(String)
     }
+
+    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "bonjour")
 
     let type: String
     /// Instance -> TXT brut (vide si le navigateur n'en a pas donne).
@@ -92,7 +101,10 @@ final class NavigateurBonjour: EcouteBonjour {
         switch e {
         case .setup, .cancelled: nouveau = .demarrage
         case .ready: nouveau = .pret
-        case .waiting(let erreur), .failed(let erreur): nouveau = Self.etat(erreur)
+        case .waiting(let erreur), .failed(let erreur):
+            nouveau = Self.etat(erreur)
+            // Le type et le code seulement (aucun identifiant d'appareil ni de reseau).
+            Self.journal.error("ecoute Bonjour \(self.type, privacy: .public) en echec : \(Self.code(erreur), privacy: .public)")
         @unknown default: nouveau = .demarrage
         }
         if case .failed = e {
@@ -110,9 +122,18 @@ final class NavigateurBonjour: EcouteBonjour {
         surChangement?()
     }
 
-    /// Refus du reseau local : le navigateur attend avec l'erreur DNS PolicyDenied.
+    /// Refus du reseau local : le navigateur attend avec l'erreur DNS PolicyDenied. Type non declare pour macOS : NoAuth.
     static func etat(_ erreur: NWError) -> Etat {
-        if case .dns(let code) = erreur, code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied) { return .refuse }
+        if case .dns(let code) = erreur {
+            if code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied) { return .refuse }
+            if code == DNSServiceErrorType(kDNSServiceErr_NoAuth) { return .nonDeclare }
+        }
         return .erreur(erreur.debugDescription)
+    }
+
+    /// Le code de l'erreur, pour le journal : « DNS -65555 », sinon la description du systeme.
+    static func code(_ erreur: NWError) -> String {
+        if case .dns(let code) = erreur { return "DNS \(code)" }
+        return erreur.debugDescription
     }
 }

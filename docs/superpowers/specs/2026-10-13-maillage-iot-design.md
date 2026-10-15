@@ -340,12 +340,14 @@ Zigbee/
   `imports.json`.
 - **Clés du trousseau** (demande de Djoko, 14/10/2026, au banc de l'étape 2) : l'export n'en contient toujours
   aucune ; Maillage IoT les **lit directement dans l'ancien trousseau** (`TrousseauRepris`). Une clé absente du
-  nouveau service est demandée **une seule fois** à l'ancien (Thread : `fr.djoko.maillage.sonde` et `.sonde.udp` ; Zigbee : `fr.djoko.maillage.zigbee.pont`,
+  nouveau service est demandée **une seule fois** à l'ancien (Thread : `fr.djoko.maillage.sonde`, le transport UDP n'ayant pas de service propre ; Zigbee : `fr.djoko.maillage.zigbee.pont`,
   `fr.djoko.maillage.zigbee.sonde`) : macOS demande l'accord de l'utilisateur, l'élément appartenant à l'ancienne
   app. La clé est recopiée sous le nouveau service ; l'ancien élément n'est jamais modifié ni effacé, si bien que
   l'ancienne app garde son pont et son accès réseau à la sonde. Un refus, une clé absente ou « Oublier » ne
-  redemandent plus rien, et l'appairage manuel (4.4) reste le secours. Déjà en place dans l'app de transition
-  Zigbee (étape 2) ; à étendre à Thread à l'étape 4, après un essai réel sous bac à sable.
+  redemandent plus rien, et l'appairage manuel (4.4) reste le secours. En place pour les deux protocoles : Zigbee
+  depuis l'app de transition (étape 2, `TrousseauRepris`), Thread depuis le banc de l'étape 3a (15/10,
+  `TrousseauReprisThread`). La liste des clés montre la clé de l'ancienne app sans la lire (attributs seuls), pour que le
+  choix de la liaison par le réseau apparaisse ; la clé est reprise à la connexion.
 - **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Le second
   ne fait qu'ajouter ce qui manque, et le résumé dit ce qui a été ignoré. Les clés préfixées n'entrent jamais en
   collision.
@@ -592,6 +594,13 @@ Décisions du plan 3a, d'après les inventaires `inventaire-etape3-*.md` (propos
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
 - Vue de santé par pièce, tous protocoles confondus (option C du 13/10).
+- **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
+  naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
+  dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.
+- **Panneau de santé dans la vue par pièces** (demande de Djoko, banc de l'étape 3a, 15/10) : un panneau en verre liquide
+  (Liquid Glass), dans le même style que la légende, en haut à gauche de la vue. Il reprend les informations du journal
+  que montre le menu de la barre (alertes de l'heure, pertes, changements récents, par protocole). Un clic sur une entrée
+  montre l'appareil en cause dans la scène : sélection, focus et fiche, comme un clic sur le nœud.
 - Catégories de notification propres à Zigbee (parent perdu, pont injoignable).
 - Clés `rloc:` de Thread qualifiées par leur partition : deux partitions peuvent avoir le même RLOC16. Le
   comportement actuel est gardé à l'étape 1 ; à corriger ensuite, sous le rejeu.

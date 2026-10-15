@@ -151,6 +151,9 @@ final class NomsPont {
     private(set) var identifications: [String: Identification] = [:]
     /// Bonjour est refuse (Reglages Systeme › Confidentialite › Reseau local).
     var reseauLocalRefuse = false
+    /// macOS refuse `_hue._tcp` a l'app : type absent de la liste NSBonjourServices qu'il connait (NoAuth), distinct du refus du
+    /// reseau local.
+    var bonjourNonDeclare = false
     /// Appele a chaque nouveau releve (nil : le pont est oublie).
     @ObservationIgnored var surNoms: ((NomsZigbee?) -> Void)?
     /// Appele apres `surNoms` a chaque lecture reussie du pont seulement (ni le cache relu au lancement, ni la demo) :

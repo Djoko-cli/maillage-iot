@@ -8481,6 +8481,54 @@
         }
       }
     },
+    "macOS refuse la recherche Bonjour à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuses the app's Bonjour search (the app's Bonjour services list is out of date for macOS): restart the Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuse la recherche Bonjour à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac."
+          }
+        }
+      }
+    },
+    "macOS refuse la recherche de la sonde Zigbee à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou branchez la sonde en USB." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuses the app's search for the Zigbee probe (the app's Bonjour services list is out of date for macOS): restart the Mac, or plug the probe in over USB."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuse la recherche de la sonde Zigbee à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou branchez la sonde en USB."
+          }
+        }
+      }
+    },
+    "macOS refuse la recherche du pont Hue à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou saisissez l'adresse du pont." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuses the app's search for the Hue bridge (the app's Bonjour services list is out of date for macOS): restart the Mac, or enter the bridge address."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS refuse la recherche du pont Hue à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou saisissez l'adresse du pont."
+          }
+        }
+      }
+    },
     "membre" : {
       "localizations" : {
         "en" : {

@@ -393,5 +393,8 @@
   "—": "—",
   "→ Salon": "→ Living room",
   "⌂ Maison": "⌂ Home",
-  "👑 Chef du réseau Thread, élu automatiquement": "👑 Thread network leader, elected automatically"
+  "👑 Chef du réseau Thread, élu automatiquement": "👑 Thread network leader, elected automatically",
+  "macOS refuse la recherche Bonjour à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac.": "macOS refuses the app's Bonjour search (the app's Bonjour services list is out of date for macOS): restart the Mac.",
+  "macOS refuse la recherche du pont Hue à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou saisissez l'adresse du pont.": "macOS refuses the app's search for the Hue bridge (the app's Bonjour services list is out of date for macOS): restart the Mac, or enter the bridge address.",
+  "macOS refuse la recherche de la sonde Zigbee à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou branchez la sonde en USB.": "macOS refuses the app's search for the Zigbee probe (the app's Bonjour services list is out of date for macOS): restart the Mac, or plug the probe in over USB."
 }
