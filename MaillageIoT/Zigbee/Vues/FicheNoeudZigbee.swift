@@ -5,7 +5,7 @@ import SwiftUI
 /// Le contenu de la fiche d'un noeud Zigbee (la coque, `FicheNoeud`, donne le cadre, le bouton de fermeture et les courbes
 /// de l'historique), en quatre colonnes cote a cote (`ColonnesFiche`, moins dans une fenetre etroite) :
 /// 1. identite : le nom, la piece, la marque, le modele, le firmware, l'origine du nom, l'etat, le role (endormi d'apres
-///    `ecoute`), la pile, les adresses (longue et courte, IEEE), et les boutons « Renommer… », « Identifier » (l'appareil
+///    `ecoute`), la pile, les adresses (longue et courte, IEEE), et les boutons « Renommer… », « Identifier par Hue » (l'appareil
 ///    clignote, par le pont Hue : seulement pour un appareil que le pont connait) et « Placer dans une pièce… » ;
 /// 2. chemin : vers le pont (direct, ou via son prochain saut, en sauts ; suppose ; l'age de la route), le parent d'un
 ///    appareil final (ou son parent d'avant), le nombre de routeurs qui parlent directement au pont ; puis le journal
@@ -23,7 +23,7 @@ struct FicheNoeudZigbee: View {
     @Environment(\.capturePieces) private var capture
     /// Pieces choisies pour les noeuds que le pont ne place pas : la vue par pieces seule les donne.
     @Environment(PiecesChoisies.self) private var piecesChoisies: PiecesChoisies?
-    /// Le pont Hue : « Identifier » passe par lui. nil dans les vues de test sans pont.
+    /// Le pont Hue : « Identifier par Hue » passe par lui. nil dans les vues de test sans pont.
     @Environment(NomsPont.self) private var nomsPont: NomsPont?
     /// Le demon Passeur Noms : « Identifier par Maison » passe par lui. nil dans les vues de test sans demon.
     @Environment(NomsPasseur.self) private var nomsPasseur: NomsPasseur?
@@ -538,18 +538,19 @@ struct BoutonIdentifierMaison: View {
     }
 }
 
-/// « Identifier » : fait clignoter l'appareil par le pont Hue. Grise pendant l'envoi des identifications.
+/// « Identifier par Hue » : fait clignoter l'appareil par le pont Hue. Grise pendant l'envoi des identifications.
 struct BoutonIdentifierHue: View {
     let enCours: Bool
     let action: () -> Void
 
+    /// Le libelle du bouton : « Identifier par Hue », ou « Identification… » pendant l'envoi.
+    nonisolated static func titre(enCours: Bool) -> String {
+        enCours ? String(localized: "Identification…") : String(localized: "Identifier par Hue")
+    }
+
     var body: some View {
         Button(action: action) {
-            if enCours {
-                Label("Identification…", systemImage: "light.beacon.max")
-            } else {
-                Label("Identifier", systemImage: "light.beacon.max")
-            }
+            Label(Self.titre(enCours: enCours), systemImage: "light.beacon.max")
         }
         .boutonDeFiche()
         .disabled(enCours)

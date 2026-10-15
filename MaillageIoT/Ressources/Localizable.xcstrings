@@ -3281,6 +3281,22 @@
         }
       }
     },
+    "Identifier par Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identify via Hue"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifier par Hue"
+          }
+        }
+      }
+    },
     "Identifier par Maison" : {
       "localizations" : {
         "en" : {

@@ -167,10 +167,10 @@ D'après `inventaire-etape3b.md` §13 ; spec 6.7, backlog.
 - Modify: fiche Zigbee (`BoutonIdentifier` de Zigbee : « Identifier par Hue », « Identification… »), catalogue ; la spec 3.2 est déjà précisée (6.7).
 - Test: libellé du bouton.
 
-- [ ] **Step 1: RED** — test du libellé.
-- [ ] **Step 2: GREEN** — renommer.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Fiche Zigbee : Identifier par Hue ».
+- [x] **Step 1: RED** — test du libellé.
+- [x] **Step 2: GREEN** — renommer.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Fiche Zigbee : Identifier par Hue ».
 
 ---
 
