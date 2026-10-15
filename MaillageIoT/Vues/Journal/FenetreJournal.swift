@@ -53,6 +53,12 @@ struct FiltreJournal: Equatable {
     var recherche = ""
     var protocoles = Set(Protocole.allCases)
 
+    /// Remet la famille a « Tous » quand les protocoles montres la grisent (« Prefixes », propre a Thread, avec Thread filtre) :
+    /// la famille choisie ne peut plus l'etre, et la liste resterait vide alors que le journal a des evenements.
+    mutating func rattraper(montres: Set<Protocole>) {
+        if famille.grisee(montres: montres) { famille = .toutes }
+    }
+
     func appliquer(_ lignes: [LigneJournal]) -> [LigneJournal] {
         let r = recherche.trimmingCharacters(in: .whitespaces)
         return lignes.filter { l in
@@ -94,6 +100,8 @@ struct FenetreJournal: View {
             }
         }
         .searchable(text: $filtre.recherche)
+        // Un interrupteur de protocole qui grise la famille choisie la remet a « Tous ».
+        .onChange(of: montres) { filtre.rattraper(montres: montres) }
         .toolbar {
             ForEach(Protocole.allCases, id: \.self) { p in
                 InterrupteurJournal(protocole: p, allume: preferences.liaison(p))

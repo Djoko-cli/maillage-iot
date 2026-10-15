@@ -152,10 +152,10 @@ D'après `inventaire-etape3b.md` §8, §9 ; `registre-etape-3a.md` (Final m3 : d
 - Modify: `Notifications` / `Alertes` (catégories par protocole, clés `notification.<protocole>.<catégorie>` qui reprennent à la première lecture la valeur des clés communes actuelles), onglet Notifications (sections Thread et Zigbee, mêmes défauts), `MenuBarre` (chaque bloc d'alerte dit son protocole ; une ligne de résumé par protocole actif), `IconeBarre` (pire des deux réseaux actifs, déjà en place : test seulement).
 - Test: `reprisesDesClesCommunes` (une catégorie coupée en 3a reste coupée pour les deux protocoles), `notificationSelonSonProtocole`, `menuAlerteAvecProtocole`.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Notifications par protocole, menu de la barre avec le protocole des alertes ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Notifications par protocole, menu de la barre avec le protocole des alertes ».
 
 ---
 

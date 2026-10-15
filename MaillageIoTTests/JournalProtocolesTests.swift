@@ -143,4 +143,26 @@ struct JournalProtocolesTests {
         // Les types de Zigbee ne sont dans aucune famille de Thread seule.
         for t in TypeEvenement.zigbee { #expect(!FamilleEvenement.reseau.contient(t) || FamilleEvenement.reseau.protocoles.contains(.zigbee)) }
     }
+
+    /// Quand le filtre de protocole grise la famille choisie (« Préfixes », propre a Thread, Thread filtre), la famille revient a
+    /// « Tous » : sans cela la liste restait vide (« Aucun evenement ») alors que le journal a des evenements (relecture de la
+    /// tache 7). Une famille non grisee, ou « Tous », ne bouge pas ; les autres reglages du filtre non plus.
+    @Test func familleGriseeRevientAToutes() {
+        let lignes = Self.lignes()
+        var f = FiltreJournal(famille: .prefixes, graviteMinimale: .attention, recherche: "x")
+        f.rattraper(montres: [.zigbee])
+        #expect(f.famille == .toutes, "Thread filtre : Prefixes revient a Tous")
+        #expect(f.graviteMinimale == .attention && f.recherche == "x", "le reste du filtre est garde")
+        var g = FiltreJournal(famille: .prefixes)
+        g.rattraper(montres: Self.tous)
+        #expect(g.famille == .prefixes, "Thread montre : la famille reste")
+        var h = FiltreJournal(famille: .routeurs)
+        h.rattraper(montres: [.zigbee])
+        #expect(h.famille == .routeurs, "famille commune : elle reste")
+        // La liste n'est plus vide apres le rattrapage.
+        var vide = FiltreJournal(famille: .reseau, protocoles: [.zigbee])
+        #expect(vide.appliquer(lignes).isEmpty, "avant : liste vide alors que le journal a des evenements")
+        vide.rattraper(montres: [.zigbee])
+        #expect(!vide.appliquer(lignes).isEmpty && !lignes.isEmpty)
+    }
 }

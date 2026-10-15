@@ -58,7 +58,7 @@ enum OngletReglages: String, CaseIterable {
 }
 
 /// Une page des Reglages, celle d'un onglet : General (ouverture a la connexion, mises a jour, langue, vue par
-/// pieces : les etages en 2D), Notifications (par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
+/// pieces : les etages en 2D), Notifications (une section par protocole, par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
 /// `ReglagesMaison`), Thread (liaison USB ou reseau Thread de la sonde, acces reseau, Thread Route), Zigbee (le pont Hue
 /// et la sonde Zigbee : `ReglagesZigbee`), Diagnostic (ecoute de Thread, maillage de Zigbee, captures, journal). La
 /// fenetre et ses onglets sont dans `ControleurReglages`.
@@ -70,10 +70,6 @@ struct FenetreReglages: View {
     @Environment(OuvertureSession.self) private var ouverture
     @Environment(SondeMaillageThread.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
-    @AppStorage(Notifications.cle(.scission)) private var scission = CategorieAlerte.scission.parDefaut
-    @AppStorage(Notifications.cle(.routeurDisparu)) private var routeurDisparu = CategorieAlerte.routeurDisparu.parDefaut
-    @AppStorage(Notifications.cle(.pertes)) private var pertes = CategorieAlerte.pertes.parDefaut
-    @AppStorage(Notifications.cle(.informations)) private var informations = CategorieAlerte.informations.parDefaut
     @AppStorage(FenetrePieces.cleGrille) private var etagesEnGrille = true
     @State private var messageCapture: String?
     @State private var langue = LangueApp.lire()
@@ -136,13 +132,11 @@ struct FenetreReglages: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Onglet Notifications : une categorie par interrupteur.
+    /// Onglet Notifications : une section par protocole (Thread, puis Zigbee), une categorie par interrupteur ; la section
+    /// d'un protocole eteint est grisee, comme son onglet.
     private var notifications: some View {
-        Section {
-            Toggle("Réseau scindé", isOn: $scission)
-            Toggle("Routeur de bordure disparu", isOn: $routeurDisparu)
-            Toggle("Au moins 3 appareils perdus en 10 min (une notification groupée)", isOn: $pertes)
-            Toggle("Autres changements", isOn: $informations)
+        ForEach(Protocole.allCases, id: \.self) { protocole in
+            SectionNotifications(protocole: protocole)
         }
     }
 
@@ -558,5 +552,47 @@ struct CodeMatterSonde: View {
             }
         }
         .task(id: qr) { image = qr.flatMap(CodeMatter.imageQR) }
+    }
+}
+
+/// Les interrupteurs de notification d'un protocole (spec 3.5), dans l'onglet Notifications : ses categories, sous ses
+/// propres cles (`Notifications.cle`), avec les memes defauts pour les deux. Grisee quand le protocole est eteint : ses
+/// notifications ne partent pas, l'onglet le dit comme celui du protocole.
+struct SectionNotifications: View {
+    @Environment(Surveillance.self) private var surveillance
+    let protocole: Protocole
+
+    var body: some View {
+        Section(Self.titre(protocole)) {
+            ForEach(Notifications.categories(de: protocole), id: \.self) { c in
+                InterrupteurNotification(protocole: protocole, categorie: c)
+            }
+        }
+        .disabled(!surveillance.protocoleReglable(protocole))
+    }
+
+    /// Titre de la section : le nom du protocole.
+    static func titre(_ protocole: Protocole) -> String {
+        switch protocole {
+        case .thread: String(localized: "Thread")
+        case .zigbee: String(localized: "Zigbee")
+        }
+    }
+}
+
+/// Un interrupteur de notification : la categorie d'un protocole, sous sa cle (le defaut est celui de la categorie).
+struct InterrupteurNotification: View {
+    let protocole: Protocole
+    let categorie: CategorieAlerte
+    @AppStorage private var allume: Bool
+
+    init(protocole: Protocole, categorie: CategorieAlerte) {
+        self.protocole = protocole
+        self.categorie = categorie
+        _allume = AppStorage(wrappedValue: categorie.parDefaut, Notifications.cle(categorie, de: protocole))
+    }
+
+    var body: some View {
+        Toggle(Notifications.titre(categorie, de: protocole), isOn: $allume)
     }
 }

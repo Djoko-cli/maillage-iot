@@ -89,7 +89,7 @@ struct MenuTests {
         #expect(MenuBarre.blocs(s).first?.etat == .attente)
         s.zigbee.recevoir(MaillageDemoZigbee.maillage, a: Date())
         s.ajouter([Evenement(date: Date(), type: .routeurDisparu, sujet: Sujet(id: "ID-1", nom: "Prise"))], de: .zigbee)
-        #expect(MenuBarre.blocs(s).first?.titre == String(localized: "Alerte dans l'heure"))
+        #expect(MenuBarre.blocs(s).first?.titre == String(localized: "Alerte Zigbee dans l'heure"))
         #expect(MenuBarre.blocs(s).first?.etat == .alerte)
         // Une alerte de Thread ne fait pas celle de Zigbee.
         let t = Surveillance(mode: .direct, dossier: nil)

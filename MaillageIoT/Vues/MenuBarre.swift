@@ -226,21 +226,29 @@ struct MenuBarre: View {
     /// Le menu quand aucun protocole n'est actif.
     static var titreSansProtocole: String { String(localized: "Aucun protocole actif") }
 
+    /// Titre d'un bloc en alerte dans l'heure : il nomme son protocole, car deux blocs s'empilent dans le menu.
+    static func titreAlerte(_ protocole: Protocole) -> String {
+        switch protocole {
+        case .thread: String(localized: "Alerte Thread dans l'heure")
+        case .zigbee: String(localized: "Alerte Zigbee dans l'heure")
+        }
+    }
+
     /// Titre du bloc de Thread : l'ecoute du reseau local tant qu'il n'a rien releve, le silence du Mac, puis l'etat du
-    /// reseau. `alerte` : celle de Thread.
+    /// reseau (l'alerte de l'heure nomme son protocole : deux blocs s'empilent). `alerte` : celle de Thread.
     static func titreThread(_ t: SurveillanceThread, alerte: Bool) -> String {
         if t.instantane == nil { return String(localized: "Écoute du réseau local…") }
         if let d = t.rienVuDepuis { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
         guard let r = t.reseau else { return String(localized: "Aucun réseau Thread visible") }
         if r.estScinde { return String(localized: "Réseau scindé") }
-        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")
+        return alerte ? titreAlerte(.thread) : String(localized: "Réseau Thread normal")
     }
 
     /// Titre du bloc de Zigbee : en attente tant qu'il n'y a rien a montrer, sinon l'alerte de l'heure, ou le reseau normal.
     /// `alerte` : celle de Zigbee.
     static func titreZigbee(resume: ResumeReseauZigbee?, alerte: Bool) -> String {
         guard resume != nil else { return String(localized: "En attente du maillage de la sonde…") }
-        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Zigbee normal")
+        return alerte ? titreAlerte(.zigbee) : String(localized: "Réseau Zigbee normal")
     }
 
     /// Ligne de la sonde, sous le nom donne (celui de la sonde retenue quand l'etat la concerne,

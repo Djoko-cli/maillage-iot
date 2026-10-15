@@ -31,9 +31,9 @@ struct TexteEvenementZigbeeTests {
         let r = TexteEvenementZigbee.notification(AlerteAEnvoyer(categorie: .routeurDisparu, identifiant: "r", evenements: [routeur]))
         #expect(r.titre == String(localized: "Routeur disparu") && r.corps.contains("Prise salon"))
         let vides = try #require(UserDefaults(suiteName: "vide-\(UUID())"))
-        #expect(Notifications.active(.routeurDisparu, preferences: vides))
+        #expect(Notifications.active(.routeurDisparu, de: .zigbee, preferences: vides))
         let videsAussi = try #require(UserDefaults(suiteName: "vide-\(UUID())"))
-        #expect(!Notifications.active(.informations, preferences: videsAussi))
+        #expect(!Notifications.active(.informations, de: .zigbee, preferences: videsAussi))
     }
 
     /// Evenements du maillage de la sonde : les attentes reprennent les cles du code (independantes de la langue de

@@ -1601,18 +1601,34 @@
         }
       }
     },
-    "Alerte dans l'heure" : {
+    "Alerte Thread dans l'heure" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alert in the last hour"
+            "value" : "Thread alert in the last hour"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alerte dans l'heure"
+            "value" : "Alerte Thread dans l'heure"
+          }
+        }
+      }
+    },
+    "Alerte Zigbee dans l'heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee alert in the last hour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte Zigbee dans l'heure"
           }
         }
       }

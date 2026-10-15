@@ -51,6 +51,9 @@ struct MaillageIoTApp: App {
         let premier = !UserDefaults.standard.bool(forKey: Self.clePremierGraphe)
         ouvrirGraphe = !Surveillance.sousTests && (Self.demo || premier)
         guard !Surveillance.sousTests else { return }
+        // Les interrupteurs de notification de 3a (une cle par categorie) passent aux cles par protocole, avant que les
+        // Reglages les lisent.
+        Notifications.reprendreClesCommunes()
         if !Self.demo {
             UserDefaults.standard.set(true, forKey: Self.clePremierGraphe)
             let n = notifications

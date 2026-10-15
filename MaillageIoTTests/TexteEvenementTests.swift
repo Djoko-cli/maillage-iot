@@ -33,9 +33,9 @@ struct TexteEvenementTests {
         let notification = TexteEvenementThread.notification(AlerteAEnvoyer(categorie: .pertes, identifiant: "p", evenements: pertes))
         #expect(notification.corps.contains("Prise bureau"))
         let vides = try #require(PreferencesMemoire(domaine: "vide-\(UUID())"))
-        #expect(Notifications.active(.scission, preferences: vides))
+        #expect(Notifications.active(.scission, de: .thread, preferences: vides))
         let videsAussi = try #require(PreferencesMemoire(domaine: "vide-\(UUID())"))
-        #expect(!Notifications.active(.informations, preferences: videsAussi))
+        #expect(!Notifications.active(.informations, de: .thread, preferences: videsAussi))
     }
 
     /// Evenements du maillage de la sonde : les attentes reprennent les cles du code

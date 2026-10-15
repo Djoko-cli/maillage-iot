@@ -17,8 +17,14 @@ struct PageProtocole<Contenu: View>: View {
             .disabled(!actif)
     }
 
-    private var actif: Bool {
-        guard surveillance.mode == .direct, let m = surveillance.modele(pour: protocole) else { return true }
+    private var actif: Bool { surveillance.protocoleReglable(protocole) }
+}
+
+extension Surveillance {
+    /// Les reglages d'un protocole sont-ils utilisables : son module est actif. Toujours vrai en demo (aucun module n'y est
+    /// branche : rien n'est grise). Sert aux pages des protocoles et aux sections de l'onglet Notifications.
+    func protocoleReglable(_ protocole: Protocole) -> Bool {
+        guard mode == .direct, let m = modele(pour: protocole) else { return true }
         return m.actif
     }
 }
