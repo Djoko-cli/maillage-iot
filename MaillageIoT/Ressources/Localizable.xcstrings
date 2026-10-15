@@ -417,6 +417,22 @@
         }
       }
     },
+    "%@ est éteint dans les Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is turned off in Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est éteint dans les Réglages"
+          }
+        }
+      }
+    },
     "%@ n'a plus de parent" : {
       "localizations" : {
         "en" : {
@@ -493,6 +509,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld partitions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld partitions"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld partitions"
           }
         }
       }
@@ -2705,6 +2737,22 @@
         }
       }
     },
+    "Démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démo"
+          }
+        }
+      }
+    },
     "Dépendants" : {
       "localizations" : {
         "en" : {
@@ -2909,6 +2957,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entre %1$@ et %2$@ : %3$@"
+          }
+        }
+      }
+    },
+    "Erreur (voir les Réglages)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error (see Settings)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur (voir les Réglages)"
           }
         }
       }
@@ -3245,6 +3309,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installer automatiquement"
+          }
+        }
+      }
+    },
+    "Introuvable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introuvable"
           }
         }
       }
@@ -3697,6 +3777,22 @@
         }
       }
     },
+    "Liaison en cours…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linking…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liaison en cours…"
+          }
+        }
+      }
+    },
     "Liaison refusée par le pont : %@" : {
       "localizations" : {
         "en" : {
@@ -3773,6 +3869,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liste des routeurs"
+          }
+        }
+      }
+    },
+    "Lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lié"
           }
         }
       }
@@ -3917,6 +4029,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maison indisponible pour Passeur Noms."
+          }
+        }
+      }
+    },
+    "Masquer %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer %@"
           }
         }
       }
@@ -4097,6 +4225,22 @@
         }
       }
     },
+    "Montrer %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montrer %@"
+          }
+        }
+      }
+    },
     "Mot de passe" : {
       "localizations" : {
         "en" : {
@@ -4205,6 +4349,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non identifié · %@"
+          }
+        }
+      }
+    },
+    "Non lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non lié"
           }
         }
       }
@@ -5137,22 +5297,6 @@
         }
       }
     },
-    "Rafraîchir : rien à relever sans sonde connectée" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refresh: nothing to read without a connected probe"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rafraîchir : rien à relever sans sonde connectée"
-          }
-        }
-      }
-    },
     "Rafraîchir : réseau" : {
       "localizations" : {
         "en" : {
@@ -5213,22 +5357,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rafraîchir : réseau, tournée de la sonde et noms de Maison"
-          }
-        }
-      }
-    },
-    "Rafraîchir : tournée de la sonde" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refresh: probe round"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rafraîchir : tournée de la sonde"
           }
         }
       }
@@ -5921,22 +6049,6 @@
         }
       }
     },
-    "Réseau Zigbee" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zigbee network"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réseau Zigbee"
-          }
-        }
-      }
-    },
     "Réseau Zigbee normal" : {
       "localizations" : {
         "en" : {
@@ -6465,6 +6577,38 @@
         }
       }
     },
+    "Thread est masqué" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread is hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread est masqué"
+          }
+        }
+      }
+    },
+    "Thread et Zigbee sont masqués" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread and Zigbee are hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread et Zigbee sont masqués"
+          }
+        }
+      }
+    },
     "Tournée" : {
       "localizations" : {
         "en" : {
@@ -6973,6 +7117,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zigbee"
+          }
+        }
+      }
+    },
+    "Zigbee est masqué" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee is hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee est masqué"
           }
         }
       }

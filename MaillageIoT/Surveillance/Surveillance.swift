@@ -47,6 +47,10 @@ final class Surveillance {
         modeles.filter { $0.actif && (mode != .demo || $0.rejoueLaDemo) }
     }
 
+    /// Les protocoles actifs (« Activer ce protocole ») : ceux dont l'interrupteur de vue peut s'allumer, et dont la scene a des
+    /// noeuds. Un protocole eteint est masque quelle que soit la preference de la vue.
+    var protocolesActifs: Set<Protocole> { Set(modeles.filter(\.actif).map(\.protocole)) }
+
     /// Le modele d'un protocole ; nil si l'app n'en porte pas.
     func modele(pour protocole: Protocole) -> (any ModeleProtocole)? {
         modeles.first { $0.protocole == protocole }

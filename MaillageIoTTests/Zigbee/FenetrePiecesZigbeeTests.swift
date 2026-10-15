@@ -311,7 +311,7 @@ struct FenetrePiecesZigbeeTests {
         let haute = Self.hauteAssez
         // Petite fenetre, fiche de la demo : repliee faute de place, puis rouverte.
         let (sousPetite, apresPetite) = try await essai(demo, petite, NomsDemo.Ieee.pont, repliee: false)
-        #expect(sousPetite < 40 && apresPetite > 150, "820 x 680 : repliee sous la fiche (\(sousPetite)), rouverte ensuite (\(apresPetite))")
+        #expect(sousPetite < 40 && apresPetite > 150, "1000 x 680 : repliee sous la fiche (\(sousPetite)), rouverte ensuite (\(apresPetite))")
         // Fenetre assez haute, fiche d'un appareil de la demo : la place suffit, elle reste ouverte (dans la fenetre par
         // defaut, la fiche en quatre colonnes de l'etape 5 la fait replier).
         let (sousHaute, _) = try await essai(demo, haute, NomsDemo.Ieee.detecteurEntree, repliee: false)
@@ -355,7 +355,7 @@ struct FenetrePiecesZigbeeTests {
         #expect(moteur.basGrille == 30, "repli garde par Djoko, sous la fiche : 30 pt")
     }
 
-    /// Taille minimale du contenu de la fenetre : 820 x 680 pt, sous la barre de titre cachee (la fenetre, elle, fait
+    /// Taille minimale du contenu de la fenetre : 1000 x 680 pt, sous la barre de titre cachee (la fenetre, elle, fait
     /// 732 pt de haut au moins, avec la barre d'outils invisible).
     @Test func tailleMinimale() throws {
         let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
@@ -367,7 +367,7 @@ struct FenetrePiecesZigbeeTests {
             .environment(NomsPasseur())
             .environment(SondeMaillageThread(preferences: p, actif: false))
             .environment(SondeMaillageZigbee(preferences: p, actif: false, trousseau: TrousseauMemoireZigbee()))
-        #expect(FenetrePieces.tailleMinimale == CGSize(width: 820, height: 680))
+        #expect(FenetrePieces.tailleMinimale == CGSize(width: 1000, height: 680))
         #expect(NSHostingView(rootView: vue).fittingSize == FenetrePieces.tailleMinimale)
     }
 
@@ -377,7 +377,7 @@ struct FenetrePiecesZigbeeTests {
     /// du 02/10), ouverte ou repliee faute de place ; la fiche fermee, elle revient a sa place. La marge du bas suit
     /// la hauteur mesuree de la legende seule, puis de la legende et de la fiche : la ligne de niveau n'y compte plus.
     /// Les images de demo ne le montrent pas : `VueCapture` refait sa mise en page, alignee a gauche.
-    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 820, height: 680)])
+    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 1000, height: 680)])
     func rangeeDuBasAGauche(_ taille: CGSize) async throws {
         let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
         defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
@@ -443,7 +443,7 @@ struct FenetrePiecesZigbeeTests {
     /// meme colonne. Les noms de la scene evitent ces nouvelles places (`cadresInterface`). Et la marge du haut de la
     /// vue d'ensemble compte la ligne de niveau, qui est toujours la : elle ne change ni quand la ligne change de
     /// texte (le zoom, une piece isolee, dont le texte est le plus long), ni quand la pastille parait ou repart.
-    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 820, height: 680)])
+    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 1000, height: 680)])
     func ligneDeNiveauSousLeFil(_ taille: CGSize) async throws {
         let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
         defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
@@ -742,9 +742,11 @@ struct FenetrePiecesZigbeeTests {
         let colonne = try #require(moteur.cadresInterface["colonne"])
         #expect(abs(ligne.midY - feux.milieu) < 0.5 && ligne.minY == 0, "la ligne centree sur les boutons : \(ligne)")
         #expect(ligne.minX == feux.droite + HautPieces.ecartFeux, "la capsule de gauche apres les boutons : \(ligne)")
-        let capsule = NSHostingView(rootView: BarreOutilsZigbee().capsuleDeVerre()
+        let capsule = NSHostingView(rootView: BarreOutils().capsuleDeVerre()
             .environment(demo)
+            .environment(SondeMaillageThread(preferences: p, actif: false))
             .environment(SondeMaillageZigbee(preferences: p, actif: false, trousseau: TrousseauMemoireZigbee()))
+            .environment(NomsPasseur())
             .environment(NomsPont())).fittingSize.height
         let hautDesCapsules = feux.milieu - capsule / 2
         #expect(hautDesCapsules >= 10 && hautDesCapsules <= 13, "le haut des capsules : \(hautDesCapsules) pt")
@@ -1009,7 +1011,7 @@ struct FenetrePiecesZigbeeTests {
         let sonde = SondeMaillageZigbee(preferences: p, actif: false, trousseau: TrousseauMemoireZigbee())
         let noms = NomsPont()
         let s = NomsSceneZigbeeTests.surveillanceDemo()
-        let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
+        let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1400, height: 700),
                                styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
                                defer: false)
         fenetre.isReleasedWhenClosed = false
@@ -1025,11 +1027,11 @@ struct FenetrePiecesZigbeeTests {
         let cadre = try #require(hote.superview)
         func sous(_ x: CGFloat, _ y: CGFloat) -> NSView? { cadre.hitTest(NSPoint(x: x, y: fenetre.frame.height - y)) }
         let milieu = CadreFeux.defaut.milieu
-        #expect(sous(500, milieu) is BandeFenetre.Vue, "entre les capsules")
-        #expect(sous(500, 2) !== hote, "au bord du haut : le cadre de la fenetre")
+        #expect(sous(800, milieu) is BandeFenetre.Vue, "entre les capsules")
+        #expect(sous(800, 2) !== hote, "au bord du haut : le cadre de la fenetre")
         #expect(!(sous(CadreFeux.defaut.droite + HautPieces.ecartFeux + 20, milieu) is BandeFenetre.Vue), "la capsule de gauche")
-        #expect(!(sous(1000 - HautPieces.bordDroit - 20, milieu) is BandeFenetre.Vue), "la capsule de droite")
-        #expect(!(sous(500, 200) is BandeFenetre.Vue), "la scene")
+        #expect(!(sous(1400 - HautPieces.bordDroit - 20, milieu) is BandeFenetre.Vue), "la capsule de droite")
+        #expect(!(sous(800, 200) is BandeFenetre.Vue), "la scene")
     }
 
     /// La premiere sous-vue de ce type, dans `racine` ou plus bas.
@@ -1059,7 +1061,7 @@ struct FenetrePiecesZigbeeTests {
             NSHostingView(rootView: AnyView(vue.environment(s).environment(sonde).environment(noms).environment(SondeMaillageThread(preferences: p, actif: false)).environment(NomsPasseur())))
         }
         // La largeur de chaque capsule seule : celle de son contenu.
-        let gauche = hote(BarreOutilsZigbee().capsuleDeVerre()).fittingSize.width
+        let gauche = hote(BarreOutils().capsuleDeVerre()).fittingSize.width
         let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(troisD)).capsuleDeVerre()).fittingSize.width
         // Le haut de la fenetre a sa taille minimale, comme `FenetrePieces` le pose.
         let largeur = FenetrePieces.tailleMinimale.width

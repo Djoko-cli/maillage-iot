@@ -107,10 +107,10 @@ D'après `inventaire-etape3b.md` §3, §4 ; spec 3.1, 3.3, 6.7.
 - Modify: `MaillageIoT/Vues/Pieces/` (`ContenuHaut`, `BandeauPieces`, `HautPieces` : capsule de gauche = nom de la maison (Maison), menu des réseaux par protocole — Thread : réseaux, partitions, choix du réseau affiché ; Zigbee : le pont —, puis « ● Thread ⬢ Zigbee » ; « Appareils IP · N » seulement si Thread est montré ; ligne de tournée d'un protocole masqué cachée), `EntreeScene` (paramètre des protocoles montrés, combiné à `actif` ; masquage **stable** : la disposition est calculée sur les protocoles actifs, le masquage n'agit qu'au dessin), `FenetrePieces` (fiche, focus et isolement d'un nœud masqué fermés ; écran quand tout est masqué), préférences `vue.thread` / `vue.zigbee` (vrai par défaut).
 - Test: `masquageStable` (positions des pièces et des nœuds visibles identiques, protocole montré ou masqué) ; `ficheFermeeAuMasquage` ; `interrupteurGriseProtocoleEteint` ; `appareilsIPSelonThread` ; constantes de largeur et de hauteur de la barre.
 
-- [ ] **Step 1: RED** — tests ci-dessus.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : le masquage n'entre pas dans la scène calculée).
-- [ ] **Step 4: Commit** — « Barre du haut : nom de la maison, interrupteurs de vue, masquage stable ».
+- [x] **Step 1: RED** — tests ci-dessus.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : le masquage n'entre pas dans la scène calculée).
+- [x] **Step 4: Commit** — « Barre du haut : nom de la maison, interrupteurs de vue, masquage stable ».
 
 ---
 

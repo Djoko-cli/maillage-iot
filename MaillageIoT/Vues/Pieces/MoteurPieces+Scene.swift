@@ -11,6 +11,9 @@ extension MoteurPieces {
     /// ou du glisser. Si ses etages, ses pieces, ses noeuds ou leurs noms changent, la disposition est
     /// recalculee hors du fil principal ; l'ancienne reste affichee pendant ce temps.
     func recevoir(_ e: EntreeScene) {
+        // Un protocole masque ne laisse ni fiche ni focus : ils se ferment tout de suite, meme si la scene attend la fin d'un
+        // mouvement (l'isolement d'une piece, lui, se ferme a la pose de la scene, `installer`).
+        if let choisi = selection, !e.montre(choisi) { selection = nil }
         if occupe {
             attente = e
             return
@@ -194,6 +197,8 @@ extension MoteurPieces {
         textes = Self.textes(e, focus: focus)
         routeurs = Set(scene.noeuds.filter(\.route).map(\.id))
         teintes = Dictionary(uniqueKeysWithValues: scene.pieces.indices.map { ($0, scene.pieces[$0].teinte) })
+        // Un noeud choisi dont le protocole est masque n'est plus choisi (sa fiche et son focus se ferment).
+        if let choisi = selection, !e.montre(choisi) { selection = nil }
         construireEtiquettes()
         majFil()
         majMiseEnAvant()
@@ -211,6 +216,11 @@ extension MoteurPieces {
             // disparue), elle ne bouge pas.
             suivre(depuis: ancre0)
         }
+        // Une piece isolee dont tous les noeuds sont d'un protocole masque n'a plus rien a montrer : retour a la maison.
+        if estIsolee, let f = focus, f < scene.pieces.count, !scene.pieces[f].noeuds.isEmpty,
+           scene.pieces[f].noeuds.allSatisfy({ !e.montre($0) }) {
+            versMaison()
+        }
         reveiller()
     }
 
@@ -224,13 +234,14 @@ extension MoteurPieces {
         var t = TextesScene()
         t.noeuds = e.libelles
         for (i, p) in e.scene.pieces.enumerated() {
+            // Le compte d'une piece est celui des noeuds dessines : un protocole masque n'y compte pas.
             t.pieces[i] = TextesScene.Piece(nom: LibellesNoeuds.nom(p.nom, libelles: e.libelles),
-                                            compte: LibellesNoeuds.compte(p.noeuds.count))
+                                            compte: LibellesNoeuds.compte(p.noeuds.count { e.montre($0) }))
         }
         for (i, et) in e.scene.etages.enumerated() { t.etages[i] = LibellesNoeuds.nom(et.nom) }
         t.maison = String(localized: "⌂ Maison")
         if let f = focus {
-            for a in SceneProjetee.reperes(e.scene, focus: f) {
+            for a in SceneProjetee.reperes(e.scene, focus: f) where e.montre(a.enfant) {
                 t.ailleurs[a.enfant] = LibellesNoeuds.ailleurs(a, scene: e.scene, libelles: e.libelles)
             }
         }
@@ -268,7 +279,8 @@ extension MoteurPieces {
             }
             l.append(e)
         }
-        for n in scene.noeuds {
+        // Le nom d'un noeud d'un protocole masque n'est ni pose ni dessine ; les etiquettes se retrouvent par leur cle.
+        for n in scene.noeuds where entree?.montre(n.id) ?? true {
             let libelle = textes.noeuds[n.id] ?? LibellesNoeuds.Libelle(texte: n.id.cle)
             ajouter(.noeud(n.id), mesure.noeud(libelle, routeur: n.route))
         }

@@ -260,34 +260,41 @@ struct BandeFenetre: View {
     }
 }
 
-/// Ce que le haut de la fenetre montre d'une scene d'apres les protocoles qui y ont des noeuds : la barre d'outils, les
-/// lignes de tournee, le bandeau d'une maison sans pieces et les commandes des liens. Une scene des deux reseaux montre les
-/// commandes des deux (la barre definitive, avec les interrupteurs de vue, est a l'etape 3b).
+/// Ce que le haut de la fenetre montre d'une scene d'apres les protocoles qui y ont des noeuds et ceux que la vue montre
+/// (interrupteurs de vue, `InterrupteursVue`) : les lignes de tournee, le bandeau d'une maison sans pieces, les commandes des
+/// liens et « Appareils IP ». La barre d'outils est la meme pour toutes les scenes (`BarreOutils`). Un protocole masque n'a
+/// plus de ligne de tournee, de commande ni de bouton ; la place de sa ligne reste comptee (`emplacements`) : la vue ne se
+/// recadre pas quand il se masque ou revient.
 struct ContenuHaut: Equatable {
     let protocoles: Set<Protocole>
+    /// Les protocoles montres (voulus et actifs) ; tous par defaut.
+    let montres: Set<Protocole>
 
-    init(protocoles: Set<Protocole>) {
+    init(protocoles: Set<Protocole>, montres: Set<Protocole> = Set(Protocole.allCases)) {
         self.protocoles = protocoles
+        self.montres = montres
     }
 
-    /// La barre d'outils de Zigbee n'est celle du haut que pour une scene qui n'a que Zigbee. Avec des noeuds Thread (les
-    /// deux reseaux, ou aucun noeud), c'est celle de Thread, dont le journal et le bouton rafraichir servent aux deux
-    /// protocoles.
-    var barreZigbee: Bool { protocoles == [.zigbee] }
-
-    /// Les lignes de tournee, Thread d'abord : celle de chaque protocole de la scene. Sans noeud, celle de Thread.
-    var tournees: [Protocole] {
+    /// La place d'une ligne de tournee par protocole de la scene, Thread d'abord, montre ou non ; sans noeud, celle de Thread.
+    var emplacements: [Protocole] {
         let p = Protocole.allCases.filter(protocoles.contains)
         return p.isEmpty ? [.thread] : p
     }
 
+    /// Les lignes de tournee montrees, Thread d'abord : celle de chaque protocole de la scene qui est montre. Sans noeud,
+    /// celle de Thread, s'il est montre.
+    var tournees: [Protocole] { emplacements.filter(montres.contains) }
+
     /// « Liens : chemins | tous » et les voisins entendus a la selection : ceux de Zigbee, des qu'un noeud de Zigbee est de
-    /// la scene (Thread n'en depend pas, `ModeleProtocole.suitModeLiens`).
-    var liens: Bool { protocoles.contains(.zigbee) }
+    /// la scene et que Zigbee est montre (Thread n'en depend pas, `ModeleProtocole.suitModeLiens`).
+    var liens: Bool { protocoles.contains(.zigbee) && montres.contains(.zigbee) }
+
+    /// « Appareils IP · N » (les appareils du reseau local, hors Thread) : seulement quand Thread est montre.
+    var appareilsIP: Bool { montres.contains(.thread) }
 
     /// Le bandeau d'une maison sans pieces est celui de Zigbee (le pont donnera les pieces) pour une scene de Zigbee seul, et
     /// celui de Maison sinon.
-    var sansPiecesZigbee: Bool { barreZigbee }
+    var sansPiecesZigbee: Bool { protocoles == [.zigbee] }
 }
 
 /// Haut de la fenetre, pose sur la scene : la ligne des capsules, centree sur les trois boutons de la
@@ -314,9 +321,10 @@ struct HautPieces: View {
     /// « Maillage incomplet » (avec l'heure de la passe complementaire programmee, `TexteTourneeZigbee.texteIncomplet`) :
     /// il prend la place de la ligne de la tournee quand aucune ne tourne ; nil : aucun.
     var texteIncomplet: String?
-    /// Les protocoles qui ont des noeuds dans la scene (`EntreeScene.protocoles`) : ils disent la barre, les lignes de tournee
-    /// et les commandes (`ContenuHaut`).
+    /// Les protocoles qui ont des noeuds dans la scene (`EntreeScene.protocoles`) et ceux que la vue montre
+    /// (`EntreeScene.montres`) : ils disent les lignes de tournee et les commandes (`ContenuHaut`).
     var protocoles: Set<Protocole> = []
+    var montres: Set<Protocole> = Set(Protocole.allCases)
     var feux = CadreFeux.defaut
     /// Le bas du haut de la fenetre, dans l'espace de la vue, la place d'une ligne de tournee absente comprise.
     var surBas: (CGFloat) -> Void = { _ in }
@@ -334,22 +342,26 @@ struct HautPieces: View {
         feux.droite > 0 ? feux.droite + ecartFeux : bordDroit
     }
 
-    /// La place de la ligne de tournee de chaque protocole de la scene (`ContenuHaut.tournees`), Thread d'abord.
+    /// La place de la ligne de tournee de chaque protocole de la scene (`ContenuHaut.emplacements`), Thread d'abord. Celle d'un
+    /// protocole masque n'est jamais montree, mais sa place reste comptee, tournee en cours ou non : la marge du haut ne
+    /// change pas quand on le masque (le masquage est stable).
     private var places: [(protocole: Protocole, place: LigneTournee.Place)] {
-        ContenuHaut(protocoles: protocoles).tournees.map { p in
-            switch p {
-            case .thread: (p, LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee))
-            case .zigbee: (p, LigneTournee.place(serie: sondeZigbee?.serie, debut: sondeZigbee?.debutTournee))
+        let contenu = ContenuHaut(protocoles: protocoles, montres: montres)
+        return contenu.emplacements.map { p in
+            let place: LigneTournee.Place = switch p {
+            case .thread: LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee)
+            case .zigbee: LigneTournee.place(serie: sondeZigbee?.serie, debut: sondeZigbee?.debutTournee)
             }
+            return (p, place == .montree && !montres.contains(p) ? .comptee : place)
         }
     }
 
     var body: some View {
-        let contenu = ContenuHaut(protocoles: protocoles)
+        let contenu = ContenuHaut(protocoles: protocoles, montres: montres)
         let places = self.places
         // Hors tournee, une sonde retenue : la marge du haut compte la ligne absente et son espacement, pour chaque protocole.
         // L'indicateur du maillage incomplet (Zigbee) prend la place de la ligne de Zigbee (de la meme hauteur) : rien ne saute.
-        let incompletZigbee = texteIncomplet != nil
+        let incompletZigbee = texteIncomplet != nil && montres.contains(.zigbee)
         let reservees: Int = places.filter { p in
             p.place == .comptee && !(p.protocole == .zigbee && incompletZigbee)
         }.count
@@ -358,14 +370,12 @@ struct HautPieces: View {
             // Chaque capsule garde la largeur de son contenu (`fixedSize`) : la bande vide prend la place qui
             // reste. Sans cela, les trois se la partagent et la capsule du reseau tronque ses boutons.
             HStack(spacing: 0) {
-                Group {
-                    if contenu.barreZigbee { BarreOutilsZigbee() } else { BarreOutils() }
-                }
-                .capsuleDeVerre()
-                .fixedSize()
+                BarreOutils()
+                    .capsuleDeVerre()
+                    .fixedSize()
                 BandeFenetre()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                CommandesVue(moteur: moteur, troisD: $troisD)
+                CommandesVue(moteur: moteur, troisD: $troisD, montres: montres)
                     .capsuleDeVerre()
                     .fixedSize()
             }
@@ -380,7 +390,7 @@ struct HautPieces: View {
             VStack(alignment: .leading, spacing: FenetrePieces.espacementNiveau) {
                 VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                     // Une ligne par protocole dont une tournee tourne : Thread, puis Zigbee.
-                    ForEach(places.filter { $0.place == .montree }, id: \.protocole) { p in
+                    ForEach(places.filter { $0.place == .montree && montres.contains($0.protocole) }, id: \.protocole) { p in
                         Group {
                             switch p.protocole {
                             case .thread: LigneTournee()
@@ -390,10 +400,14 @@ struct HautPieces: View {
                         .transition(apparition.transitionAnimee)
                     }
                     if let r = surveillance.thread.reseau, r.estScinde {
+                        // Thread masque : le bandeau n'est pas dessine, mais garde sa place (la vue ne se recadre pas).
                         BandeauScission(reseau: r)
+                            .opacity(montres.contains(.thread) ? 1 : 0)
+                            .allowsHitTesting(montres.contains(.thread))
+                            .accessibilityHidden(!montres.contains(.thread))
                             .transition(apparition.transitionAnimee)
                     }
-                    if let texteIncomplet {
+                    if let texteIncomplet, montres.contains(.zigbee) {
                         IndicateurIncomplet(texte: texteIncomplet, hauteur: hauteurTournee)
                             .transition(apparition.transitionAnimee)
                     }
@@ -417,7 +431,7 @@ struct HautPieces: View {
                 if places.contains(where: { $0.place != .aucune }) {
                     // Les deux lignes ont la meme hauteur : une seule est mesuree.
                     Group {
-                        if contenu.tournees.contains(.thread) { LigneTournee.gabarit } else { LigneTourneeZigbee.gabarit }
+                        if contenu.emplacements.contains(.thread) { LigneTournee.gabarit } else { LigneTourneeZigbee.gabarit }
                     }
                     .fixedSize()
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hauteurTournee = $0 }

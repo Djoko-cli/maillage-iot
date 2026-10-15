@@ -6,24 +6,23 @@ import Testing
 
 /// Etape 3a, tache 13 : le haut de la fenetre de la vue par pieces et son ecran d'attente suivent les protocoles de la scene.
 /// Une scene qui a les deux reseaux montre les commandes de Thread et celles de Zigbee (liens, voisins, ligne de tournee) ;
-/// la barre definitive, avec les interrupteurs de vue, est a l'etape 3b.
+/// la barre est une seule (etape 3b, tache 5 : `VueProtocolesTests` tient les interrupteurs de vue et le masquage).
 @MainActor
 @Suite("Haut de la fenetre : commandes et ecran d'attente par protocole")
 struct BarreDuHautTests {
-    /// Ce que le haut montre pour chaque ensemble de protocoles de la scene. Le haut ne depend plus d'un drapeau « Zigbee seul »
-    /// qui laissait la scene reunie avec la barre de Thread seule.
+    /// Ce que le haut montre pour chaque ensemble de protocoles de la scene (tous montres). Une seule barre, quel que soit
+    /// l'ensemble : ses lignes de tournee et ses commandes seules changent.
     @Test func commandesDuHaut() {
         let rien = ContenuHaut(protocoles: []), thread = ContenuHaut(protocoles: [.thread])
         let zigbee = ContenuHaut(protocoles: [.zigbee]), deux = ContenuHaut(protocoles: [.thread, .zigbee])
-        // Thread seul, ou rien a montrer : la barre de Thread, sa ligne de tournee, pas de liens.
+        // Thread seul, ou rien a montrer : sa ligne de tournee, pas de liens.
         for c in [rien, thread] {
-            #expect(c.tournees == [.thread] && !c.liens && !c.barreZigbee)
+            #expect(c.tournees == [.thread] && !c.liens)
         }
-        // Zigbee seul : la barre de Zigbee, sa ligne de tournee, les liens et les voisins.
-        #expect(zigbee.tournees == [.zigbee] && zigbee.liens && zigbee.barreZigbee)
-        // Les deux : la barre de Thread (journal et rafraichir servent aux deux), les deux lignes de tournee, Thread d'abord,
-        // et les liens et voisins de Zigbee.
-        #expect(deux.tournees == [.thread, .zigbee] && deux.liens && !deux.barreZigbee)
+        // Zigbee seul : sa ligne de tournee, les liens et les voisins.
+        #expect(zigbee.tournees == [.zigbee] && zigbee.liens)
+        // Les deux : les deux lignes de tournee, Thread d'abord, et les liens et voisins de Zigbee.
+        #expect(deux.tournees == [.thread, .zigbee] && deux.liens)
         #expect(deux.sansPiecesZigbee == false && zigbee.sansPiecesZigbee && !thread.sansPiecesZigbee)
     }
 
@@ -34,10 +33,10 @@ struct BarreDuHautTests {
         let c = ContenuHaut(protocoles: reunie.protocoles)
         #expect(c.tournees == [.thread, .zigbee] && c.liens)
         let m = MoteurPiecesTests.moteur(reunie)
-        #expect(CommandesVue.montreLiens(scene: m.scene), "les liens de Zigbee, avec ceux de Thread")
+        #expect(CommandesVue.montreLiens(scene: m.scene, montres: reunie.montres), "les liens de Zigbee, avec ceux de Thread")
         let seulThread = MoteurPiecesTests.moteur(EntreeScene(surveillance: SurveillanceTests.demo(), places: PlacesGardees()))
-        #expect(!CommandesVue.montreLiens(scene: seulThread.scene), "Thread seul : pas de liens")
-        #expect(!CommandesVue.montreLiens(scene: nil))
+        #expect(!CommandesVue.montreLiens(scene: seulThread.scene, montres: reunie.montres), "Thread seul : pas de liens")
+        #expect(!CommandesVue.montreLiens(scene: nil, montres: reunie.montres))
     }
 
     /// L'ecran d'attente dit l'etat de chaque protocole actif : « Ecoute du reseau local… » n'est pas dit quand Thread est

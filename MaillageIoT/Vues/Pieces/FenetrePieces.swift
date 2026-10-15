@@ -20,6 +20,8 @@ struct FenetrePieces: View {
     @AppStorage(FenetrePieces.cleGrille) private var etagesEnGrille = true
     /// Le repli de la legende, tel que Djoko l'a laisse (la preference de `LigneDuBas`) : la zone visible de la grille.
     @AppStorage(LegendePieces.cleRepliee) private var legendeRepliee = false
+    /// Les interrupteurs de vue « Thread » / « Zigbee » (`vue.thread`, `vue.zigbee`), gardes d'un lancement a l'autre.
+    private let vue = PreferencesVue()
     @State private var moteur: MoteurPieces
     @State private var piecesChoisies: PiecesChoisies
     @State private var aRenommer: NoeudChoisi?
@@ -81,9 +83,12 @@ struct FenetrePieces: View {
 
     /// Taille minimale de la fenetre (polissage B, section 3) : avec la fiche et ses courbes, la scene
     /// garde environ 230 pt de haut (88 pour 820 x 560, tri du sous-projet A, n° 11 ; 234 mesures, ligne de niveau
-    /// comprise, sur le jeu de l'historique). 820 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
-    /// invisible : la fenetre ne descend pas sous 820 x 732 pt.
-    static let tailleMinimale = CGSize(width: 820, height: 680)
+    /// comprise, sur le jeu de l'historique). 1000 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
+    /// invisible : la fenetre ne descend pas sous 1000 x 732 pt. La largeur est celle des deux capsules du haut des deux
+    /// protocoles en 3D, avec la bande entre elles (etape 3b, tache 5 : la capsule de gauche porte le nom de la maison, les
+    /// deux interrupteurs de vue, « Appareils IP », le journal et rafraichir, 465 pt avec « Maison (démo) », 488 pt au plus avec un nom coupe ; celle de droite,
+    /// 365 pt avec les liens de Zigbee et « Rotation lente » ; la largeur etait de 820 pt avant). `VueProtocolesTests` la tient.
+    static let tailleMinimale = CGSize(width: 1000, height: 680)
     /// Largeur par defaut de la fenetre (`MaillageIoTApp`, `.defaultSize`).
     static let largeurParDefaut: CGFloat = 1100
     /// Bord des elements poses sur la vue, et ecart entre eux (pt).
@@ -183,8 +188,11 @@ struct FenetrePieces: View {
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
             // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
+            // Le masquage n'agit qu'au dessin : la scene est celle des protocoles actifs, montres ou non (`EntreeScene.montres`).
+            let montres = InterrupteursVue.montres(preferes: vue.preferes, actifs: surveillance.protocolesActifs)
             let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
-                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix) : nil
+                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix, montres: montres)
+                : nil
             let fiche = moteur.selection != nil
             // Sous une fiche, la legende se replie d'elle-meme si la place manque, sauf si Djoko l'a rouverte.
             let repliDePlace = fiche && !legendeRouverte && hauteurVue.map {
@@ -201,14 +209,19 @@ struct FenetrePieces: View {
                     if !moteur.pret {
                         ProgressView().controlSize(.small)
                     }
+                    // Tout est masque : la vue le dit, en une ligne (les pieces restent a leur place).
+                    if entree.toutMasque, let texte = MessageMasque.texte(protocoles: entree.protocoles) {
+                        VueToutMasque(texte: texte)
+                    }
                 } else {
                     EtatVide()
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
-                           ancien: surveillance.modeles.contains(where: \.maillageAncien),
+                           ancien: surveillance.modeles.contains { montres.contains($0.protocole) && $0.maillageAncien },
                            texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
-                           protocoles: entree?.protocoles ?? [], feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           protocoles: entree?.protocoles ?? [], montres: montres,
+                           feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
@@ -427,20 +440,22 @@ struct MenuPieces: View {
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les protocoles montres (`EntreeScene.montres`) : les commandes de Zigbee n'y sont que s'il l'est ; tous par defaut.
+    var montres = Set(Protocole.allCases)
     /// Les liens montres, gardes d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleLiens) private var liensGardes = ModeLiens.chemins.rawValue
     /// Les voisins entendus a la selection, gardes d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleVoisins) private var voisinsGardes = true
 
-    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene (`ContenuHaut.liens`), seul ou avec
-    /// Thread.
-    static func montreLiens(scene: ScenePieces?) -> Bool {
-        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? [])).liens
+    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene et que Zigbee est montre
+    /// (`ContenuHaut.liens`), seul ou avec Thread.
+    static func montreLiens(scene: ScenePieces?, montres: Set<Protocole>) -> Bool {
+        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? []), montres: montres).liens
     }
 
     var body: some View {
         HStack(spacing: 5) {
-            if Self.montreLiens(scene: moteur.scene) {
+            if Self.montreLiens(scene: moteur.scene, montres: montres) {
                 SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
                     moteur.liens = v
                     liensGardes = v.rawValue

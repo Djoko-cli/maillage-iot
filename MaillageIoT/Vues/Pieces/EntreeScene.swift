@@ -33,13 +33,21 @@ struct EntreeScene: Equatable {
     var appareils: [IdNoeud: AppareilAffiche]
     /// Les modeles de protocole de la coque : leur mise en avant et le choix de leurs voisins, par protocole du noeud.
     let modeles: [any ModeleProtocole]
+    /// Les protocoles montres : ceux dont l'interrupteur de vue est allume (`vue.thread`, `vue.zigbee`) et qui sont actifs
+    /// (« Activer ce protocole ») ; un protocole eteint est masque quelle que soit la preference. Le masquage est STABLE : la
+    /// scene, sa disposition, ses pieces et la place de chaque noeud sont ceux de tous les protocoles actifs, montres ou non
+    /// (`scene` ne lit pas ce champ) ; il n'agit qu'au dessin (`EtatAnime.masques`, les noms, la legende, le compte des pieces)
+    /// et sur ce qui s'ouvre a un noeud (fiche, focus, isolement : `MoteurPieces`).
+    let montres: Set<Protocole>
 
     /// `reseau` : le reseau de Thread a montrer (nil : Thread n'en a pas) ; `places` : les places gardees, dont l'ordre des
     /// etages de la maison et ses choix de niveau ; `choix` : les pieces choisies pour les noeuds que Maison ne place pas,
     /// routeurs de bordure (sous leur instance) et autres noeuds (sous leur ExtMac, precision 27 ; sous leur adresse
-    /// longue pour Zigbee). Zigbee est de la scene quand il a un maillage ou des appareils du pont.
+    /// longue pour Zigbee). Zigbee est de la scene quand il a un maillage ou des appareils du pont. `montres` : les protocoles
+    /// que la vue dessine (tous par defaut), combines a ceux qui sont actifs ; la scene n'en depend pas.
     @MainActor
-    init(surveillance: Surveillance, reseau r: Reseau?, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs()) {
+    init(surveillance: Surveillance, reseau r: Reseau?, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs(),
+         montres: Set<Protocole> = Set(Protocole.allCases)) {
         let thread = surveillance.thread, zigbee = surveillance.zigbee
         // Un protocole eteint (« Activer ce protocole ») n'est pas de la scene : aucun de ses noeuds, liens, libelles ni pieces.
         let r = thread.actif ? r : nil
@@ -110,6 +118,7 @@ struct EntreeScene: Equatable {
         self.maillageZigbee = maillageZigbee
         self.chefs = chefs
         modeles = surveillance.modeles
+        self.montres = montres.intersection(surveillance.protocolesActifs)
         self.appareils = appareils
         apparences = Dictionary(scene.noeuds.map { n in
             let a = appareils[n.id]
@@ -128,8 +137,10 @@ struct EntreeScene: Equatable {
 
     /// La scene de la surveillance : le reseau de Thread affiche (`SurveillanceThread.reseau`) et celui de Zigbee.
     @MainActor
-    init(surveillance: Surveillance, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs()) {
-        self.init(surveillance: surveillance, reseau: surveillance.thread.reseau, places: places, choix: choix)
+    init(surveillance: Surveillance, places: PlacesGardees, choix: PiecesRouteurs = PiecesRouteurs(),
+         montres: Set<Protocole> = Set(Protocole.allCases)) {
+        self.init(surveillance: surveillance, reseau: surveillance.thread.reseau, places: places, choix: choix,
+                  montres: montres)
     }
 
     /// Le classement des noeuds : la regle du protocole de chaque noeud, jamais celle d'un autre (le `switch` n'a pas de defaut :
@@ -148,17 +159,31 @@ struct EntreeScene: Equatable {
     /// Les protocoles qui ont au moins un noeud dans la scene.
     var protocoles: Set<Protocole> { Set(graphe.noeuds.map(\.id.protocole)) }
 
+    /// Les protocoles de la scene que la vue dessine (montres).
+    var visibles: Set<Protocole> { protocoles.intersection(montres) }
+
+    /// Les protocoles que la projection ne dessine pas : tous ceux qui ne sont pas montres.
+    var masques: Set<Protocole> { Set(Protocole.allCases).subtracting(montres) }
+
+    /// Le noeud `id` est dessine : son protocole est montre. Un noeud masque n'a ni nom, ni pastille, ni lien, ni fiche.
+    func montre(_ id: IdNoeud) -> Bool { montres.contains(id.protocole) }
+
+    /// La scene a des noeuds, et aucun n'est dessine : tout est masque.
+    var toutMasque: Bool { !protocoles.isEmpty && visibles.isEmpty }
+
     /// Le modele du protocole `protocole` ; nil si la coque n'en porte pas.
     @MainActor
     func modele(pour protocole: Protocole) -> (any ModeleProtocole)? {
         modeles.first { $0.protocole == protocole }
     }
 
-    /// Egalite de ce que la vue dessine : la scene, les libelles, les apparences et le domicile. Ce dont
-    /// la scene est faite n'y entre pas : un maillage recu plus tard, qui ne change rien a la scene, ne
-    /// la fait pas reposer par le moteur (`MoteurPieces.recevoir`).
+    /// Egalite de ce que la vue dessine : la scene, les libelles, les apparences, le domicile et les protocoles montres. Ce
+    /// dont la scene est faite n'y entre pas : un maillage recu plus tard, qui ne change rien a la scene, ne la fait pas
+    /// reposer par le moteur (`MoteurPieces.recevoir`). Les protocoles montres y sont : un interrupteur de vue change le
+    /// dessin, sans changer la disposition (`cleDisposition`).
     static func == (a: EntreeScene, b: EntreeScene) -> Bool {
         a.scene == b.scene && a.libelles == b.libelles && a.apparences == b.apparences && a.domicile == b.domicile
+            && a.montres == b.montres
     }
 
     /// Mode focus du graphe : ce qui reste net a la selection du noeud `id`, calcule par le modele de son protocole

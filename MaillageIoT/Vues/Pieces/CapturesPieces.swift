@@ -383,7 +383,8 @@ struct VueCapture: View {
         ZStack(alignment: .topLeading) {
             RadialGradient(gradient: palette.fond, center: UnitPoint(x: 0.3, y: 0.35), startRadius: 0, endRadius: 900)
             Canvas { ctx, taille in moteur.image(&ctx, taille: taille, echelle: 2, palette: palette) }
-            HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), protocoles: moteur.entree?.protocoles ?? [])
+            HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), protocoles: moteur.entree?.protocoles ?? [],
+                       montres: moteur.entree?.montres ?? Set(Protocole.allCases))
             FeuxDeCapture()
             VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 Spacer()

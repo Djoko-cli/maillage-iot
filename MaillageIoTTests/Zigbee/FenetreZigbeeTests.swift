@@ -9,11 +9,12 @@ import ProtocoleZigbee
 @MainActor
 @Suite("Fenetre : barre d'outils et ligne de la tournee (Zigbee)")
 struct FenetreZigbeeTests {
-    /// L'aide du bouton rafraichir dit ce qu'il lancera vraiment : une tournee si la sonde est connectee et libre.
+    /// L'aide du bouton rafraichir, dans la barre commune aux deux protocoles (etape 3b, tache 5 : celle de Zigbee seul n'est
+    /// plus), dit ce qu'il lancera vraiment : une tournee si la sonde de Zigbee est connectee et libre, sans les noms de
+    /// Maison hors du mode direct.
     @Test func aideDuBoutonRafraichir() {
-        #expect(BarreOutilsZigbee.aideRafraichir(tournee: true) == String(localized: "Rafraîchir : tournée de la sonde"))
-        #expect(BarreOutilsZigbee.aideRafraichir(tournee: false)
-                == String(localized: "Rafraîchir : rien à relever sans sonde connectée"))
+        #expect(BarreOutils.aideRafraichir(tournee: true, passeur: false) == String(localized: "Rafraîchir : réseau et tournée de la sonde"))
+        #expect(BarreOutils.aideRafraichir(tournee: false, passeur: false) == String(localized: "Rafraîchir : réseau"))
     }
 
     /// La capsule de la tournee garde la meme largeur a chaque etape (celle de la plus longue,
@@ -55,7 +56,8 @@ struct FenetreZigbeeTests {
         let sonde = SondeMaillageZigbee(preferences: p, actif: true, trousseau: TrousseauMemoireZigbee(),
                                   ouvrirCanal: { _ in CanalRejoueZigbee { CanalRejoueZigbee.sondeMinimale($0) } })
         func taille(_ vue: some View) -> CGSize {
-            NSHostingView(rootView: vue.environment(surveillance).environment(sonde).environment(noms)).fittingSize
+            NSHostingView(rootView: vue.environment(surveillance).environment(sonde).environment(noms)
+                .environment(SondeMaillageThread(preferences: p, actif: false)).environment(NomsPasseur())).fittingSize
         }
         func pile() -> CGSize {
             taille(VStack(spacing: 10) {
@@ -64,13 +66,13 @@ struct FenetreZigbeeTests {
                 Color.clear.frame(width: 10, height: 10)
             })
         }
-        let barre = taille(BarreOutilsZigbee())
+        let barre = taille(BarreOutils())
         #expect(pile().height == 30, "hors tournee : rien")
         await sonde.connecter(SondeMaillageZigbeeTests.port, choisi: true)
         sonde.debuterTournee()
         sonde.avancer(AvancementTourneeZigbee(etape: .tables, fait: 3, total: 12))
         #expect(sonde.tourneeEnCours && !sonde.tourneeAuRafraichir)
-        #expect(taille(BarreOutilsZigbee()) == barre)
+        #expect(taille(BarreOutils()) == barre)
         #expect(pile().height > 30, "pendant la tournee : la ligne de l'indicateur")
         sonde.finirTournee(nil)
         #expect(pile().height == 30 && sonde.avancement == nil && sonde.debutTournee == nil)

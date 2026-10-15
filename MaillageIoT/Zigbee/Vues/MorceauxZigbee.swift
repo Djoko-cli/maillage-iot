@@ -3,40 +3,9 @@ import ProtocoleZigbee
 import SwiftUI
 
 // La part de Zigbee des morceaux de la fenetre de la vue par pieces (la coque commune est `MorceauxFenetre` : la
-// feuille « Renommer… », la place de la ligne de la tournee, l'indicateur du maillage incomplet). L'ecran d'attente
+// barre d'outils, la feuille « Renommer… », la place de la ligne de la tournee, l'indicateur du maillage incomplet). L'ecran d'attente
 // (`EtatVide`) et le haut de la fenetre (`ContenuHaut`) choisissent, pour chaque protocole de la scene, le morceau qui lui
 // revient.
-
-/// Capsule de gauche du haut de la fenetre pour Zigbee : journal, rafraichir (tournee de la sonde de Zigbee).
-struct BarreOutilsZigbee: View {
-    @Environment(SondeMaillageZigbee.self) private var sonde
-    @Environment(\.openWindow) private var openWindow
-
-    /// Aide du bouton rafraichir : ce qu'il lancera vraiment, une tournee si la sonde est connectee et libre
-    /// (`SondeMaillageZigbee.tourneeAuRafraichir`).
-    static func aideRafraichir(tournee: Bool) -> String {
-        tournee ? String(localized: "Rafraîchir : tournée de la sonde") : String(localized: "Rafraîchir : rien à relever sans sonde connectée")
-    }
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Text("Réseau Zigbee")
-                .padding(.horizontal, 4)
-            Button("Journal") {
-                openWindow(id: "journal")
-            }
-            .buttonStyle(StyleBoutonCapsule())
-            // Pendant une tournee : rien de plus.
-            Button {
-                sonde.rafraichir()
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .buttonStyle(StyleBoutonCapsule())
-            .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir))
-        }
-    }
-}
 
 /// Ligne de la tournee en cours de la sonde de Zigbee, en haut de la colonne de gauche (voir `LigneTournee` pour la
 /// place qu'elle prend et garde) : vue a part, seule elle se redessine a chaque pas de la tournee.

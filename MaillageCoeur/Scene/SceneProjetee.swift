@@ -57,11 +57,16 @@ public struct EtatAnime: Hashable, Sendable {
     /// (`MiseEnAvant.cle`), de 0 (net) a 1 (estompe) ; absent : net.
     public var noeudsEstompes: [IdNoeud: Double]
     public var liensEstompes: [String: Double]
+    /// Les protocoles masques (interrupteurs de vue) : ni leurs pastilles, ni leurs liens, ni leurs fils « ailleurs » ne sont
+    /// projetes. Le masquage n'agit qu'au dessin : la scene, sa disposition et la place de chaque noeud ne le lisent pas, et
+    /// les pieces restent ou elles sont. Vide : rien n'est masque.
+    public var masques: Set<Protocole>
 
     public init(t: Double = 0, s: Double = 0, fk: [Double], focus: Int? = nil, survol: IdNoeud? = nil,
                 selection: IdNoeud? = nil, se: Double = 0, ek: [Double] = [], survolEtage: Int? = nil,
                 liens: ModeLiens = .tous, voisins: Bool = true, protocolesSansMode: Set<Protocole> = [],
-                noeudsEstompes: [IdNoeud: Double] = [:], liensEstompes: [String: Double] = [:]) {
+                noeudsEstompes: [IdNoeud: Double] = [:], liensEstompes: [String: Double] = [:],
+                masques: Set<Protocole> = []) {
         self.t = t
         self.s = s
         self.fk = fk
@@ -76,6 +81,7 @@ public struct EtatAnime: Hashable, Sendable {
         self.protocolesSansMode = protocolesSansMode
         self.noeudsEstompes = noeudsEstompes
         self.liensEstompes = liensEstompes
+        self.masques = masques
     }
 
     /// Le mode des liens qui vaut pour `l` : `liens`, sauf pour un lien d'un protocole qui l'ignore (`protocolesSansMode`),
@@ -434,7 +440,7 @@ public struct SceneProjetee: Sendable {
 
         // Pastilles ; en mode focus, celles qui ne sont pas mises en avant s'estompent, avec leur nom.
         for (id, e) in etat.noeudsEstompes where e > 0 { facteursNoeuds[id] = MiseEnAvant.facteur(e) }
-        for n in scene.noeuds {
+        for n in scene.noeuds where !etat.masques.contains(n.id.protocole) {
             guard let p = mondes[n.id], let e = proj.ecran(p) else { continue }
             let r = rayonPastille(n.rayon, en: p)
             disques.append(Disque(noeud: n.id, centre: e, rayon: r,
@@ -443,7 +449,7 @@ public struct SceneProjetee: Sendable {
                                   profondeur: proj.profondeur(p), focus: facteur(noeud: n.id)))
             ancresNoeuds[n.id] = CGRect(x: Double(e.x) - r, y: Double(e.y) - r, width: 2 * r, height: 2 * r)
         }
-        for id in fantomes.sorted() {
+        for id in fantomes.sorted() where !etat.masques.contains(id.protocole) {
             guard let n = poses.noeuds[id], let p = mondes[id], let e = proj.ecran(p) else { continue }
             disques.append(Disque(noeud: id, centre: e, rayon: rayonPastille(n.rayon, en: p),
                                   opacite: min(1 - 0.8 * (pieceRestante(n).map { 1 - voiles[$0] } ?? es),
@@ -455,7 +461,7 @@ public struct SceneProjetee: Sendable {
         // Liens : estompes avec leurs pieces ; un lien qui touche l'etage isole reste visible, meme vers un autre
         // etage ; eclaires au survol (ou a la selection) d'un bout ; en mode focus, estompes s'ils ne sont pas mis en
         // avant.
-        for l in scene.liens {
+        for l in scene.liens where !etat.masques.contains(l.de.protocole) {
             guard let trace = Self.trace(l, mode: etat.mode(de: l), selection: etat.selection, voisins: etat.voisins),
                   let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b),
                   let na = scene.noeud(l.de), let nb = scene.noeud(l.vers) else { continue }
@@ -479,7 +485,7 @@ public struct SceneProjetee: Sendable {
             return (pieceRestante(n).map { voiles[$0] } ?? 1 - es, voileAncres(n.ancres))
         }
         let presents = poses.liens.isEmpty ? Set<String>() : Set(scene.liens.map(PosesScene.cle))
-        for (k, l) in poses.liens.sorted(by: { $0.key < $1.key }) where !presents.contains(k) {
+        for (k, l) in poses.liens.sorted(by: { $0.key < $1.key }) where !presents.contains(k) && !etat.masques.contains(l.de.protocole) {
             guard let trace = Self.trace(l.graphe, mode: etat.mode(de: l.graphe), selection: etat.selection, voisins: etat.voisins),
                   let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b) else { continue }
             let va = voilesBout(l.de), vb = voilesBout(l.vers)
@@ -491,7 +497,7 @@ public struct SceneProjetee: Sendable {
         // Reperes « ailleurs » de la piece isolee : un fil vers le bord de la piece, du cote du parent.
         if let i = etat.focus, i < scene.pieces.count, i < cartes.count {
             let fe = CameraScene.rampe(i < etat.fk.count ? etat.fk[i] : 0)
-            ailleurs = Self.reperes(scene, focus: i)
+            ailleurs = Self.reperes(scene, focus: i).filter { !etat.masques.contains($0.enfant.protocole) }
             for a in ailleurs {
                 guard let e = mondes[a.enfant], let pp = mondes[a.parent] else { continue }
                 var dir = pp - centres[i]
