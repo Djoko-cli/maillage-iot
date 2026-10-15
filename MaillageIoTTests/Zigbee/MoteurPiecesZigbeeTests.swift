@@ -396,7 +396,7 @@ struct MoteurPiecesZigbeeTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu), contour: .hexagone)
         #expect(autre != e && autre.cleDisposition == e.cleDisposition)
         let cuisine = try Self.indice(e, "Cuisine")
         let avant = m.positions[cuisine]
@@ -516,7 +516,7 @@ struct MoteurPiecesZigbeeTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu), contour: .hexagone)
         let cuisine = try Self.indice(e, "Cuisine")
         let depart = try Self.pointDePiece(m, cuisine)
         m.glisser(depart, depart: depart)

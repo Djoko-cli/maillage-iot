@@ -76,10 +76,10 @@ D'après `inventaire-etape3b.md` §1, §2, §6 ; spec 3.1, 6.7.
 - Modify: `MaillageIoT/Vues/Pieces/DessinNoeud.swift` (`Apparence` gagne la forme du protocole, valeur par défaut ronde), `Palette.swift` (couleur `routeurZigbee` violette, pont compris), `RenduCanvas.swift` (2D et 3D), `LegendePieces.swift` / `SigneLegende.swift` (ligne « ● Thread ⬢ Zigbee » seulement quand les deux protocoles sont dans la scène ; entrées communes rondes).
 - Test: les ~30 assertions sur `Apparence` réécrites dans cette tâche ; `ondesDessinees` (`MaillageIoTTests/…/LegendePiecesZigbeeTests.swift`) étendu à l'hexagone (ondes, pile, anneau pointillé et sélection n'empiètent sur aucun sommet) ; constantes de hauteur de la légende.
 
-- [ ] **Step 1: RED** — `hexagoneZigbee` (routeur facetté, pastille et anneau hexagonaux pour un appareil et un disparu, pointe en haut, sommets sur le rayon) ; `routeurZigbeeViolet` (pont compris) ; `routeurDeBordureBleu` inchangé ; test de pixels étendu ; légende : la ligne de protocole présente avec deux protocoles, absente avec un seul.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : aucune forme ni couleur dans les références).
-- [ ] **Step 4: Commit** — « Silhouettes : hexagone violet pour Zigbee, ligne de protocole dans la legende ».
+- [x] **Step 1: RED** — `hexagoneZigbee` (routeur facetté, pastille et anneau hexagonaux pour un appareil et un disparu, pointe en haut, sommets sur le rayon) ; `routeurZigbeeViolet` (pont compris) ; `routeurDeBordureBleu` inchangé ; test de pixels étendu ; légende : la ligne de protocole présente avec deux protocoles, absente avec un seul.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : aucune forme ni couleur dans les références).
+- [x] **Step 4: Commit** — « Silhouettes : hexagone violet pour Zigbee, ligne de protocole dans la legende ».
 
 ---
 

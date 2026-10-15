@@ -207,11 +207,16 @@ struct NomsSceneZigbeeTests {
         #expect(liens.contains { $0.0 != $0.1 } && liens.contains { $0.0 == $0.1 })
         #expect(!e.scene.sansPiecesMaison)
         #expect(e.domicile == "Maison (démo)")
-        #expect(e.apparences[idz(I.pont)] == DessinNoeud.Apparence(forme: .sphere(halo: 10), couleur: .routeur(principale: true)))
-        #expect(e.apparences[idz(I.lampeBureau)] == DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: .routeur(principale: true)))
-        #expect(e.apparences[idz(I.inconnu)]?.couleur == .routeurInconnu)
-        #expect(e.apparences[idz(I.priseSalon)] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu)))
-        #expect(e.apparences[idz(I.interrupteurSalon)] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable)))
+        // Zigbee : l'hexagone ; ses routeurs et le pont, violets (le pont garde son halo de 10 et sa couronne dans son nom).
+        #expect(e.apparences[idz(I.pont)] == DessinNoeud.Apparence(forme: .sphere(halo: 10), couleur: .routeurZigbee,
+                                                                    contour: .hexagone))
+        #expect(e.apparences[idz(I.lampeBureau)] == DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: .routeurZigbee,
+                                                                           contour: .hexagone))
+        #expect(e.apparences[idz(I.inconnu)]?.couleur == .routeurInconnu && e.apparences[idz(I.inconnu)]?.contour == .hexagone)
+        #expect(e.apparences[idz(I.priseSalon)] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu),
+                                                                          contour: .hexagone))
+        #expect(e.apparences[idz(I.interrupteurSalon)] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable),
+                                                                                 contour: .hexagone))
         #expect(e.apparences[idz(I.sonde)]?.couleur == .appareil(.inconnu), "la sonde n'est pas un appareil du pont")
     }
 

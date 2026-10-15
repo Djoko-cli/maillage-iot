@@ -9,15 +9,21 @@ import SwiftUI
 /// dessine comme dans la scene (`SigneLegende`). En verre, comme les capsules du haut (verification du 02/10 :
 /// le choix de Djoko, au lieu du panneau sombre de la maquette). Repliee, il ne reste que l'etiquette
 /// « Legende » ; son etat est garde d'un lancement a l'autre, par la ligne du bas (`LigneDuBas`). Une legende
-/// sans entree n'est pas montree.
+/// sans entree n'est pas montree. Quand la scene a des noeuds des deux protocoles, une ligne « ● Thread ⬢ Zigbee » ouvre
+/// le panneau (`ligneProtocoles`) : le rond est Thread, l'hexagone Zigbee ; les entrees communes restent rondes.
 struct LegendePieces: View {
     @Environment(\.accessibilityReduceMotion) private var reduire
     let rubriques: [Rubrique]
+    /// La ligne des protocoles, sous l'en-tete du panneau ouvert (`montreLesProtocoles`).
+    var ligneProtocoles = false
     /// Repliee ou ouverte : un clic sur l'en-tete bascule.
     @Binding var repliee: Bool
 
     /// La preference qui garde le repli.
     static let cleRepliee = "legendeRepliee"
+
+    /// L'ecart du panneau entre ses elements (l'en-tete, la ligne des protocoles, la grille).
+    static let ecartLigneProtocoles: CGFloat = 7
 
     var body: some View {
         if !rubriques.isEmpty {
@@ -56,7 +62,7 @@ struct LegendePieces: View {
     /// En-tete « Legende ⌄ » (7 pt dessous ; le chevron vers le bas, qui replie la legende), puis la grille ; marges de
     /// 9, 12, 11 et 12 pt. La largeur est celle de la grille : l'en-tete s'y etend, sans elargir le panneau.
     private var panneau: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: Self.ecartLigneProtocoles) {
             Button {
                 repliee = true
             } label: {
@@ -69,6 +75,7 @@ struct LegendePieces: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            if ligneProtocoles { self.ligneDesProtocoles }
             GrilleLegende {
                 ForEach(rubriques, id: \.groupe) { r in
                     groupe(r)
@@ -90,6 +97,20 @@ struct LegendePieces: View {
         Image(systemName: repliee ? "chevron.up" : "chevron.down")
             .font(.system(size: 8.5, weight: .bold))
             .accessibilityHidden(true)
+    }
+
+    /// « ● Thread ⬢ Zigbee » : un noeud de chaque protocole, tel que la scene le dessine (`signeProtocole`), 7 pt, son nom ;
+    /// 14 pt entre les deux. Une ligne de texte (`hauteurLigne`), a `ecartLigneProtocoles` de l'en-tete et de la grille.
+    private var ligneDesProtocoles: some View {
+        HStack(spacing: 14) {
+            ForEach(Protocole.allCases, id: \.self) { p in
+                HStack(spacing: 7) {
+                    SigneLegende(signe: Self.signeProtocole(p))
+                        .accessibilityHidden(true)
+                    Text(Self.nomProtocole(p))
+                }
+            }
+        }
     }
 
     /// Un groupe : son titre (10 pt semi-gras, gris bleute), 4 pt, puis ses entrees, a 3 pt l'une de
@@ -236,6 +257,18 @@ extension LegendePieces {
         /// Les voisins entendus de Zigbee se montrent a la selection (mode « chemins ») : sinon ni leur entree ni leurs
         /// qualites.
         var voisins = true
+
+        /// Les protocoles dont la scene a un noeud (un noeud dessine, inconnu, chef ou sonde).
+        var protocoles: Set<Protocole> {
+            Set(couleurs.keys.map(\.protocole)).union(inconnus.map(\.protocole)).union(chefs.map(\.protocole))
+                .union(sondes.map(\.protocole))
+        }
+    }
+
+    /// La ligne « ● Thread ⬢ Zigbee » ne se montre que quand la scene a des noeuds des deux protocoles : avec un seul, la
+    /// forme se lit sans elle, et la legende ne grandit pas.
+    static func montreLesProtocoles(_ l: Lecture) -> Bool {
+        Set(Protocole.allCases).isSubset(of: l.protocoles)
     }
 
     /// Les entrees que la scene contient (spec du polissage B, section 2) : chaque couleur de noeud (un appareil
@@ -250,6 +283,7 @@ extension LegendePieces {
             let zigbee = id.protocole == .zigbee
             switch c {
             case .routeur(principale: true): r.insert(zigbee ? .routeurZigbee : .routeur)
+            case .routeurZigbee: r.insert(.routeurZigbee)
             case .routeur(principale: false): r.insert(.autrePartition)
             case .appareil(.joignable): r.insert(l.verifies.contains(id) ? .verifiee : .joignable)
             // Les etats de Thread, que Zigbee ne donne jamais : comme injoignable ; et `injoignable` (etat d'un pont),

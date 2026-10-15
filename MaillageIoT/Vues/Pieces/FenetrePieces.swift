@@ -551,15 +551,17 @@ struct LigneDuBas: View {
     var body: some View {
         // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
         let ailleurs = moteur.isolee != nil && !moteur.textes.ailleurs.isEmpty
-        let rubriques = entree.map {
-            LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens,
-                                                           voisins: moteur.voisins))
-        } ?? []
+        let lecture = entree.map {
+            LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens, voisins: moteur.voisins)
+        }
+        let rubriques = lecture.map(LegendePieces.rubriques) ?? []
+        // La ligne « Thread / Zigbee » : seulement quand la scene a des noeuds des deux protocoles.
+        let deuxProtocoles = lecture.map(LegendePieces.montreLesProtocoles) ?? false
         let estRepliee = legendeForcee ?? (repliee || repliDePlace)
         let ouverte = !rubriques.isEmpty && !estRepliee
         HStack(spacing: 0) {
             if !rubriques.isEmpty {
-                LegendePieces(rubriques: rubriques, repliee: Binding(get: { estRepliee }, set: { r in
+                LegendePieces(rubriques: rubriques, ligneProtocoles: deuxProtocoles, repliee: Binding(get: { estRepliee }, set: { r in
                     guard legendeForcee == nil else { return }
                     // Un clic : le recadrage qui suit prend la duree de la legende ; l'ouvrir leve son repli faute de
                     // place, sans rien ecrire de plus que le choix de Djoko.

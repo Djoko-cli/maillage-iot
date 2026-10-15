@@ -254,12 +254,16 @@ struct NomsSceneTests {
         #expect(liens.contains { $0.0 != $0.1 } && liens.contains { $0.0 == $0.1 })
         #expect(!e.scene.sansPiecesMaison)
         #expect(e.domicile == "Maison (démo)")
+        // Thread garde le rond, et le bleu de ses routeurs de bordure.
         #expect(e.apparences[idt("Apple TV 4K")] == DessinNoeud.Apparence(forme: .sphere(halo: 10),
-                                                                    couleur: .routeur(principale: true)))
+                                                                    couleur: .routeur(principale: true), contour: .rond))
         #expect(e.apparences[idt("HomePod Avant")]?.forme == .sphere(halo: 5))
         #expect(e.apparences[idt("Aqara HubM100 #DFEB")]?.couleur == .routeur(principale: false))
-        #expect(e.apparences[idt("7AF0B6D5006CF95F")] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu)))
-        #expect(e.apparences[idt("56B1E064401F74EF")] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable)))
+        #expect(e.apparences[idt("7AF0B6D5006CF95F")] == DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu),
+                                                                                contour: .rond))
+        #expect(e.apparences[idt("56B1E064401F74EF")] == DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.joignable),
+                                                                                contour: .rond))
+        #expect(e.scene.noeuds.allSatisfy { e.apparences[$0.id]?.contour == .rond }, "aucun hexagone chez Thread")
         #expect(e.apparences[idt("rloc:041F")]?.couleur == .appareil(.inconnu))
         // Le cercle bleu : les appareils qui routent, sauf disparus, et eux seuls (demande de Djoko du 08/10).
         let cercles = Set(e.scene.noeuds.filter { e.apparences[$0.id]?.cercle == true }.map(\.id))

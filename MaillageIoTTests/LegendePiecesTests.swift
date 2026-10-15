@@ -258,6 +258,8 @@ struct LegendePiecesTests {
                 case .routeur(principale: true): .routeur
                 case .routeur(principale: false): .autrePartition
                 case .routeurInconnu: .nonIdentifie
+                // Le violet est celui de Zigbee : la scene de Thread n'en a pas (`SilhouettesTests`).
+                case .routeurZigbee: nil
                 case .appareil(.joignable): .joignable
                 case .appareil(.partitionCoupee): .partitionCoupee
                 case .appareil(.sansAdresse): .sansAdresse
@@ -270,6 +272,7 @@ struct LegendePiecesTests {
                 // Le centre d'une partition a un plus grand halo (10) : la legende montre un routeur, au halo de 5.
                 let attendue = n.genre == .centre ? DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: a.couleur) : a
                 #expect(n.genre != .centre || a.forme == .sphere(halo: 10))
+                #expect(attendue.contour == .rond, "\(n.id) : un noeud de Thread est rond, dans la scene comme dans la legende")
                 let routeur = n.genre != .appareil
                 #expect(LegendePieces.signe(entree)
                         == .noeud(attendue, rayon: routeur ? LegendePieces.rayonRouteur : LegendePieces.rayonAppareil),

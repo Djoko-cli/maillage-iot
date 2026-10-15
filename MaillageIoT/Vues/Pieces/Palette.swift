@@ -48,6 +48,10 @@ struct Palette {
         principale ? Color(red: 0.38, green: 0.65, blue: 0.98) : Color(red: 0.98, green: 0.75, blue: 0.14)
     }
 
+    /// Routeur de Zigbee, pont Hue compris : un violet (teinte 270 degres) que ni les etats (vert, orange, rouge, gris), ni
+    /// le bleu d'un routeur de bordure de Thread (213 degres), ni les jaunes ne prennent. Le meme sur fond sombre et clair.
+    var routeurZigbee: Color { Color(red: 0.70, green: 0.45, blue: 0.98) }
+
     func appareil(_ e: EtatAffiche) -> Color {
         switch e {
         case .joignable: Color(red: 0.29, green: 0.87, blue: 0.5)
