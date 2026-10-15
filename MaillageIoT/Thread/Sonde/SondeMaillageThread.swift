@@ -766,8 +766,7 @@ final class SondeMaillageThread {
         var canal: (any CanalSonde)?
         do {
             guard let hote else { throw CleReseau.Erreur.sansNomDHote }
-            let t = trousseau
-            let cle = try await Self.horsActeurPrincipal { try t.lire(nom: hote) }
+            let cle = try await lireCle(hote)
             // Arretee (ou autre liaison choisie) pendant la lecture de la cle : aucune session n'est ouverte.
             guard n == essai else { return }
             let c = try await ouvrirReseau(hote, cle)
@@ -817,6 +816,29 @@ final class SondeMaillageThread {
             if let e = error as? ErreurReseau, !e.repriseAutomatique { return }
             planifierReprise()
         }
+    }
+
+    /// La lecture de la cle en vol, avec son numero : une seule a la fois (voir `lireCle`).
+    @ObservationIgnored private var lectureCle: (numero: Int, hote: String, tache: Task<Data, any Error>)?
+    @ObservationIgnored private var numeroLecture = 0
+
+    /// Lit la cle de l'hote, une seule lecture en vol : une seconde tentative (carte rebranchee puis retiree, annonce qui
+    /// tombe puis revient, pendant que macOS attend l'accord de l'utilisateur) rejoint la lecture en cours au lieu d'en lancer
+    /// une autre. Sinon la seconde echouerait en `absente` (la reprise est deja notee) et l'acces reseau serait indisponible
+    /// jusqu'au relancement, alors que l'accord donne a la premiere recopie la cle. Le resultat est le meme pour toutes ; la
+    /// liste du trousseau est relue a la fin, la recopie ayant change ce qu'elle montre.
+    private func lireCle(_ hote: String) async throws -> Data {
+        if let l = lectureCle, l.hote == hote { return try await l.tache.value }
+        let t = trousseau
+        let tache = Task { try await Self.horsActeurPrincipal { try t.lire(nom: hote) } }
+        numeroLecture += 1
+        let numero = numeroLecture
+        lectureCle = (numero, hote, tache)
+        defer {
+            if lectureCle?.numero == numero { lectureCle = nil }
+            if self.hote == hote { empreinteAcces = empreinte(pour: hote) }
+        }
+        return try await tache.value
     }
 
     /// Operation du trousseau hors de l'acteur principal : macOS peut d'abord demander

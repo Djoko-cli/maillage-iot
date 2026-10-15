@@ -26,6 +26,43 @@ private struct CanalQuiRefuse: CanalSonde {
     func fermer() {}
 }
 
+/// Un trousseau dont la premiere lecture attend l'accord de l'utilisateur (la fenetre de macOS, ouverte) puis recopie la cle,
+/// comme `TrousseauReprisThread` pour la cle de Maillage Thread 1.3.0 : la reprise est notee des le debut de la lecture, donc
+/// une seconde lecture en meme temps echoue en `absente` et la liste ne montre plus l'ancienne cle ; seule la recopie la
+/// rend a la liste. Les lectures sont comptees.
+private final class TrousseauEnAttenteThread: TrousseauClesThread {
+    private struct Etat { var appels = 0, tentee = false, recopiee = false }
+    private let etat = Mutex(Etat())
+    private let accord = DispatchSemaphore(value: 0)
+    private let hote: String
+
+    init(hote: String) { self.hote = hote }
+
+    var appels: Int { etat.withLock { $0.appels } }
+    /// L'utilisateur accepte l'invite.
+    func accorder() { accord.signal() }
+
+    func lister() -> [SondeConnue] {
+        let visible = etat.withLock { $0.recopiee || !$0.tentee }
+        return visible ? [SondeConnue(nom: hote, empreinte: "630DCD29")] : []
+    }
+
+    func lire(nom: String) throws -> Data {
+        let premiere = etat.withLock { e -> Bool in
+            e.appels += 1
+            defer { e.tentee = true }
+            return !e.tentee
+        }
+        guard premiere else { throw ErreurTrousseauThread.absente(nom) }
+        accord.wait()
+        etat.withLock { $0.recopiee = true }
+        return VecteursH1.psk
+    }
+
+    func ranger(nom: String, cle: Data, empreinte: String) throws {}
+    func oublier(nom: String) throws {}
+}
+
 /// Les instants des ouvertures du reseau, notes par le banc (les essais d'une liaison reseau qui echoue).
 @MainActor
 private final class InstantsReseau {
@@ -64,7 +101,8 @@ private final class Banc {
          ouvrirReseau: (@MainActor (String, Data) async throws -> any CanalSonde)? = nil,
          canalUSB: @escaping (String) -> any CanalSonde = { _ in SondeReseauTests.sonde() },
          delaisReprise: [Duration] = [.milliseconds(30), .milliseconds(60)],
-         delaiRetourUSB: Duration = .milliseconds(150)) throws {
+         delaiRetourUSB: Duration = .milliseconds(150),
+         trousseau autre: (any TrousseauClesThread)? = nil) throws {
         let (p, d) = try SondeMaillageTests.preferences()
         preferences = p
         domaine = d
@@ -74,8 +112,9 @@ private final class Banc {
             p.set(Self.hote, forKey: SondeMaillageThread.cleHote)
         }
         if let reglage { p.set(reglage, forKey: SondeMaillageThread.cleLiaison) }
-        let trousseau = TrousseauMemoireThread()
-        if cle { try trousseau.ranger(nom: Self.hote, cle: VecteursH1.psk, empreinte: "630DCD29") }
+        let memoire = TrousseauMemoireThread()
+        if cle { try memoire.ranger(nom: Self.hote, cle: VecteursH1.psk, empreinte: "630DCD29") }
+        let trousseau: any TrousseauClesThread = autre ?? memoire
         let factice = ReseauFactice(reseau)
         self.reseau = factice
         self.cartes = cartes
@@ -494,6 +533,29 @@ struct LiaisonAutomatiqueThreadTests {
         if case .erreur = b.sonde.etat {} else { Issue.record("etat : \(b.sonde.etat)") }
     }
 
+    // MARK: - Lecture de la cle
+
+    /// Deux lectures de la cle en meme temps (la premiere attend l'accord de macOS, la carte ou l'annonce clignote pendant
+    /// ce temps) : une seule lecture part, la seconde tentative la rejoint, et le reseau reste disponible une fois l'accord
+    /// donne (sinon la seconde lecture echoue en `absente` et le reseau est indisponible jusqu'au relancement).
+    @Test func uneSeuleLectureDeLaCle() async throws {
+        let t = TrousseauEnAttenteThread(hote: Banc.hote)
+        let b = try Banc(reglage: nil, retenue: true, cle: false, trousseau: t)
+        defer { t.accorder(); b.nettoyer() }
+        #expect(b.sonde.reseauDisponible)
+        b.sonde.demarrer()
+        b.annoncer(true)
+        #expect(await attendreActivation { t.appels == 1 }, "la premiere lecture attend l'accord")
+        b.annoncer(false)
+        b.annoncer(true)
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(t.appels == 1, "pas de seconde lecture pendant la premiere")
+        t.accorder()
+        #expect(await attendreActivation { b.connectee(par: .reseau) }, "la session s'ouvre une fois l'accord donne")
+        #expect(t.appels == 1 && b.sonde.reseauDisponible)
+        #expect(b.reseau.appels.count == 1)
+    }
+
     // MARK: - Changements de reglage
 
     /// Le reglage change les chemins : Automatique -> USB ferme le reseau, Reseau n'est pas choisissable sans cle ; la
@@ -670,9 +732,21 @@ struct SelecteurLiaisonThreadTests {
         #expect(seg.label(forSegment: 2) == String(localized: "Réseau Thread"))
         #expect(seg.isEnabled)
         #expect(seg.selectedSegment == 0, "Automatique est le reglage d'une nouvelle installation")
-        seg.selectedSegment = 2
-        seg.performClick(nil)
-        try await Task.sleep(for: .milliseconds(200))
+        // Sans cle, ce seul segment est grise (`selectionDisabled`) : AppKit bloque le clic de l'utilisateur, le segment
+        // ne reste donc pas en surbrillance sur un choix refuse. Les deux autres restent actifs.
+        #expect(seg.isEnabled(forSegment: 0))
+        #expect(seg.isEnabled(forSegment: 1))
+        #expect(seg.isEnabled(forSegment: 2) == cle, "« Réseau Thread » grise tant que la cle est inconnue, cle \(cle)")
+        if cle {
+            seg.selectedSegment = 2
+            seg.performClick(nil)
+            try await Task.sleep(for: .milliseconds(200))
+        } else {
+            // Le refus de `choisirLiaison` reste la garde derriere le grisage.
+            sonde.choisirLiaison(.reseau)
+            try await Task.sleep(for: .milliseconds(200))
+            #expect(seg.selectedSegment == 0, "le segment ne reste pas sur un choix refuse")
+        }
         #expect(sonde.reglage == (cle ? .reseau : .automatique), "« Réseau Thread » indisponible tant que la cle est inconnue")
         if !cle { #expect(p.string(forKey: SondeMaillageThread.cleLiaison) == nil) }
         await sonde.oublier()

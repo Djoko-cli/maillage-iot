@@ -210,9 +210,12 @@ struct FenetreReglages: View {
                 Text("Mode démo : pas de sonde.").foregroundStyle(.secondary)
             } else {
                 // Toujours la : « Réseau Thread » ne se choisit qu'une fois l'accès autorisé (cle de ce Mac pour la sonde) ;
-                // avant, `choisirLiaison` le refuse et la note dit pourquoi (SwiftUI ne grise pas un segment seul).
+                // avant, ce seul segment est grise (`selectionDisabled`), `choisirLiaison` reste la garde et la note dit pourquoi.
                 Picker("Liaison", selection: Binding(get: { sonde.reglage }, set: { sonde.choisirLiaison($0) })) {
-                    ForEach(ReglageLiaison.allCases, id: \.self) { Text($0.libelle).tag($0) }
+                    ForEach(ReglageLiaison.allCases, id: \.self) {
+                        Text($0.libelle).tag($0)
+                            .selectionDisabled($0 == .reseau && !sonde.reseauDisponible && sonde.reglage != .reseau)
+                    }
                 }
                 .pickerStyle(.segmented)
                 if let note = Self.noteReseauIndisponible(reseauDisponible: sonde.reseauDisponible) {
