@@ -103,12 +103,17 @@ struct BarreOutils: View {
 }
 
 /// Le menu des reseaux : une section par protocole actif, Thread d'abord. Thread : ses reseaux (un article coche pour celui
-/// que la vue montre ; un autre le choisit) ; Zigbee : le pont, son nom, son modele et son etat.
+/// que la vue montre ; un autre le choisit) ; Zigbee : le pont, son nom, son modele et son etat. Aucun protocole actif :
+/// une ligne le dit (grisee, comme tout texte d'un menu).
 struct MenuDesReseaux: View {
     @Environment(Surveillance.self) private var surveillance
     let contenu: MenuReseaux
 
     var body: some View {
+        if contenu.sansProtocole {
+            // Le texte de la fenetre de la barre des menus (meme cle du catalogue).
+            Text(MenuBarre.titreSansProtocole)
+        }
         if let thread = contenu.thread {
             Section(LegendePieces.nomProtocole(.thread)) {
                 if thread.isEmpty {

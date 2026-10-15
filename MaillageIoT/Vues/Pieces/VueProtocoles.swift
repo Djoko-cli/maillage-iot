@@ -119,6 +119,9 @@ struct MenuReseaux: Equatable {
     /// Le pont de Zigbee, nil quand Zigbee est eteint.
     var zigbee: PontZigbee?
 
+    /// Thread et Zigbee sont eteints : le menu n'a aucune section, et le dit.
+    var sansProtocole: Bool { thread == nil && zigbee == nil }
+
     @MainActor
     static func contenu(_ s: Surveillance, pont: NomsPont?) -> MenuReseaux {
         var m = MenuReseaux()

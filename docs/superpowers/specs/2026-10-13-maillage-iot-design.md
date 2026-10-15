@@ -334,6 +334,13 @@ Zigbee/
   - `pieces-routeurs.json` (des deux apps) devient `pieces-noeuds.json` ;
   - l'historique de plus de 90 jours est laissé de côté ;
   - les réglages repris sont rangés sous leurs nouvelles clés (2.3).
+  - **`thread.sondeLiaison` est recopiée telle quelle, jamais remplacée par une valeur par défaut** : une préférence
+    absente vaut Automatique (la sonde Thread la lit ainsi, et « Oublier » retire la clé) ; écrire `usb` ou un autre
+    défaut à l'import figerait un choix que l'utilisateur n'a pas fait ;
+  - **les clés de notification sont écrites par protocole** (`notification.<protocole>.<catégorie>`) : l'import les
+    pose lui-même, ou passe avant `Notifications.reprendreClesCommunes` (qui recopie une clé commune sous la clé du
+    protocole, sans jamais écraser une clé déjà écrite) ; sinon une catégorie coupée dans Thread 1.3.0 reviendrait au
+    défaut ;
 - **Atomicité** : l'import se fait dans un dossier d'attente, puis il est déplacé d'un coup. En cas d'échec, rien ne
   change.
 - **Idempotence** : réimporter le même export ne fait rien de plus. Son identifiant de manifeste est gardé dans

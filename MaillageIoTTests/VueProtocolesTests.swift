@@ -235,6 +235,19 @@ struct VueProtocolesTests {
         #expect(MenuReseaux.nomDeLaMaison(demo) != demo.thread.reseau?.nom)
     }
 
+    /// Thread et Zigbee eteints : le menu du nom de la maison n'a aucune section ; il le dit (une ligne grisee) au lieu de
+    /// s'ouvrir vide. Un seul protocole allume suffit a le remplir.
+    @Test func menuDesReseauxSansProtocole() {
+        let s = EntreeSceneTests.deuxReseaux()
+        #expect(!MenuReseaux.contenu(s, pont: nil).sansProtocole)
+        s.zigbee.actif = false
+        #expect(!MenuReseaux.contenu(s, pont: nil).sansProtocole, "Thread seul : une section")
+        s.thread.actif = false
+        #expect(MenuReseaux.contenu(s, pont: nil).sansProtocole, "aucun protocole actif")
+        s.zigbee.actif = true
+        #expect(!MenuReseaux.contenu(s, pont: nil).sansProtocole, "Zigbee seul : une section")
+    }
+
     /// Le menu du nom de la maison liste les reseaux par protocole : Thread (ses reseaux, partitions comprises, et le choisi),
     /// puis Zigbee (le pont : son nom, son modele, son etat). Un protocole eteint n'a pas de section.
     @Test func contenuDuMenuDesReseaux() throws {

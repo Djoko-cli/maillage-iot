@@ -82,7 +82,8 @@ struct LogosEtIconeTests {
         #expect(orange == 0, "\(orange) points oranges dans le coin du badge")
     }
 
-    /// L'icone existe a chaque taille de l'icone d'une app Mac (16 a 1024 points, 1x et 2x), toutes carrees.
+    /// Les apercus de l'icone existent a chaque taille (16 a 1024 pixels), tous carres. Ils ne servent pas a la compilation :
+    /// seul le calque 1024 d'AppIcon.icon est embarque (voir l'en-tete de outils/icone/generer.swift).
     @Test(arguments: [16, 32, 64, 128, 256, 512, 1024])
     func uneIconeParTaille(_ cote: Int) throws {
         let url = Self.racine.appendingPathComponent("outils/icone/tailles/icone_\(cote).png")

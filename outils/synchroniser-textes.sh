@@ -9,6 +9,7 @@ set -eu
 cd "$(dirname "$0")/.."
 [ $# -eq 0 ] || { echo "usage : $0 (sans argument : une seule app, MaillageIoT)" >&2; exit 2; }
 APP=MaillageIoT
+CATALOGUE=${CATALOGUE:-$APP/Ressources/Localizable.xcstrings}
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot}
 # Le premier MaillageIoT.build est celui du projet, le second celui de la cible.
 I="$DD/Build/Intermediates.noindex/MaillageIoT.build/Debug/$APP.build/Objects-normal"
@@ -27,4 +28,8 @@ PY
 [ -s "$LISTE" ] || { echo "aucun .stringsdata a source existante dans $I : compiler d'abord (outils/tester.sh)" >&2; exit 1; }
 set --
 while IFS= read -r f; do set -- "$@" --stringsdata "$f"; done < "$LISTE"
-xcrun xcstringstool sync "$APP/Ressources/Localizable.xcstrings" "$@"
+xcrun xcstringstool sync "$CATALOGUE" "$@"
+# xcstringstool retire le saut de ligne final du catalogue : on le remet, pour ne laisser aucun diff parasite.
+if [ -s "$CATALOGUE" ] && [ "$(tail -c 1 "$CATALOGUE" | od -An -c | tr -d ' ')" != '\n' ]; then
+  printf '\n' >> "$CATALOGUE"
+fi

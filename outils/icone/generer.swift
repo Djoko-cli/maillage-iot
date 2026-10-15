@@ -5,9 +5,11 @@
 // Ecrit, toujours les memes octets pour le meme programme :
 //   - MaillageIoT/Ressources/AppIcon.icon/Assets/constellation.png : le calque de l'icone (1024 x 1024, opaque, plein
 //     cadre : le systeme y applique son masque) ;
-//   - outils/icone/tailles/icone_<n>.png : l'icone a chaque taille de l'icone d'une app Mac, 16 a 1024 points en 1x et
-//     en 2x, soit 16, 32, 64, 128, 256, 512 et 1024 pixels, chacune dessinee a sa taille (pas reduite : aux petites
-//     tailles la composition est simplifiee, moins de noeuds et plus gros) ;
+//   - outils/icone/tailles/icone_<n>.png : des APERCUS de l'icone, 16 a 1024 pixels (16, 32, 64, 128, 256, 512, 1024),
+//     chacun dessine a sa taille (pas reduit : aux petites tailles la composition est simplifiee, moins de noeuds et plus
+//     gros). L'app ne les utilise pas : elle n'embarque que le calque 1024 d'AppIcon.icon (format Icon Composer), et
+//     macOS le reduit lui-meme pour le Dock, le Finder et le selecteur d'apps. Ils servent a juger le dessin a petite
+//     taille, et `LogosEtIconeTests` n'en verifie que les dimensions ;
 //   - MaillageIoT/Ressources/Logos.xcassets : les logos de Thread et de Zigbee, redessines en glyphes simplifies,
 //     vectoriels et monochromes (PDF), declares « images modeles » pour que la barre d'outils des Reglages les teinte
 //     comme les symboles SF voisins.
