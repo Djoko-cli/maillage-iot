@@ -269,6 +269,20 @@ struct SilhouettesTests {
         #expect(contour(.coordinateur) == nil && LegendePieces.signe(.coordinateur) == .glyphe(LibellesNoeuds.couronne, routeur: true))
     }
 
+    /// `libellesDesRouteurs` : avec la ligne des protocoles, les deux routeurs (l'anneau de Thread, l'hexagone de Zigbee)
+    /// se nomment « routeur Thread » et « routeur Zigbee » ; avec un seul protocole, « routeur » ; les autres entrees
+    /// ne changent pas ; la hauteur non plus (meme nombre de lignes).
+    @Test func libellesDesRouteurs() {
+        #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: true) == String(localized: "routeur Thread"))
+        #expect(LegendePieces.texte(.routeurZigbee, deuxProtocoles: true) == String(localized: "routeur Zigbee"))
+        #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: false) == "routeur")
+        #expect(LegendePieces.texte(.routeurZigbee, deuxProtocoles: false) == "routeur")
+        #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: true) != LegendePieces.texte(.routeurZigbee, deuxProtocoles: true))
+        for e in LegendePieces.Entree.allCases where e != .routeurSimple && e != .routeurZigbee {
+            #expect(LegendePieces.texte(e, deuxProtocoles: true) == e.texte, "\(e) ne change pas")
+        }
+    }
+
     /// La ligne prend une ligne de texte (14 pt) et son ecart (7 pt) de plus dans le panneau ouvert ; replie, rien ne change.
     /// Les marges de la vue (`margeBas`, `repliDePlace`) lisent la hauteur mesuree de la legende ouverte : elles suivent.
     @Test func hauteurDeLaLigneDeProtocoles() {

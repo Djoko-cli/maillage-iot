@@ -135,7 +135,18 @@ struct LegendePieces: View {
         HStack(spacing: 7) {
             SigneLegende(signe: Self.signe(e))
                 .accessibilityHidden(true)
-            Text(e.texte)
+            Text(Self.texte(e, deuxProtocoles: ligneProtocoles))
+        }
+    }
+
+    /// Le texte d'une entree : avec la ligne des protocoles (Thread et Zigbee dans la scene), les deux routeurs (l'anneau
+    /// de Thread, l'hexagone de Zigbee) se distinguent par leur protocole ; avec un seul, « routeur » suffit.
+    static func texte(_ e: Entree, deuxProtocoles: Bool) -> String {
+        guard deuxProtocoles else { return e.texte }
+        switch e {
+        case .routeurSimple: return String(localized: "routeur Thread")
+        case .routeurZigbee: return String(localized: "routeur Zigbee")
+        default: return e.texte
         }
     }
 

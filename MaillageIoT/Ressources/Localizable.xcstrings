@@ -9361,6 +9361,38 @@
         }
       }
     },
+    "routeur Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur Thread"
+          }
+        }
+      }
+    },
+    "routeur Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur Zigbee"
+          }
+        }
+      }
+    },
     "routeur de bordure" : {
       "localizations" : {
         "en" : {
