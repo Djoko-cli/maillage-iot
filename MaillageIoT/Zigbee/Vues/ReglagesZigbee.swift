@@ -34,6 +34,12 @@ struct ReglagesZigbee: View {
         .onChange(of: sonde.etatSonde?.reseau?.connecte) { suivreSuccesReseau() }
     }
 
+    /// Le refus de Bonjour ne bloque que si la liaison passe par le reseau (Wi-Fi ou Automatique) et que la sonde n'est pas
+    /// connectee : en USB, ou sonde deja connectee, la recherche Bonjour est sans objet.
+    static func afficherRefusBonjour(nonDeclare: Bool, chemin: ReglageChemin, connectee: Bool) -> Bool {
+        nonDeclare && chemin != .usb && !connectee
+    }
+
     /// Fait avancer le suivi du message de succes de la mise en service ; l'efface quand la sonde est de retour.
     private func suivreSuccesReseau() {
         guard var suivi = suiviSucces else { return }
@@ -92,7 +98,8 @@ struct ReglagesZigbee: View {
                     }
                 }
                 LabeledContent("État", value: FenetreReglages.texteEtatSonde(sonde.etat, nom: sonde.nomEtat))
-                if sonde.bonjourNonDeclare {
+                if Self.afficherRefusBonjour(nonDeclare: sonde.bonjourNonDeclare, chemin: sonde.reglageChemin,
+                                             connectee: sonde.etat.estConnectee) {
                     Text("macOS refuse la recherche de la sonde Zigbee à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou branchez la sonde en USB.")
                         .font(.caption)
                         .foregroundStyle(.red)

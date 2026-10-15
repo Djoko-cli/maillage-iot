@@ -28,7 +28,7 @@ struct ReglagesPont: View {
                 .font(.caption)
                 .foregroundStyle(.red)
         }
-        if pont.bonjourNonDeclare {
+        if Self.afficherRefusBonjour(nonDeclare: pont.bonjourNonDeclare, pontRetenu: pont.pont != nil, lie: pont.lie) {
             Text(Self.texteNonDeclare)
                 .font(.caption)
                 .foregroundStyle(.red)
@@ -50,6 +50,12 @@ struct ReglagesPont: View {
             Button("Oublier le pont") { pont.oublier() }
                 .disabled(Self.enLiaison(pont.etat))
         }
+    }
+
+    /// Le refus de Bonjour ne bloque que si aucun pont n'est retenu ni lie (un pont lie par son adresse n'a plus besoin de
+    /// la recherche).
+    static func afficherRefusBonjour(nonDeclare: Bool, pontRetenu: Bool, lie: Bool) -> Bool {
+        nonDeclare && !pontRetenu && !lie
     }
 
     /// Bonjour refuse `_hue._tcp` (NoAuth) : la liste des services Bonjour que macOS connait pour l'app est perimee.
