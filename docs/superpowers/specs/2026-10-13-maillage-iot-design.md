@@ -464,6 +464,17 @@ de l'eau et commitées avec le travail.
 
 L'export dans les anciennes apps (étape 4, côté anciens dépôts) peut avancer **en parallèle** des étapes 2 et 3.
 
+**Feuille de route** (une phase par étape ; les plans s'appellent `…-phase-N.md`, avec un suffixe de lettre pour les
+plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `SondeMaillage`, se fait après l'étape 3b
+(6.6) : elle devient le troisième plan de la phase 3, `phase-3c`.
+
+- [x] Phase 0 : préparation
+- [x] Phase 1 : cœur neutre et Thread à l'identique
+- [x] Phase 2 : Zigbee branché
+- [ ] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
+- [ ] Phase 4 : reprise
+- [ ] Phase 5 : publication
+
 ### 6.2 Les tests
 
 - **Tous les tests existants suivent leur code** :

@@ -251,7 +251,7 @@ releve-maison.json
 - [x] **Step 4: Vérifier ce que git verrait**
 
 Run: `git status --short --untracked-files=all`
-Expected: seulement `.gitignore`, `docs/superpowers/specs/2026-10-13-maillage-iot-design.md` et `docs/superpowers/plans/2026-10-14-maillage-iot-etape-0.md`. Rien sous `.superpowers/`.
+Expected: seulement `.gitignore`, `docs/superpowers/specs/2026-10-13-maillage-iot-design.md` et `docs/superpowers/plans/2026-10-14-maillage-iot-phase-0.md`. Rien sous `.superpowers/`.
 
 ---
 
@@ -321,7 +321,7 @@ Expected: `table zigbee : 1 fichier d'identifiants, 1 valeur(s) supplementaire(s
 
 ```bash
 A=.superpowers/anonymisation
-F="docs/superpowers/specs/2026-10-13-maillage-iot-design.md docs/superpowers/plans/2026-10-14-maillage-iot-etape-0.md .gitignore outils/garde.py outils/tests/test_garde.py"
+F="docs/superpowers/specs/2026-10-13-maillage-iot-design.md docs/superpowers/plans/2026-10-14-maillage-iot-phase-0.md .gitignore outils/garde.py outils/tests/test_garde.py"
 python3 $A/thread/outils/controles.py fichiers --table $A/thread/table.json $F > $A/sortie-thread.txt 2>&1; echo "thread code=$?"; tail -1 $A/sortie-thread.txt
 python3 $A/zigbee/controles.py fichiers --table $A/zigbee/table.json $F > $A/sortie-zigbee.txt 2>&1; echo "zigbee code=$?"; tail -1 $A/sortie-zigbee.txt
 ```
@@ -692,7 +692,7 @@ Expected: `remotes : 0 ; branches distantes : 0` ; `commits : 1` (ou 2 si les ca
 Cocher les étapes faites des tâches 4 et 5 dans ce plan, puis :
 
 ```bash
-git add docs/superpowers/plans/2026-10-14-maillage-iot-etape-0.md
+git add docs/superpowers/plans/2026-10-14-maillage-iot-phase-0.md
 git commit -q -F - <<'EOF'
 Plan de l'etape 0 : garde essayee sur un depot nu local (refus et acceptation)
 
