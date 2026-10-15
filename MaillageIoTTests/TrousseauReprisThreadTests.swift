@@ -151,4 +151,21 @@ struct TrousseauReprisThreadTests {
         #expect(TrousseauReprisThread.serviceAncien == "fr.djoko.maillage.sonde")
         #expect(TrousseauSystemeThread(service: TrousseauReprisThread.serviceAncien).service == "fr.djoko.maillage.sonde")
     }
+
+    /// Banc de l'etape 3a, I1 : l'ancienne cle est listee (attributs seuls), donc « autorise » et le selecteur de liaison
+    /// apparaissent ; Djoko refuse la fenetre de macOS a la connexion : l'etat d'acces est relu (plus de cle, plus de reseau).
+    @Test @MainActor func refusALaConnexionRetireLEtatAcces() async throws {
+        let (p, domaine) = try SondeMaillageTests.preferences()
+        defer { p.removePersistentDomain(forName: domaine) }
+        p.set(Self.hote, forKey: SondeMaillageThread.cleHote)
+        p.set(SondeMaillageThread.Liaison.reseau.rawValue, forKey: SondeMaillageThread.cleLiaison)
+        let ancien = try TrousseauEspionThread([Self.hote: Self.ancienne], refus: true)
+        let t = trousseau(ancien: ancien)
+        let s = SondeReseauTests.sondeMaillage(p, trousseau: t, reseau: ReseauFactice([]))
+        #expect(s.empreinteAcces == H1.kid(cle: Self.ancienne) && s.reseauDisponible)
+        await s.connecterReseau()
+        #expect(s.etat == .erreur(ErreurTrousseauThread.absente(Self.hote).localizedDescription))
+        #expect(s.empreinteAcces == nil && !s.reseauDisponible)
+        await s.oublier()
+    }
 }

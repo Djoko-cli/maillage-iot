@@ -642,7 +642,9 @@ final class SondeMaillageThread {
             enConnexion = nil
             etat = .erreur(error.localizedDescription)
             // Sans cle ou sans nom d'hote (trousseau, ou jamais appris) : il faut l'USB ; le reste
-            // se reprend seul.
+            // se reprend seul. Cle refusee ou absente : l'etat d'acces est relu (la reprise etant
+            // notee, la liste ne montre plus l'ancienne cle : « non autorise », pas de selecteur).
+            if error is ErreurTrousseauThread { empreinteAcces = hote.flatMap(empreinte(pour:)) }
             if error is ErreurTrousseauThread || error is CleReseau.Erreur { return }
             if let e = error as? ErreurReseau, !e.repriseAutomatique { return }
             planifierReprise()

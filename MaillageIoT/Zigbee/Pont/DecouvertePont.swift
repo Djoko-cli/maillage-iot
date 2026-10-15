@@ -43,6 +43,9 @@ final class DecouvertePont {
         resolues = [:]
         epoque += 1
         demarree = false
+        // Eteinte, la decouverte ne garde pas ses messages de refus.
+        surRefus?(false)
+        surNonDeclare?(false)
     }
 
     /// Resout de nouveau toutes les instances vues (rien tant que l'ecoute est arretee).

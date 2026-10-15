@@ -63,6 +63,43 @@ struct BonjourNonDeclareTests {
         decouverte.arreter()
     }
 
+    /// A l'arret de la decouverte, les deux drapeaux retombent : un Zigbee eteint ne garde pas le message rouge.
+    @Test func arretRemetLesDrapeauxAZero() async throws {
+        let ecoute = BonjourFactice(type: DecouvertePont.type)
+        let d = DecouvertePont(navigateur: ecoute)
+        var refus: [Bool] = []
+        var nonDeclare: [Bool] = []
+        d.surRefus = { refus.append($0) }
+        d.surNonDeclare = { nonDeclare.append($0) }
+        d.demarrer()
+        ecoute.etat = .nonDeclare
+        ecoute.surChangement?()
+        #expect(nonDeclare.last == true)
+        d.arreter()
+        #expect(nonDeclare.last == false && refus.last == false)
+        d.demarrer()
+        ecoute.etat = .refuse
+        ecoute.surChangement?()
+        #expect(refus.last == true)
+        d.arreter()
+        #expect(nonDeclare.last == false && refus.last == false)
+
+        // Jusqu'a `NomsPont` : un Zigbee eteint ne garde pas le message.
+        let b = try BancActivation(zigbee: false)
+        defer { b.nettoyer() }
+        let z = try ArretSondeZigbeeTests.banc()
+        defer { z.nettoyer() }
+        let pont = ArretNomsPontTests.banc()
+        let decouverte = DecouvertePont(navigateur: ecoute)
+        ModulesApp.relierZigbee(b.s, sonde: z.sonde, nomsPont: pont.pont, decouverte: decouverte)
+        decouverte.demarrer()
+        ecoute.etat = .nonDeclare
+        ecoute.surChangement?()
+        #expect(pont.pont.bonjourNonDeclare)
+        decouverte.arreter()
+        #expect(!pont.pont.bonjourNonDeclare && !pont.pont.reseauLocalRefuse)
+    }
+
     /// Le texte des Reglages dit le remede, sans parler du reseau local.
     @Test func texteEnClair() {
         let t = ReglagesPont.texteNonDeclare

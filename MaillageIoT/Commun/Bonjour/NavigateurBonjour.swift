@@ -98,13 +98,13 @@ final class NavigateurBonjour: EcouteBonjour {
 
     private func changerEtat(_ e: NWBrowser.State) {
         let nouveau: Etat
+        var echec: NWError?
         switch e {
         case .setup, .cancelled: nouveau = .demarrage
         case .ready: nouveau = .pret
         case .waiting(let erreur), .failed(let erreur):
             nouveau = Self.etat(erreur)
-            // Le type et le code seulement (aucun identifiant d'appareil ni de reseau).
-            Self.journal.error("ecoute Bonjour \(self.type, privacy: .public) en echec : \(Self.code(erreur), privacy: .public)")
+            echec = erreur
         @unknown default: nouveau = .demarrage
         }
         if case .failed = e {
@@ -118,6 +118,11 @@ final class NavigateurBonjour: EcouteBonjour {
             }
         }
         guard nouveau != etat else { return }
+        // Une ligne au changement d'etat seulement, pas a chaque relance de 10 s. Le type et le code
+        // seulement (aucun identifiant d'appareil ni de reseau).
+        if let erreur = echec {
+            Self.journal.error("ecoute Bonjour \(self.type, privacy: .public) en echec : \(Self.code(erreur), privacy: .public)")
+        }
         etat = nouveau
         surChangement?()
     }
