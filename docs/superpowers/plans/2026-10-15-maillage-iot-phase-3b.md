@@ -194,9 +194,9 @@ D'après `inventaire-etape3b.md` §10 ; spec 3.6, 6.7, décision 3.
 
 D'après la tâche 1 ; critère de l'étape 3 (spec 6.1).
 
-- [ ] **Step 1: Mesurer** — `outils/mesurer.sh vue` sur la démo combinée et sur la démo Thread seule ; écrire `docs/mesures/etape-3b.json`.
-- [ ] **Step 2: Comparer** — tableau au rapport contre `docs/mesures/etape-1.json` ; un écart de plus de 20 % sur l'ouverture ou le zoom de la démo Thread seule est un constat à remonter, pas à masquer.
-- [ ] **Step 3: Commit** — « Mesures de la vue : etape 3b contre l'etape 1 ».
+- [x] **Step 1: Mesurer** — `outils/mesurer.sh vue` sur la démo combinée et sur la démo Thread seule ; écrire `docs/mesures/etape-3b.json`.
+- [x] **Step 2: Comparer** — tableau au rapport contre `docs/mesures/etape-1.json` ; un écart de plus de 20 % sur l'ouverture ou le zoom de la démo Thread seule est un constat à remonter, pas à masquer.
+- [x] **Step 3: Commit** — « Mesures de la vue : etape 3b contre l'etape 1 ».
 
 ---
 
