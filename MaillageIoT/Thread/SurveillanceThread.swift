@@ -68,6 +68,9 @@ final class SurveillanceThread: ModeleProtocole {
     /// Appele a chaque changement de `actif` : l'app y branche l'arret et le redemarrage de la sonde (`ModulesApp`), que le
     /// modele ne connait pas.
     @ObservationIgnored var surActivite: ((Bool) -> Void)?
+    /// Appele a chaque releve integre, avec les hotes que l'instantane montre avec une adresse (`CheminLiaison.hotesAnnonces`) :
+    /// le signal « annoncee » de la sonde (Automatique). Ce que l'ecoute Bonjour voit deja, rien de plus.
+    @ObservationIgnored var surAnnonces: ((Set<String>) -> Void)?
     @ObservationIgnored private let persisteActif: Bool
     /// La coque a demarre ce modele (`demarrer`) et ne l'a pas arrete (`arreter`).
     @ObservationIgnored private var demarre = false
@@ -257,6 +260,7 @@ final class SurveillanceThread: ModeleProtocole {
         let nouveaux = suivi.integrer(a, noms: noms)
         ajouter(nouveaux)
         garderAdresses(releve: a.date)
+        surAnnonces?(CheminLiaison.hotesAnnonces(instantane))
     }
 
     /// Verse des evenements au journal de la coque (qui les marque du protocole Thread, les garde et notifie). Un modele

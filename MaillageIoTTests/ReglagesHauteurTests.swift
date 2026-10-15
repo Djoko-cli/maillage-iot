@@ -43,6 +43,9 @@ struct ReglagesHauteurTests {
         await zigbee.connecter(SondeMaillageZigbeeTests.port, choisi: true)
         p.set(onglet.rawValue, forKey: OngletReglages.cle)
         let fenetre = controleur.creerFenetre()
+        // Sans animation d'ouverture ni de fermeture : une animation de fenetre qui ne finit jamais (ecran verrouille, fenetre
+        // cachee) bloque un fil du pool de Dispatch, et le pool epuise fait taire tout test qui attend le reseau.
+        fenetre.animationBehavior = .none
         fenetre.alphaValue = 0
         fenetre.setFrameOrigin(NSPoint(x: -6000, y: -6000))
         fenetre.orderFrontRegardless()

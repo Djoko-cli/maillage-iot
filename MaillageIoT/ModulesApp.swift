@@ -95,6 +95,8 @@ struct ModulesApp {
         st.surOubli = { [weak s] in s?.thread.oublierMaillage() }
         st.appareilsAResoudre = { [weak s] in s?.thread.appareilsAResoudre() ?? [] }
         st.reseauConnu = { [weak s] in s?.thread.instantane != nil }
+        // Automatique : la sonde est « annoncee » quand son hote est dans l'instantane (ce que Bonjour voit deja).
+        s.thread.surAnnonces = { [weak st] hotes in st?.annoncesChangees(hotes) }
         s.thread.surActivite = { [weak st] actif in
             if actif { st?.demarrer() } else { st?.arreter() }
         }

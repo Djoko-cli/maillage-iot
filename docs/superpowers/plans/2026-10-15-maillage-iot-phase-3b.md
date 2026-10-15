@@ -208,10 +208,10 @@ D'après `inventaire-etape3b.md` §12 ; spec 6.7. Tâche la plus risquée : rele
 - Modify: `MaillageIoT/Thread/Sonde/SondeMaillageThread.swift` (réglage séparé du chemin, comme `ReglageChemin` / `CheminSonde` de Zigbee : Automatique, USB, Réseau Thread ; Automatique = USB d'abord si la carte retenue est branchée, sinon le réseau Thread si la clé est connue et la sonde annoncée ; signal « annoncée » à créer côté Thread), la page Thread des Réglages (sélecteur toujours visible ; Réseau indisponible tant que la clé est inconnue, avec son explication), préférence (Automatique par défaut des nouvelles installations ; un choix existant gardé).
 - Test: miroir des tests de chemin de Zigbee (`CheminSondeTests`) : choix du chemin selon branchée / clé connue / annoncée ; aucune carte de Zigbee ni carte inconnue ouverte ; pas de bascule sans fin (USB et réseau qui se disputent) ; choix existant gardé.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; tests de la sonde Thread ×3.
-- [ ] **Step 4: Commit** — « Sonde Thread : liaison Automatique, USB d'abord puis le reseau Thread ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche ; tests de la sonde Thread ×3.
+- [x] **Step 4: Commit** — « Sonde Thread : liaison Automatique, USB d'abord puis le reseau Thread ».
 
 ---
 

@@ -9793,6 +9793,22 @@
         }
       }
     },
+    "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Thread Network” is available once network access is allowed: plug the probe in over USB, then “Allow Network Access”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau »."
+          }
+        }
+      }
+    },
     "· %@" : {
       "localizations" : {
         "en" : {

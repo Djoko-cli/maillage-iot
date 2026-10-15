@@ -209,17 +209,23 @@ struct FenetreReglages: View {
             if surveillance.mode == .demo {
                 Text("Mode démo : pas de sonde.").foregroundStyle(.secondary)
             } else {
-                // Le reseau se propose une fois l'acces autorise (cle de ce Mac pour la sonde).
-                if sonde.reseauDisponible || sonde.liaison == .reseau {
-                    Picker("Liaison", selection: Binding(get: { sonde.liaison }, set: { sonde.choisirLiaison($0) })) {
-                        Text("USB").tag(SondeMaillageThread.Liaison.usb)
-                        Text("Réseau Thread").tag(SondeMaillageThread.Liaison.reseau)
-                    }
-                    .pickerStyle(.segmented)
+                // Toujours la : « Réseau Thread » ne se choisit qu'une fois l'accès autorisé (cle de ce Mac pour la sonde) ;
+                // avant, `choisirLiaison` le refuse et la note dit pourquoi (SwiftUI ne grise pas un segment seul).
+                Picker("Liaison", selection: Binding(get: { sonde.reglage }, set: { sonde.choisirLiaison($0) })) {
+                    ForEach(ReglageLiaison.allCases, id: \.self) { Text($0.libelle).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                if let note = Self.noteReseauIndisponible(reseauDisponible: sonde.reseauDisponible) {
+                    Text(note).font(.caption).foregroundStyle(.secondary)
+                }
+                // Le chemin en service ne s'apprend qu'en Automatique : les deux autres liaisons l'imposent.
+                if sonde.reglage == .automatique, case .connectee = sonde.etat {
+                    LabeledContent("Chemin", value: sonde.liaison.libelle)
                 }
                 if sonde.liaison == .reseau {
                     LabeledContent("Nom d'hôte", value: Self.texteHote(sonde.hote))
-                } else {
+                }
+                if sonde.reglage != .reseau {
                     Picker("Port", selection: Binding(
                         get: { sonde.ports.first { $0.serie != nil && $0.serie == sonde.serie }?.chemin ?? "" },
                         set: { c in if let p = sonde.ports.first(where: { $0.chemin == c }) { sonde.choisir(p) } })) {
@@ -354,6 +360,13 @@ struct FenetreReglages: View {
     static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillageThread.Liaison) -> String? {
         guard liaison == .reseau, (b.qr ?? "").isEmpty, (b.code ?? "").isEmpty else { return nil }
         return String(localized: "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher.")
+    }
+
+    /// Ce que dit la page tant que « Réseau Thread » n'est pas choisissable (pas de cle de ce Mac pour la sonde) ; nil sinon.
+    /// Le selecteur de liaison reste visible : c'est ici qu'on apprend pourquoi ce choix est indisponible.
+    static func noteReseauIndisponible(reseauDisponible: Bool) -> String? {
+        reseauDisponible ? nil
+            : String(localized: "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau ».")
     }
 
     /// Nom d'hote vise par la liaison reseau : « 0123456789ABCDEF.local ».
