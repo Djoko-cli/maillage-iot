@@ -107,7 +107,7 @@ struct FocusFicheTests {
         let p = Palette(sombre: true)
         let qualites: [Int?] = [3, 2, 1, 0, nil]
         for q in qualites {
-            #expect(p.lienSonde(q, protocole: .zigbee) == p.couleur(NiveauQualite(q)))
+            #expect(p.lienSonde(q, protocole: .zigbee) == p.couleur(BandeQualite(q)))
         }
         #expect(p.lienSonde(0, protocole: .zigbee) == p.lienSonde(1, protocole: .zigbee), "0 est un lien faible")
         #expect(Set([3, 2, 1].map { p.lienSonde($0, protocole: .zigbee) }).count == 3
@@ -191,7 +191,7 @@ struct FocusFicheTests {
         #expect(FicheNoeudZigbee.valeurPastille(qualite: 3) == String(localized: "qualité du lien : \(String(localized: "bonne"))"))
         #expect(FicheNoeudZigbee.valeurPastille(qualite: 0) == String(localized: "qualité du lien : \(String(localized: "faible"))"))
         #expect(FicheNoeudZigbee.valeurPastille(qualite: nil) == String(localized: "qualité du lien : \(String(localized: "inconnue"))"))
-        #expect(Set([NiveauQualite.bonne, .moyenne, .faible, .inconnue].map(\.nom)).count == 4)
+        #expect(Set([BandeQualite.bonne, .moyenne, .faible, .inconnue].map(\.nom)).count == 4)
         let chef = NSHostingController(rootView: PastilleChef(protocole: .zigbee))
         let naturelle = chef.sizeThatFits(in: CGSize(width: 1000, height: 100)).width
         let etroite = chef.sizeThatFits(in: CGSize(width: 150, height: 100))

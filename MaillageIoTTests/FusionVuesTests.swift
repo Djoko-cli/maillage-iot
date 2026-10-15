@@ -86,6 +86,18 @@ struct FusionVuesTests {
         #expect(p.lienSonde(0) == p.lienSonde(nil) && p.lienSonde(0) != p.lienSonde(1), "Thread : 0 est inconnu")
         for q in [1, 2, 3, nil] as [Int?] { #expect(p.lienSonde(q) == p.lienSonde(q, protocole: .zigbee)) }
         #expect(Palette.qualiteAffichee(0, protocole: .zigbee) == 1 && Palette.qualiteAffichee(0, protocole: .thread) == 0)
+        // La bande lue par la scene et la legende : le 0 de Thread reste inconnu (gris), celui de Zigbee est faible ;
+        // la fiche lit le 0 « faible » pour les deux (`BandeQualite.init`) : l'ecart est voulu, il n'est que la.
+        #expect(Palette.bande(0, protocole: .thread) == .inconnue && BandeQualite(0) == .faible)
+        #expect(Palette.bande(0, protocole: .zigbee) == .faible)
+        for q in [1, 2, 3, nil] as [Int?] {
+            #expect(Palette.bande(q, protocole: .thread) == BandeQualite(q) && Palette.bande(q, protocole: .zigbee) == BandeQualite(q))
+        }
+        for protocole in [Protocole.thread, .zigbee] {
+            for q in [0, 1, 2, 3, nil] as [Int?] {
+                #expect(p.lienSonde(q, protocole: protocole) == p.couleur(Palette.bande(q, protocole: protocole)), "\(protocole) \(String(describing: q))")
+            }
+        }
     }
 
     /// La legende des deux protocoles : les entrees communes et celles de chacun, lues d'apres le protocole de chaque noeud

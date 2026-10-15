@@ -3,8 +3,10 @@ import Foundation
 // Ce que la fiche du noeud range dans ses colonnes, sans protocole (repris de Maillage Zigbee, 09/10) : les voisins et
 // leur resume par qualite, les dependants. Le protocole les remplit (Thread : `FicheThread`).
 
-/// Le niveau d'une qualite de lien (0 a 3), celui de la legende : 3 bonne, 2 moyenne, 1 et 0 faible ; inconnue.
-public enum NiveauQualite: Int, CaseIterable, Hashable, Sendable {
+/// La bande de qualite d'un lien ou d'un signal, commune aux protocoles : celle de la fiche et de la legende. D'une
+/// qualite de lien (0 a 3) : 3 bonne, 2 moyenne, 1 et 0 faible ; inconnue sans mesure. D'une valeur de signal :
+/// `EchelleSignal.bande(_:)`. (La scene lit le 0 de Thread, « pas de lien », comme inconnue : `Palette.bande`.)
+public enum BandeQualite: Int, CaseIterable, Hashable, Sendable {
     case bonne, moyenne, faible, inconnue
 
     public init(_ qualite: Int?) {
@@ -39,19 +41,19 @@ public struct VoisinFiche: Hashable, Sendable, Identifiable {
 /// Le resume des voisins entendus : « 28 voisins · 6 bons · 9 moyens · 13 faibles », et la barre de leur repartition.
 public struct ResumeVoisins: Hashable, Sendable {
     public var total: Int
-    /// Par niveau, dans l'ordre de `NiveauQualite` (bonne, moyenne, faible, inconnue).
-    public var parNiveau: [NiveauQualite: Int]
+    /// Par niveau, dans l'ordre de `BandeQualite` (bonne, moyenne, faible, inconnue).
+    public var parNiveau: [BandeQualite: Int]
 
     public init(_ voisins: [VoisinFiche]) {
         total = voisins.count
-        parNiveau = Dictionary(grouping: voisins, by: { NiveauQualite($0.qualite) }).mapValues(\.count)
+        parNiveau = Dictionary(grouping: voisins, by: { BandeQualite($0.qualite) }).mapValues(\.count)
     }
 
-    public func nombre(_ n: NiveauQualite) -> Int { parNiveau[n] ?? 0 }
+    public func nombre(_ n: BandeQualite) -> Int { parNiveau[n] ?? 0 }
 
     /// Les parts de la barre de repartition, de la meilleure qualite a l'inconnue, sans les niveaux absents.
-    public var parts: [(niveau: NiveauQualite, nombre: Int)] {
-        NiveauQualite.allCases.compactMap { n in nombre(n) > 0 ? (n, nombre(n)) : nil }
+    public var parts: [(niveau: BandeQualite, nombre: Int)] {
+        BandeQualite.allCases.compactMap { n in nombre(n) > 0 ? (n, nombre(n)) : nil }
     }
 
     /// Les voisins de la meilleure qualite a la plus faible (l'inconnue a la fin) ; a qualite egale, le meilleur LQI

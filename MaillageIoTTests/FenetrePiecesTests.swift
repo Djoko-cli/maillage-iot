@@ -79,6 +79,13 @@ struct FenetrePiecesTests {
         }
     }
 
+    /// Ce que la mesure peut lire de la duree de la legende (0,45 s) et de celle de la fiche (0,3 s). L'horloge est la
+    /// vraie et l'echantillonnage de 3 ms : sous charge, un retard ne fait que rallonger la duree lue, jamais la
+    /// raccourcir. La borne basse reste serree (le recadrage ne doit pas etre plus court que sa duree), la haute laisse
+    /// 0,25 s de retard a la legende ; celle de la fiche reste sous 0,45 s, pour qu'on ne la prenne pas pour la legende.
+    static let dureeLegendeMesuree = (Apparition.dureeLegende - 0.07) ... (Apparition.dureeLegende + 0.25)
+    static let dureeFicheMesuree = (Apparition.duree - 0.07) ... 0.42
+
     /// Duree du recadrage de la vue (les marges en route, `margesEnRoute`) : du premier echantillon ou elles le sont au
     /// premier ou elles ne le sont plus ; nil si elles ne partent pas, ou ne s'arretent pas, en 2 s.
     static func dureeDuRecadrage(_ moteur: MoteurPieces) async throws -> Double? {
@@ -620,18 +627,18 @@ struct FenetrePiecesTests {
         var legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.minX + 40, y: legende.minY + 16))
         let repli = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(repli - Apparition.dureeLegende) < 0.07, "repli par clic : \(repli) s")
+        #expect(Self.dureeLegendeMesuree.contains(repli), "repli par clic : \(repli) s")
         try await Task.sleep(for: .milliseconds(600))
         // Repliee : un clic sur son etiquette l'ouvre.
         legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.midX, y: legende.midY))
         let ouverture = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(ouverture - Apparition.dureeLegende) < 0.07, "ouverture par clic : \(ouverture) s")
+        #expect(Self.dureeLegendeMesuree.contains(ouverture), "ouverture par clic : \(ouverture) s")
         try await Task.sleep(for: .milliseconds(600))
         // La fiche, elle, garde ses 0,3 s.
         moteur.selection = idt("Apple TV 4K")
         let fiche = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(fiche - Apparition.duree) < 0.07, "fiche : \(fiche) s")
+        #expect(Self.dureeFicheMesuree.contains(fiche), "fiche : \(fiche) s")
     }
 
     /// Avec « Reduire les animations », rien ne glisse ni ne s'attarde en haut non plus (spec de B, sections 1 et 3 :

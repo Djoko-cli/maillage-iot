@@ -61,10 +61,10 @@ D'après `inventaire-etape3b.md` §5 ; spec 6.7, décision 2.
 - Modify: `MaillageCoeur` (`NiveauQualite` devient `BandeQualite`, avec un alias de transition si utile ; `EchelleSignal.bande(_:)`), `MaillageIoT/Vues/Pieces/Palette.swift` (`NiveauLien` supprimé), la fiche (`CourbesFiche`, `ComposantsFiche`).
 - Test: tests du cœur sur `EchelleSignal` (dBm et LQI), `qualiteDUnLienSelonLeProtocole` (le 0 de Thread reste gris).
 
-- [ ] **Step 1: RED** — `bandeSelonLEchelle` (des valeurs dBm et LQI rangées dans les bonnes bandes) ; un lien Thread de qualité 0 reste gris dans la scène et « faible » nulle part ailleurs qu'aujourd'hui.
-- [ ] **Step 2: GREEN** — implémenter, sans changer une couleur affichée.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
-- [ ] **Step 4: Commit** — « Bandes de qualite communes aux deux protocoles ».
+- [x] **Step 1: RED** — `bandeSelonLEchelle` (des valeurs dBm et LQI rangées dans les bonnes bandes) ; un lien Thread de qualité 0 reste gris dans la scène et « faible » nulle part ailleurs qu'aujourd'hui.
+- [x] **Step 2: GREEN** — implémenter, sans changer une couleur affichée.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
+- [x] **Step 4: Commit** — « Bandes de qualite communes aux deux protocoles ».
 
 ---
 

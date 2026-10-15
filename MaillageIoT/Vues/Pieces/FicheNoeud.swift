@@ -301,7 +301,7 @@ struct FicheNoeud: View {
 
     /// Ce que le point de couleur d'une pastille d'enfant dit a VoiceOver : « qualité du lien : bonne ».
     static func valeurPastille(qualite: Int?) -> String {
-        String(localized: "qualité du lien : \(NiveauQualite(qualite).nom)")
+        String(localized: "qualité du lien : \(BandeQualite(qualite).nom)")
     }
 
     /// « 4 enfants ».

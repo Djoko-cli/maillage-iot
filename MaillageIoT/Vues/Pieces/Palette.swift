@@ -17,34 +17,27 @@ struct Palette {
     var batterieFaible: Color { Color(red: 1.0, green: 0.62, blue: 0.1) }
     var texteBatterieFaible: Color { Color(red: 0.25, green: 0.12, blue: 0.0) }
 
-    /// Qualite d'un lien vu par la sonde : 3 bon, 2 moyen, 1 faible ; 0 ou inconnue.
-    enum NiveauLien: Equatable {
-        case bon, moyen, faible, inconnu
-
-        init(_ qualite: Int?) {
-            switch qualite {
-            case 3?: self = .bon
-            case 2?: self = .moyen
-            case 1?: self = .faible
-            default: self = .inconnu
-            }
-        }
-    }
-
     /// La qualite que la vue lit d'un lien de `protocole` : celle du module, sauf le 0 de Zigbee, un LQI sous 50, lien
     /// tres faible mais reel, qui se lit comme un lien faible (1) ; le 0 de Thread vaut « pas de lien » et reste gris.
     static func qualiteAffichee(_ qualite: Int?, protocole: Protocole) -> Int? {
         protocole == .zigbee && qualite == 0 ? 1 : qualite
     }
 
+    /// La bande que la scene et la legende lisent d'un lien de `protocole` (`qualiteAffichee`) : celle de la fiche
+    /// (`BandeQualite.init`), sauf le 0 de Thread, « pas de lien », qui reste inconnu (gris) ; la fiche le lit « faible ».
+    static func bande(_ qualite: Int?, protocole: Protocole) -> BandeQualite {
+        let q = qualiteAffichee(qualite, protocole: protocole)
+        return q == 0 ? .inconnue : BandeQualite(q)
+    }
+
     /// Lien de la sonde : vert, jaune, orange ; gris si la qualite est inconnue (parent muet). `protocole` : celui du lien
     /// (`qualiteAffichee`) ; Thread par defaut.
     func lienSonde(_ qualite: Int?, protocole: Protocole = .thread) -> Color {
-        switch NiveauLien(Self.qualiteAffichee(qualite, protocole: protocole)) {
-        case .bon: Color(red: 0.29, green: 0.87, blue: 0.5)
-        case .moyen: Color(red: 0.98, green: 0.8, blue: 0.2)
+        switch Self.bande(qualite, protocole: protocole) {
+        case .bonne: Color(red: 0.29, green: 0.87, blue: 0.5)
+        case .moyenne: Color(red: 0.98, green: 0.8, blue: 0.2)
         case .faible: .orange
-        case .inconnu: sombre ? Color(white: 0.6) : Color(white: 0.5)
+        case .inconnue: sombre ? Color(white: 0.6) : Color(white: 0.5)
         }
     }
 

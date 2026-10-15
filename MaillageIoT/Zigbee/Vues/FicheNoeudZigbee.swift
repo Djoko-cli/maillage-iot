@@ -431,7 +431,7 @@ struct FicheNoeudZigbee: View {
 
     /// Ce que le point de couleur d'une pastille de dependant dit a VoiceOver : « qualité du lien : bonne ».
     static func valeurPastille(qualite: Int?) -> String {
-        String(localized: "qualité du lien : \(NiveauQualite(qualite).nom)")
+        String(localized: "qualité du lien : \(BandeQualite(qualite).nom)")
     }
 
     /// Un LQI : « 182 » seul, « ? » inconnu ; sinon « (LQI 182) », rien d'inconnu.

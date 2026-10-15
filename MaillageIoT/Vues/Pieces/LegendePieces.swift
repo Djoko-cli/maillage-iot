@@ -270,11 +270,11 @@ extension LegendePieces {
         if !l.piles.isEmpty { r.insert(.pile) }
         if !l.candidats.isEmpty { r.insert(.candidats) }
         func qualite(_ q: Int?, _ protocole: Protocole) {
-            switch Palette.NiveauLien(Palette.qualiteAffichee(q, protocole: protocole)) {
-            case .bon: r.insert(.bonne)
-            case .moyen: r.insert(.moyenne)
+            switch Palette.bande(q, protocole: protocole) {
+            case .bonne: r.insert(.bonne)
+            case .moyenne: r.insert(.moyenne)
             case .faible: r.insert(.faible)
-            case .inconnu: r.insert(.inconnue)
+            case .inconnue: r.insert(.inconnue)
             }
         }
         for lien in l.liens {
