@@ -345,7 +345,7 @@ Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctif
 
 - [x] **Step 1: Préparer** — compiler `MaillageIoT` (Debug). Le conteneur de développement de `fr.djoko.maillage.iot` n'est pas migré (spec 6.6, décision 8) : avec l'accord de Djoko, mettre de côté son dossier `Application Support/Maillage IoT/` avant le lancement. Les clés du trousseau sont reprises de Thread 1.3.0 et de Zigbee 1.1.1 par les invites de macOS (Zigbee et Thread : la reprise de la clé de Thread est faite à l'étape 3a, `TrousseauReprisThread`).
 - [x] **Step 2: Comparer** — les deux réseaux réels ensemble dans la vue par pièces (dessin actuel), à côté de Thread 1.3.0 et de Zigbee 1.1.1 ; les deux sondes en USB en même temps (aucune carte de l'autre dans les listes) ; « Activer ce protocole » éteint puis rallumé pour chacun ; le journal et le menu.
-- [ ] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
+- [x] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
 
 ---
 
