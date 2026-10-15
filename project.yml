@@ -278,6 +278,11 @@ targets:
         # Le produit s'appelle "Maillage IoT" (avec une espace), pas comme la cible.
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Maillage IoT.app/Contents/MacOS/Maillage IoT"
         BUNDLE_LOADER: "$(TEST_HOST)"
+      configs:
+        # Les mesures de la vue (outils/mesurer.sh vue) compilent ces tests en Release : en module entier, deux classes de
+        # preferences (PreferencesMemoire, PreferencesMemoireZigbee) n'y compilent pas (Sendable de UserDefaults).
+        Release:
+          SWIFT_COMPILATION_MODE: incremental
   # Le coeur du demon Passeur Noms (Passeur/Logique), sans HomeKit ni UIKit, teste sur macOS. Il compile les fichiers
   # communs lui-meme, comme la cible Passeur : pas de dependance a MaillageCoeur (les types seraient en double).
   PasseurTests:

@@ -46,10 +46,10 @@ D'après `inventaire-etape3b.md` §14. Le critère de l'étape 3 (spec 6.1) comp
 - Create: `MaillageIoTTests/MesuresVueTests.swift` (temps d'ouverture de la scène de démo et coût d'une suite de zooms, mesurés hors écran ; écrits dans un fichier de résultats, jamais une assertion de durée) ; `docs/mesures/etape-1.json` (référence).
 - Modify: `outils/mesurer.sh` (seconde ligne : les mesures de la vue).
 
-- [ ] **Step 1: Outil** — écrire `MesuresVueTests` (désactivé par défaut dans la porte, lancé par `outils/mesurer.sh vue`) et sa ligne dans `mesurer.sh`.
-- [ ] **Step 2: Référence** — dans une copie de travail à part (`git worktree add --detach /private/tmp/claude-501/mesure-e32f3a5 e32f3a5`, DerivedData à part), y copier l'outil adapté si besoin, mesurer Thread seul, écrire `docs/mesures/etape-1.json` dans le dépôt principal, puis `git worktree remove`.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; `outils/mesurer.sh vue` sur `main` donne des valeurs du même ordre (noté au rapport).
-- [ ] **Step 4: Commit** — « Mesures de la vue : outil et reference de l'etape 1 ».
+- [x] **Step 1: Outil** — écrire `MesuresVueTests` (désactivé par défaut dans la porte, lancé par `outils/mesurer.sh vue`) et sa ligne dans `mesurer.sh`.
+- [x] **Step 2: Référence** — dans une copie de travail à part (`git worktree add --detach /private/tmp/claude-501/mesure-e32f3a5 e32f3a5`, DerivedData à part), y copier l'outil adapté si besoin, mesurer Thread seul, écrire `docs/mesures/etape-1.json` dans le dépôt principal, puis `git worktree remove`.
+- [x] **Step 3: Vérifier** — porte de la tâche ; `outils/mesurer.sh vue` sur `main` donne des valeurs du même ordre (noté au rapport).
+- [x] **Step 4: Commit** — « Mesures de la vue : outil et reference de l'etape 1 ».
 
 ---
 
