@@ -43,7 +43,7 @@ struct MaillageIoTApp: App {
         _sondeZigbee = State(initialValue: m.sondeZigbee)
         // Les mises a jour : ni en demo, ni sous les tests (aucune recherche, aucun reseau), ni dans une
         // compilation de travail.
-        let mj = MisesAJour(demarrer: MisesAJour.demarrerAuLancement(demo: Self.demo))
+        let mj = MisesAJour.pourLApp(demo: Self.demo)
         _misesAJour = State(initialValue: mj)
         _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: m.nomsMaison,
                                                            nomsPont: m.nomsPont, sonde: m.sondeThread,

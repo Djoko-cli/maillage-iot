@@ -70,4 +70,14 @@ struct MisesAJourTests {
         #expect(!m.demarre)
         #expect(!m.peutRechercher, "un moteur arrete ne recherche pas")
     }
+
+    /// Seule l'instance de l'app est « celle de l'app » : une autre, creee ailleurs (une fenetre des Reglages d'un
+    /// test, hors ecran), ne la remplace pas. Sinon `deLApp`, faible, se vidait quand elle disparaissait, et
+    /// `moteurArreteSousLesTests` echouait selon l'ordre des tests.
+    @Test func uneAutreInstanceNeRemplacePasCelleDeLApp() throws {
+        let deLApp = try #require(MisesAJour.deLApp, "creee au lancement de l'app")
+        let autre = MisesAJour(demarrer: false)
+        #expect(MisesAJour.deLApp === deLApp)
+        #expect(MisesAJour.deLApp !== autre)
+    }
 }

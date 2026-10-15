@@ -15,7 +15,8 @@ import Sparkle
 @MainActor
 @Observable
 final class MisesAJour {
-    /// Celle de l'app, creee a son lancement.
+    /// Celle de l'app, creee a son lancement par `pourLApp` ; aucune autre instance (une fenetre des Reglages d'un
+    /// test, par exemple) ne la remplace.
     static private(set) weak var deLApp: MisesAJour?
 
     /// Le moteur est-il demarre ?
@@ -43,7 +44,14 @@ final class MisesAJour {
         abonnement = controleur.updater.publisher(for: \.canCheckForUpdates).sink { [weak self] peut in
             MainActor.assumeIsolated { self?.peutRechercher = peut }
         }
-        Self.deLApp = self
+    }
+
+    /// L'instance de l'app, creee a son lancement : le moteur ne demarre ni en demo, ni sous les tests, ni dans une
+    /// compilation de travail.
+    static func pourLApp(demo: Bool) -> MisesAJour {
+        let m = MisesAJour(demarrer: demarrerAuLancement(demo: demo))
+        deLApp = m
+        return m
     }
 
     /// Le moteur demarre au lancement de l'app, sauf en demo, sous les tests et dans une compilation de travail.
