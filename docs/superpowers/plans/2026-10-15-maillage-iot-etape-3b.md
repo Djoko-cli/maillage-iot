@@ -137,10 +137,10 @@ D'après `inventaire-etape3b.md` §7 ; spec 3.5, 6.7.
 - Modify: `FenetreJournal` et ses familles (interrupteurs Thread / Zigbee propres au journal, mémorisés `journal.thread` / `journal.zigbee` ; marque ● ou ⬢ dans la couleur du protocole sur chaque ligne ; familles propres à un protocole filtré grisées).
 - Test: `filtreDuJournalParProtocole`, `marqueDeLigne`, préférence gardée.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Journal : filtres et marques par protocole ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Journal : filtres et marques par protocole ».
 
 ---
 

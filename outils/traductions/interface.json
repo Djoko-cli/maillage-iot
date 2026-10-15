@@ -409,5 +409,7 @@
   "Non lié": "Not linked",
   "Thread est masqué": "Thread is hidden",
   "Thread et Zigbee sont masqués": "Thread and Zigbee are hidden",
-  "Zigbee est masqué": "Zigbee is hidden"
+  "Zigbee est masqué": "Zigbee is hidden",
+  "Masquer %@ dans le journal": "Hide %@ in the journal",
+  "Montrer %@ dans le journal": "Show %@ in the journal"
 }

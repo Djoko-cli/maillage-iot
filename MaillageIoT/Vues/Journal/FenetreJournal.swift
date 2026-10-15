@@ -3,8 +3,9 @@ import ProtocoleThread
 import ProtocoleZigbee
 import SwiftUI
 
-/// Familles d'evenements, pour le filtre du journal : celles des deux protocoles (les filtres par protocole sont a l'etape
-/// 3b). « Reseau » est celle de Thread, « Surveillance » celle de Zigbee ; les types communs vont dans la meme famille.
+/// Familles d'evenements, pour le filtre du journal : celles des deux protocoles (leurs interrupteurs sont dans
+/// `ProtocolesJournal.swift`, avec les familles qui se grisent). « Reseau » est celle de Thread, « Surveillance » celle de
+/// Zigbee ; les types communs vont dans la meme famille.
 enum FamilleEvenement: String, CaseIterable, Identifiable {
     case toutes, reseau, surveillance, routeurs, prefixes, appareils, maillage
 
@@ -43,17 +44,20 @@ enum FamilleEvenement: String, CaseIterable, Identifiable {
     }
 }
 
-/// Filtre du journal : famille, gravite minimale, recherche dans le titre, le sujet et les noms
-/// « avant » et « apres » (les parents d'un changement de parent regroupe ne sont pas dans son titre).
+/// Filtre du journal : protocoles montres, famille, gravite minimale, recherche dans le titre, le sujet et les noms
+/// « avant » et « apres » (les parents d'un changement de parent regroupe ne sont pas dans son titre). Une ligne est du protocole
+/// de son premier evenement, Thread sans protocole ; les lignes regroupees sont par protocole, elles suivent le leur.
 struct FiltreJournal: Equatable {
     var famille: FamilleEvenement = .toutes
     var graviteMinimale: Gravite = .info
     var recherche = ""
+    var protocoles = Set(Protocole.allCases)
 
     func appliquer(_ lignes: [LigneJournal]) -> [LigneJournal] {
         let r = recherche.trimmingCharacters(in: .whitespaces)
         return lignes.filter { l in
             let ev = l.evenements
+            guard protocoles.contains(MarqueProtocole.protocole(de: l)) else { return false }
             guard ev.contains(where: { famille.contient($0.type) }), l.gravite >= graviteMinimale else { return false }
             guard !r.isEmpty else { return true }
             return TexteEvenement.titre(l).localizedCaseInsensitiveContains(r)
@@ -69,9 +73,18 @@ struct FiltreJournal: Equatable {
 struct FenetreJournal: View {
     @Environment(Surveillance.self) private var surveillance
     @State private var filtre = FiltreJournal()
+    private let preferences = PreferencesJournal()
+
+    /// Le filtre de la fenetre et les protocoles que le journal montre (ses interrupteurs a lui, pas ceux de la vue).
+    private var filtreApplique: FiltreJournal {
+        var f = filtre
+        f.protocoles = preferences.preferes
+        return f
+    }
 
     var body: some View {
-        let lignes = filtre.appliquer(surveillance.lignesJournal)
+        let montres = preferences.preferes
+        let lignes = filtreApplique.appliquer(surveillance.lignesJournal)
         List(lignes) { ligne in
             LigneJournalVue(ligne: ligne)
         }
@@ -82,8 +95,13 @@ struct FenetreJournal: View {
         }
         .searchable(text: $filtre.recherche)
         .toolbar {
+            ForEach(Protocole.allCases, id: \.self) { p in
+                InterrupteurJournal(protocole: p, allume: preferences.liaison(p))
+            }
             Picker("Famille", selection: $filtre.famille) {
-                ForEach(FamilleEvenement.allCases) { Text($0.titre).tag($0) }
+                ForEach(FamilleEvenement.allCases) { f in
+                    Text(f.titre).tag(f).disabled(f.grisee(montres: montres))
+                }
             }
             Picker("Gravité", selection: $filtre.graviteMinimale) {
                 Text("Tout").tag(Gravite.info)
@@ -97,7 +115,7 @@ struct FenetreJournal: View {
     }
 }
 
-/// Une ligne : pastille de gravite, titre, quand ; le detail des pertes regroupees ; pour les changements de parent
+/// Une ligne : pastille de gravite, marque de protocole, titre, quand ; le detail des pertes regroupees ; pour les changements de parent
 /// regroupes, les relais et, a deplier, leurs changements (comme dans la fiche).
 struct LigneJournalVue: View {
     let ligne: LigneJournal
@@ -128,6 +146,7 @@ struct LigneJournalVue: View {
     private func contenu(_ titre: String, quand: String, gravite: Gravite) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Circle().fill(Self.couleur(gravite)).frame(width: 8, height: 8)
+            MarqueProtocoleVue(protocole: MarqueProtocole.protocole(de: ligne))
             VStack(alignment: .leading, spacing: 2) {
                 Text(titre)
                 Text(quand).font(.caption).foregroundStyle(.secondary)

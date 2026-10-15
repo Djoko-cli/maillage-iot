@@ -4049,6 +4049,22 @@
         }
       }
     },
+    "Masquer %@ dans le journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide %@ in the journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer %@ dans le journal"
+          }
+        }
+      }
+    },
     "Message illisible de Passeur Noms : connexion fermée." : {
       "localizations" : {
         "en" : {
@@ -4237,6 +4253,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Montrer %@"
+          }
+        }
+      }
+    },
+    "Montrer %@ dans le journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show %@ in the journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montrer %@ dans le journal"
           }
         }
       }
