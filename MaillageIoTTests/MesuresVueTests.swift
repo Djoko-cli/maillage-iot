@@ -8,7 +8,8 @@ import Testing
 @testable import MaillageIoT
 
 /// Mesures de la vue par pieces, hors ecran (critere 6.1 de la spec de la fusion : l'ouverture de la vue et la fluidite du
-/// zoom, contre Thread seul de l'etape 1). Jamais une assertion de duree : les machines different ; le test ne verifie que
+/// zoom, pour la demo de Thread seule, a comparer a l'etape 1, et pour la demo combinee). Jamais une assertion de duree :
+/// les machines different ; le test ne verifie que
 /// ce qui rend la mesure valable (la scene est dessinee, la camera a bien bouge) et ecrit ses medianes sur une ligne
 /// `mesure vue json : {...}` que `outils/mesurer.sh vue` lit (le test est dans le bac a sable de l'app : il n'ecrit pas
 /// lui-meme dans un fichier du depot).
@@ -45,13 +46,28 @@ struct MesuresVueTests {
     /// Rapport de l'echelle au bout de l'aller.
     static let rapportDeZoom = 5.0
 
-    /// La scene de la demo : l'unique ligne qui differe d'une etape a l'autre de l'app (le reseau Thread se lit
+    /// Les scenes mesurees : la demo de Thread seule (`-demo-thread`, celle de l'etape 1, a garder identique pour que les
+    /// chiffres se comparent) et la demo combinee (`-demo`, les deux protocoles, construite comme l'app).
+    enum Cas: String, CaseIterable {
+        case threadSeule = "thread_seule"
+        case combinee
+    }
+
+    /// La scene d'un cas : la ligne qui differe d'une etape a l'autre de l'app pour Thread seule (le reseau Thread se lit
     /// `surveillance.thread.reseau` depuis l'etape 3a, `surveillance.reseau` a l'etape 1).
-    static func sceneDeDemo() throws -> EntreeScene {
-        let s = Surveillance(mode: .demo, dossier: nil)
-        s.demarrer()
-        let r = try #require(s.thread.reseau)
-        return EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
+    static func sceneDeDemo(_ cas: Cas) throws -> EntreeScene {
+        switch cas {
+        case .threadSeule:
+            let s = Surveillance(mode: .demo, dossier: nil, demo: .thread)
+            s.demarrer()
+            let r = try #require(s.thread.reseau)
+            return EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
+        case .combinee:
+            // Comme `FenetrePieces` : la scene de la surveillance (reseau de Thread et maillage de Zigbee), places vides.
+            let s = Surveillance(mode: .demo, dossier: nil, demo: .combinee)
+            s.demarrer()
+            return EntreeScene(surveillance: s, places: PlacesGardees())
+        }
     }
 
     static func ms(_ debut: ContinuousClock.Instant, _ fin: ContinuousClock.Instant) -> Double {
@@ -81,8 +97,8 @@ struct MesuresVueTests {
         var total = 0.0, scene = 0.0, disposition = 0.0, image = 0.0
     }
 
-    /// Verifiee une fois (hors chronometre) : la premiere image a la taille de la vue et n'est pas unie.
-    static var verifie = false
+    /// Verifiee une fois par cas (hors chronometre) : la premiere image a la taille de la vue et n'est pas unie.
+    static var verifie: Set<Cas> = []
 
     /// L'image porte plus d'une couleur (un echantillon de ses octets).
     static func nonUnie(_ image: CGImage) -> Bool {
@@ -92,10 +108,10 @@ struct MesuresVueTests {
     }
 
     /// Un passage de l'ouverture, chronometre en trois temps.
-    static func ouvrir() throws -> (Ouverture, MoteurPieces, EntreeScene) {
+    static func ouvrir(_ cas: Cas) throws -> (Ouverture, MoteurPieces, EntreeScene) {
         var o = Ouverture()
         let t0 = ContinuousClock.now
-        let e = try sceneDeDemo()
+        let e = try sceneDeDemo(cas)
         let t1 = ContinuousClock.now
         let m = MoteurPieces(fichierPlaces: nil)
         m.marges = (84, 50)
@@ -105,8 +121,8 @@ struct MesuresVueTests {
         let image = dessiner(m)
         let t3 = ContinuousClock.now
         #expect(image != nil && m.pret && m.projetee != nil, "la premiere image est dessinee")
-        if let image, !verifie {
-            verifie = true
+        if let image, !verifie.contains(cas) {
+            verifie.insert(cas)
             #expect(image.width >= Int(taille.width) && image.height >= Int(taille.height), "l'image a la taille de la vue")
             #expect(Self.nonUnie(image), "l'image n'est pas unie : la scene y est dessinee")
         }
@@ -135,40 +151,46 @@ struct MesuresVueTests {
         return images
     }
 
-    @Test(.enabled(if: MesuresVueTests.actives, "mesure hors porte (outils/mesurer.sh vue)"))
-    func ouvertureEtZoom() throws {
+    /// Les mesures d'un cas : les memes passages et la meme suite de zoom pour chacun.
+    static func mesurer(_ cas: Cas) throws -> [String: Any] {
         // Ouverture : un passage froid, puis `passages` passages.
-        let (froid, _, e0) = try Self.ouvrir()
+        let (froid, _, e0) = try ouvrir(cas)
         var ouvertures: [Ouverture] = []
-        for _ in 0..<Self.passages { ouvertures.append(try Self.ouvrir().0) }
+        for _ in 0..<passages { ouvertures.append(try ouvrir(cas).0) }
         // Zoom : sur un moteur ouvert, `passages` suites ; la premiere image de chaque suite part de la vue d'ensemble.
         var suites: [Double] = []
         var images: [Double] = []
-        for _ in 0..<Self.passages {
-            let (_, m, _) = try Self.ouvrir()
+        for _ in 0..<passages {
+            let (_, m, _) = try ouvrir(cas)
             let depart = m.orbite.distance
-            let pasImages = Self.zoomer(m)
-            #expect(pasImages.count == Self.pasDeZoom)
+            let pasImages = zoomer(m)
+            #expect(pasImages.count == pasDeZoom)
             #expect(abs(m.orbite.distance - depart) < 1e-6 * depart, "la suite revient a la vue de depart : la camera a bien suivi")
             suites.append(pasImages.reduce(0, +))
             images += pasImages
         }
-        let resultat: [String: Any] = [
-            "ouverture_ms": Self.mediane(ouvertures.map(\.total)),
+        return [
+            "ouverture_ms": mediane(ouvertures.map(\.total)),
             "ouverture_froide_ms": froid.total,
-            "ouverture_scene_ms": Self.mediane(ouvertures.map(\.scene)),
-            "ouverture_disposition_ms": Self.mediane(ouvertures.map(\.disposition)),
-            "ouverture_premiere_image_ms": Self.mediane(ouvertures.map(\.image)),
-            "zoom_suite_ms": Self.mediane(suites),
-            "zoom_image_ms": Self.mediane(images),
-            "zoom_image_p95_ms": Self.centile(images, 0.95),
+            "ouverture_scene_ms": mediane(ouvertures.map(\.scene)),
+            "ouverture_disposition_ms": mediane(ouvertures.map(\.disposition)),
+            "ouverture_premiere_image_ms": mediane(ouvertures.map(\.image)),
+            "zoom_suite_ms": mediane(suites),
+            "zoom_image_ms": mediane(images),
+            "zoom_image_p95_ms": centile(images, 0.95),
             "zoom_pire_image_ms": images.max() ?? 0,
-            "pas_de_zoom": Self.pasDeZoom,
-            "passages": Self.passages,
+            "pas_de_zoom": pasDeZoom,
+            "passages": passages,
             "noeuds": e0.scene.noeuds.count,
             "pieces": e0.scene.pieces.count,
-            "compilation": Self.optimisee ? "Release" : "Debug",
         ]
+    }
+
+    /// Thread seule d'abord (son passage froid est celui du processus, comme a l'etape 1), puis la combinee.
+    @Test(.enabled(if: MesuresVueTests.actives, "mesure hors porte (outils/mesurer.sh vue)"))
+    func ouvertureEtZoom() throws {
+        var resultat: [String: Any] = ["compilation": Self.optimisee ? "Release" : "Debug"]
+        for cas in Cas.allCases { resultat[cas.rawValue] = try Self.mesurer(cas) }
         let json = try JSONSerialization.data(withJSONObject: resultat, options: [.sortedKeys])
         print("mesure vue json : \(String(decoding: json, as: UTF8.self))")
     }
