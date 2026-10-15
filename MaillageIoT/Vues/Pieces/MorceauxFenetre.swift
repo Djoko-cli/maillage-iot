@@ -7,14 +7,15 @@ import SwiftUI
 
 /// Noeud choisi pour une feuille (surnom).
 struct NoeudChoisi: Identifiable {
-    let id: String
+    let id: IdNoeud
 }
 
 /// Capsule de gauche du haut de la fenetre : reseau, appareils IP, journal, rafraichir.
 struct BarreOutils: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(SondeMaillage.self) private var sonde
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(SondeMaillageThread.self) private var sonde
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
+    @Environment(NomsPasseur.self) private var nomsMaison
     @Environment(\.openWindow) private var openWindow
     @State private var appareilsIP = false
 
@@ -25,7 +26,7 @@ struct BarreOutils: View {
     }
 
     /// Aide du bouton rafraichir : ce qu'il lancera vraiment. Le reseau toujours ; une tournee
-    /// si la sonde est connectee et libre (`SondeMaillage.tourneeAuRafraichir`) ; les noms de
+    /// si la sonde est connectee et libre (`SondeMaillageThread.tourneeAuRafraichir`) ; les noms de
     /// Maison si le passeur sera lance (`lancePasseur`).
     static func aideRafraichir(tournee: Bool, passeur: Bool) -> String {
         switch (tournee, passeur) {
@@ -40,11 +41,11 @@ struct BarreOutils: View {
         HStack(spacing: 5) {
             // « Reseau demo ▾ » : le menu, dessine comme les autres boutons de la capsule.
             Menu {
-                ForEach(surveillance.instantane?.reseaux ?? []) { r in
-                    Button(r.nom) { surveillance.reseauChoisi = r.id }
+                ForEach(surveillance.thread.instantane?.reseaux ?? []) { r in
+                    Button(r.nom) { surveillance.thread.reseauChoisi = r.id }
                 }
             } label: {
-                Text(verbatim: (surveillance.reseau?.nom ?? String(localized: "Aucun réseau Thread")) + " ▾")
+                Text(verbatim: (surveillance.thread.reseau?.nom ?? String(localized: "Aucun réseau Thread")) + " ▾")
             }
             .menuStyle(.button)
             .buttonStyle(StyleBoutonCapsule())
@@ -52,7 +53,7 @@ struct BarreOutils: View {
             Button {
                 appareilsIP = true
             } label: {
-                Text("Appareils IP · \(surveillance.instantane?.appareilsIP.count ?? 0)")
+                Text("Appareils IP · \(surveillance.thread.instantane?.appareilsIP.count ?? 0)")
             }
             .buttonStyle(StyleBoutonCapsule())
             .popover(isPresented: $appareilsIP) { ListeAppareilsIP() }
@@ -62,8 +63,10 @@ struct BarreOutils: View {
             .buttonStyle(StyleBoutonCapsule())
             // Pendant une tournee : le reseau et les noms, sans seconde tournee.
             Button {
-                surveillance.rafraichir()
+                surveillance.thread.rafraichir()
                 sonde.rafraichir()
+                // Une scene qui montre aussi Zigbee : sa sonde fait sa tournee de meme.
+                if surveillance.zigbee.aUnReseau { sondeZigbee?.rafraichir() }
                 if Self.lancePasseur(mode: surveillance.mode) {
                     nomsMaison.relire()
                 }
@@ -71,7 +74,8 @@ struct BarreOutils: View {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(StyleBoutonCapsule())
-            .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir,
+            .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir
+                                          || (surveillance.zigbee.aUnReseau && sondeZigbee?.tourneeAuRafraichir == true),
                                       passeur: Self.lancePasseur(mode: surveillance.mode)))
         }
     }
@@ -84,7 +88,7 @@ struct BarreOutils: View {
 /// haut compte sa place (`gabarit`) tant qu'une sonde est retenue, comme avant, et la vue d'ensemble ne se recadre pas
 /// a chaque tournee. Vue a part : seule elle se redessine a chaque pas de la tournee, pas la fenetre de la vue.
 struct LigneTournee: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     /// Ce que fait la ligne : montree pendant une tournee ; hors tournee, une sonde retenue, cachee, mais sa place
     /// comptee dans la marge du haut ; rien sans sonde.
@@ -137,11 +141,11 @@ struct IndicateurTournee: View {
             // pas de taille d'une etape a l'autre (texte cale a gauche).
             ZStack(alignment: .leading) {
                 ForEach(AvancementTournee.Etape.allCases, id: \.self) { e in
-                    Text(TexteTournee.gabaritBarre(e)).hidden()
+                    Text(TexteTourneeThread.gabaritBarre(e)).hidden()
                 }
                 if let debut {
                     TimelineView(.periodic(from: debut, by: 1)) { contexte in
-                        Text(TexteTournee.barre(avancement, debut: debut, maintenant: contexte.date))
+                        Text(TexteTourneeThread.barre(avancement, debut: debut, maintenant: contexte.date))
                     }
                 }
             }
@@ -165,8 +169,8 @@ struct BandeauScission: View {
 
     private var texte: String {
         let n = reseau.partitions.count
-        let aPart = reseau.partitions.dropFirst().flatMap(\.routeurs).map { surveillance.nom($0) }.joined(separator: ", ")
-        guard let e = surveillance.derniereScission(reseau) else {
+        let aPart = reseau.partitions.dropFirst().flatMap(\.routeurs).map { surveillance.thread.nom($0) }.joined(separator: ", ")
+        guard let e = surveillance.thread.derniereScission(reseau) else {
             return String(localized: "Réseau scindé en \(n) partitions · à part : \(aPart)")
         }
         let quand = e.date.formatted(date: .abbreviated, time: .shortened)
@@ -177,12 +181,72 @@ struct BandeauScission: View {
     }
 }
 
-/// Ecran d'attente ou d'erreur, quand il n'y a pas de reseau a dessiner.
+/// « Maillage incomplet » (Zigbee, avec l'heure de la passe complementaire programmee), a la place de la ligne de la
+/// tournee quand aucune ne tourne : texte discret, de la hauteur de la ligne (`hauteur`, mesuree sur son gabarit) pour
+/// que la colonne ne bouge pas quand l'une prend la place de l'autre.
+struct IndicateurIncomplet: View {
+    let texte: String
+    let hauteur: CGFloat?
+
+    var body: some View {
+        Text(texte)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .frame(height: hauteur)
+    }
+}
+
+/// Ecran d'attente ou d'erreur, quand il n'y a pas de reseau a dessiner : l'etat de chaque protocole actif, Thread d'abord.
+/// Un protocole eteint n'a rien a dire (« Ecoute du reseau local… » ne s'affiche pas quand Thread est eteint) ; aucun
+/// protocole actif, l'ecran le dit.
 struct EtatVide: View {
     @Environment(Surveillance.self) private var surveillance
 
+    /// Ce que l'ecran dit d'un protocole.
+    enum Etat: Hashable {
+        /// Thread : l'acces au reseau local est refuse.
+        case reseauLocalRefuse
+        /// Thread : le Mac a ecoute le reseau local sans y voir de reseau Thread.
+        case aucunReseauThread
+        /// Thread : le Mac n'a encore rien ecoute.
+        case ecouteThread
+        /// Zigbee : ni maillage de la sonde, ni appareil du pont.
+        case attenteZigbee
+        /// Aucun protocole n'est actif.
+        case aucunProtocole
+    }
+
+    /// Les etats a dire : un par protocole actif (en demo, celui dont la demo est rejouee), Thread d'abord ; l'etat « aucun
+    /// protocole » seul quand aucun n'est actif.
+    static func etats(_ s: Surveillance) -> [Etat] {
+        let montres = s.modelesMontres.map(\.protocole)
+        guard !montres.isEmpty else { return [.aucunProtocole] }
+        return montres.map { p in
+            switch p {
+            case .thread:
+                if s.thread.etatEcoute == .reseauLocalRefuse { .reseauLocalRefuse }
+                else if s.thread.instantane != nil { .aucunReseauThread }
+                else { .ecouteThread }
+            case .zigbee:
+                .attenteZigbee
+            }
+        }
+    }
+
     var body: some View {
-        if surveillance.etatEcoute == .reseauLocalRefuse {
+        let etats = Self.etats(surveillance)
+        VStack(spacing: 24) {
+            ForEach(etats, id: \.self) { etat in
+                vue(etat)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func vue(_ etat: Etat) -> some View {
+        switch etat {
+        case .reseauLocalRefuse:
             ContentUnavailableView {
                 Label("Accès au réseau local refusé", systemImage: "network.slash")
             } description: {
@@ -194,11 +258,19 @@ struct EtatVide: View {
                     }
                 }
             }
-        } else if surveillance.instantane != nil {
+        case .aucunReseauThread:
             ContentUnavailableView("Aucun réseau Thread visible sur ce réseau local",
                                    systemImage: "point.3.connected.trianglepath.dotted")
-        } else {
+        case .ecouteThread:
             ProgressView("Écoute du réseau local…")
+        case .attenteZigbee:
+            EtatVideZigbee()
+        case .aucunProtocole:
+            ContentUnavailableView {
+                Label("Aucun protocole actif", systemImage: "pause.circle")
+            } description: {
+                Text("Activez Thread ou Zigbee dans les Réglages.")
+            }
         }
     }
 }
@@ -208,7 +280,7 @@ struct ListeAppareilsIP: View {
     @Environment(Surveillance.self) private var surveillance
 
     var body: some View {
-        let appareils = surveillance.instantane?.appareilsIP ?? []
+        let appareils = surveillance.thread.instantane?.appareilsIP ?? []
         VStack(alignment: .leading, spacing: 10) {
             Text("Appareils du réseau local (hors Thread)").font(.headline)
             if appareils.isEmpty {
@@ -216,7 +288,7 @@ struct ListeAppareilsIP: View {
             }
             ForEach(appareils) { a in
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(surveillance.nom(a))
+                    Text(surveillance.thread.nom(a))
                     Text((a.adresses.map(\.description) + a.adressesIPv4).joined(separator: ", "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -233,12 +305,12 @@ struct ListeAppareilsIP: View {
 struct FeuilleRenommer: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(\.dismiss) private var fermer
-    let id: String
+    let id: IdNoeud
     @State private var texte = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Renommer « \(id) »").font(.headline)
+            Text("Renommer « \(id.cle) »").font(.headline)
             TextField("Surnom", text: $texte)
             Text("Le surnom reste sur ce Mac et passe avant le nom de Maison.")
                 .font(.caption)
@@ -259,6 +331,6 @@ struct FeuilleRenommer: View {
         }
         .padding(20)
         .frame(width: 400)
-        .onAppear { texte = surveillance.noms.surnoms[id] ?? "" }
+        .onAppear { texte = surveillance.surnom(de: id) ?? "" }
     }
 }

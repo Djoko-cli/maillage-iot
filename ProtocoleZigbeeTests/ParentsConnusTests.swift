@@ -52,7 +52,7 @@ struct ParentsConnusTests {
         // Le graphe trace ce lien en pointilles (« suppose ») ; un lien lu ne l'est pas.
         let g = GrapheReseau(maillage: m, appareils: [])
         #expect(g.liens.filter { $0.genre == .parent }.map(\.suppose) == [true, false])
-        #expect(g.parent(de: Self.bouton) == Self.r1)
+        #expect(g.parent(de: idz(Self.bouton)) == idz(Self.r1))
         // Rien a ajouter si on le refait.
         #expect(p.completer(m) == m)
     }

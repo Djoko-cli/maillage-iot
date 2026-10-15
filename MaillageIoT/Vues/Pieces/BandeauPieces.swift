@@ -11,6 +11,8 @@ extension EnvironmentValues {
     /// Rendu d'une capture (`CapturesPieces`, par `ImageRenderer`) : ni le verre, ni les vues d'AppKit
     /// n'y sont dessines ; les vues posent a leur place le dessin de la maquette.
     @Entry var capturePieces = false
+    /// La periode des courbes de la fiche dans une capture (qui ne rend pas le choix de la periode) ; nil, 24 h.
+    @Entry var periodeCapture: PeriodeCourbes?
 }
 
 /// Cadre des trois boutons de la fenetre (fermer, reduire, agrandir), dans l'espace de la vue, dont
@@ -258,17 +260,50 @@ struct BandeFenetre: View {
     }
 }
 
+/// Ce que le haut de la fenetre montre d'une scene d'apres les protocoles qui y ont des noeuds : la barre d'outils, les
+/// lignes de tournee, le bandeau d'une maison sans pieces et les commandes des liens. Une scene des deux reseaux montre les
+/// commandes des deux (la barre definitive, avec les interrupteurs de vue, est a l'etape 3b).
+struct ContenuHaut: Equatable {
+    let protocoles: Set<Protocole>
+
+    init(protocoles: Set<Protocole>) {
+        self.protocoles = protocoles
+    }
+
+    /// La barre d'outils de Zigbee n'est celle du haut que pour une scene qui n'a que Zigbee. Avec des noeuds Thread (les
+    /// deux reseaux, ou aucun noeud), c'est celle de Thread, dont le journal et le bouton rafraichir servent aux deux
+    /// protocoles.
+    var barreZigbee: Bool { protocoles == [.zigbee] }
+
+    /// Les lignes de tournee, Thread d'abord : celle de chaque protocole de la scene. Sans noeud, celle de Thread.
+    var tournees: [Protocole] {
+        let p = Protocole.allCases.filter(protocoles.contains)
+        return p.isEmpty ? [.thread] : p
+    }
+
+    /// « Liens : chemins | tous » et les voisins entendus a la selection : ceux de Zigbee, des qu'un noeud de Zigbee est de
+    /// la scene (Thread n'en depend pas, `ModeleProtocole.suitModeLiens`).
+    var liens: Bool { protocoles.contains(.zigbee) }
+
+    /// Le bandeau d'une maison sans pieces est celui de Zigbee (le pont donnera les pieces) pour une scene de Zigbee seul, et
+    /// celui de Maison sinon.
+    var sansPiecesZigbee: Bool { barreZigbee }
+}
+
 /// Haut de la fenetre, pose sur la scene : la ligne des capsules, centree sur les trois boutons de la
 /// fenetre (le reseau juste apres eux, la vue contre le bord droit, la bande entre elles) ; dessous, la
 /// colonne de gauche, contre le bord gauche de la fenetre, a la marge de la legende (ronde finale du 02/10) : la
-/// ligne de la tournee, pendant une tournee seulement, le bandeau de scission, celui d'une maison sans pieces, le
+/// ligne de la tournee, pendant une tournee seulement, le bandeau de scission (Thread), l'indicateur du maillage
+/// incomplet (Zigbee), celui d'une maison sans pieces, le
 /// fil, et, juste sous lui, la ligne de niveau avec la pastille d'un releve ancien (`RangeeNiveau`, decision de
 /// Djoko du 02/10). Son bas mesure donne la marge du haut de la vue d'ensemble (`surBas`, puis
 /// `FenetrePieces.margeHaut`), avec la place d'une ligne de tournee absente tant qu'une sonde est retenue : la
 /// scene ne bouge pas quand la ligne parait ou disparait, ni quand la ligne de niveau change de texte.
 struct HautPieces: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
+    /// La sonde de Zigbee : sa tournee, quand la scene n'a que Zigbee. nil dans les vues de test sans elle.
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(\.accessibilityReduceMotion) private var reduire
     let moteur: MoteurPieces
     @Binding var troisD: Bool
@@ -276,6 +311,12 @@ struct HautPieces: View {
     var sansPieces = false
     /// Le releve de la sonde est ancien : sa pastille est a cote de la ligne de niveau.
     var ancien = false
+    /// « Maillage incomplet » (avec l'heure de la passe complementaire programmee, `TexteTourneeZigbee.texteIncomplet`) :
+    /// il prend la place de la ligne de la tournee quand aucune ne tourne ; nil : aucun.
+    var texteIncomplet: String?
+    /// Les protocoles qui ont des noeuds dans la scene (`EntreeScene.protocoles`) : ils disent la barre, les lignes de tournee
+    /// et les commandes (`ContenuHaut`).
+    var protocoles: Set<Protocole> = []
     var feux = CadreFeux.defaut
     /// Le bas du haut de la fenetre, dans l'espace de la vue, la place d'une ligne de tournee absente comprise.
     var surBas: (CGFloat) -> Void = { _ in }
@@ -293,17 +334,35 @@ struct HautPieces: View {
         feux.droite > 0 ? feux.droite + ecartFeux : bordDroit
     }
 
+    /// La place de la ligne de tournee de chaque protocole de la scene (`ContenuHaut.tournees`), Thread d'abord.
+    private var places: [(protocole: Protocole, place: LigneTournee.Place)] {
+        ContenuHaut(protocoles: protocoles).tournees.map { p in
+            switch p {
+            case .thread: (p, LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee))
+            case .zigbee: (p, LigneTournee.place(serie: sondeZigbee?.serie, debut: sondeZigbee?.debutTournee))
+            }
+        }
+    }
+
     var body: some View {
-        let tournee = LigneTournee.place(serie: sonde.serie, debut: sonde.debutTournee)
-        // Hors tournee, une sonde retenue : la marge du haut compte la ligne absente et son espacement.
-        let reserve = tournee == .comptee ? (hauteurTournee ?? 0) + FenetrePieces.espacement : 0
+        let contenu = ContenuHaut(protocoles: protocoles)
+        let places = self.places
+        // Hors tournee, une sonde retenue : la marge du haut compte la ligne absente et son espacement, pour chaque protocole.
+        // L'indicateur du maillage incomplet (Zigbee) prend la place de la ligne de Zigbee (de la meme hauteur) : rien ne saute.
+        let incompletZigbee = texteIncomplet != nil
+        let reservees: Int = places.filter { p in
+            p.place == .comptee && !(p.protocole == .zigbee && incompletZigbee)
+        }.count
+        let reserve: CGFloat = CGFloat(reservees) * ((hauteurTournee ?? 0) + FenetrePieces.espacement)
         VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
             // Chaque capsule garde la largeur de son contenu (`fixedSize`) : la bande vide prend la place qui
             // reste. Sans cela, les trois se la partagent et la capsule du reseau tronque ses boutons.
             HStack(spacing: 0) {
-                BarreOutils()
-                    .capsuleDeVerre()
-                    .fixedSize()
+                Group {
+                    if contenu.barreZigbee { BarreOutilsZigbee() } else { BarreOutils() }
+                }
+                .capsuleDeVerre()
+                .fixedSize()
                 BandeFenetre()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 CommandesVue(moteur: moteur, troisD: $troisD)
@@ -320,32 +379,48 @@ struct HautPieces: View {
             // fond sur la meme animation de conteneur (aucune avec le reglage).
             VStack(alignment: .leading, spacing: FenetrePieces.espacementNiveau) {
                 VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
-                    if tournee == .montree {
-                        LigneTournee()
-                            .transition(apparition.transitionAnimee)
+                    // Une ligne par protocole dont une tournee tourne : Thread, puis Zigbee.
+                    ForEach(places.filter { $0.place == .montree }, id: \.protocole) { p in
+                        Group {
+                            switch p.protocole {
+                            case .thread: LigneTournee()
+                            case .zigbee: LigneTourneeZigbee()
+                            }
+                        }
+                        .transition(apparition.transitionAnimee)
                     }
-                    if let r = surveillance.reseau, r.estScinde {
+                    if let r = surveillance.thread.reseau, r.estScinde {
                         BandeauScission(reseau: r)
                             .transition(apparition.transitionAnimee)
                     }
-                    if sansPieces {
-                        BandeauSansPieces()
+                    if let texteIncomplet {
+                        IndicateurIncomplet(texte: texteIncomplet, hauteur: hauteurTournee)
                             .transition(apparition.transitionAnimee)
+                    }
+                    if sansPieces {
+                        Group {
+                            if contenu.sansPiecesZigbee { BandeauSansPiecesZigbee() } else { BandeauSansPieces() }
+                        }
+                        .transition(apparition.transitionAnimee)
                     }
                     FilPieces(moteur: moteur)
                 }
                 .obstacle("colonne", moteur)
                 RangeeNiveau(moteur: moteur, ancien: ancien)
             }
-            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.reseau?.estScinde == true)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.thread.reseau?.estScinde == true)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: sansPieces)
-            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: tournee == .montree)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: texteIncomplet != nil)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: places.map { $0.place == .montree })
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: ancien)
             .background(alignment: .topLeading) {
-                if tournee != .aucune {
-                    LigneTournee.gabarit
-                        .fixedSize()
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hauteurTournee = $0 }
+                if places.contains(where: { $0.place != .aucune }) {
+                    // Les deux lignes ont la meme hauteur : une seule est mesuree.
+                    Group {
+                        if contenu.tournees.contains(.thread) { LigneTournee.gabarit } else { LigneTourneeZigbee.gabarit }
+                    }
+                    .fixedSize()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { hauteurTournee = $0 }
                 }
             }
             .padding(.leading, FenetrePieces.bord)
@@ -422,6 +497,50 @@ struct SelecteurVue: View {
             Picker("Vue", selection: $troisD) {
                 Text("2D").tag(false)
                 Text("3D").tag(true)
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private func segment(_ titre: LocalizedStringKey, choisi: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(titre)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(choisi ? 1 : 0.8))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(Color.white.opacity(choisi ? 0.28 : 0)))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// « Liens : chemins | tous » (consigne de l'etape 3 bis, section 3) : le chemin de chaque routeur vers le pont, ou
+/// tous les liens radio entendus ; dessine comme l'interrupteur 2D / 3D.
+struct SelecteurLiens: View {
+    @Binding var liens: ModeLiens
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("Liens")
+                .font(.system(size: 11))
+                .foregroundStyle(Color.white.opacity(0.7))
+                .padding(.leading, 6)
+            HStack(spacing: 0) {
+                segment("chemins", choisi: liens == .chemins) { liens = .chemins }
+                segment("tous", choisi: liens == .tous) { liens = .tous }
+            }
+            .background(Capsule().fill(Color.white.opacity(0.08)))
+            .overlay(Capsule().strokeBorder(Color.white.opacity(0.16), lineWidth: 0.5))
+        }
+        .help(liens == .chemins
+            ? String(localized: "Les chemins des messages vers le pont ; les voisins entendus d'un nœud à sa sélection")
+            : String(localized: "Tous les liens radio entendus"))
+        .accessibilityRepresentation {
+            Picker("Liens", selection: $liens) {
+                Text("chemins").tag(ModeLiens.chemins)
+                Text("tous").tag(ModeLiens.tous)
             }
             .pickerStyle(.segmented)
         }

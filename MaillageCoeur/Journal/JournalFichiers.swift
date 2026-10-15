@@ -11,12 +11,15 @@ public struct JournalFichiers: Sendable {
     private let fichiersMensuels: FichiersMensuels
     /// Types d'evenements que le journal sait nommer a la relecture (gravite par defaut comprise).
     private let typesConnus: [String: TypeEvenement]
+    /// Les types de chaque protocole, quand la politique en compose plusieurs (gravite par defaut de leur protocole).
+    private let typesParProtocole: [Protocole: [String: TypeEvenement]]
 
     public init(dossier: URL, calendrier: Calendar = .current,
                 politique: any PolitiqueJournal) {
         self.dossier = dossier
         self.calendrier = calendrier
         typesConnus = politique.typesParNom
+        typesParProtocole = politique.typesParProtocole
         fichiersMensuels = FichiersMensuels(dossier: dossier, prefixe: "journal", calendrier: calendrier)
     }
 
@@ -34,6 +37,7 @@ public struct JournalFichiers: Sendable {
     public func lire() throws -> [Evenement] {
         let decodeur = CodageJSON.decodeur()
         decodeur.userInfo[.typesEvenement] = typesConnus
+        decodeur.userInfo[.typesEvenementParProtocole] = typesParProtocole
         let tous = try fichiersMensuels.lignes().compactMap { try? decodeur.decode(Evenement.self, from: $0) }
         return tous.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }.map(\.element)
     }

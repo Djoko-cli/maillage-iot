@@ -60,7 +60,7 @@ struct IsolementTests {
     static func sceneQuiArrive(_ e: EntreeScene, places: PlacesGardees, deplacer: [String: String] = [:],
                                zones changer: (inout [ZoneMaison]) -> Void = { _ in }) throws -> EntreeScene {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         // Les zones de `e`, dans son ordre, avec leurs pieces de Maison.
         var zones = e.scene.etages.compactMap { et -> ZoneMaison? in
             guard case .zone(let nom) = et.nom else { return nil }
@@ -73,7 +73,7 @@ struct IsolementTests {
         for k in maison.accessoires.indices {
             if let p = maison.accessoires[k].piece, let q = deplacer[p] { maison.accessoires[k].piece = q }
         }
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         return EntreeScene(surveillance: s, reseau: r, places: places)
     }
 
@@ -132,7 +132,7 @@ struct IsolementTests {
         m.versMaison()
         #expect(m.fil == Fil())
         let (s, r, _) = try NomsSceneTests.demo()
-        s.noms.maison?.zones = nil
+        s.thread.noms.maison?.zones = nil
         let seul = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         #expect(seul.scene.etages.count == 1)
         let n = MoteurPiecesTests.moteur(seul)
@@ -383,7 +383,7 @@ struct IsolementTests {
         #expect(p.sphere == nil && t.ligneNiveau == .etageIsole("Étage"))
         t.poserZoom(echelle: 1, vers: t.geometrie.centrePlateau(etage, t.t))
         MoteurPiecesTests.dessiner(t)
-        let voulus = t.etiquettes.compactMap { l -> String? in if case .noeud(let id) = l.genre, l.voulu { id } else { nil } }
+        let voulus = t.etiquettes.compactMap { l -> IdNoeud? in if case .noeud(let id) = l.genre, l.voulu { id } else { nil } }
         #expect(t.projetee?.niveau == .tous && !voulus.isEmpty, "\(voulus.count) noms voulus")
         #expect(voulus.allSatisfy { id in e.scene.noeud(id).map { e.scene.pieces[$0.piece].etage == etage } == true },
                 "seuls les noms des appareils de l'etage isole : \(voulus)")
@@ -565,7 +565,7 @@ struct IsolementTests {
         let part = try #require(m.fk["piece:Salon"]), partEtage = try #require(m.ek["zone:Rez-de-chaussée"])
         #expect(part > 0 && part < 1 && partEtage > 0 && partEtage < 1, "en plein fondu : \(part), \(partEtage)")
         var autre = e
-        autre.apparences["Apple TV 4K"] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idt("Apple TV 4K")] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         m.installerMaintenant(autre)
         #expect(m.entree == autre && m.fk["piece:Salon"] == part && m.ek["zone:Rez-de-chaussée"] == partEtage && m.estIsolee)
     }

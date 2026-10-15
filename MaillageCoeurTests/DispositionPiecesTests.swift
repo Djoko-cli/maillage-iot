@@ -234,13 +234,13 @@ struct DispositionPiecesTests {
     /// `vueReference` : l'attendu ne suit pas une erreur du code juge. Des positions ou un lien du niveau coupe un
     /// lien entre niveaux montrent que ce croisement ne coute rien.
     @Test func vueDeReference() throws {
-        let pieces = ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Terrasse",
-                      "E000000000000003": "Terrasse", "E000000000000004": "Salon", "E000000000000005": "Salon"]
+        let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Terrasse",
+                      idt("E000000000000003"): "Terrasse", idt("E000000000000004"): "Salon", idt("E000000000000005"): "Salon"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre"]),
                      ZoneMaison(nom: "Jardin", pieces: ["Terrasse"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
-                            piecesNoeuds: pieces, zones: zones, chefs: ["Apple TV"], piecesMaison: true,
-                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)])
+                            piecesNoeuds: pieces, zones: zones, chefs: [idt("Apple TV")], piecesMaison: true,
+                            aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true)], classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Jardin", "zone:Étage"])
         let c = CartesPieces.cartes(s, largeurs: [:])
         let k = DispositionPieces.Calcul(scene: s, cartes: c, fixees: [:])
@@ -297,11 +297,11 @@ struct DispositionPiecesTests {
         // « Abri » (le noeud E...05 : seul son rectangle sert ici), seule dans la zone « Cabane », a cote du
         // Rez-de-chaussee, apres le Jardin.
         let s2 = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
-                             piecesNoeuds: pieces.merging(["E000000000000005": "Abri"]) { $1 },
-                             zones: zones + [ZoneMaison(nom: "Cabane", pieces: ["Abri"])], chefs: ["Apple TV"],
+                             piecesNoeuds: pieces.merging([idt("E000000000000005"): "Abri"]) { $1 },
+                             zones: zones + [ZoneMaison(nom: "Cabane", pieces: ["Abri"])], chefs: [idt("Apple TV")],
                              piecesMaison: true,
                              aCote: ["zone:Jardin": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée", dehors: true),
-                                     "zone:Cabane": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée")])
+                                     "zone:Cabane": PlacesGardees.ACote(etage: "zone:Rez-de-chaussée")], classement: FixturesScene.classement)
         #expect(s2.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Jardin", "zone:Cabane", "zone:Étage"])
         let c2 = CartesPieces.cartes(s2, largeurs: [:])
         let d2 = DispositionPieces(scene: s2, cartes: c2)
@@ -328,15 +328,15 @@ struct DispositionPiecesTests {
     /// quand ils relient des cartes differentes ; les autres liens y entrent tous.
     @Test func liensCheminHorsDisposition() throws {
         let graphe = try ScenePiecesTests.graphe(sonde: true)
-        let chemins = ["E000000000000002", "E000000000000003", "E000000000000005", "E000000000000004"].map {
-            GrapheReseau.Lien(de: $0, vers: "HomePod", genre: .chemin, qualite: 2)
+        let chemins = [idt("E000000000000002"), idt("E000000000000003"), idt("E000000000000005"), idt("E000000000000004")].map {
+            GrapheReseau.Lien(de: $0, vers: idt("HomePod"), genre: .chemin, qualite: 2)
         }
-        let pieces = ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
-                      "E000000000000003": "Bureau", "E000000000000004": "Salon", "E000000000000005": "Salon"]
+        let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
+                      idt("E000000000000003"): "Bureau", idt("E000000000000004"): "Salon", idt("E000000000000005"): "Salon"]
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         func scene(_ g: GrapheReseau) -> ScenePieces {
             ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
-                        chefs: ["Apple TV"], piecesMaison: true)
+                        chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
         }
         let sans = scene(graphe)
         let avec = scene(GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins))

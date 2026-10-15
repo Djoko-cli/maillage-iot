@@ -31,9 +31,16 @@ struct Palette {
         }
     }
 
-    /// Lien de la sonde : vert, jaune, orange ; gris si la qualite est inconnue (parent muet).
-    func lienSonde(_ qualite: Int?) -> Color {
-        switch NiveauLien(qualite) {
+    /// La qualite que la vue lit d'un lien de `protocole` : celle du module, sauf le 0 de Zigbee, un LQI sous 50, lien
+    /// tres faible mais reel, qui se lit comme un lien faible (1) ; le 0 de Thread vaut « pas de lien » et reste gris.
+    static func qualiteAffichee(_ qualite: Int?, protocole: Protocole) -> Int? {
+        protocole == .zigbee && qualite == 0 ? 1 : qualite
+    }
+
+    /// Lien de la sonde : vert, jaune, orange ; gris si la qualite est inconnue (parent muet). `protocole` : celui du lien
+    /// (`qualiteAffichee`) ; Thread par defaut.
+    func lienSonde(_ qualite: Int?, protocole: Protocole = .thread) -> Color {
+        switch NiveauLien(Self.qualiteAffichee(qualite, protocole: protocole)) {
         case .bon: Color(red: 0.29, green: 0.87, blue: 0.5)
         case .moyen: Color(red: 0.98, green: 0.8, blue: 0.2)
         case .faible: .orange

@@ -59,9 +59,9 @@ enum LibellesNoeuds {
     }
 
     /// Noeuds couronnes : le chef de chaque partition (son annonce), et celui du maillage de la sonde.
-    static func chefs(reseau: Reseau, maillage: Maillage?, affiche: MaillageAffiche?) -> Set<String> {
-        var c = Set(reseau.partitions.compactMap { $0.chef?.instance })
-        if let chef = maillage?.chef, let n = affiche?.routeurs[chef.id] { c.insert(n.id) }
+    static func chefs(reseau: Reseau, maillage: Maillage?, affiche: MaillageAffiche?) -> Set<IdNoeud> {
+        var c = Set(reseau.partitions.compactMap { $0.chef?.instance }.map { IdNoeud(.thread, $0) })
+        if let chef = maillage?.chef, let n = affiche?.routeurs[chef.id] { c.insert(IdNoeud(.thread, n.id)) }
         return c
     }
 
@@ -74,13 +74,16 @@ enum LibellesNoeuds {
 
     /// Libelle de chaque noeud : son nom (coupe a 40 caracteres), la couronne du chef, ☾ endormi (pas pour un noeud
     /// qui route), ⚠︎ sans adresse ou disparu ; la pastille d'une batterie faible.
-    static func libelles(graphe: GrapheReseau, appareils: [String: AppareilAffiche], nomsRouteurs: [String: String],
-                         maillage: MaillageAffiche?, chefs: Set<String>) -> [String: Libelle] {
+    static func libelles(graphe: GrapheReseau, appareils: [IdNoeud: AppareilAffiche], nomsRouteurs: [String: String],
+                         maillage: MaillageAffiche?, chefs: Set<IdNoeud>) -> [IdNoeud: Libelle] {
         func inconnu(_ n: NoeudSonde) -> String { Self.inconnu(n, noms: nomsRouteurs) }
-        var libelles: [String: Libelle] = [:]
+        var libelles: [IdNoeud: Libelle] = [:]
         for n in graphe.noeuds {
             let a = appareils[n.id]
-            let nom = a?.nom ?? nomsRouteurs[n.id] ?? maillage?.noeud(n.id).map(inconnu) ?? n.id
+            // Les etats de Thread (noms de routeurs, maillage) sont indexes par cle de Thread : un noeud d'un autre protocole
+            // de meme cle ne les lit pas ; le repli est la cle, jamais le texte.
+            let thread = n.id.protocole == .thread
+            let nom = a?.nom ?? (thread ? nomsRouteurs[n.id.cle] ?? maillage?.noeud(n.id.cle).map(inconnu) : nil) ?? n.id.cle
             let coupe = CartesPieces.couper(nom)
             let texte = CartesPieces.texte(coupe, chef: chefs.contains(n.id), endormi: endormi(a, routeur: n.routeur),
                                            alerte: a?.etat == .sansAdresse || a?.etat == .disparu)
@@ -98,8 +101,8 @@ enum LibellesNoeuds {
     /// (precision 27).
     static func pieces(reseau: Reseau, appareils: [AppareilAffiche], maison: NomsMaison?,
                        nomsRouteurs: [String: String] = [:], choix: PiecesRouteurs = PiecesRouteurs(),
-                       graphe: GrapheReseau, maillage: MaillageAffiche? = nil) -> [String: String] {
-        var pieces: [String: String] = [:]
+                       graphe: GrapheReseau, maillage: MaillageAffiche? = nil) -> [IdNoeud: String] {
+        var pieces: [IdNoeud: String] = [:]
         for a in appareils {
             if let p = a.piece, !p.isEmpty { pieces[a.id] = p }
         }
@@ -109,13 +112,13 @@ enum LibellesNoeuds {
         for r in reseau.routeurs {
             if let p = choix.piece(routeur: r.instance, nom: nomsRouteurs[r.instance] ?? r.instance, maison: maison,
                                    parmi: toutes, domicile: domicile) {
-                pieces[r.instance] = p
+                pieces[IdNoeud(.thread, r.instance)] = p
             }
         }
         // Seul un routeur de bordure non identifie a des candidats (`Rapprochement`), et rien ne l'a place avant : ni
         // Maison, ni un choix (sans instance ni ExtMac).
         for n in graphe.noeuds {
-            guard let candidats = maillage?.noeud(n.id)?.candidats,
+            guard n.id.protocole == .thread, let candidats = maillage?.noeud(n.id.cle)?.candidats,
                   let p = choix.piece(candidats: candidats, noms: nomsRouteurs, maison: maison, parmi: toutes,
                                       domicile: domicile) else { continue }
             pieces[n.id] = p
@@ -131,10 +134,10 @@ enum LibellesNoeuds {
         }
     }
 
-    static func nom(_ p: ScenePieces.NomPiece, libelles: [String: Libelle]) -> String {
+    static func nom(_ p: ScenePieces.NomPiece, libelles: [IdNoeud: Libelle]) -> String {
         switch p {
         case .maison(let n): n
-        case .routeur(let id): libelles[id]?.texte ?? id
+        case .routeur(let id): libelles[id]?.texte ?? id.cle
         case .sansPiece: String(localized: "Sans pièce")
         }
     }
@@ -148,13 +151,13 @@ enum LibellesNoeuds {
     /// plateau, « ↗ … · Terrasse, Jardin » pour un parent au meme niveau, dans une autre zone ; « ↓ … · Salon,
     /// Rez-de-chaussee » ou ↑ pour un parent a un autre niveau, avec le nom de son plateau (sans la couronne du
     /// chef).
-    static func ailleurs(_ a: Ailleurs, scene: ScenePieces, libelles: [String: Libelle]) -> String {
+    static func ailleurs(_ a: Ailleurs, scene: ScenePieces, libelles: [IdNoeud: Libelle]) -> String {
         let fleche = switch a.sens {
         case .memeNiveau: "↗"
         case .dessous: "↓"
         case .dessus: "↑"
         }
-        let parent = (libelles[a.parent]?.texte ?? a.parent).replacingOccurrences(of: " " + couronne, with: "")
+        let parent = (libelles[a.parent]?.texte ?? a.parent.cle).replacingOccurrences(of: " " + couronne, with: "")
         let piece = nom(scene.pieces[a.piece].nom, libelles: libelles)
         let ici = scene.noeud(a.enfant).map { scene.pieces[$0.piece].etage }
         guard a.etage != ici else { return "\(fleche) \(parent) · \(piece)" }

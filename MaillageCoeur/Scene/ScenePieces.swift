@@ -44,7 +44,7 @@ public struct ScenePieces: Hashable, Sendable {
         /// Piece de Maison.
         case maison(String)
         /// Carte d'un routeur et de ses enfants (maison sans pieces), par l'id du routeur.
-        case routeur(String)
+        case routeur(IdNoeud)
         /// Noeuds sans piece.
         case sansPiece
 
@@ -52,7 +52,7 @@ public struct ScenePieces: Hashable, Sendable {
         public var cle: String {
             switch self {
             case .maison(let n): "piece:" + n
-            case .routeur(let id): "routeur:" + id
+            case .routeur(let id): "routeur:" + id.cle
             case .sansPiece: "sans-piece"
             }
         }
@@ -76,13 +76,13 @@ public struct ScenePieces: Hashable, Sendable {
         /// Indice de sa teinte dans `ScenePieces.teintes`.
         public var teinte: Int
         /// Ses noeuds, dans l'ordre des lignes de sa carte.
-        public var noeuds: [String]
+        public var noeuds: [IdNoeud]
 
         public var id: String { nom.cle }
     }
 
     public struct Noeud: Hashable, Sendable, Identifiable {
-        public var id: String
+        public var id: IdNoeud
         /// Nom, sans la couronne, la lune ni l'alerte (polissage D, section 2) ; deja coupe (`CartesPieces.couper`).
         public var libelle: String
         public var genre: GrapheReseau.Genre
@@ -120,28 +120,23 @@ public struct ScenePieces: Hashable, Sendable {
     public private(set) var niveaux: Niveaux
     /// Maison n'a encore aucune piece : cartes par routeur, et le bandeau du passeur.
     public private(set) var sansPiecesMaison: Bool
-    private var indices: [String: Int] = [:]
-
-    /// Le classement des noeuds quand le protocole n'en fournit pas (la regle de Thread) : rang dans sa carte (1 routeur
-    /// de bordure, 2 autre routeur, 3 autre noeud) et rayon naturel de sa pastille (15 px pour le centre, 13 pour un
-    /// routeur de bordure, 8 pour un routeur, 7 sinon).
-    public static let classementParDefaut: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = { n in
-        (n.bordure ? 1 : n.routeur ? 2 : 3, n.genre == .centre ? 15 : n.bordure ? 13 : n.routeur ? 8 : 7)
-    }
+    private var indices: [IdNoeud: Int] = [:]
 
     /// `libelles` : nom de chaque noeud, sans ses badges (son id a defaut) ; `piecesNoeuds` : piece de Maison
     /// de chaque noeud qui en a une ; `zones` : celles de Maison (nil : fichier d'avant les zones) ;
     /// `chefs` : noeuds couronnes ; `piecesMaison` : Maison a au moins une piece ; `ordreEtages` :
     /// cles des etages dans l'ordre garde, du bas vers le haut ; `aCote` : les choix de niveau gardes ; `piles` : les
-    /// noeuds dont la pile est connue ; `classement` : le rang et le rayon de chaque noeud (par defaut, la regle de Thread).
-    public init(graphe: GrapheReseau, libelles: [String: String], piecesNoeuds: [String: String],
-                zones: [ZoneMaison]?, chefs: Set<String>, piecesMaison: Bool, ordreEtages: [String] = [],
-                aCote: [String: PlacesGardees.ACote] = [:], piles: Set<String> = [],
-                classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double) = ScenePieces.classementParDefaut) {
+    /// noeuds dont la pile est connue ; `classement` : le rang dans sa carte (1 a 3) et le rayon naturel de la
+    /// pastille de chaque noeud, la regle de son protocole (`classementThread`, `ScenePieces.classementZigbee`) : le coeur
+    /// n'en a pas de par defaut.
+    public init(graphe: GrapheReseau, libelles: [IdNoeud: String], piecesNoeuds: [IdNoeud: String],
+                zones: [ZoneMaison]?, chefs: Set<IdNoeud>, piecesMaison: Bool, ordreEtages: [String] = [],
+                aCote: [String: PlacesGardees.ACote] = [:], piles: Set<IdNoeud> = [],
+                classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double)) {
         sansPiecesMaison = !piecesMaison
-        func libelle(_ id: String) -> String { libelles[id] ?? id }
+        func libelle(_ id: IdNoeud) -> String { libelles[id] ?? id.cle }
         // Piece de chaque noeud.
-        var nomPiece: [String: NomPiece] = [:]
+        var nomPiece: [IdNoeud: NomPiece] = [:]
         for n in graphe.noeuds {
             if piecesMaison {
                 if let p = piecesNoeuds[n.id], !p.isEmpty {
@@ -214,14 +209,19 @@ public struct ScenePieces: Hashable, Sendable {
         func nomTri(_ p: NomPiece) -> String {
             switch p {
             case .maison(let n): n
-            case .routeur(let id): id
+            case .routeur(let id): id.cle
             case .sansPiece: Self.nomSansPiece
             }
+        }
+        // Dernier critere de tri : deux routeurs de meme cle de deux protocoles ont la meme cle de piece ; sans lui, leur ordre
+        // suivrait l'iteration d'un `Set`.
+        func rangProtocole(_ p: NomPiece) -> Int {
+            if case .routeur(let id) = p { Protocole.allCases.firstIndex(of: id.protocole)! } else { 0 }
         }
         // Pieces, etage par etage, par nom ; teintes.
         let distinctes = Set(nomPiece.values)
         for e in etages.indices {
-            let ici = distinctes.filter { etage($0) == e }.sorted { (nomTri($0), $0.cle) < (nomTri($1), $1.cle) }
+            let ici = distinctes.filter { etage($0) == e }.sorted { (nomTri($0), $0.cle, rangProtocole($0)) < (nomTri($1), $1.cle, rangProtocole($1)) }
             var prises = Set<Int>()
             for p in ici {
                 var t = Int(Self.fnv1a(nomTri(p)) % 8)
@@ -253,7 +253,7 @@ public struct ScenePieces: Hashable, Sendable {
         liens = graphe.liens
     }
 
-    public func noeud(_ id: String) -> Noeud? { indices[id].map { noeuds[$0] } }
+    public func noeud(_ id: IdNoeud) -> Noeud? { indices[id].map { noeuds[$0] } }
 
     /// Ce qui oblige a recalculer la disposition (spec de la vue par pieces, section 4.3 ; polissage C, section 4 ;
     /// polissage D, section 2).
@@ -277,7 +277,9 @@ public struct ScenePieces: Hashable, Sendable {
                 let p = pieces[i]
                 c.pieces[e.id, default: [:]][p.id] = p.noeuds.map { id in
                     let n = noeud(id)
-                    return [id, n?.libelle ?? "", n?.route == true ? "R" : "", n?.pile == true ? "P" : ""]
+                    // La cle du noeud dans son module, pas son protocole : la disposition ne depend que de l'ordre et de la taille des
+                    // lignes, jamais de l'identifiant, et deux scenes qui ne different que par le protocole se posent pareil.
+                    return [id.cle, n?.libelle ?? "", n?.route == true ? "R" : "", n?.pile == true ? "P" : ""]
                         .joined(separator: "|")
                 }
             }
@@ -289,7 +291,7 @@ public struct ScenePieces: Hashable, Sendable {
     }
 
     /// Indice d'un noeud dans `noeuds`.
-    public func indice(_ id: String) -> Int? { indices[id] }
+    public func indice(_ id: IdNoeud) -> Int? { indices[id] }
 
     /// FNV-1a sur 32 bits, du nom en UTF-8.
     public static func fnv1a(_ nom: String) -> UInt32 {

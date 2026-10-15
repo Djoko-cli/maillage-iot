@@ -1,14 +1,13 @@
 import Foundation
 import Testing
 
-/// Une app et ses catalogues de textes. Deux apps, tant que l'app de transition Zigbee existe (etape 2) : leurs deux
-/// catalogues restent separes jusqu'a l'etape 3.
+/// L'app et ses catalogues de textes (une seule app depuis l'etape 3a : `MaillageIoT`).
 struct AppCatalogue: Sendable, CustomTestStringConvertible {
-    /// Nom de la cible et de son dossier de sources (`MaillageIoT`, `MaillageIoTZigbee`).
+    /// Nom de la cible et de son dossier de sources.
     let nom: String
     var testDescription: String { nom }
 
-    static let toutes = [AppCatalogue(nom: "MaillageIoT"), AppCatalogue(nom: "MaillageIoTZigbee")]
+    static let toutes = [AppCatalogue(nom: "MaillageIoT")]
 
     var textes: URL { Catalogues.racine.appendingPathComponent("\(nom)/Ressources/Localizable.xcstrings") }
     var infoPlist: URL { Catalogues.racine.appendingPathComponent("\(nom)/Ressources/InfoPlist.xcstrings") }
@@ -45,6 +44,23 @@ struct AppCatalogue: Sendable, CustomTestStringConvertible {
             }
         }
         return cles
+    }
+}
+
+/// Ce que le test d'alignement fait d'une app, selon les `.stringsdata` trouves (voir `AppCatalogue.cas`).
+enum CasCatalogue: Equatable {
+    case verifier
+    case sauter(String)
+}
+
+extension AppCatalogue {
+    /// Le cas de l'app d'apres le nombre de ses `.stringsdata` :
+    /// - elle en a : on verifie ;
+    /// - elle n'en a pas : on saute. Le coeur se teste seul (outils/tester-coeur.sh, DerivedData neuf) sans compiler
+    ///   l'app ; la porte complete (outils/tester.sh) compile l'app avant, donc n'y saute jamais.
+    static func cas(_ app: String, nombres: [String: Int]) -> CasCatalogue {
+        if nombres[app, default: 0] > 0 { return .verifier }
+        return .sauter("produits de compilation introuvables : \(app) (l'app n'est pas compilee ; la porte complete outils/tester.sh la compile avant)")
     }
 }
 
@@ -119,16 +135,33 @@ struct CataloguesTests {
         }
     }
 
-    /// Le code et le catalogue vont ensemble, pour chaque app : aucune cle du code ne manque, aucune cle du catalogue
-    /// n'est morte (apres un changement de texte : `outils/synchroniser-textes.sh <App>` puis outils/traduire.py).
-    /// Sans les produits de compilation de l'app (le schema du coeur ne la compile pas), le test est saute.
+    /// Le code et le catalogue vont ensemble : aucune cle du code ne manque, aucune cle du catalogue n'est morte
+    /// (apres un changement de texte : `outils/synchroniser-textes.sh` puis outils/traduire.py). Sans les produits de
+    /// compilation de l'app (coeur teste seul, app non compilee), le test est saute (`AppCatalogue.cas`).
     @Test(arguments: AppCatalogue.toutes)
     func codeEtCatalogueAlignes(_ app: AppCatalogue) throws {
-        if app.stringsdata.isEmpty { try Test.cancel("produits de compilation introuvables : \(app.nom)") }
+        let nombres = Dictionary(uniqueKeysWithValues: AppCatalogue.toutes.map { ($0.nom, $0.stringsdata.count) })
+        switch AppCatalogue.cas(app.nom, nombres: nombres) {
+        case .verifier: break
+        case .sauter(let raison): try Test.cancel(Comment(rawValue: raison))
+        }
         let extraites = try app.clesExtraites()
         let catalogue = Set(try Catalogues.entrees(app.textes).cles.keys)
         #expect(!extraites.isEmpty)
         #expect(extraites.subtracting(catalogue).sorted() == [], "absentes du catalogue de \(app.nom)")
         #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees dans le catalogue de \(app.nom)")
+    }
+
+    /// La selection des cas, sans produits reels : verifie si l'app a ses `.stringsdata`, saute sinon.
+    @Test func selectionDesCas() {
+        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3]) == .verifier)
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0]) else {
+            Issue.record("sans produits : doit sauter")
+            return
+        }
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:]) else {
+            Issue.record("aucun decompte : doit sauter")
+            return
+        }
     }
 }

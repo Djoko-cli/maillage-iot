@@ -20,20 +20,20 @@ enum MaisonInventee {
     static func graphe(pieces: Int, routeurs: Int, appareils: Int) -> GrapheReseau {
         var noeuds: [GrapheReseau.Noeud] = []
         for k in 0..<routeurs {
-            noeuds.append(.init(id: routeur(k), genre: k == 0 ? .centre : .routeur, partition: partition, routeur: true,
+            noeuds.append(.init(id: idt(routeur(k)), genre: k == 0 ? .centre : .routeur, partition: partition, routeur: true,
                                 bordure: true, inconnu: false, extMac: extMacRouteur(k)))
         }
         for j in 0..<appareils {
-            noeuds.append(.init(id: appareil(j), genre: .appareil, partition: partition, routeur: false, bordure: false,
+            noeuds.append(.init(id: idt(appareil(j)), genre: .appareil, partition: partition, routeur: false, bordure: false,
                                 inconnu: false, extMac: appareil(j)))
         }
         var liens: [GrapheReseau.Lien] = []
         for k in 1..<max(routeurs, 1) {
-            liens.append(.init(de: routeur(k - 1), vers: routeur(k), genre: .radio, qualite: 2))
+            liens.append(.init(de: idt(routeur(k - 1)), vers: idt(routeur(k)), genre: .radio, qualite: 2))
         }
         for k in 0..<routeurs {
             for j in 0..<appareils where (j % pieces) % routeurs == k {
-                liens.append(.init(de: appareil(j), vers: routeur(k), genre: .parent, qualite: 2))
+                liens.append(.init(de: idt(appareil(j)), vers: idt(routeur(k)), genre: .parent, qualite: 2))
             }
         }
         return GrapheReseau(noeuds: noeuds, liens: liens)
@@ -44,21 +44,21 @@ enum MaisonInventee {
                       unSeulPlateau: Bool = false) -> (scene: ScenePieces, cartes: [CartesPieces.Carte]) {
         let g = graphe(pieces: pieces, routeurs: routeurs, appareils: appareils)
         func nomPiece(_ p: Int) -> String { String(format: "Pièce %02d", p) }
-        var piecesNoeuds: [String: String] = [:]
-        var libelles: [String: String] = [:]
+        var piecesNoeuds: [IdNoeud: String] = [:]
+        var libelles: [IdNoeud: String] = [:]
         for k in 0..<routeurs {
-            piecesNoeuds[routeur(k)] = nomPiece(k % pieces)
-            libelles[routeur(k)] = routeur(k)
+            piecesNoeuds[idt(routeur(k))] = nomPiece(k % pieces)
+            libelles[idt(routeur(k))] = routeur(k)
         }
         for j in 0..<appareils {
-            piecesNoeuds[appareil(j)] = nomPiece(j % pieces)
-            libelles[appareil(j)] = "Appareil \(j)"
+            piecesNoeuds[idt(appareil(j))] = nomPiece(j % pieces)
+            libelles[idt(appareil(j))] = "Appareil \(j)"
         }
         let bas = (0..<pieces / 2).map(nomPiece)
         let haut = (pieces / 2..<pieces).map(nomPiece)
         let s = ScenePieces(graphe: g, libelles: libelles, piecesNoeuds: piecesNoeuds,
                             zones: unSeulPlateau ? nil : [ZoneMaison(nom: "Bas", pieces: bas), ZoneMaison(nom: "Haut", pieces: haut)],
-                            chefs: [routeur(0)], piecesMaison: true)
+                            chefs: [idt(routeur(0))], piecesMaison: true, classement: FixturesScene.classement)
         let largeurs = libelles.mapValues { Double($0.count) * 7 + 10 }
         return (s, CartesPieces.cartes(s, largeurs: largeurs))
     }

@@ -1,6 +1,7 @@
 import AppKit
 import MaillageCoeur
 import ProtocoleThread
+import ProtocoleZigbee
 import SwiftUI
 
 /// Icone de la barre des menus : le maillage et, en bas a droite, le symbole de Thread ; orange quand il y a une
@@ -51,8 +52,10 @@ struct IconeBarre: View {
 /// evenements, et les actions.
 struct MenuBarre: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(NomsInternes.self) private var nomsMaison
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(NomsPasseur.self) private var nomsMaison
+    @Environment(SondeMaillageThread.self) private var sonde
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee
+    @Environment(NomsPont.self) private var pont
     @Environment(\.openWindow) private var openWindow
     @Environment(ControleurReglages.self) private var reglages
     @Environment(MisesAJour.self) private var misesAJour
@@ -62,11 +65,6 @@ struct MenuBarre: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             entete
-            if surveillance.etatEcoute == .reseauLocalRefuse {
-                Label("Accès au réseau local refusé", systemImage: "network.slash")
-                    .foregroundStyle(.red)
-                    .font(.callout)
-            }
             Divider()
             ForEach(surveillance.lignesJournal.prefix(3)) { l in
                 VStack(alignment: .leading, spacing: 1) {
@@ -101,61 +99,212 @@ struct MenuBarre: View {
         .background(FenetreHote { fenetreMenu.fenetre = $0 })
     }
 
+    /// Un bloc par protocole actif, l'un sous l'autre (Thread, puis Zigbee) ; un protocole eteint n'a rien. Aucun protocole
+    /// actif : une ligne le dit.
     @ViewBuilder
     private var entete: some View {
-        let alerte = surveillance.alerte
-        HStack(spacing: 8) {
-            if muet != nil {
-                Image(systemName: "wifi.slash").foregroundStyle(.secondary)
-            } else {
-                Image(systemName: alerte ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                    .foregroundStyle(alerte ? .orange : .green)
+        let blocs = Self.blocs(surveillance)
+        if blocs.isEmpty {
+            HStack(spacing: 8) {
+                Image(systemName: "pause.circle").foregroundStyle(.secondary)
+                Text(Self.titreSansProtocole).font(.headline)
             }
-            Text(titre).font(.headline)
         }
-        if let r = surveillance.resume {
-            Text("\(r.nom) · partitions : \(r.partitions)").font(.caption).foregroundStyle(.secondary)
-            Text("Routeurs : \(r.routeurs) · appareils : \(r.appareils) · injoignables : \(r.injoignables)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        if surveillance.mode == .demo {
-            Text("Mode démo : panne du 27/09 rejouée").font(.caption).foregroundStyle(.secondary)
-        } else if let t = Self.ligneSonde(sonde.etat, nom: sonde.nomEtat, derniere: sonde.derniereTournee,
-                                          avancement: sonde.avancement, maintenant: Date()) {
-            Text(t).font(.caption).foregroundStyle(.secondary)
+        ForEach(blocs) { b in
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: b.etat.symbole).foregroundStyle(b.etat.couleur)
+                    Text(verbatim: b.titre).font(.headline)
+                }
+                if b.protocole == .thread && surveillance.thread.etatEcoute == .reseauLocalRefuse {
+                    Label("Accès au réseau local refusé", systemImage: "network.slash")
+                        .foregroundStyle(.red)
+                        .font(.callout)
+                }
+                ForEach(b.lignes, id: \.self) { l in
+                    Text(verbatim: l).font(.caption).foregroundStyle(.secondary)
+                }
+                lignesSonde(b.protocole)
+            }
         }
     }
 
+    /// Ce que la sonde (et le pont) du protocole disent sous son resume : le mode demo, ou l'etat de la sonde.
+    @ViewBuilder
+    private func lignesSonde(_ protocole: Protocole) -> some View {
+        switch protocole {
+        case .thread:
+            if surveillance.mode == .demo {
+                Text("Mode démo : panne du 27/09 rejouée").font(.caption).foregroundStyle(.secondary)
+            } else if let t = Self.ligneSonde(sonde.etat, nom: sonde.nomEtat, derniere: sonde.derniereTournee,
+                                              avancement: sonde.avancement, maintenant: Date()) {
+                Text(verbatim: t).font(.caption).foregroundStyle(.secondary)
+            }
+        case .zigbee:
+            if surveillance.mode == .demo {
+                Text("Mode démo : faux réseau Hue").font(.caption).foregroundStyle(.secondary)
+            } else {
+                if let t = Self.ligneSondeZigbee(sondeZigbee.etat, nom: sondeZigbee.nomEtat, derniere: sondeZigbee.derniereTournee,
+                                                 avancement: sondeZigbee.avancement, maintenant: Date(),
+                                                 passe: sondeZigbee.passeComplementaire, differee: sondeZigbee.tourneeDifferee) {
+                    Text(verbatim: t).font(.caption).foregroundStyle(.secondary)
+                }
+                if let t = Self.lignePont(pont.etat, lie: pont.lie) {
+                    Text(verbatim: t).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    /// L'etat d'un protocole dans le menu : son icone et sa couleur.
+    enum EtatBloc: Equatable {
+        /// Rien a montrer encore (Thread n'a pas ecoute le reseau local, Zigbee attend le maillage de la sonde).
+        case attente
+        /// Thread : le Mac n'entend plus rien depuis un moment, le resume montre le dernier etat connu.
+        case muet
+        case alerte
+        case normal
+
+        var symbole: String {
+            switch self {
+            case .attente: "ellipsis.circle"
+            case .muet: "wifi.slash"
+            case .alerte: "exclamationmark.triangle.fill"
+            case .normal: "checkmark.circle.fill"
+            }
+        }
+
+        var couleur: Color {
+            switch self {
+            case .attente, .muet: .secondary
+            case .alerte: .orange
+            case .normal: .green
+            }
+        }
+    }
+
+    /// Ce que le menu dit d'un protocole actif : l'etat de son reseau (titre, icone) et ses chiffres.
+    struct BlocMenu: Equatable, Identifiable {
+        var protocole: Protocole
+        var titre: String
+        var etat: EtatBloc
+        /// Le resume du reseau, une ligne par information (Thread : son nom et ses partitions, puis les chiffres) ; vide sans
+        /// reseau a resumer. La ligne de la sonde (et du pont) vient en dessous, de la vue.
+        var lignes: [String]
+
+        var id: Protocole { protocole }
+    }
+
+    /// Un bloc par protocole actif, Thread d'abord ; aucun pour un protocole eteint (en demo, seul le protocole rejoue en a un).
+    /// L'alerte de chaque bloc est celle de son protocole. Le `switch` n'a pas de defaut : un troisieme protocole ne compile
+    /// pas sans son bloc.
+    static func blocs(_ s: Surveillance) -> [BlocMenu] {
+        s.modelesMontres.map { m in
+            switch m.protocole {
+            case .thread: blocThread(s)
+            case .zigbee: blocZigbee(s)
+            }
+        }
+    }
+
+    private static func blocThread(_ s: Surveillance) -> BlocMenu {
+        let t = s.thread
+        let alerte = s.alerte(de: .thread)
+        var lignes: [String] = []
+        if let r = t.resume {
+            lignes = [String(localized: "\(r.nom) · partitions : \(r.partitions)"),
+                      String(localized: "Routeurs : \(r.routeurs) · appareils : \(r.appareils) · injoignables : \(r.injoignables)")]
+        }
+        // Un reseau scinde est une alerte (`alerteReseau`) : `alerte` le dit deja.
+        let etat: EtatBloc
+        if t.instantane == nil {
+            etat = .attente
+        } else if t.rienVuDepuis != nil {
+            etat = .muet
+        } else {
+            etat = alerte ? .alerte : .normal
+        }
+        return BlocMenu(protocole: .thread, titre: titreThread(t, alerte: alerte), etat: etat, lignes: lignes)
+    }
+
+    private static func blocZigbee(_ s: Surveillance) -> BlocMenu {
+        let z = s.zigbee
+        let alerte = s.alerte(de: .zigbee)
+        let r = z.resume
+        let lignes = r.map { [String(localized: "Routeurs : \($0.routeurs) · appareils : \($0.appareils) · injoignables : \($0.injoignables)")] } ?? []
+        return BlocMenu(protocole: .zigbee, titre: titreZigbee(resume: r, alerte: alerte),
+                        etat: r == nil ? .attente : alerte ? .alerte : .normal, lignes: lignes)
+    }
+
+    /// Le menu quand aucun protocole n'est actif.
+    static var titreSansProtocole: String { String(localized: "Aucun protocole actif") }
+
+    /// Titre du bloc de Thread : l'ecoute du reseau local tant qu'il n'a rien releve, le silence du Mac, puis l'etat du
+    /// reseau. `alerte` : celle de Thread.
+    static func titreThread(_ t: SurveillanceThread, alerte: Bool) -> String {
+        if t.instantane == nil { return String(localized: "Écoute du réseau local…") }
+        if let d = t.rienVuDepuis { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
+        guard let r = t.reseau else { return String(localized: "Aucun réseau Thread visible") }
+        if r.estScinde { return String(localized: "Réseau scindé") }
+        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")
+    }
+
+    /// Titre du bloc de Zigbee : en attente tant qu'il n'y a rien a montrer, sinon l'alerte de l'heure, ou le reseau normal.
+    /// `alerte` : celle de Zigbee.
+    static func titreZigbee(resume: ResumeReseauZigbee?, alerte: Bool) -> String {
+        guard resume != nil else { return String(localized: "En attente du maillage de la sonde…") }
+        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Zigbee normal")
+    }
+
     /// Ligne de la sonde, sous le nom donne (celui de la sonde retenue quand l'etat la concerne,
-    /// `SondeMaillage.nomEtat`), sinon « Sonde » ; pendant une tournee, son etape et son
+    /// `SondeMaillageThread.nomEtat`), sinon « Sonde » ; pendant une tournee, son etape et son
     /// compteur. Rien tant qu'aucune sonde n'est choisie.
-    static func ligneSonde(_ e: SondeMaillage.Etat, nom: String?, derniere: Date?, avancement: AvancementTournee?,
+    static func ligneSonde(_ e: SondeMaillageThread.Etat, nom: String?, derniere: Date?, avancement: AvancementTournee?,
                            maintenant: Date) -> String? {
-        let n = SondeMaillage.nomAffiche(nom)
+        let n = SondeMaillageThread.nomAffiche(nom)
         switch e {
         case .sansSonde: return nil
         case .absente: return String(localized: "\(n) : absente")
         case .connexion: return String(localized: "\(n) : connexion…")
         case .connectee:
-            if let avancement { return TexteTournee.menu(avancement, nom: n) }
+            if let avancement { return TexteTourneeThread.menu(avancement, nom: n) }
             guard let d = derniere else { return String(localized: "\(n) : connectée") }
             return String(localized: "\(n) : connectée · relevé \(FicheNoeud.relatif(d, maintenant))")
         case .refusee, .erreur: return String(localized: "\(n) : erreur (voir les Réglages)")
         }
     }
 
-    /// Le Mac n'entend plus rien depuis cette date ; le resume montre le dernier etat connu.
-    private var muet: Date? {
-        surveillance.instantane == nil ? nil : surveillance.rienVuDepuis
+    /// Ligne de la sonde de Zigbee, sous le nom donne (celui de la sonde retenue quand l'etat la concerne,
+    /// `SondeMaillageZigbee.nomEtat`), sinon « Sonde » ; pendant une tournee, son etape et son compteur, hors tournee la
+    /// passe complementaire programmee (`passe`) ou la tournee differee faute de budget (`differee`). Rien tant qu'aucune
+    /// sonde n'est choisie.
+    static func ligneSondeZigbee(_ e: SondeMaillageZigbee.Etat, nom: String?, derniere: Date?,
+                                 avancement: AvancementTourneeZigbee?, maintenant: Date, passe: Date? = nil,
+                                 differee: SondeMaillageZigbee.TourneeDifferee? = nil) -> String? {
+        let n = SondeMaillageZigbee.nomAffiche(nom)
+        switch e {
+        case .sansSonde: return nil
+        case .absente: return String(localized: "\(n) : absente")
+        case .injoignable: return String(localized: "\(n) : injoignable")
+        case .connexion: return String(localized: "\(n) : connexion…")
+        case .connectee:
+            if let avancement { return TexteTourneeZigbee.menu(avancement, nom: n) }
+            if let passe { return TexteTourneeZigbee.menuPasse(passe, nom: n) }
+            if let differee { return TexteTourneeZigbee.menuDifferee(differee, nom: n) }
+            guard let d = derniere else { return String(localized: "\(n) : connectée") }
+            return String(localized: "\(n) : connectée · relevé \(FicheNoeud.relatif(d, maintenant))")
+        case .refusee, .erreur: return String(localized: "\(n) : erreur (voir les Réglages)")
+        }
     }
 
-    private var titre: String {
-        if surveillance.instantane == nil { return String(localized: "Écoute du réseau local…") }
-        if let d = muet { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
-        guard let r = surveillance.reseau else { return String(localized: "Aucun réseau Thread visible") }
-        if r.estScinde { return String(localized: "Réseau scindé") }
-        return surveillance.alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")
+    /// Ligne du pont Hue, quand il n'est pas lie et lu : introuvable, non lie, ou en erreur.
+    static func lignePont(_ e: NomsPont.Etat, lie: Bool) -> String? {
+        switch e {
+        case .lie: nil
+        case .introuvable: String(localized: "Pont Hue introuvable")
+        case .erreur where lie: String(localized: "Pont Hue : erreur (voir les Réglages)")
+        case .trouve, .aLier, .liaisonEnCours, .erreur: String(localized: "Pont Hue non lié")
+        }
     }
 
     private func ouvrir(_ id: String) {

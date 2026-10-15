@@ -25,7 +25,7 @@ enum MaisonInventeeThread {
         }
         let i = Instantane(annonces: b.annonces)
         let r = i.reseaux[0]
-        let apps = i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
+        let apps = i.appareils.map { AppareilAffiche(id: idt($0.id), nom: $0.id, partition: $0.partition, etat: .joignable) }
         var c = ConstructionMaillage(date: Date(timeIntervalSince1970: 1_790_000_000), partition: partition)
         c.routeurs(Route64(sequence: 0, routes: (1...routeurs).map {
             RouteRouteur(idRouteur: $0, qualiteSortante: 3, qualiteEntrante: 3, cout: 1)
@@ -61,7 +61,7 @@ enum ScenePiecesThread {
         }
         let i = Instantane(annonces: b.annonces)
         let r = try #require(i.reseaux.first)
-        let apps = i.appareils.map { AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition, etat: .joignable) }
+        let apps = i.appareils.map { AppareilAffiche(id: idt($0.id), nom: $0.id, partition: $0.partition, etat: .joignable) }
         guard sonde else { return GrapheReseau(reseau: r, appareils: apps) }
         var c = ConstructionMaillage(date: Date(timeIntervalSince1970: 1_790_000_000), partition: partition)
         c.routeurs(Route64(sequence: 0, routes: (1...3).map {

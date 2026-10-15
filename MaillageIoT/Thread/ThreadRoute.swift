@@ -59,7 +59,7 @@ enum EtatThreadRoute: Equatable, Sendable {
     }
 }
 
-/// Suit l'etat de Thread Route pour la page Diagnostic des Reglages. Il le relit :
+/// Suit l'etat de Thread Route pour la page Thread des Reglages. Il le relit :
 /// - a la demande (`relire`) : l'onglet qui s'affiche, la fenetre qui se rouvre ;
 /// - a chaque retour de l'app au premier plan, tant que cette page est celle de l'onglet retenu : c'est le
 ///   retour de Reglages Systeme apres l'approbation, ou d'un Terminal ou l'installateur vient de tourner.

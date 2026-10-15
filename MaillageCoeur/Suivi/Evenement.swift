@@ -40,6 +40,10 @@ public struct TypeEvenement: RawRepresentable, Hashable, Codable, Sendable {
 public extension CodingUserInfoKey {
     /// Types d'evenements connus, par nom (`[String: TypeEvenement]`), pour relire le journal.
     static let typesEvenement = CodingUserInfoKey(rawValue: "typesEvenement")!
+    /// Types d'evenements connus de chaque protocole, par nom (`[Protocole: [String: TypeEvenement]]`) : un meme type
+    /// peut avoir deux gravites par defaut selon le protocole de l'evenement (`PolitiqueJournalComposee`). Prime sur
+    /// `typesEvenement` pour un type que le protocole de la ligne connait.
+    static let typesEvenementParProtocole = CodingUserInfoKey(rawValue: "typesEvenementParProtocole")!
 }
 
 public enum Gravite: String, Codable, Hashable, Sendable, CaseIterable, Comparable {
@@ -86,10 +90,14 @@ public struct Evenement: Codable, Hashable, Sendable, Identifiable {
     public var constate: Bool
     /// Complements ("routeurs": "6", partition -> routeurs, "coupee": "oui"...).
     public var details: [String: String]
+    /// Protocole de l'evenement ; nil pour une ligne d'avant l'etape 3 (journaux de Maillage Thread, de Maillage IoT
+    /// avant 3a), lue comme Thread par la politique composee (`PolitiqueJournalComposee`). Absent de la ligne quand il
+    /// est nil : une ligne d'avant se reecrit a l'identique. `Sujet.id` reste la cle brute du module.
+    public var protocole: Protocole?
 
     public init(date: Date, type: TypeEvenement, gravite: Gravite? = nil, reseau: String? = nil,
                 sujet: Sujet? = nil, avant: String? = nil, apres: String? = nil, periode: DateInterval? = nil,
-                constate: Bool = false, details: [String: String] = [:]) {
+                constate: Bool = false, details: [String: String] = [:], protocole: Protocole? = nil) {
         self.date = date
         self.type = type
         self.gravite = gravite ?? type.gravite
@@ -100,21 +108,30 @@ public struct Evenement: Codable, Hashable, Sendable, Identifiable {
         self.periode = periode
         self.constate = constate
         self.details = details
+        self.protocole = protocole
     }
 
+    /// Identifiant de l'evenement : sa date, son protocole (sans protocole : Thread, comme partout), son type et son sujet.
+    /// Deux evenements identiques sauf le protocole ne se confondent pas (ligne du journal, identifiant de notification).
     public var id: String {
-        "\(Int64((date.timeIntervalSince1970 * 1000).rounded()))-\(type.rawValue)-\(sujet?.id ?? reseau ?? "")"
+        "\(Int64((date.timeIntervalSince1970 * 1000).rounded()))-\((protocole ?? .thread).rawValue)-\(type.rawValue)-\(sujet?.id ?? reseau ?? "")"
     }
 
     enum CodingKeys: String, CodingKey {
-        case date, type, gravite, reseau, sujet, avant, apres, periode, constate, details
+        case date, type, gravite, reseau, sujet, avant, apres, periode, constate, details, protocole
     }
 
-    /// Lecture tolerante : `gravite`, `constate` et `details` peuvent manquer.
+    /// Lecture tolerante : `gravite`, `constate`, `details` et `protocole` peuvent manquer. Un protocole inconnu rend la
+    /// ligne illisible (elle n'est jamais lue comme une ligne de Thread). Le type se relit avec les types connus du
+    /// protocole de la ligne (`typesEvenementParProtocole`, Thread sans protocole), puis avec tous les types connus.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         date = try c.decode(Date.self, forKey: .date)
-        type = try c.decode(TypeEvenement.self, forKey: .type)
+        protocole = try c.decodeIfPresent(Protocole.self, forKey: .protocole)
+        let nom = try c.decode(String.self, forKey: .type)
+        let duProtocole = (decoder.userInfo[.typesEvenementParProtocole] as? [Protocole: [String: TypeEvenement]])?[protocole ?? .thread]
+        let connus = decoder.userInfo[.typesEvenement] as? [String: TypeEvenement]
+        type = duProtocole?[nom] ?? connus?[nom] ?? TypeEvenement(rawValue: nom)
         gravite = try c.decodeIfPresent(Gravite.self, forKey: .gravite) ?? type.gravite
         reseau = try c.decodeIfPresent(String.self, forKey: .reseau)
         sujet = try c.decodeIfPresent(Sujet.self, forKey: .sujet)

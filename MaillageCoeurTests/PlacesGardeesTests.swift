@@ -10,7 +10,7 @@ struct PlacesGardeesTests {
 
     static func scene(zones: [ZoneMaison]) throws -> ScenePieces {
         ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: false), libelles: ScenePiecesTests.libelles,
-                    piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre"], zones: zones, chefs: [], piecesMaison: true)
+                    piecesNoeuds: [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre"], zones: zones, chefs: [], piecesMaison: true, classement: FixturesScene.classement)
     }
 
     /// Aller-retour sur disque : places et ordre des etages, par maison ; un fichier absent ou
@@ -147,8 +147,8 @@ struct PlacesGardeesTests {
         p.garder(SIMD2(1, 2), piece: "piece:Salon", etage: "zone:Rez-de-chaussée", domicile: "")
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: false), libelles: [:],
-                            piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre"], zones: zones, chefs: [],
-                            piecesMaison: true, ordreEtages: p.maison("").ordreEtages)
+                            piecesNoeuds: [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre"], zones: zones, chefs: [],
+                            piecesMaison: true, ordreEtages: p.maison("").ordreEtages, classement: FixturesScene.classement)
         #expect(s.etages.map(\.id) == ["zone:Étage", "zone:Rez-de-chaussée"])
         p.replacer(domicile: "")
         #expect(p.maison("").etages.isEmpty)

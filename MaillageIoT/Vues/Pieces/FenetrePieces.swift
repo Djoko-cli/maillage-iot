@@ -10,6 +10,8 @@ import SwiftUI
 /// clair (precision 15 du plan 4b).
 struct FenetrePieces: View {
     @Environment(Surveillance.self) private var surveillance
+    /// La sonde de Zigbee : « Maillage incomplet » et sa passe complementaire. nil dans les vues de test sans elle.
+    @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(\.accessibilityReduceMotion) private var reduire
     /// Le mode 2D ou 3D, garde d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleMode) private var troisD = false
@@ -45,11 +47,45 @@ struct FenetrePieces: View {
     static let cleMode = "vuePieces3D"
     /// Preference des etages en 2D : en grille (vrai, par defaut) ou en rangee.
     static let cleGrille = "etagesEnGrille"
+    /// Preference des liens montres de Zigbee : « chemins » (par defaut) ou « tous » (`ModeLiens`). Propre a Zigbee
+    /// (Thread n'a pas de chemin vers un pont) : la scene reunie la lit (tache 8).
+    static let cleLiens = "zigbee.liensMontres"
+
+    /// Les liens montres gardes ; « chemins » sans preference ou pour une valeur inconnue.
+    static func modeLiens(_ valeur: String?) -> ModeLiens {
+        valeur.flatMap(ModeLiens.init(rawValue:)) ?? .chemins
+    }
+    /// Preference des voisins entendus a la selection (mode « chemins », Zigbee) : montres (vrai, par defaut) ou masques.
+    static let cleVoisins = "zigbee.voisinsALaSelection"
+
+    /// Les voisins montres gardes ; montres sans preference ou pour une valeur qui n'est pas un booleen.
+    static func voisinsMontres(_ valeur: Any?) -> Bool {
+        valeur as? Bool ?? true
+    }
+
+    /// L'aide du bouton « Voisins » : ce que le clic fait, ou pourquoi il est grise (mode « tous »).
+    static func aideVoisins(montres: Bool, mode: ModeLiens) -> String {
+        if mode == .tous { return String(localized: "Sans effet avec « Liens : tous » : tous les liens radio sont montrés") }
+        return montres
+            ? String(localized: "Voisins entendus montrés à la sélection d'un nœud : cliquer pour les masquer")
+            : String(localized: "Voisins entendus masqués à la sélection d'un nœud : cliquer pour les montrer")
+    }
+
+    /// « Maillage incomplet » de Zigbee (avec l'heure de la passe complementaire programmee) : le maillage affiche est
+    /// marque incomplet, et aucune tournee de la sonde de Zigbee ne tourne ; nil sinon.
+    static func texteIncomplet(_ zigbee: SurveillanceZigbee, sonde: SondeMaillageZigbee?) -> String? {
+        TexteTourneeZigbee.texteIncomplet(passe: sonde?.passeComplementaire,
+                                          incomplet: zigbee.maillageIncomplet && zigbee.maillageAffiche != nil,
+                                          tourneeEnCours: sonde?.debutTournee != nil)
+    }
+
     /// Taille minimale de la fenetre (polissage B, section 3) : avec la fiche et ses courbes, la scene
     /// garde environ 230 pt de haut (88 pour 820 x 560, tri du sous-projet A, n° 11 ; 234 mesures, ligne de niveau
     /// comprise, sur le jeu de l'historique). 820 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
     /// invisible : la fenetre ne descend pas sous 820 x 732 pt.
     static let tailleMinimale = CGSize(width: 820, height: 680)
+    /// Largeur par defaut de la fenetre (`MaillageIoTApp`, `.defaultSize`).
+    static let largeurParDefaut: CGFloat = 1100
     /// Bord des elements poses sur la vue, et ecart entre eux (pt).
     static let bord: CGFloat = 16
     static let espacement: CGFloat = 10
@@ -57,14 +93,22 @@ struct FenetrePieces: View {
     static let espacementNiveau: CGFloat = 4
 
     /// `fichierPlaces` : `positions-pieces.json` (`fichierPlaces(demo:sousTests:)`) ; `fichierPieces` :
-    /// `pieces-routeurs.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
+    /// `pieces-noeuds.json` (`PiecesChoisies.fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. `places` : sans
     /// fichier, celles de depart, en memoire (la demo : `NomsDemo.places()`).
-    /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran).
+    /// `--args -selection <id>` : fiche ouverte au lancement (captures d'ecran). Forme texte d'un `IdNoeud`
+    /// (`thread:<cle>` ou `zigbee:<cle>`) ; une cle brute, sans protocole reconnu, est une cle de Thread.
+    static func selection(argument: String?) -> IdNoeud? {
+        guard let argument, !argument.isEmpty else { return nil }
+        return IdNoeud(texte: argument) ?? IdNoeud(.thread, argument)
+    }
+
     init(fichierPlaces: URL?, fichierPieces: URL? = nil, places: PlacesGardees? = nil) {
         _moteur = State(initialValue: MoteurPieces(troisD: UserDefaults.standard.bool(forKey: Self.cleMode),
                                                    fichierPlaces: fichierPlaces,
-                                                   selection: UserDefaults.standard.string(forKey: "selection"),
-                                                   places: places))
+                                                   selection: Self.selection(argument: UserDefaults.standard.string(forKey: "selection")),
+                                                   places: places,
+                                                   liens: Self.modeLiens(UserDefaults.standard.string(forKey: Self.cleLiens)),
+                                                   voisins: Self.voisinsMontres(UserDefaults.standard.object(forKey: Self.cleVoisins))))
         _piecesChoisies = State(initialValue: PiecesChoisies(fichier: fichierPieces))
     }
 
@@ -73,7 +117,8 @@ struct FenetrePieces: View {
         demo || sousTests ? nil : Surveillance.dossierParDefaut.appendingPathComponent("positions-pieces.json")
     }
 
-    /// Redessin de la fenetre au debut de chaque minute. « Ancien » (6 min) et « perime » (15 min)
+    /// Redessin de la fenetre au debut de chaque minute. « Ancien » et « perime » (6 et 15 min pour Thread, 16 et 45 min
+    /// pour Zigbee)
     /// ne dependent que de l'heure (`Surveillance.maintenant`), que rien n'observe : quand la sonde
     /// se tait, aucun evenement ne redessine la vue ; l'etat parait avec une minute de retard au
     /// plus, et le redessin n'a lieu que dans cette fenetre, tant qu'elle est ouverte.
@@ -137,9 +182,9 @@ struct FenetrePieces: View {
         // fiche la recoit (`instant`) : sinon SwiftUI la sauterait, ses entrees n'ayant pas change. La
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
-            let entree = surveillance.reseau.map {
-                EntreeScene(surveillance: surveillance, reseau: $0, places: moteur.places, choix: piecesChoisies.choix)
-            }
+            // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
+            let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
+                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix) : nil
             let fiche = moteur.selection != nil
             // Sous une fiche, la legende se replie d'elle-meme si la place manque, sauf si Djoko l'a rouverte.
             let repliDePlace = fiche && !legendeRouverte && hauteurVue.map {
@@ -161,7 +206,9 @@ struct FenetrePieces: View {
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
-                           ancien: surveillance.maillageAncien, feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           ancien: surveillance.modeles.contains(where: \.maillageAncien),
+                           texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
+                           protocoles: entree?.protocoles ?? [], feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
@@ -374,14 +421,41 @@ struct MenuPieces: View {
     }
 }
 
-/// Capsule de droite du haut de la fenetre : l'interrupteur 2D / 3D, puis « Rotation lente », en 3D
-/// seulement (coupee par « Reduire les animations »).
+/// Capsule de droite du haut de la fenetre : pour une scene qui a des noeuds Zigbee, les liens montres (chemins ou tous)
+/// et le bouton des voisins entendus a la selection (grise en mode « tous ») ; l'interrupteur 2D / 3D, puis
+/// « Rotation lente », en 3D seulement (coupee par « Reduire les animations »).
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les liens montres, gardes d'un lancement a l'autre.
+    @AppStorage(FenetrePieces.cleLiens) private var liensGardes = ModeLiens.chemins.rawValue
+    /// Les voisins entendus a la selection, gardes d'un lancement a l'autre.
+    @AppStorage(FenetrePieces.cleVoisins) private var voisinsGardes = true
+
+    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene (`ContenuHaut.liens`), seul ou avec
+    /// Thread.
+    static func montreLiens(scene: ScenePieces?) -> Bool {
+        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? [])).liens
+    }
 
     var body: some View {
         HStack(spacing: 5) {
+            if Self.montreLiens(scene: moteur.scene) {
+                SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
+                    moteur.liens = v
+                    liensGardes = v.rawValue
+                }))
+                Toggle(isOn: Binding(get: { moteur.voisins }, set: { v in
+                    moteur.voisins = v
+                    voisinsGardes = v
+                })) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .accessibilityLabel(Text("Voisins à la sélection"))
+                }
+                .toggleStyle(StyleBasculeCapsule())
+                .disabled(moteur.liens == .tous)
+                .help(FenetrePieces.aideVoisins(montres: moteur.voisins, mode: moteur.liens))
+            }
             SelecteurVue(troisD: Binding(get: { moteur.troisD }, set: { v in
                 moteur.basculer(troisD: v)
                 troisD = v
@@ -400,7 +474,7 @@ struct CommandesVue: View {
 /// Bandeau d'une maison dont Maison n'a encore donne aucune piece (spec, section 2.3).
 struct BandeauSansPieces: View {
     @Environment(Surveillance.self) private var surveillance
-    @Environment(NomsInternes.self) private var nomsMaison
+    @Environment(NomsPasseur.self) private var nomsMaison
 
     var body: some View {
         HStack(spacing: 8) {
@@ -477,7 +551,10 @@ struct LigneDuBas: View {
     var body: some View {
         // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
         let ailleurs = moteur.isolee != nil && !moteur.textes.ailleurs.isEmpty
-        let rubriques = entree.map { LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs)) } ?? []
+        let rubriques = entree.map {
+            LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens,
+                                                           voisins: moteur.voisins))
+        } ?? []
         let estRepliee = legendeForcee ?? (repliee || repliDePlace)
         let ouverte = !rubriques.isEmpty && !estRepliee
         HStack(spacing: 0) {

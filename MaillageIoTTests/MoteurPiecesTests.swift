@@ -225,9 +225,9 @@ struct MoteurPiecesTests {
         let salon = try Self.indice(e, "Salon")
         m.cliquer(try Self.pointDePiece(m, salon))
         #expect(m.estIsolee && m.focus == salon && m.isolee == "Salon")
-        let disque = try #require(m.projetee?.disques.first { $0.noeud == "Apple TV 4K" })
+        let disque = try #require(m.projetee?.disques.first { $0.noeud == idt("Apple TV 4K") })
         m.cliquer(disque.centre)
-        #expect(m.selection == "Apple TV 4K")
+        #expect(m.selection == idt("Apple TV 4K"))
         m.cliquer(CGPoint(x: 5, y: Self.taille.height / 2))
         #expect(m.selection == nil && !m.estIsolee && m.isolee == nil && m.focus == nil)
     }
@@ -276,7 +276,7 @@ struct MoteurPiecesTests {
         let a = moteur()
         a.poserZoom(echelle: 1.6, vers: a.centrePiece(try Self.indice(e, "Salon")))
         for _ in 0..<2 { Self.dessiner(a) }
-        let appareil = a.etiquettes.compactMap { l -> (String, CGPoint)? in
+        let appareil = a.etiquettes.compactMap { l -> (IdNoeud, CGPoint)? in
             guard l.vu, case .noeud(let id) = l.genre else { return nil }
             let c = CGPoint(x: l.rect.midX, y: l.rect.midY)
             return a.projetee?.noeud(sous: c) == nil ? (id, c) : nil
@@ -330,12 +330,12 @@ struct MoteurPiecesTests {
     /// Deux zones de Maison du meme nom : un seul etage, et la disposition s'installe sans plantage.
     @Test func zonesHomonymes() throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Terrasse", "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau", "Salle de bain", "Chambre d'amis",
                                                           "Grenier", "Salle de jeux"]),
                         ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Entrée", "Buanderie"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         #expect(e.scene.etages.map(\.id) == ["zone:Rez-de-chaussée", "zone:Étage"])
         let m = Self.moteur(e)
@@ -371,7 +371,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences["Apple TV 4K"] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idt("Apple TV 4K")] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         #expect(autre != e && autre.cleDisposition == e.cleDisposition)
         let cuisine = try Self.indice(e, "Cuisine")
         let avant = m.positions[cuisine]
@@ -411,11 +411,11 @@ struct MoteurPiecesTests {
     /// scene s'applique au relachement, la piece glissee a la place du geste.
     @Test(.timeLimit(.minutes(1))) func releveQuiChangeLaStructurePendantUnGlisser() async throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         for k in maison.accessoires.indices where maison.accessoires[k].piece == "Chambre d'amis" {
             maison.accessoires[k].piece = "Chambre"
         }
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let autre = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         // Disposition finie pendant le geste (`installerMaintenant` : comme un calcul qui se termine).
         let (m, e) = try Self.moteur()
@@ -470,7 +470,7 @@ struct MoteurPiecesTests {
     @Test(.timeLimit(.minutes(1))) func replacerGardeLeReleveEnAttente() async throws {
         let (s, r, e) = try NomsSceneTests.demo()
         let m = Self.moteur(e)
-        s.renommer("56B1E064401F74EF", en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idt("56B1E064401F74EF"), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, reseau: r, places: m.places)
         let fond = CGPoint(x: 5, y: Self.taille.height / 2)
         m.glisser(fond, depart: fond)
@@ -491,7 +491,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (m, e) = try Self.moteur(fichier: url)
         var autre = e
-        autre.apparences["Apple TV 4K"] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idt("Apple TV 4K")] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
         let cuisine = try Self.indice(e, "Cuisine")
         let depart = try Self.pointDePiece(m, cuisine)
         m.glisser(depart, depart: depart)
@@ -569,7 +569,7 @@ struct MoteurPiecesTests {
         m.basculer(troisD: true)
         #expect(m.troisD && m.enMouvement && m.focus == nil && m.isolee == nil)
         var autre = e
-        autre.libelles["56B1E064401F74EF"] = LibellesNoeuds.Libelle(texte: "Pont Halo")
+        autre.libelles[idt("56B1E064401F74EF")] = LibellesNoeuds.Libelle(texte: "Pont Halo")
         m.recevoir(autre)
         #expect(m.entree == e, "pendant l'envol, la scene attend")
         let r = MoteurPieces(troisD: true)
@@ -601,15 +601,15 @@ struct MoteurPiecesTests {
     /// a un etage le rayon d'un autre. Trois etages : « Sans piece » reste sur celui du bas.
     @Test(.timeLimit(.minutes(1))) func ordreDesEtagesPendantUnCalcul() async throws {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Entrée", "Buanderie", "Terrasse",
                                                                     "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Chambre d'amis"]),
                         ZoneMaison(nom: "Combles", pieces: ["Bureau", "Salle de bain", "Grenier", "Salle de jeux"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         let e = EntreeScene(surveillance: s, reseau: r, places: PlacesGardees())
         let m = Self.moteur(e)
-        s.renommer("56B1E064401F74EF", en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idt("56B1E064401F74EF"), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, reseau: r, places: m.places)
         #expect(autre.cleDisposition != e.cleDisposition)
         m.recevoir(autre)
@@ -639,7 +639,7 @@ struct MoteurPiecesTests {
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
         let (s, r, e) = try NomsSceneTests.demo()
         let m = Self.moteur(e, fichier: url)
-        s.renommer("56B1E064401F74EF", en: "Pont du bureau, sous la lampe de l'écran")
+        s.renommer(idt("56B1E064401F74EF"), en: "Pont du bureau, sous la lampe de l'écran")
         let autre = EntreeScene(surveillance: s, reseau: r, places: m.places)
         m.recevoir(autre)
         let cuisine = try Self.indice(e, "Cuisine")
@@ -685,7 +685,7 @@ struct MoteurPiecesTests {
         // Piece isolee et fiche ouverte : le premier clic les ferme, le second ne relance rien.
         let (n, _) = try Self.moteur()
         n.cliquer(try Self.pointDePiece(n, try Self.indice(e, "Salon")))
-        n.selection = "Apple TV 4K"
+        n.selection = idt("Apple TV 4K")
         n.relacher(fond, a: 200)
         #expect(n.selection == nil && !n.estIsolee && n.isolee == nil && n.focus == nil)
         n.relacher(fond, a: 200.1)
@@ -706,12 +706,12 @@ struct MoteurPiecesTests {
     /// pieces de la demo, celles du jardin et des combles de sa maquette comprises.
     static func quatrePlateaux(_ places: PlacesGardees = PlacesGardees()) throws -> EntreeScene {
         let (s, r, _) = try NomsSceneTests.demo()
-        var maison = try #require(s.noms.maison)
+        var maison = try #require(s.thread.noms.maison)
         maison.zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon", "Cuisine", "Buanderie"]),
                         ZoneMaison(nom: "Jardin", pieces: ["Entrée", "Terrasse", "Abri"]),
                         ZoneMaison(nom: "Étage", pieces: ["Chambre", "Salle de bain"]),
                         ZoneMaison(nom: "Combles", pieces: ["Bureau", "Chambre d'amis", "Grenier", "Salle de jeux"])]
-        s.noms.maison = maison
+        s.thread.noms.maison = maison
         return EntreeScene(surveillance: s, reseau: r, places: places)
     }
 
@@ -1093,5 +1093,29 @@ struct MoteurPiecesTests {
     @Test func ordreDesCouches() {
         #expect(RenduCanvas.couches == [.plateaux, .blocs, .liensEnfants, .liensRouteurs, .pastilles, .sphere, .traits, .noms])
         #expect(Set(RenduCanvas.couches) == Set(RenduCanvas.Couche.allCases))
+    }
+
+    /// Maison sans pieces, un routeur Thread et un routeur Zigbee de meme cle (relecture finale, m2) : deux cartes (leurs
+    /// `NomPiece` different), qui ont la meme cle de piece `routeur:<cle>`, gardee brute ; le moteur ne plante pas sur la cle
+    /// en double, et chaque carte a sa place et sa mise en page.
+    @Test func deuxRouteursDeMemeCleDeDeuxProtocolesSansPieces() throws {
+        let (_, _, base) = try NomsSceneTests.demo()
+        let t = IdNoeud(.thread, "E000000000000001"), z = IdNoeud(.zigbee, "E000000000000001")
+        let noeuds = [t, z].map {
+            GrapheReseau.Noeud(id: $0, genre: .centre, partition: $0.protocole == .zigbee ? "zigbee" : "p", routeur: true,
+                               bordure: false, inconnu: false)
+        }
+        let graphe = GrapheReseau(noeuds: noeuds)
+        var e = base
+        e.graphe = graphe
+        e.scene = ScenePieces(graphe: graphe, libelles: [t: "Routeur Thread", z: "Routeur Zigbee"], piecesNoeuds: [:],
+                              zones: nil, chefs: [], piecesMaison: false,
+                              classement: { n in (n.routeur ? 2 : 3, n.routeur ? 8 : 7) })
+        #expect(e.scene.sansPiecesMaison && e.scene.pieces.count == 2)
+        #expect(e.scene.pieces.map(\.id) == ["routeur:E000000000000001", "routeur:E000000000000001"], "cle de piece brute")
+        let m = Self.moteur(e)
+        #expect(m.cartes.count == 2 && m.positions.count == 2)
+        #expect(m.positions[0] != m.positions[1], "deux cartes, deux places : \(m.positions)")
+        #expect(m.projetee?.ancresPieces.count == 2)
     }
 }

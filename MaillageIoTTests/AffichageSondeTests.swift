@@ -52,9 +52,9 @@ struct AffichageSondeTests {
     @Test func nomsDesRouteurs() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
-        s.renommer("HomePod Avant", en: "Enceinte droite")
-        let noms = s.nomsRouteurs(pour: r)
+        let r = try #require(s.thread.reseau)
+        s.renommer(idt("HomePod Avant"), en: "Enceinte droite")
+        let noms = s.thread.nomsRouteurs(pour: r)
         #expect(noms["HomePod Avant"] == "Enceinte droite")
         #expect(noms["HomePod Palier"] == "HomePod Palier")
         #expect(Set(noms.keys) == Set(r.routeurs.map(\.instance)))
@@ -67,7 +67,7 @@ struct AffichageSondeTests {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
         #expect(FicheNoeud.selection(candidat: "HomePod Avant", dans: s) == "HomePod Avant")
-        #expect(FicheNoeud.renommable("HomePod Avant", dans: s), "sa fiche : « Renommer… »")
+        #expect(FicheNoeud.renommable(idt("HomePod Avant"), dans: s, entree: nil), "sa fiche : « Renommer… »")
         #expect(FicheNoeud.selection(candidat: "Annonce disparue", dans: s) == nil)
     }
 
@@ -95,9 +95,9 @@ struct AffichageSondeTests {
     @Test func ficheEtDemo() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
-        let m = try #require(s.maillageAffiche(pour: r))
-        #expect(!s.maillageAncien)
+        let r = try #require(s.thread.reseau)
+        let m = try #require(s.thread.maillageAffiche(pour: r))
+        #expect(!s.thread.maillageAncien)
         let enfant = try #require(m.enfants.values.first { $0.reconnu && m.parent(de: $0.id) != nil })
         let ligne = FicheNoeud.ligneSonde(enfant, maillage: m, nom: { "P[\($0)]" })
         #expect(ligne.hasPrefix(String(format: "RLOC16 %04X", enfant.rloc16)))
@@ -138,7 +138,7 @@ struct AffichageSondeTests {
     @Test func ficheAvecLesSources() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau), i = try #require(s.instantane), p = try #require(r.principale)
+        let r = try #require(s.thread.reseau), i = try #require(s.thread.instantane), p = try #require(r.principale)
         let appareils = i.appareils.filter { $0.partition == p.id && $0.etat == .joignable }.sorted { $0.id < $1.id }
         let routeur = try #require(appareils.first), enfant = try #require(appareils.last)
         let t = Date(timeIntervalSince1970: 1_790_000_000)
@@ -161,7 +161,7 @@ struct AffichageSondeTests {
         let l = try #require(m.liens.first { $0.genre == .radio })
         let o = try #require(l.origine)
         let voisin = l.de == n2.id ? l.vers : l.de
-        #expect(FicheThread.voisins(de: n2.id, maillage: m).map(\.id) == [voisin])
+        #expect(FicheThread.voisins(de: idt(n2.id), maillage: m).map(\.id.cle) == [voisin])
         #expect(FicheNoeud.origineVoisin(voisin, de: n2.id, maillage: m, instant: t)
                 == FicheNoeud.texteQualite(l.qualite) + " · " + FicheNoeud.texteOrigine(o, t))
         #expect(FicheNoeud.origineVoisin("absent", de: n2.id, maillage: m, instant: t) == nil)
@@ -182,7 +182,7 @@ struct AffichageSondeTests {
         #expect(FicheNoeud.ligneSonde(inventeSansParent, maillage: m, nom: { $0 }, instant: t)
                 == String(localized: "Non identifié"), "RLOC16 invente, sans parent : jamais affiche")
         // Maillage de demo : aucune source, la qualite seule.
-        let demo = try #require(s.maillageAffiche(pour: r))
+        let demo = try #require(s.thread.maillageAffiche(pour: r))
         let chef = try #require(demo.routeurs[1])
         let lienDemo = try #require(demo.liens.first { $0.genre == .radio && ($0.de == chef.id || $0.vers == chef.id) })
         #expect(FicheNoeud.origineVoisin(lienDemo.de == chef.id ? lienDemo.vers : lienDemo.de, de: chef.id, maillage: demo,
@@ -195,30 +195,30 @@ struct AffichageSondeTests {
     @Test func renommable() throws {
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let r = try #require(s.reseau)
-        let m = try #require(s.maillageAffiche(pour: r))
+        let r = try #require(s.thread.reseau)
+        let m = try #require(s.thread.maillageAffiche(pour: r))
         let routeur = try #require(r.routeurs.first)
-        let appareil = try #require(s.instantane?.appareils.first)
-        let disparu = try #require(s.suivi.disparus.keys.sorted().first)
+        let appareil = try #require(s.thread.instantane?.appareils.first)
+        let disparu = try #require(s.thread.suivi.disparus.keys.sorted().first)
         let inconnu = try #require(m.inconnus.first)
         #expect(m.noeud(inconnu.id) != nil, "connu de la sonde")
-        #expect(s.instantane?.appareil(disparu) == nil && s.instantane?.routeur(disparu) == nil,
+        #expect(s.thread.instantane?.appareil(disparu) == nil && s.thread.instantane?.routeur(disparu) == nil,
                 "le disparu n'est plus dans l'instantane : seul le suivi le connait")
-        #expect(FicheNoeud.renommable(routeur.instance, dans: s))
-        #expect(FicheNoeud.renommable(appareil.id, dans: s))
-        #expect(FicheNoeud.renommable(disparu, dans: s), "appareil disparu : sa fiche garde « Renommer… »")
-        #expect(!FicheNoeud.renommable(inconnu.id, dans: s))
-        #expect(!FicheNoeud.renommable("rloc:5000", dans: s), "ni la sonde ni l'instantane : « Ce nœud n'est plus visible. »")
+        #expect(FicheNoeud.renommable(idt(routeur.instance), dans: s, entree: nil))
+        #expect(FicheNoeud.renommable(idt(appareil.id), dans: s, entree: nil))
+        #expect(FicheNoeud.renommable(idt(disparu), dans: s, entree: nil), "appareil disparu : sa fiche garde « Renommer… »")
+        #expect(!FicheNoeud.renommable(idt(inconnu.id), dans: s, entree: nil))
+        #expect(!FicheNoeud.renommable(idt("rloc:5000"), dans: s, entree: nil), "ni la sonde ni l'instantane : « Ce nœud n'est plus visible. »")
     }
 
     /// Ligne du menu : le nom de la sonde a la place de « Sonde » quand il est donne (celui de la
-    /// sonde retenue, quand l'etat la concerne : `SondeMaillage.nomEtat`) ; pendant une tournee,
+    /// sonde retenue, quand l'etat la concerne : `SondeMaillageThread.nomEtat`) ; pendant une tournee,
     /// son etape et son compteur. Etat des Reglages : « SONDE-01 · connectee », l'etat seul sans nom.
     @Test func menuEtReglages() {
         let t = Date(timeIntervalSince1970: 1_790_000_000)
         let sonde = String(localized: "Sonde")
-        #expect(SondeMaillage.nomAffiche(nil) == sonde)
-        #expect(SondeMaillage.nomAffiche("SONDE-01") == "SONDE-01")
+        #expect(SondeMaillageThread.nomAffiche(nil) == sonde)
+        #expect(SondeMaillageThread.nomAffiche("SONDE-01") == "SONDE-01")
         #expect(MenuBarre.ligneSonde(.sansSonde, nom: nil, derniere: nil, avancement: nil, maintenant: t) == nil)
         #expect(MenuBarre.ligneSonde(.absente, nom: nil, derniere: nil, avancement: nil, maintenant: t)
                 == String(localized: "\(sonde) : absente"))
@@ -238,18 +238,18 @@ struct AffichageSondeTests {
                 == String(localized: "\("SONDE-01") : connectée · relevé \(FicheNoeud.relatif(t - 120, t))"))
         let resolution = AvancementTournee(etape: .resolution, fait: 24, total: 48)
         #expect(MenuBarre.ligneSonde(.connectee(b), nom: "SONDE-01", derniere: t - 120, avancement: resolution, maintenant: t)
-                == String(localized: "\("SONDE-01") : \(TexteTournee.etape(.resolution)) \(24)/\(48)…"))
+                == String(localized: "\("SONDE-01") : \(TexteTourneeThread.etape(.resolution)) \(24)/\(48)…"))
         let rien = AvancementTournee(etape: .identites, fait: 0, total: 0)
         #expect(MenuBarre.ligneSonde(.connectee(b), nom: nil, derniere: nil, avancement: rien, maintenant: t)
-                == String(localized: "\(sonde) : \(TexteTournee.etape(.identites))…"))
+                == String(localized: "\(sonde) : \(TexteTourneeThread.etape(.identites))…"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "connectée"))"))
-        #expect(FenetreReglages.texteEtatSonde(.absente, nom: "SONDE-01")
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.absente, nom: "SONDE-01")
                 == String(localized: "\("SONDE-01") · \(String(localized: "absente (débranchée ?)"))"))
         #expect(FenetreReglages.texteEtatSonde(.connectee(b), nom: nil) == String(localized: "connectée"))
-        #expect(FenetreReglages.texteEtatSonde(.refusee("pas une sonde"), nom: nil)
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.refusee("pas une sonde"), nom: nil)
                 == String(localized: "refusée : \("pas une sonde")"))
-        #expect(FenetreReglages.texteEtatSonde(.sansSonde, nom: nil) == String(localized: "aucune sonde choisie"))
+        #expect(FenetreReglages.texteEtatSonde(SondeMaillageThread.Etat.sansSonde, nom: nil) == String(localized: "aucune sonde choisie"))
     }
 
     /// Choix du port : la sonde retenue sous son nom seul ; un autre port, un port sans numero
@@ -276,21 +276,21 @@ struct AffichageSondeTests {
     /// seule quand elle n'a rien a faire ; duree en m:ss dans la barre du graphe, en unites
     /// dans les Reglages.
     @Test func texteAvancement() {
-        let etapes = AvancementTournee.Etape.allCases.map(TexteTournee.etape)
+        let etapes = AvancementTournee.Etape.allCases.map(TexteTourneeThread.etape)
         #expect(Set(etapes).count == etapes.count)
         #expect(!etapes.contains(""))
         let a = AvancementTournee(etape: .resolution, fait: 24, total: 48)
-        #expect(TexteTournee.avancement(a) == String(localized: "\(TexteTournee.etape(.resolution)) · \(24)/\(48)"))
-        #expect(TexteTournee.avancement(AvancementTournee(etape: .identites, fait: 0, total: 0))
-                == TexteTournee.etape(.identites))
+        #expect(TexteTourneeThread.avancement(a) == String(localized: "\(TexteTourneeThread.etape(.resolution)) · \(24)/\(48)"))
+        #expect(TexteTourneeThread.avancement(AvancementTournee(etape: .identites, fait: 0, total: 0))
+                == TexteTourneeThread.etape(.identites))
         #expect(TexteTournee.chrono(42) == "0:42")
         #expect(TexteTournee.chrono(600) == "10:00")
         #expect(TexteTournee.chrono(3723) == "1:02:03")
         #expect(TexteTournee.chrono(-3) == "0:00", "horloge qui recule")
         let t = Date(timeIntervalSince1970: 1_790_000_000)
-        #expect(TexteTournee.barre(a, debut: t, maintenant: t + 42) == String(localized: "\(TexteTournee.avancement(a)) · \("0:42")"))
-        #expect(TexteTournee.reglages(a, debut: t, maintenant: t + 42)
-                == String(localized: "\(TexteTournee.avancement(a)) · depuis \(TexteTournee.duree(42))"))
+        #expect(TexteTourneeThread.barre(a, debut: t, maintenant: t + 42) == String(localized: "\(TexteTourneeThread.avancement(a)) · \("0:42")"))
+        #expect(TexteTourneeThread.reglages(a, debut: t, maintenant: t + 42)
+                == String(localized: "\(TexteTourneeThread.avancement(a)) · depuis \(TexteTournee.duree(42))"))
         #expect(TexteTournee.duree(42).contains("42"))
         #expect(TexteTournee.duree(90).contains("1") && TexteTournee.duree(90).contains("30"))
     }

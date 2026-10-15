@@ -45,12 +45,12 @@ public enum Candidats {
 /// Un nom et son etat de placement, garde d'une image a l'autre (stabilite).
 public struct Etiquette: Sendable {
     public enum Genre: Hashable, Sendable {
-        case noeud(String)
+        case noeud(IdNoeud)
         case piece(Int)
         case etage(Int)
         case maison
         /// Repere « ailleurs » de la piece isolee, par l'id de l'enfant.
-        case ailleurs(String)
+        case ailleurs(IdNoeud)
     }
 
     public let genre: Genre
@@ -213,7 +213,7 @@ public enum PlacementNoms {
     /// zoom, ceux de la maison, ou de l'etage vise seulement. Celui de l'appareil survole ou choisi est toujours voulu.
     /// Les noms d'etage restent voulus, pales et cliquables pendant un isolement.
     public static func regler(_ etiquettes: inout [Etiquette], scene: ScenePieces, niveau: NiveauZoom,
-                              survol: String?, selection: String?, focus: Int?, isolee: Bool, fk: [Double],
+                              survol: IdNoeud?, selection: IdNoeud?, focus: Int?, isolee: Bool, fk: [Double],
                               s: Double, t: Double, se: Double = 0, voiles: [Double] = [], etageIsole: Int? = nil,
                               survolNomEtage: Int? = nil) {
         let fo = 1 - CameraScene.rampe(s)

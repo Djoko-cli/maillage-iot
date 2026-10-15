@@ -1,0 +1,276 @@
+import AppKit
+import Foundation
+import MaillageCoeur
+import SwiftUI
+import Testing
+@testable import MaillageIoT
+import ProtocoleZigbee
+
+/// Etape 5 dans l'app : le mode focus du moteur (selection, second clic, Echap, bouton « Voisins »), les colonnes de la
+/// fiche et leurs textes, la bande des courbes. Sur la demo (valeurs inventees).
+@MainActor
+@Suite("Mode focus, fiche en colonnes et courbes de la fiche")
+struct FocusFicheTests {
+    typealias I = NomsDemo.Ieee
+
+    /// Le moteur suit la selection : a la selection d'une lampe, ce qui n'est pas mis en avant s'estompe (une capture,
+    /// figee, le prend tout de suite) ; ses pastilles et ses noms s'estompent, pas celles du chemin. Le bouton « Voisins »
+    /// change ce qui reste net ; un clic dans le vide, Echap ou un second clic sur le noeud rendent la vue normale.
+    @Test func focusDuMoteur() throws {
+        let (m, e) = try MoteurPiecesZigbeeTests.moteur()
+        m.fige = true
+        #expect(m.miseEnAvant == nil && m.noeudsEstompes.isEmpty)
+        m.selection = idz(I.lampeBureau)
+        let focus = try #require(m.miseEnAvant)
+        #expect(focus == e.miseEnAvant(de: idz(I.lampeBureau), liens: .chemins, voisins: true))
+        #expect(m.noeudsEstompes[idz(I.lampeGrenier)] == 1 && m.noeudsEstompes[idz(I.lampeBureau)] == nil)
+        #expect(m.noeudsEstompes.count == e.scene.noeuds.count - focus.noeuds.count)
+        MoteurPiecesZigbeeTests.dessiner(m)
+        let p = try #require(m.projetee)
+        #expect(p.disques.first { $0.noeud == idz(I.lampeGrenier) }?.focus == MiseEnAvant.opaciteEstompee)
+        #expect(p.disques.first { $0.noeud == idz(I.lampadaireSalon) }?.focus == 1, "son prochain saut reste net")
+        #expect(p.facteur(noeud: idz(I.lampeGrenier)) < 1 && p.facteur(noeud: idz(I.pont)) == 1)
+        // Sans les voisins : le lien vers le pont, un voisin, s'estompe ; en mode « tous », les voisins reviennent.
+        m.voisins = false
+        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))) == false)
+        #expect(m.liensEstompes[MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))] == 1)
+        m.liens = .tous
+        #expect(m.miseEnAvant?.liens.contains(MiseEnAvant.cle(idz(I.lampeBureau), idz(I.pont))) == true, "« tous » : voisins montres")
+        m.liens = .chemins
+        m.voisins = true
+        // Echap : la vue normale.
+        #expect(m.sortir())
+        #expect(m.selection == nil && m.miseEnAvant == nil && m.noeudsEstompes.isEmpty && m.liensEstompes.isEmpty)
+    }
+
+    /// Le nom d'un noeud estompe se lit au survol : sous le focus, un nom fort (survole) reste a 80 % au moins ; les
+    /// autres suivent leur noeud.
+    @Test func nomSurvoleSousLeFocus() {
+        let estompe = MiseEnAvant.opaciteEstompee
+        #expect(RenduCanvas.facteurNom(estompe, fort: true) == RenduCanvas.opaciteNomFort)
+        #expect(RenduCanvas.facteurNom(estompe, fort: false) == estompe)
+        #expect(RenduCanvas.facteurNom(1, fort: true) == 1 && RenduCanvas.facteurNom(1, fort: false) == 1)
+        #expect(RenduCanvas.facteurNom(0.9, fort: true) == 0.9, "jamais plus estompe qu'avant, ni plus net que le noeud net")
+    }
+
+    /// Un clic sur un noeud le choisit ; un second clic sur lui le relache (la vue normale) ; un clic sur un autre noeud
+    /// change le focus ; un clic dans le vide le relache.
+    @Test func secondClicEtVide() throws {
+        let (m, _) = try MoteurPiecesZigbeeTests.moteur()
+        func centre(_ id: String) throws -> CGPoint {
+            MoteurPiecesZigbeeTests.dessiner(m)
+            return try #require(m.projetee?.disques.first { $0.noeud == idz(id) }).centre
+        }
+        let pont = try centre(I.pont)
+        m.cliquer(pont)
+        #expect(m.selection == idz(I.pont) && m.miseEnAvant != nil)
+        m.cliquer(pont)
+        #expect(m.selection == nil && m.miseEnAvant == nil, "second clic : la vue normale")
+        m.cliquer(pont)
+        m.cliquer(try centre(I.plafonnierSalon))
+        #expect(m.selection == idz(I.plafonnierSalon) && m.miseEnAvant?.noeuds.contains(idz(I.plafonnierSalon)) == true)
+        m.cliquer(CGPoint(x: 5, y: MoteurPiecesZigbeeTests.taille.height / 2))
+        #expect(m.selection == nil && m.miseEnAvant == nil, "clic dans le vide")
+    }
+
+    /// L'estompement va en douceur : l'horloge continue tant qu'il est en route (`doitContinuer`), chaque image du moteur
+    /// (`avancer`) l'approche de sa cible sans la depasser, et il arrive : l'horloge peut alors s'arreter.
+    @Test func transitionDouce() throws {
+        let (m, _) = try MoteurPiecesZigbeeTests.moteur()
+        m.selection = idz(I.lampeChambre)
+        let debut = MoteurPieces.maintenant()
+        #expect(m.focusEnRoute && m.doitContinuer(debut), "la selection lance l'estompement")
+        #expect(m.noeudsEstompes.isEmpty, "rien n'a encore avance")
+        m.avancer(debut)
+        m.avancer(debut + 0.05)
+        let mi = m.noeudsEstompes[idz(I.lampeGrenier)] ?? 0
+        #expect(mi > 0 && mi < 1, "en route : \(mi)")
+        #expect(m.focusEnRoute && m.doitContinuer(debut + 0.05))
+        var avant = mi
+        for i in 2..<80 {
+            m.avancer(debut + 0.05 * Double(i))
+            let v = m.noeudsEstompes[idz(I.lampeGrenier)] ?? 0
+            #expect(v >= avant && v <= 1, "monte sans reculer ni depasser sa cible : \(avant) puis \(v)")
+            avant = v
+        }
+        #expect(!m.focusEnRoute, "arrive en 4 s au plus")
+        #expect(m.noeudsEstompes == m.ciblesFocus.noeuds && m.liensEstompes == m.ciblesFocus.liens)
+        #expect(m.noeudsEstompes[idz(I.lampeGrenier)] == 1)
+        // Le retour (Echap) est aussi doux, et ne garde aucun zero.
+        #expect(m.sortir() && m.focusEnRoute)
+        for i in 80..<160 { m.avancer(debut + 0.05 * Double(i)) }
+        #expect(!m.focusEnRoute && m.noeudsEstompes.isEmpty && m.liensEstompes.isEmpty)
+    }
+
+    /// Les couleurs des qualites viennent du niveau du coeur : `lienSonde` et `couleur(_:)` disent la meme chose.
+    @Test func couleursDesNiveaux() {
+        let p = Palette(sombre: true)
+        let qualites: [Int?] = [3, 2, 1, 0, nil]
+        for q in qualites {
+            #expect(p.lienSonde(q, protocole: .zigbee) == p.couleur(NiveauQualite(q)))
+        }
+        #expect(p.lienSonde(0, protocole: .zigbee) == p.lienSonde(1, protocole: .zigbee), "0 est un lien faible")
+        #expect(Set([3, 2, 1].map { p.lienSonde($0, protocole: .zigbee) }).count == 3
+                && p.lienSonde(nil, protocole: .zigbee) != p.lienSonde(1, protocole: .zigbee))
+    }
+
+    /// Les rangees fluides : a la ligne quand la place manque ; un element plus large que la rangee est ramene a sa
+    /// largeur (il ne deborde pas), avec ou sans largeur proposee, et une largeur infinie vaut aucune.
+    @Test func rangeesFluides() {
+        let t = [CGSize(width: 40, height: 10), CGSize(width: 50, height: 12), CGSize(width: 200, height: 10)]
+        let large = RangeesFluides.disposer(t, largeur: 100, espacement: 5, interligne: 4)
+        #expect(large.places == [CGPoint(x: 0, y: 0), CGPoint(x: 45, y: 0), CGPoint(x: 0, y: 16)])
+        #expect(large.tailles.map(\.width) == [40, 50, 100], "la pastille trop large est bornee a la rangee")
+        #expect(large.total == CGSize(width: 100, height: 26))
+        let libre = RangeesFluides.disposer(t, largeur: nil, espacement: 5, interligne: 4)
+        #expect(libre.places.map(\.y) == [0, 0, 0] && libre.total.width == 40 + 5 + 50 + 5 + 200)
+        #expect(RangeesFluides.disposer(t, largeur: .infinity).tailles.map(\.width) == [40, 50, 200])
+        #expect(RangeesFluides.disposer([], largeur: 100).total == CGSize(width: 100, height: 0))
+    }
+
+    // MARK: Fiche
+
+    /// Les colonnes de la fiche : quatre, puis deux, puis une, selon la place ; la grille des voisins, autant de colonnes
+    /// que la place en donne (de 210 pt au moins). Le decalage des courbes de qualite, centre et borne.
+    @Test func colonnesSelonLaPlace() {
+        #expect(ColonnesFiche.colonnes(largeur: 1000, nombre: 4) == 4)
+        #expect(ColonnesFiche.colonnes(largeur: 4 * 190 + 3 * 24, nombre: 4) == 4)
+        #expect(ColonnesFiche.colonnes(largeur: 4 * 190 + 3 * 24 - 1, nombre: 4) == 2, "jamais trois : des rangees pleines")
+        #expect(ColonnesFiche.colonnes(largeur: 300, nombre: 4) == 1)
+        #expect(ColonnesFiche.colonnes(largeur: nil, nombre: 4) == 4)
+        #expect(ColonnesFiche.grille(largeur: 1000, nombre: 4).colonnes == 4)
+        let sansLimite = ColonnesFiche.grille(largeur: .infinity, nombre: 4)
+        #expect(sansLimite.colonnes == 4 && sansLimite.largeur == ColonnesFiche.largeurMinimale,
+                "une largeur infinie ne donne pas de colonne infinie")
+        #expect(ColonnesFiche.grille(largeur: nil, nombre: 4).largeur == ColonnesFiche.largeurMinimale)
+        #expect(GrilleListe.colonnes(largeur: 1000) == 4)
+        #expect(GrilleListe.colonnes(largeur: 100) == 1)
+        #expect(GrapheQualite.decalage(0, sur: 1) == 0)
+        #expect(GrapheQualite.decalage(0, sur: 3) == -0.05 && GrapheQualite.decalage(2, sur: 3) == 0.05)
+        #expect(abs(GrapheQualite.decalage(0, sur: 9) + 0.12) < 1e-9 && abs(GrapheQualite.decalage(8, sur: 9) - 0.12) < 1e-9)
+    }
+
+    /// Les textes des colonnes : le pont (les routeurs qui lui parlent directement), un routeur (son chemin), un
+    /// appareil final (son parent, puis son chemin) ; le resume des voisins, les dependants.
+    @Test func textesDesColonnes() {
+        let m = MaillageDemoZigbee.maillage
+        let s = NomsSceneZigbeeTests.surveillanceDemo()
+        #expect(FicheNoeudZigbee.lignesChemin(I.pont, maillage: m, nom: s.zigbee.nom, maintenant: m.date)
+                == [String(localized: "\(3) routeurs lui parlent directement")])
+        #expect(FicheNoeudZigbee.ligneRouteursDirects(1) == String(localized: "1 routeur lui parle directement"))
+        #expect(FicheNoeudZigbee.ligneRouteursDirects(0) == String(localized: "aucun routeur ne lui parle directement"))
+        let age = FicheNoeud.relatif(m.date, m.date.addingTimeInterval(720), unites: .short)
+        #expect(FicheNoeudZigbee.lignesChemin(I.lampeChambre, maillage: m, nom: s.zigbee.nom, maintenant: m.date.addingTimeInterval(720))
+                == [String(localized: "vers le pont : via \("Lampe bureau") · \(3) sauts"), String(localized: "chemin lu \(age)")])
+        #expect(FicheNoeudZigbee.lignesChemin(I.interrupteurSalon, maillage: m, nom: s.zigbee.nom, maintenant: m.date)
+                == [String(localized: "parent \("Lampe chambre"), \(FicheNoeudZigbee.texteQualite(2))\(" (LQI 112)")"),
+                    String(localized: "vers le pont : via \("Lampe chambre") · \(4) sauts")])
+        #expect(FicheNoeudZigbee.lignesChemin("A0000000000000EE", maillage: m, nom: s.zigbee.nom, maintenant: m.date).isEmpty)
+        let r = ResumeVoisins(FicheZigbee.voisins(de: idz(I.lampeChambre), maillage: m))
+        #expect(FicheNoeudZigbee.ligneResume(r) == [String(localized: "\(3) voisins"), String(localized: "\(2) bons"),
+                                              String(localized: "1 faible")].joined(separator: " · "))
+        let un = ResumeVoisins([VoisinFiche(id: idz("a"), qualite: 2), VoisinFiche(id: idz("b"), qualite: nil)])
+        #expect(FicheNoeudZigbee.ligneResume(un) == [String(localized: "\(2) voisins"), String(localized: "1 moyen"),
+                                               String(localized: "1 inconnu")].joined(separator: " · "))
+        let d = FicheZigbee.dependants(de: idz(I.lampeChambre), maillage: m)
+        #expect(FicheNoeudZigbee.ligneDependants(d) == [String(localized: "\(2) routeurs"), String(localized: "\(2) appareils")]
+            .joined(separator: " · "))
+        #expect(FicheNoeudZigbee.ligneDependants([DependantFiche(id: idz("a"), qualite: 3, routeur: true)])
+                == String(localized: "1 routeur"))
+    }
+
+    /// « pas vu par la sonde » (le noeud n'est pas dans le maillage qu'elle a releve) se distingue de « aucun » (vu, sans
+    /// dependant ni voisin) ; la pastille d'un dependant dit sa qualite a VoiceOver, et celle du coordinateur se reduit
+    /// dans une colonne etroite au lieu de deborder.
+    @Test func vuParLaSondeEtAccessibilite() {
+        let m = MaillageDemoZigbee.maillage
+        #expect(FicheNoeudZigbee.vuParLaSonde(I.lampeChambre, maillage: m) && FicheNoeudZigbee.vuParLaSonde(I.pont, maillage: m))
+        #expect(!FicheNoeudZigbee.vuParLaSonde("A0000000000000EE", maillage: m), "connu du pont ou de Maison seulement")
+        #expect(!FicheNoeudZigbee.vuParLaSonde(I.lampeChambre, maillage: nil))
+        #expect(String(localized: "pas vu par la sonde") != String(localized: "aucun"))
+        #expect(FicheNoeudZigbee.valeurPastille(qualite: 3) == String(localized: "qualité du lien : \(String(localized: "bonne"))"))
+        #expect(FicheNoeudZigbee.valeurPastille(qualite: 0) == String(localized: "qualité du lien : \(String(localized: "faible"))"))
+        #expect(FicheNoeudZigbee.valeurPastille(qualite: nil) == String(localized: "qualité du lien : \(String(localized: "inconnue"))"))
+        #expect(Set([NiveauQualite.bonne, .moyenne, .faible, .inconnue].map(\.nom)).count == 4)
+        let chef = NSHostingController(rootView: PastilleChef(protocole: .zigbee))
+        let naturelle = chef.sizeThatFits(in: CGSize(width: 1000, height: 100)).width
+        let etroite = chef.sizeThatFits(in: CGSize(width: 150, height: 100))
+        #expect(naturelle > 150 && etroite.width <= 150.5, "la pastille se reduit : \(etroite.width) pt pour \(naturelle) pt")
+        let haute = chef.sizeThatFits(in: CGSize(width: 1000, height: 100)).height
+        #expect(etroite.height <= haute, "toujours sur une ligne (le texte reduit est un peu moins haut) : \(etroite.height) pt")
+    }
+
+    /// La fiche : sa liste de voisins depliee est plus haute que repliee (repliee par defaut) ; dans une fenetre etroite,
+    /// les colonnes passent sur deux rangees, la fiche est plus haute.
+    @Test func ficheRepliableEtEtroite() throws {
+        let (s, e) = try NomsSceneZigbeeTests.demo()
+        func hauteur(_ largeur: CGFloat, deplie: Bool) -> CGFloat {
+            let v = FicheNoeud(id: idz(I.lampeBureau), entree: e, instant: s.maintenant, aRenommer: .constant(nil),
+                               listeDepliee: deplie) {}
+                .frame(width: largeur)
+                .environment(s)
+                .environment(PiecesChoisies(fichier: nil))
+            return NSHostingView(rootView: v).fittingSize.height
+        }
+        let repliee = hauteur(1100, deplie: false), depliee = hauteur(1100, deplie: true)
+        #expect(depliee > repliee + 10, "\(depliee) \(repliee)")
+        #expect(hauteur(700, deplie: false) > repliee + 40, "deux rangees de colonnes")
+    }
+
+    // MARK: Courbes
+
+    /// La bande des courbes : l'axe nomme, la case « tous les liens », les reperes (changements de chemin et de
+    /// parent), les graduations espacees ; au survol, chaque courbe montree (ou celle mise en avant) avec son LQI.
+    @Test func bandeDesCourbes() throws {
+        #expect(CourbesFiche.nomQualite(3) == String(localized: "bonne"))
+        #expect(CourbesFiche.nomQualite(2) == String(localized: "moyenne"))
+        #expect(CourbesFiche.nomQualite(1) == String(localized: "faible"))
+        #expect(CourbesFiche.nomQualite(0) == String(localized: "très faible"))
+        #expect(CourbesFiche.texteTous(cachees: 3) == String(localized: "tous les liens (+\(3))"))
+        #expect(CourbesFiche.texteTous(cachees: 0) == String(localized: "tous les liens"))
+        #expect(CourbesFiche.graduations(.jour) == (.hour, 3) && CourbesFiche.graduations(.mois) == (.day, 5))
+        let h = MaillageDemoZigbee.historique
+        let c = CourbesNoeud(zigbee: I.lampeBureau, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
+        #expect(CourbesFiche.reperes(c).count == 11 && CourbesFiche.reperes(c).last?.parent == I.lampadaireSalon)
+        let cles = ChoixCourbes.montrees(cles: c.liens.map(\.id), prioritaires: c.prioritaires, tous: false)
+        let heure = MaillageDemoZigbee.fin.addingTimeInterval(-3600)
+        let tous = GrapheQualite.releves(c.liens, cles: cles, enAvant: nil, heure: heure, periode: .jour)
+        #expect(tous.map(\.cle) == cles && tous.allSatisfy { $0.point.date == heure })
+        let un = GrapheQualite.releves(c.liens, cles: cles, enAvant: I.pont, heure: heure, periode: .jour)
+        #expect(un.map(\.cle) == [I.pont])
+        #expect(GrapheQualite.releves(c.liens, cles: cles, enAvant: nil, heure: nil, periode: .jour).isEmpty)
+        #expect(GrapheQualite.releves(c.liens, cles: cles, enAvant: nil, heure: MaillageDemoZigbee.fin.addingTimeInterval(-16 * 3600 - 300),
+                                      periode: .jour).isEmpty, "dans le trou d'une heure")
+        let p = try #require(un.first?.point)
+        #expect(GrapheQualite.ligneSurvol("Pont Hue", p) == String(localized: "\("Pont Hue") : LQI \(Int(try #require(p.lqi).rounded()))"))
+        #expect(GrapheQualite.ligneSurvol("X", PointCourbe(date: heure, valeur: 2, troncon: 0))
+                == String(localized: "\("X") : \(String(localized: "moyenne"))"), "sans LQI : par une cle du catalogue")
+        // Plus de huit courbes (« tous les liens ») : les couleurs se repetent, le trait change ; le graphe garde la
+        // courbe mise en avant dans son etat, refait par un autre noeud, une autre periode ou la case.
+        #expect(CourbesFiche.tirets(0).isEmpty && CourbesFiche.tirets(7).isEmpty)
+        #expect(!CourbesFiche.tirets(8).isEmpty && CourbesFiche.tirets(8) != CourbesFiche.tirets(16))
+        #expect(CourbesFiche.couleur(8) == CourbesFiche.couleur(0) && CourbesFiche.tirets(8) != CourbesFiche.tirets(0))
+        let base = CourbesFiche.identiteGraphe(id: idz(I.lampeBureau), tous: false, periode: .jour)
+        #expect(base == CourbesFiche.identiteGraphe(id: idz(I.lampeBureau), tous: false, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idz(I.lampeChambre), tous: false, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idz(I.lampeBureau), tous: true, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idz(I.lampeBureau), tous: false, periode: .semaine))
+        // Un appareil final : une seule courbe, vers son parent, et son changement de parent en repere.
+        let abri = CourbesNoeud(zigbee: I.detecteurAbri, releves: h, periode: .jour, fin: MaillageDemoZigbee.fin)
+        #expect(ChoixCourbes.montrees(cles: abri.liens.map(\.id), prioritaires: abri.prioritaires, tous: false)
+                == [CourbesNoeud.cleParent])
+        #expect(CourbesFiche.reperes(abri).map(\.parent) == [I.priseTerrasse])
+        #expect(CourbesFiche.titreQualite(abri) == String(localized: "Qualité du lien vers le parent"))
+    }
+
+    /// L'historique des captures : en demo seulement ; une surveillance directe n'en prend pas.
+    @Test func historiqueDeCapture() {
+        let demo = NomsSceneZigbeeTests.surveillanceDemo()
+        #expect(!FicheNoeud.courbesVisibles(de: idz(I.pont), dans: demo))
+        demo.zigbee.historiqueDeCapture(MaillageDemoZigbee.historique)
+        #expect(FicheNoeud.courbesVisibles(de: idz(I.pont), dans: demo))
+        let direct = Surveillance(mode: .direct, dossier: nil)
+        direct.zigbee.historiqueDeCapture(MaillageDemoZigbee.historique)
+        #expect(!FicheNoeud.courbesVisibles(de: idz(I.pont), dans: direct))
+    }
+}

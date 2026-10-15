@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 /// Onglets de la fenetre Reglages (`ControleurReglages`), dans la barre d'outils ; le dernier
 /// ouvert est garde (demande de Djoko, 30/09 : une seule page etait trop chargee).
 enum OngletReglages: String, CaseIterable {
-    case general, notifications, maison, sonde, diagnostic
+    case general, notifications, maison, thread, zigbee, diagnostic
     static let cle = "reglages.onglet"
 
     /// Libelle de l'onglet, et titre de la fenetre quand il est choisi.
@@ -17,7 +17,8 @@ enum OngletReglages: String, CaseIterable {
         case .general: String(localized: "Général")
         case .notifications: String(localized: "Notifications")
         case .maison: String(localized: "Maison")
-        case .sonde: String(localized: "Sonde")
+        case .thread: String(localized: "Thread")
+        case .zigbee: String(localized: "Zigbee")
         case .diagnostic: String(localized: "Diagnostic")
         }
     }
@@ -28,15 +29,17 @@ enum OngletReglages: String, CaseIterable {
         case .general: "gearshape"
         case .notifications: "bell"
         case .maison: "house"
-        case .sonde: "antenna.radiowaves.left.and.right"
+        case .thread: "point.3.connected.trianglepath.dotted"
+        case .zigbee: "antenna.radiowaves.left.and.right"
         case .diagnostic: "stethoscope"
         }
     }
 }
 
-/// Une page des Reglages, celle d'un onglet : General (ouverture a la connexion, langue, vue par
-/// pieces : les etages en 2D), Notifications (par categorie), Maison (noms releves par le passeur),
-/// Sonde (liaison USB ou reseau Thread, acces reseau), Diagnostic (ecoute, capture, journal). La
+/// Une page des Reglages, celle d'un onglet : General (ouverture a la connexion, mises a jour, langue, vue par
+/// pieces : les etages en 2D), Notifications (par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
+/// `ReglagesMaison`), Thread (liaison USB ou reseau Thread de la sonde, acces reseau, Thread Route), Zigbee (le pont Hue
+/// et la sonde Zigbee : `ReglagesZigbee`), Diagnostic (ecoute de Thread, maillage de Zigbee, captures, journal). La
 /// fenetre et ses onglets sont dans `ControleurReglages`.
 struct FenetreReglages: View {
     let onglet: OngletReglages
@@ -44,8 +47,7 @@ struct FenetreReglages: View {
     var surHauteur: @MainActor (CGFloat) -> Void = { _ in }
     @Environment(Surveillance.self) private var surveillance
     @Environment(OuvertureSession.self) private var ouverture
-    @Environment(NomsInternes.self) private var nomsMaison
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
     @AppStorage(Notifications.cle(.scission)) private var scission = CategorieAlerte.scission.parDefaut
     @AppStorage(Notifications.cle(.routeurDisparu)) private var routeurDisparu = CategorieAlerte.routeurDisparu.parDefaut
@@ -70,12 +72,19 @@ struct FenetreReglages: View {
                     vueParPieces
                 }
             case .notifications: page { notifications }
-            case .maison: page { nomsDeMaison }
-            case .sonde: page { reglagesSonde }
+            case .maison: page { ReglagesMaison() }
+            case .thread:
+                page {
+                    ActivationProtocole(protocole: .thread)
+                    reglagesSonde
+                    threadRoute
+                }
+            case .zigbee: ReglagesZigbee()
             case .diagnostic:
                 page {
-                    diagnostic
-                    threadRoute
+                    diagnosticThread
+                    diagnosticZigbee
+                    diagnosticJournal
                 }
             }
         }
@@ -87,7 +96,7 @@ struct FenetreReglages: View {
         .onAppear {
             if onglet == .general { ouverture.actualiser() }
             // Thread Route installe ou approuve entre-temps : son etat est relu a chaque affichage de l'onglet.
-            if onglet == .diagnostic { suiviThreadRoute.relire() }
+            if onglet == .thread { suiviThreadRoute.relire() }
         }
     }
 
@@ -95,6 +104,11 @@ struct FenetreReglages: View {
     /// connait sa hauteur ideale, mais accepte toute hauteur proposee : sans `fixedSize`, il
     /// n'annoncerait pas sa hauteur a la fenetre. Mesure du 30/09 : 121 pt pour 2 lignes, 367 pour 8.
     private func page<Contenu: View>(@ViewBuilder _ contenu: () -> Contenu) -> some View {
+        Self.page(contenu)
+    }
+
+    /// La page d'un onglet qui compose la sienne (`ReglagesZigbee`).
+    static func page<Contenu: View>(@ViewBuilder _ contenu: () -> Contenu) -> some View {
         Form { contenu() }
             .formStyle(.grouped)
             .fixedSize(horizontal: false, vertical: true)
@@ -173,53 +187,7 @@ struct FenetreReglages: View {
         }
     }
 
-    /// Onglet Maison : le demon Passeur Noms (etat, ouverture de session, profil), puis les noms, pieces et zones qu'il
-    /// a releves.
-    private var nomsDeMaison: some View {
-        Group {
-            Section("Passeur Noms") {
-                LabeledContent("État", value: NomsInternes.texteDemon(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
-                Toggle("Ouvrir Passeur Noms à l'ouverture de session", isOn: Binding(
-                    get: { nomsMaison.etat?.ouvertureSession == .active },
-                    set: { nomsMaison.reglerOuvertureSession($0) }))
-                    .disabled(!NomsInternes.interrupteurActif(connecte: nomsMaison.connecte, etat: nomsMaison.etat))
-                if nomsMaison.connecte, nomsMaison.etat?.ouvertureSession == .aApprouver {
-                    Text("Accepte Passeur Noms dans Réglages Système › Général › Ouverture.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-                if let fin = nomsMaison.etat?.profilExpire,
-                   NomsInternes.profilBientotExpire(nomsMaison.etat, maintenant: .now) {
-                    Text("Le profil de Passeur Noms expire le \(fin.formatted(date: .abbreviated, time: .omitted)) : relance outils/passeur.sh.")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-            }
-            Section("Noms de Maison") {
-                if let n = nomsMaison.noms {
-                    LabeledContent("Noms lus",
-                                   value: String(localized: "\(n.accessoires.count) accessoires · \(n.date.formatted(date: .abbreviated, time: .shortened))"))
-                    // Rien pour un releve d'avant les zones.
-                    if let zones = n.zones {
-                        LabeledContent("Zones", value: Self.texteZones(zones))
-                    }
-                }
-                if let p = nomsMaison.probleme {
-                    Text(p).font(.caption).foregroundStyle(.red)
-                }
-                HStack {
-                    // Grise pendant une relecture : le demon y repond, sinon la garde la libere apres 2 minutes.
-                    Button("Rafraîchir depuis Maison") { nomsMaison.relire() }
-                        .disabled(surveillance.mode == .demo || nomsMaison.releveEnCours)
-                    if nomsMaison.releveEnCours {
-                        ProgressView().controlSize(.small)
-                    }
-                }
-            }
-        }
-    }
-
-    /// Onglet Sonde : liaison, etat, code Matter, acces reseau, tournee.
+    /// Onglet Thread : la sonde (liaison, etat, code Matter, acces reseau, tournee).
     private var reglagesSonde: some View {
         Section {
             if surveillance.mode == .demo {
@@ -228,8 +196,8 @@ struct FenetreReglages: View {
                 // Le reseau se propose une fois l'acces autorise (cle de ce Mac pour la sonde).
                 if sonde.reseauDisponible || sonde.liaison == .reseau {
                     Picker("Liaison", selection: Binding(get: { sonde.liaison }, set: { sonde.choisirLiaison($0) })) {
-                        Text("USB").tag(SondeMaillage.Liaison.usb)
-                        Text("Réseau Thread").tag(SondeMaillage.Liaison.reseau)
+                        Text("USB").tag(SondeMaillageThread.Liaison.usb)
+                        Text("Réseau Thread").tag(SondeMaillageThread.Liaison.reseau)
                     }
                     .pickerStyle(.segmented)
                 }
@@ -243,6 +211,10 @@ struct FenetreReglages: View {
                         ForEach(sonde.ports) { p in
                             Text(verbatim: Self.libellePort(p, serieRetenue: sonde.serie, nom: sonde.nom)).tag(p.chemin)
                         }
+                    }
+                    // Une carte que Zigbee retient n'est pas dans la liste ; un choix qui la vise malgre tout est refuse.
+                    if let refus = sonde.choixRefuse {
+                        Text(refus).font(.caption).foregroundStyle(.red)
                     }
                 }
                 LabeledContent("État", value: Self.texteEtatSonde(sonde.etat, nom: sonde.nomEtat))
@@ -270,36 +242,57 @@ struct FenetreReglages: View {
         }
     }
 
-    /// Onglet Diagnostic : ecoute du reseau local, dernier releve, capture et journal.
-    private var diagnostic: some View {
-        Section {
+    /// Onglet Diagnostic, Thread : ecoute du reseau local, dernier releve, table de routage, capture.
+    private var diagnosticThread: some View {
+        Section("Thread") {
             LabeledContent("Écoute", value: etatEcoute)
             LabeledContent("Dernier relevé",
-                           value: surveillance.dernierReleve?.date.formatted(date: .abbreviated, time: .standard) ?? "—")
-            if let a = surveillance.dernierReleve {
+                           value: surveillance.thread.dernierReleve?.date.formatted(date: .abbreviated, time: .standard) ?? "—")
+            if let a = surveillance.thread.dernierReleve {
                 LabeledContent("Services vus", value: "_meshcop._udp \(a.routeurs.count) · _matter._tcp \(a.matter.count) · _hap._udp \(a.hap.count)")
                 LabeledContent("Préfixes du Mac", value: a.prefixesLocaux.joined(separator: ", "))
             }
             LabeledContent("Table de routage", value: routes)
+            Button("Enregistrer une capture…") {
+                enregistrerCapture(nom: "capture-maillage.json") { try surveillance.thread.captureJSON() }
+            }
+            .disabled(surveillance.thread.dernierReleve == nil)
+        }
+    }
+
+    /// Onglet Diagnostic, Zigbee : dernier maillage, ses noeuds, capture.
+    private var diagnosticZigbee: some View {
+        Section("Zigbee") {
+            LabeledContent("Dernier maillage",
+                           value: surveillance.zigbee.maillageRecu?.formatted(date: .abbreviated, time: .standard) ?? "—")
+            if let m = surveillance.zigbee.maillage {
+                LabeledContent("Nœuds", value: Self.texteNoeuds(m))
+            }
+            Button("Enregistrer une capture…") {
+                enregistrerCapture(nom: "capture-maillage-zigbee.json") { try surveillance.zigbee.captureJSON() }
+            }
+            .disabled(surveillance.zigbee.maillage == nil)
+        }
+    }
+
+    /// Onglet Diagnostic, les deux protocoles : le journal commun.
+    private var diagnosticJournal: some View {
+        Section {
             if let e = surveillance.erreurJournal {
                 LabeledContent("Journal", value: e)
             }
-            HStack {
-                Button("Enregistrer une capture…") { enregistrerCapture() }
-                    .disabled(surveillance.dernierReleve == nil)
-                Button("Afficher le journal dans le Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting(
-                        [Surveillance.dossierParDefaut.appendingPathComponent("Journal")])
-                }
-                .disabled(surveillance.mode == .demo)
+            Button("Afficher le journal dans le Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting(
+                    [Surveillance.dossierParDefaut.appendingPathComponent("Journal")])
             }
+            .disabled(surveillance.mode == .demo)
             if let messageCapture {
                 Text(messageCapture).font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 
-    /// Onglet Diagnostic : Thread Route, le demon qui garde la route du Mac vers le reseau Thread (et vers la sonde
+    /// Onglet Thread : Thread Route, le demon qui garde la route du Mac vers le reseau Thread (et vers la sonde
     /// par « Reseau Thread ») ; son etat, et ce qu'il reste a faire.
     private var threadRoute: some View {
         Section("Thread Route") {
@@ -342,7 +335,7 @@ struct FenetreReglages: View {
 
     /// Note a la place du code Matter : par le reseau, la sonde (1.0.2) ne donne ni QR code ni
     /// code d'appairage, qui ne circulent pas en clair ; nil en USB, ou quand elle les donne.
-    static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillage.Liaison) -> String? {
+    static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillageThread.Liaison) -> String? {
         guard liaison == .reseau, (b.qr ?? "").isEmpty, (b.code ?? "").isEmpty else { return nil }
         return String(localized: "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher.")
     }
@@ -366,7 +359,7 @@ struct FenetreReglages: View {
 
     /// Etat de la sonde, precede du nom de la sonde retenue quand il la concerne
     /// (« SONDE-T1 · connectee ») ; seul pour un autre port choisi ou sans nom connu.
-    static func texteEtatSonde(_ e: SondeMaillage.Etat, nom: String?) -> String {
+    static func texteEtatSonde(_ e: SondeMaillageThread.Etat, nom: String?) -> String {
         let texte = switch e {
         case .sansSonde: String(localized: "aucune sonde choisie")
         case .absente: String(localized: "absente (débranchée ?)")
@@ -380,49 +373,57 @@ struct FenetreReglages: View {
     }
 
     private var etatEcoute: String {
-        switch surveillance.etatEcoute {
+        switch surveillance.thread.etatEcoute {
         case .demarrage: String(localized: "démarrage")
         case .active: String(localized: "active")
         case .reseauLocalRefuse: String(localized: "accès au réseau local refusé")
         case .demo: String(localized: "mode démo")
+        case .eteint: String(localized: "désactivé")
         case .erreur(let m): m
         }
     }
 
     private var routes: String {
-        switch surveillance.routesLisibles {
+        switch surveillance.thread.routesLisibles {
         case true?: String(localized: "lue")
         case false?: String(localized: "illisible : préfixes tirés des adresses")
         case nil: "—"
         }
     }
 
-    private func enregistrerCapture() {
-        let donnees: Data
+    /// Enregistre une capture JSON (`donnees`) dans un fichier choisi, sous le nom `nom` ; le resultat va dans
+    /// `messageCapture`.
+    private func enregistrerCapture(nom: String, _ donnees: () throws -> Data?) {
+        let contenu: Data
         do {
-            guard let d = try surveillance.captureJSON() else { return }
-            donnees = d
+            guard let d = try donnees() else { return }
+            contenu = d
         } catch {
             messageCapture = error.localizedDescription
             return
         }
         let panneau = NSSavePanel()
         panneau.allowedContentTypes = [.json]
-        panneau.nameFieldStringValue = "capture-maillage.json"
+        panneau.nameFieldStringValue = nom
         guard panneau.runModal() == .OK, let url = panneau.url else { return }
         do {
-            try donnees.write(to: url, options: .atomic)
+            try contenu.write(to: url, options: .atomic)
             messageCapture = String(localized: "Capture enregistrée : \(url.lastPathComponent)")
         } catch {
             messageCapture = error.localizedDescription
         }
     }
+
+    /// `objet` (celui d'une notification de fenetre) est la fenetre des Reglages (`ControleurReglages`).
+    static func estFenetreDesReglages(_ objet: Any?) -> Bool {
+        (objet as? NSWindow)?.contentViewController is OngletsReglages
+    }
 }
 
-/// Acces reseau de la sonde retenue (Reglages › Sonde) : son etat, et « Autoriser l'acces
+/// Acces reseau de la sonde retenue (Reglages › Thread) : son etat, et « Autoriser l'acces
 /// reseau », qui cree la cle par l'USB (sonde branchee et connectee par son port).
 struct AccesReseauSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         LabeledContent("Accès réseau", value: FenetreReglages.texteAccesReseau(empreinte: sonde.empreinteAcces))
@@ -446,11 +447,11 @@ struct AccesReseauSonde: View {
     }
 }
 
-/// Derniere session reseau perdue (Reglages › Sonde) : depuis quand, et sa cause, gardees
+/// Derniere session reseau perdue (Reglages › Thread) : depuis quand, et sa cause, gardees
 /// jusqu'a la connexion suivante reussie, quand l'etat est deja passe a la reprise (sonde
 /// promenee dans la maison). Rien en USB.
 struct DernierePerteSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         if sonde.liaison == .reseau, let perte = sonde.dernierePerte {
@@ -462,11 +463,11 @@ struct DernierePerteSonde: View {
     }
 }
 
-/// Releve de la sonde (Reglages › Sonde) : partition et suspension (`etat` de la sonde), tournee
+/// Releve de la sonde (Reglages › Thread) : partition et suspension (`etat` de la sonde), tournee
 /// en cours ou dernier releve, erreur de la derniere tournee. Seulement la sonde connectee :
 /// debranchee, en reprise ou pendant une connexion, ces lignes seraient perimees.
 struct ReleveSonde: View {
-    @Environment(SondeMaillage.self) private var sonde
+    @Environment(SondeMaillageThread.self) private var sonde
 
     var body: some View {
         if case .connectee = sonde.etat {
@@ -483,7 +484,7 @@ struct ReleveSonde: View {
             }
             if let a = sonde.avancement, let debut = sonde.debutTournee {
                 TimelineView(.periodic(from: debut, by: 1)) { contexte in
-                    LabeledContent("Tournée", value: TexteTournee.reglages(a, debut: debut, maintenant: contexte.date))
+                    LabeledContent("Tournée", value: TexteTourneeThread.reglages(a, debut: debut, maintenant: contexte.date))
                 }
             } else if let d = sonde.derniereTournee {
                 LabeledContent("Dernier relevé", value: FenetreReglages.texteDernierReleve(d))
@@ -495,7 +496,7 @@ struct ReleveSonde: View {
     }
 }
 
-/// Code Matter de la sonde (Reglages › Sonde), meme quand elle est dans Maison : le QR code,
+/// Code Matter de la sonde (Reglages › Thread), meme quand elle est dans Maison : le QR code,
 /// agrandi sans lissage, noir sur blanc (marge blanche comprise, lisible en mode sombre), et le
 /// code d'appairage mis en forme.
 struct CodeMatterSonde: View {

@@ -10,7 +10,7 @@ public enum EtatAffiche: String, Hashable, Sendable {
 
 /// Appareil a dessiner : nom deja choisi, partition courante ou derniere connue.
 public struct AppareilAffiche: Hashable, Sendable, Identifiable {
-    public var id: String
+    public var id: IdNoeud
     public var nom: String
     public var piece: String?
     public var partition: String?
@@ -21,7 +21,7 @@ public struct AppareilAffiche: Hashable, Sendable, Identifiable {
     /// Joignable parce que la sonde l'a trouve, alors qu'il n'annonce plus d'adresse : la carte l'entoure d'un anneau.
     public var verifie: Bool
 
-    public init(id: String, nom: String, piece: String? = nil, partition: String? = nil, etat: EtatAffiche,
+    public init(id: IdNoeud, nom: String, piece: String? = nil, partition: String? = nil, etat: EtatAffiche,
                 endormi: Bool = false, batterie: BatterieMaison? = nil, verifie: Bool = false) {
         self.id = id
         self.nom = nom
@@ -57,7 +57,7 @@ public struct GrapheReseau: Hashable, Sendable {
     }
 
     public struct Noeud: Hashable, Sendable, Identifiable {
-        public var id: String
+        public var id: IdNoeud
         public var genre: Genre
         /// Partition ; "" : sans partition connue.
         public var partition: String
@@ -72,7 +72,7 @@ public struct GrapheReseau: Hashable, Sendable {
         /// elle n'est pas connue. La cle de son choix de piece (precision 27).
         public var extMac: String?
 
-        public init(id: String, genre: Genre, partition: String, routeur: Bool, bordure: Bool, inconnu: Bool,
+        public init(id: IdNoeud, genre: Genre, partition: String, routeur: Bool, bordure: Bool, inconnu: Bool,
                     extMac: String? = nil) {
             self.id = id
             self.genre = genre
@@ -96,8 +96,8 @@ public struct GrapheReseau: Hashable, Sendable {
             case chemin
         }
 
-        public var de: String
-        public var vers: String
+        public var de: IdNoeud
+        public var vers: IdNoeud
         public var genre: Genre
         /// De 0 a 3 ; nil : inconnue.
         public var qualite: Int?
@@ -105,7 +105,7 @@ public struct GrapheReseau: Hashable, Sendable {
         /// absent des dernieres tables. Le trace est en pointilles.
         public var suppose: Bool
 
-        public init(de: String, vers: String, genre: Genre = .rattachement, qualite: Int? = nil, suppose: Bool = false) {
+        public init(de: IdNoeud, vers: IdNoeud, genre: Genre = .rattachement, qualite: Int? = nil, suppose: Bool = false) {
             self.de = de
             self.vers = vers
             self.genre = genre
@@ -126,15 +126,15 @@ public struct GrapheReseau: Hashable, Sendable {
         self.liens = liens.filter { ids.contains($0.de) && ids.contains($0.vers) }
     }
 
-    public func noeud(_ id: String) -> Noeud? { noeuds.first { $0.id == id } }
+    public func noeud(_ id: IdNoeud) -> Noeud? { noeuds.first { $0.id == id } }
 
     /// Le chemin d'un routeur vers le pont : son premier lien `chemin` (vers son prochain saut) ; nil sans chemin.
-    public func chemin(de id: String) -> Lien? {
+    public func chemin(de id: IdNoeud) -> Lien? {
         liens.first { $0.genre == .chemin && $0.de == id }
     }
 
     /// Parent d'un noeud vu par la sonde (lien enfant-parent) ; nil sinon.
-    public func parent(de id: String) -> String? {
+    public func parent(de id: IdNoeud) -> IdNoeud? {
         liens.first { $0.genre == .parent && $0.de == id }?.vers
     }
 }

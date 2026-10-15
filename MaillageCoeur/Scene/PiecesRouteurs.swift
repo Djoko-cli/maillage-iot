@@ -4,28 +4,35 @@ import Foundation
 /// ne donne a une app tierce ni les HomePod ni l'Apple TV, leur annonce n'a donc pas d'accessoire de
 /// Maison. Un routeur qui en a un garde sa piece ; pour les autres, dans cet ordre :
 /// - **le choix** (« Placer dans une piece… », dans la fiche du routeur), garde par maison
-///   (`domicile`) sous l'instance de l'annonce, dans `pieces-routeurs.json` ; un choix dont la piece
-///   n'est plus dans Maison ne compte pas ;
+///   (`domicile`) sous l'identifiant du routeur (`thread:<instance de l'annonce>`), dans `pieces-noeuds.json` ; un
+///   choix dont la piece n'est plus dans Maison ne compte pas ;
 /// - **le nom** du routeur, celui qu'affiche l'app (son surnom, sinon son annonce) : la piece de
 ///   Maison dont le nom y figure, en mots entiers, sans egard a la casse ni aux accents ; le nom de
 ///   piece le plus long gagne ; si deux pieces ont cette longueur, aucune.
 ///
 /// Piece d'un autre noeud que Maison ne place pas (precision 27, spec de la vue par pieces, section
 /// 2.3) : un appareil Matter dont l'annonce a expire, que la sonde seule connait, ou une annonce
-/// sans accessoire de Maison ; un routeur Thread qui n'est pas de bordure. La piece de Maison, sinon
-/// le choix, garde par maison sous son ExtMac dans le meme fichier, sinon « Sans piece » ; pas de
-/// regle du nom. Un noeud sans ExtMac connue n'a pas de choix.
+/// sans accessoire de Maison ; un routeur Thread qui n'est pas de bordure ; un noeud Zigbee que le pont ne place
+/// pas. La piece de Maison, sinon le choix, garde par maison sous son adresse longue (ExtMac, IEEE) prefixee du
+/// protocole dans le meme fichier, sinon « Sans piece » ; pas de regle du nom. Un noeud sans adresse longue connue n'a
+/// pas de choix.
+///
+/// Les choix sont gardes par `IdNoeud` : deux noeuds de deux protocoles qui ont la meme adresse ne se confondent pas.
+/// Les fonctions de calcul d'un routeur de bordure (`piece(routeur:...)`, `pieceDeMaison(routeur:...)`,
+/// `piece(candidats:...)`) prennent l'instance brute de l'annonce : un routeur de bordure est un noeud Thread, et son
+/// choix est garde sous `thread:<instance>`.
 public struct PiecesRouteurs: Hashable, Sendable, Codable {
-    /// Version 1 : les routeurs (`maisons`), puis, depuis la precision 27, les autres noeuds
-    /// (`appareils`), un champ facultatif. Un fichier d'avant se lit sans perte ; une app d'avant lit
-    /// encore les routeurs d'un fichier d'apres, et ignore les autres noeuds.
-    public static let versionActuelle = 1
+    /// Version 2 : les cles de noeud portent leur protocole (`thread:<instance>`, `thread:<ExtMac>`, `zigbee:<IEEE>`).
+    /// Le fichier de la version 1 (`pieces-routeurs.json`, cles brutes d'un seul protocole) se relit a la place du
+    /// nouveau tant que celui-ci n'existe pas (`lire(_:ancien:protocoleParDefaut:)`), et n'est jamais reecrit.
+    public static let versionActuelle = 2
 
     public var version = PiecesRouteurs.versionActuelle
-    /// Par domicile ("" : maison sans nom) : instance de l'annonce -> piece choisie.
-    public var maisons: [String: [String: String]] = [:]
-    /// Par domicile : ExtMac d'un autre noeud (16 hexa majuscules) -> piece choisie (precision 27).
-    public var appareils: [String: [String: String]] = [:]
+    /// Par domicile ("" : maison sans nom) : routeur de bordure (`thread:<instance de l'annonce>`) -> piece choisie.
+    public var maisons: [String: [IdNoeud: String]] = [:]
+    /// Par domicile : autre noeud (son protocole et son adresse longue en 16 hexa majuscules) -> piece choisie
+    /// (precision 27).
+    public var appareils: [String: [IdNoeud: String]] = [:]
 
     public init() {}
 
@@ -33,19 +40,78 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
         case version, maisons, appareils
     }
 
-    /// `appareils` manque aux fichiers d'avant la precision 27 : aucun choix d'appareil. Mal forme, il
-    /// est ignore de meme : un champ facultatif ne doit pas faire perdre les choix des routeurs. `maisons`
-    /// manque aux fichiers de Maillage Zigbee, qui n'ont pas de routeur de bordure : aucun choix de routeur.
+    /// `appareils` et `maisons` peuvent manquer : aucun choix. `appareils` mal forme est ignore : un champ facultatif ne
+    /// doit pas faire perdre les choix des routeurs. Une cle de noeud d'un protocole inconnu (une app plus recente a ecrit
+    /// le fichier) leve `FichiersGardes.FormatPlusRecent` : le fichier n'est ni lu ni reecrit.
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = try c.decode(Int.self, forKey: .version)
-        maisons = try c.decodeIfPresent([String: [String: String]].self, forKey: .maisons) ?? [:]
-        appareils = (try? c.decodeIfPresent([String: [String: String]].self, forKey: .appareils)) ?? [:]
+        guard version >= Self.versionActuelle else {
+            throw DecodingError.dataCorruptedError(forKey: .version, in: c, debugDescription: "version anterieure : ancien fichier")
+        }
+        maisons = try Self.cles(try c.decodeIfPresent([String: [String: String]].self, forKey: .maisons) ?? [:])
+        appareils = try Self.cles((try? c.decodeIfPresent([String: [String: String]].self, forKey: .appareils)) ?? [:])
     }
 
-    /// Vide si le fichier manque, est illisible, ou d'une version plus recente (`FichiersGardes`).
+    public func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(version, forKey: .version)
+        try c.encode(Self.textes(maisons), forKey: .maisons)
+        try c.encode(Self.textes(appareils), forKey: .appareils)
+    }
+
+    private static func cles(_ brut: [String: [String: String]]) throws -> [String: [IdNoeud: String]] {
+        try brut.mapValues { choix in
+            Dictionary(uniqueKeysWithValues: try choix.map { (try FichiersGardes.idNoeud($0.key), $0.value) })
+        }
+    }
+
+    private static func textes(_ choix: [String: [IdNoeud: String]]) -> [String: [String: String]] {
+        choix.mapValues { Dictionary(uniqueKeysWithValues: $0.map { ($0.key.texte, $0.value) }) }
+    }
+
+    /// Le fichier de la version 1 (`pieces-routeurs.json`) : `maisons` sous l'instance de l'annonce, `appareils` sous
+    /// l'ExtMac ou l'IEEE, cles brutes d'un seul protocole. `maisons` manque aux fichiers de Maillage Zigbee (pas de
+    /// routeur de bordure) ; `appareils` aux fichiers d'avant la precision 27, ou mal forme : ignore.
+    private struct Version1: Decodable {
+        var version: Int
+        var maisons: [String: [String: String]]
+        var appareils: [String: [String: String]]
+
+        enum CodingKeys: String, CodingKey { case version, maisons, appareils }
+
+        init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            version = try c.decode(Int.self, forKey: .version)
+            maisons = try c.decodeIfPresent([String: [String: String]].self, forKey: .maisons) ?? [:]
+            appareils = (try? c.decodeIfPresent([String: [String: String]].self, forKey: .appareils)) ?? [:]
+        }
+    }
+
+    /// Vide si le fichier manque, est illisible, d'une version plus recente, ou d'un protocole inconnu (`FichiersGardes`).
     public static func lire(_ url: URL) -> PiecesRouteurs {
         FichiersGardes.lire(PiecesRouteurs.self, url, version: versionActuelle) ?? PiecesRouteurs()
+    }
+
+    /// Comme `lire(_:)` ; si `url` (`pieces-noeuds.json`) n'existe pas, relit `ancien` (`pieces-routeurs.json`, version 1) :
+    /// ses cles brutes prennent le protocole de l'app (`protocoleParDefaut`), les ExtMac en majuscules. L'ancien fichier
+    /// n'est jamais ecrit ; un `url` qui existe (meme illisible ou plus recent) n'est jamais remplace par l'ancien.
+    public static func lire(_ url: URL, ancien: URL, protocoleParDefaut: Protocole) -> PiecesRouteurs {
+        guard FichiersGardes.examiner(PiecesRouteurs.self, url, version: versionActuelle).etat == .absent else {
+            return lire(url)
+        }
+        guard let v1 = FichiersGardes.lire(Version1.self, ancien, version: 1) else { return PiecesRouteurs() }
+        var p = PiecesRouteurs()
+        p.maisons = v1.maisons.mapValues { choix in
+            Dictionary(uniqueKeysWithValues: choix.map { (IdNoeud(protocoleParDefaut, $0.key), $0.value) })
+        }
+        // Deux cles qui ne different que par la casse se rejoignent en majuscules : on garde la premiere par ordre des
+        // octets de la cle d'origine (jamais celle d'un ordre de hachage), sans planter.
+        p.appareils = v1.appareils.mapValues { choix in
+            Dictionary(choix.sorted { $0.key < $1.key }.map { (IdNoeud(protocoleParDefaut, $0.key.uppercased()), $0.value) },
+                       uniquingKeysWith: { premier, _ in premier })
+        }
+        return p
     }
 
     /// Rien n'est ecrit sur un fichier d'une version plus recente ; un fichier illisible est d'abord mis
@@ -81,41 +147,46 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
         return premiere
     }
 
-    /// Piece choisie pour un routeur (son instance) ; nil : la regle du nom.
-    public func choix(routeur: String, domicile: String) -> String? {
+    /// Piece choisie pour un routeur de bordure (`thread:<instance>`) ; nil : la regle du nom.
+    public func choix(routeur: IdNoeud, domicile: String) -> String? {
         maisons[domicile]?[routeur]
     }
 
-    /// Garde le choix d'une piece pour un routeur ; nil revient a la regle du nom.
-    public mutating func choisir(_ piece: String?, routeur: String, domicile: String) {
+    /// Garde le choix d'une piece pour un routeur de bordure ; nil revient a la regle du nom.
+    public mutating func choisir(_ piece: String?, routeur: IdNoeud, domicile: String) {
         maisons[domicile, default: [:]][routeur] = piece
         if maisons[domicile]?.isEmpty == true { maisons[domicile] = nil }
     }
 
-    /// Piece choisie pour un autre noeud (son ExtMac) ; nil : aucune, il est « Sans piece ».
-    public func choix(appareil extMac: String, domicile: String) -> String? {
-        appareils[domicile]?[extMac.uppercased()]
+    /// La cle d'un autre noeud : son protocole et son adresse longue en majuscules.
+    private static func majuscules(_ id: IdNoeud) -> IdNoeud { IdNoeud(id.protocole, id.cle.uppercased()) }
+
+    /// Piece choisie pour un autre noeud (son protocole et son adresse longue, `cle(_:)`) ; nil : aucune, il est
+    /// « Sans piece ».
+    public func choix(appareil: IdNoeud, domicile: String) -> String? {
+        appareils[domicile]?[Self.majuscules(appareil)]
     }
 
-    /// Garde le choix d'une piece pour un autre noeud (son ExtMac) ; nil, « Sans piece », l'efface.
-    public mutating func choisir(_ piece: String?, appareil extMac: String, domicile: String) {
-        appareils[domicile, default: [:]][extMac.uppercased()] = piece
+    /// Garde le choix d'une piece pour un autre noeud (son protocole et son adresse longue) ; nil, « Sans piece »,
+    /// l'efface.
+    public mutating func choisir(_ piece: String?, appareil: IdNoeud, domicile: String) {
+        appareils[domicile, default: [:]][Self.majuscules(appareil)] = piece
         if appareils[domicile]?.isEmpty == true { appareils[domicile] = nil }
     }
 
-    /// Cle du choix d'un noeud qui n'est pas un routeur de bordure (precision 27) : son ExtMac. Nil pour
-    /// un routeur de bordure, qui suit les precisions 23 a 25, et pour un noeud sans ExtMac connue :
-    /// ni choix ni menu.
-    public static func cle(_ n: GrapheReseau.Noeud) -> String? {
-        n.bordure ? nil : n.extMac?.uppercased()
+    /// Cle du choix d'un noeud qui n'est pas un routeur de bordure (precision 27) : son protocole et son adresse longue
+    /// (ExtMac, IEEE). Nil pour un routeur de bordure, qui suit les precisions 23 a 25, et pour un noeud sans adresse
+    /// longue connue : ni choix ni menu.
+    public static func cle(_ n: GrapheReseau.Noeud) -> IdNoeud? {
+        n.bordure ? nil : n.extMac.map { IdNoeud(n.id.protocole, $0.uppercased()) }
     }
 
     /// Piece de chaque noeud du graphe : celle de Maison (`deMaison`, par id de noeud) ; sinon, pour un
     /// noeud qui a une cle (`cle(_:)`), la piece choisie sous cette cle, si elle est encore une piece de
     /// la maison (`pieces`). Un noeud qui n'y est pas va dans « Sans piece ». La piece d'un routeur de
     /// bordure se calcule a part (`piece(routeur:nom:parmi:domicile:)`).
-    public func piecesNoeuds(_ graphe: GrapheReseau, deMaison: [String: String], parmi pieces: [String],
-                             domicile: String) -> [String: String] {
+    public func piecesNoeuds(_ graphe: GrapheReseau, deMaison: [IdNoeud: String], parmi pieces: [String],
+                             domicile: String) -> [IdNoeud: String] {
         var resultat = deMaison.filter { !$0.value.isEmpty }
         for n in graphe.noeuds where resultat[n.id] == nil {
             if let x = Self.cle(n), let c = choix(appareil: x, domicile: domicile), pieces.contains(c) {
@@ -128,7 +199,7 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
     /// Piece d'un routeur que Maison ne place pas : son choix, s'il est encore une piece de la maison,
     /// sinon d'apres son nom ; nil : « Sans piece ».
     public func piece(routeur: String, nom: String, parmi pieces: [String], domicile: String) -> String? {
-        if let c = choix(routeur: routeur, domicile: domicile), pieces.contains(c) { return c }
+        if let c = choix(routeur: IdNoeud(.thread, routeur), domicile: domicile), pieces.contains(c) { return c }
         return Self.piece(nom: nom, parmi: pieces)
     }
 

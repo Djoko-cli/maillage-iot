@@ -12,8 +12,13 @@ extension LegendePieces {
         case noeud(DessinNoeud.Apparence, rayon: CGFloat)
         /// Un lien radio entre routeurs, de la couleur de sa qualite.
         case lienRadio(qualite: Int?)
-        /// Un lien vers un parent, d'un pixel ; un rattachement suppose, en pointilles.
+        /// Un lien vers un parent, d'un pixel ; un rattachement suppose (Thread) ou un parent d'avant (Zigbee), en
+        /// pointilles.
         case lienEnfant(rattachement: Bool)
+        /// Un chemin vers le pont (Zigbee, en pointilles s'il est suppose), de la couleur d'une bonne qualite.
+        case chemin(suppose: Bool)
+        /// Un voisin entendu (Zigbee), en trait fin estompe, de la couleur d'une bonne qualite.
+        case voisin
         /// Un nom de noeud, d'un routeur (12 pt) ou d'un appareil (11 pt).
         case nom(String, routeur: Bool)
         /// Le glyphe d'un nom de noeud, dans son texte, sans la pastille sombre du nom (reverification du 02/10).
@@ -47,16 +52,18 @@ extension LegendePieces {
     /// la scene.
     static func signe(_ e: Entree) -> Signe {
         switch e {
-        case .routeur: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: true), rayon: rayonRouteur)
+        case .routeur, .routeurZigbee: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: true), rayon: rayonRouteur)
         case .routeurSimple: .noeud(DessinNoeud.apparenceAppareil(.joignable, routeur: true), rayon: rayonAppareil)
-        case .nonIdentifie: .noeud(DessinNoeud.apparenceRouteur(inconnu: true, principale: true), rayon: rayonRouteur)
+        case .nonIdentifie, .nonIdentifieZigbee:
+            .noeud(DessinNoeud.apparenceRouteur(inconnu: true, principale: true), rayon: rayonRouteur)
         case .autrePartition: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: false), rayon: rayonRouteur)
-        case .chef: .glyphe(LibellesNoeuds.couronne, routeur: true)
+        case .chef, .coordinateur: .glyphe(LibellesNoeuds.couronne, routeur: true)
         case .joignable: .noeud(DessinNoeud.apparenceAppareil(.joignable), rayon: rayonAppareil)
         case .verifiee: .noeud(DessinNoeud.apparenceAppareil(.joignable, verifie: true), rayon: rayonAppareil)
         case .sonde: .noeud(DessinNoeud.apparenceSonde, rayon: rayonAppareil)
         case .partitionCoupee: .noeud(DessinNoeud.apparenceAppareil(.partitionCoupee), rayon: rayonAppareil)
         case .sansAdresse: .noeud(DessinNoeud.apparenceAppareil(.sansAdresse), rayon: rayonAppareil)
+        case .injoignable: .noeud(DessinNoeud.apparenceAppareil(.injoignable), rayon: rayonAppareil)
         case .disparu: .noeud(DessinNoeud.apparenceAppareil(.disparu), rayon: rayonAppareil)
         case .endormi: .glyphe(LibellesNoeuds.lune, routeur: false)
         case .pile: .pastille(exemplePile)
@@ -64,8 +71,11 @@ extension LegendePieces {
         case .moyenne: .lienRadio(qualite: 2)
         case .faible: .lienRadio(qualite: 1)
         case .inconnue: .lienRadio(qualite: nil)
+        case .chemin: .chemin(suppose: false)
+        case .cheminSuppose: .chemin(suppose: true)
+        case .voisinEntendu: .voisin
         case .versParent: .lienEnfant(rattachement: false)
-        case .rattachement: .lienEnfant(rattachement: true)
+        case .rattachement, .parentDAvant: .lienEnfant(rattachement: true)
         case .ailleurs: .ailleurs(exempleAilleurs)
         case .candidats: .nom(exempleCandidats, routeur: true)
         }
@@ -118,7 +128,7 @@ struct SigneLegende: View {
             apparence.sonde ? CGSize(width: 2 * (rayon + DessinNoeud.ecartOndes), height: 2 * rayon)
             : apparence.cercle ? CGSize(width: largeurGlyphe(routeur: true), height: largeurGlyphe(routeur: true))
             : CGSize(width: 2 * rayon, height: 2 * rayon)
-        case .lienRadio, .lienEnfant: CGSize(width: longueurLien, height: 2)
+        case .lienRadio, .lienEnfant, .chemin, .voisin: CGSize(width: longueurLien, height: 2)
         case .nom(let texte, let routeur): mesure.noeud(LibellesNoeuds.Libelle(texte: texte), routeur: routeur)
         case .glyphe(let texte, let routeur):
             CGSize(width: largeurGlyphe(routeur: routeur), height: mesure.glyphe(texte, routeur: routeur).height)
@@ -146,6 +156,12 @@ struct SigneLegende: View {
             RenduCanvas.dessinerLienEnfant(&ctx, de: a, a: b, rattachement: rattachement,
                                            opacite: LegendePieces.opaciteLienEnfant, eclaire: false, pixel: 1 / echelle,
                                            palette: palette)
+        case .chemin(let suppose):
+            RenduCanvas.dessinerChemin(&ctx, de: a, a: b, qualite: 3, suppose: suppose,
+                                       opacite: LegendePieces.opaciteLienRadio, palette: palette)
+        case .voisin:
+            RenduCanvas.dessinerVoisin(&ctx, de: a, a: b, qualite: 3, opacite: SceneProjetee.opaciteVoisin,
+                                       palette: palette)
         case .nom(let texte, let routeur):
             let nom = ctx.resolve(RenduCanvas.texteNom(texte, routeur: routeur, fort: false, palette: palette))
             RenduCanvas.dessinerNom(&ctx, nom, dans: r, palette: palette)

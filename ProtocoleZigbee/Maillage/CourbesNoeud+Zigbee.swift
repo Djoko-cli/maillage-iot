@@ -9,7 +9,7 @@ public extension CourbesNoeud {
     /// final, vers son parent), puis ceux des dependants de la periode (routeurs dont il etait le prochain saut,
     /// appareils dont il etait le parent), du plus faible au meilleur en moyenne, puis par cle. Seules y sont les cles
     /// qui ont une courbe.
-    init(cle: String, releves: [ReleveMaillageZigbee], periode: PeriodeCourbes, fin: Date) {
+    init(zigbee cle: String, releves: [ReleveMaillageZigbee], periode: PeriodeCourbes, fin: Date) {
         let debut = fin.addingTimeInterval(-periode.duree)
         // Une mesure brute : sa date, sa valeur, et pour la qualite d'un lien, son LQI.
         var liens: [String: [(Date, Double, Double?)]] = [:]

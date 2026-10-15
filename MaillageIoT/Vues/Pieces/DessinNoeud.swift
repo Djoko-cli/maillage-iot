@@ -4,8 +4,8 @@ import SwiftUI
 /// Dessin d'un noeud, le meme que celui du graphe d'avant (spec de la vue par pieces, section 5) :
 /// routeur en sphere brillante (degrade du blanc vers sa couleur, decale en haut a gauche) avec un
 /// halo, appareil en pastille pleine de la couleur de son etat avec un halo, appareil disparu en
-/// anneau ; cercle bleu autour d'un routeur qui n'est pas de bordure ; ondes de part et d'autre de la sonde ; anneau blanc de la selection ; pastille
-/// orange d'une batterie faible.
+/// anneau ; cercle bleu autour d'un routeur Thread qui n'est pas de bordure ; ondes de part et d'autre de la sonde ;
+/// anneau blanc de la selection ; pastille orange d'une batterie faible.
 enum DessinNoeud {
     /// Couleur d'un noeud, resolue par la palette au dessin.
     enum Couleur: Hashable {
@@ -35,17 +35,22 @@ enum DessinNoeud {
         var verifie = false
     }
 
-    /// Apparence d'un noeud : sphere pour un routeur de bordure ou un routeur que seule la sonde
-    /// connait, pastille pour un appareil, anneau pour un appareil disparu, avec un cercle s'il route. `etat` :
-    /// celui de l'appareil ; `principale` : la partition du noeud est la principale. La legende reprend les
-    /// memes (`apparenceRouteur`, `apparenceAppareil`).
+    /// Apparence d'un noeud : sphere pour un routeur de bordure (Thread), un routeur ou le coordinateur (Zigbee) ou un
+    /// routeur que seule la sonde connait, pastille pour un appareil, anneau pour un appareil disparu, avec un cercle
+    /// s'il route (Thread). `etat` : celui de l'appareil ; `principale` : la partition du noeud est la principale
+    /// (Zigbee n'a qu'une partition : ses routeurs sont toujours de la couleur de la principale, et n'ont ni cercle ni
+    /// anneau). Sans valeur par defaut : un oubli ferait d'un routeur Thread d'une autre partition un routeur de la principale. La legende reprend les memes (`apparenceRouteur`, `apparenceAppareil`).
     /// `sonde` : le noeud est la sonde elle-meme (ses ondes) ; `verifie` : l'appareil est joignable parce que la
     /// sonde l'a trouve (son anneau).
     static func apparence(_ n: ScenePieces.Noeud, etat: EtatAffiche?, principale: Bool, sonde: Bool = false,
                           verifie: Bool = false) -> Apparence {
+        let zigbee = n.id.protocole == .zigbee
         var a = switch n.genre {
-        case .centre, .routeur: apparenceRouteur(centre: n.genre == .centre, inconnu: n.inconnu, principale: principale)
-        case .appareil: apparenceAppareil(etat, routeur: n.routeur, verifie: verifie)
+        case .centre, .routeur:
+            apparenceRouteur(centre: n.genre == .centre, inconnu: n.inconnu, principale: zigbee || principale)
+        case .appareil:
+            zigbee ? apparenceAppareil(n.inconnu ? .inconnu : etat)
+                : apparenceAppareil(etat, routeur: n.routeur, verifie: verifie)
         }
         a.sonde = sonde
         return a
@@ -60,7 +65,7 @@ enum DessinNoeud {
 
     /// Un routeur : sphere brillante, au halo de 10 pour le centre de sa partition, de 5 sinon ; grise s'il n'est
     /// connu que de la sonde, sinon de la couleur de sa partition, principale ou non.
-    static func apparenceRouteur(centre: Bool = false, inconnu: Bool, principale: Bool) -> Apparence {
+    static func apparenceRouteur(centre: Bool = false, inconnu: Bool, principale: Bool = true) -> Apparence {
         Apparence(forme: .sphere(halo: centre ? 10 : 5), couleur: inconnu ? .routeurInconnu : .routeur(principale: principale))
     }
 

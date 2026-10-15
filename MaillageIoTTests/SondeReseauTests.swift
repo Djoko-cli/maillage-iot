@@ -45,9 +45,9 @@ final class CanalLent: CanalSonde {
 
 /// Trousseau en memoire qui peut refuser d'effacer ou de ranger (trousseau verrouille, acces
 /// refuse).
-final class TrousseauRetif: TrousseauCles {
-    static let refus = ErreurTrousseau.systeme(-25308)  // errSecInteractionNotAllowed
-    let memoire = TrousseauMemoire()
+final class TrousseauRetif: TrousseauClesThread {
+    static let refus = ErreurTrousseauThread.systeme(-25308)  // errSecInteractionNotAllowed
+    let memoire = TrousseauMemoireThread()
     let refuserOubli = Mutex(true)
     let refuserRangement = Mutex(false)
 
@@ -68,8 +68,8 @@ final class TrousseauRetif: TrousseauCles {
 /// Trousseau en memoire qui note chaque lecture de cle et chaque ecriture, dans l'ordre, et si
 /// elle s'est faite sur le fil principal : macOS peut d'abord y afficher une autorisation
 /// modale (signature ad hoc), qui figerait le menu.
-final class TrousseauTemoin: TrousseauCles {
-    let memoire = TrousseauMemoire()
+final class TrousseauTemoin: TrousseauClesThread {
+    let memoire = TrousseauMemoireThread()
     /// « lire NOM », « ranger NOM » ou « oublier NOM », et le fil de l'operation.
     let operations = Mutex<[(nom: String, filPrincipal: Bool)]>([])
 
@@ -98,8 +98,8 @@ final class TrousseauTemoin: TrousseauCles {
 
 /// Trousseau en memoire dont chaque effacement attend que le test le libere, comme derriere une
 /// autorisation modale du trousseau.
-final class TrousseauLent: TrousseauCles {
-    let memoire = TrousseauMemoire()
+final class TrousseauLent: TrousseauClesThread {
+    let memoire = TrousseauMemoireThread()
     /// Un effacement a commence.
     let effacementCommence = Mutex(false)
     private let feu = DispatchSemaphore(value: 0)
@@ -118,7 +118,7 @@ final class TrousseauLent: TrousseauCles {
     func liberer() { feu.signal() }
 }
 
-/// Ouvertures de la liaison reseau demandees par `SondeMaillage` : nom d'hote et cle, et le
+/// Ouvertures de la liaison reseau demandees par `SondeMaillageThread` : nom d'hote et cle, et le
 /// canal rendu (ou l'erreur) a chaque essai. Aucun trafic reseau.
 @MainActor
 final class ReseauFactice {
@@ -170,9 +170,9 @@ struct SondeReseauTests {
     }
 
     static func sondeMaillage(_ p: UserDefaults, usb: @escaping (String) -> any CanalSonde = { _ in sonde() },
-                              trousseau: any TrousseauCles, reseau: ReseauFactice? = nil,
-                              delais: [Duration] = [.milliseconds(20)]) -> SondeMaillage {
-        SondeMaillage(preferences: p, actif: true, ouvrirCanal: usb, trousseau: trousseau,
+                              trousseau: any TrousseauClesThread, reseau: ReseauFactice? = nil,
+                              delais: [Duration] = [.milliseconds(20)]) -> SondeMaillageThread {
+        SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: usb, trousseau: trousseau,
                       ouvrirReseau: { h, c in
                           guard let reseau else { throw ErreurReseau.autre("pas de reseau dans ce test") }
                           return try reseau.ouvrir(h, c)
@@ -181,12 +181,12 @@ struct SondeReseauTests {
     }
 
     /// Sonde retenue avec sa cle, prete pour le reseau (comme apres « Autoriser l'acces reseau »).
-    static func prete(_ p: UserDefaults, liaison: SondeMaillage.Liaison) throws -> TrousseauMemoire {
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
-        p.set("SONDE-01", forKey: SondeMaillage.cleNom)
-        p.set(hote, forKey: SondeMaillage.cleHote)
-        p.set(liaison.rawValue, forKey: SondeMaillage.cleLiaison)
-        let t = TrousseauMemoire()
+    static func prete(_ p: UserDefaults, liaison: SondeMaillageThread.Liaison) throws -> TrousseauMemoireThread {
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
+        p.set("SONDE-01", forKey: SondeMaillageThread.cleNom)
+        p.set(hote, forKey: SondeMaillageThread.cleHote)
+        p.set(liaison.rawValue, forKey: SondeMaillageThread.cleLiaison)
+        let t = TrousseauMemoireThread()
         try t.ranger(nom: hote, cle: VecteursH1.psk, empreinte: "630DCD29")
         return t
     }
@@ -196,11 +196,11 @@ struct SondeReseauTests {
     @Test func autoriser() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let t = TrousseauMemoire()
+        let t = TrousseauMemoireThread()
         let s = Self.sondeMaillage(p, trousseau: t)
         await s.connecter(Self.port, choisi: true)
         #expect(s.hote == Self.hote)
-        #expect(p.string(forKey: SondeMaillage.cleHote) == Self.hote)
+        #expect(p.string(forKey: SondeMaillageThread.cleHote) == Self.hote)
         #expect(s.empreinteAcces == nil && !s.reseauDisponible)
         #expect(s.peutAutoriser)
         await s.autoriserAccesReseau()
@@ -218,7 +218,7 @@ struct SondeReseauTests {
     @Test func autoriserSansNomDHote() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let t = TrousseauMemoire()
+        let t = TrousseauMemoireThread()
         let canal = Self.sonde(bonjour: Self.bonjour(hote: nil))
         let s = Self.sondeMaillage(p, usb: { _ in canal }, trousseau: t)
         await s.connecter(Self.port, choisi: true)
@@ -233,7 +233,7 @@ struct SondeReseauTests {
     @Test func autoriserEnEchec() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let t = TrousseauMemoire()
+        let t = TrousseauMemoireThread()
         var canaux = 0
         let s = Self.sondeMaillage(p, usb: { _ in
             canaux += 1
@@ -257,10 +257,10 @@ struct SondeReseauTests {
     @Test func autoriserRetireLAncienneEntree() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let t = TrousseauMemoire()
+        let t = TrousseauMemoireThread()
         try t.ranger(nom: "FEDCBA9876543210", cle: Data(repeating: 1, count: 32), empreinte: "11111111")
-        p.set("A0:00:00:00:00:01", forKey: SondeMaillage.cleSerie)
-        p.set("FEDCBA9876543210", forKey: SondeMaillage.cleHote)
+        p.set("A0:00:00:00:00:01", forKey: SondeMaillageThread.cleSerie)
+        p.set("FEDCBA9876543210", forKey: SondeMaillageThread.cleHote)
         let s = Self.sondeMaillage(p, trousseau: t)
         await s.connecter(Self.port, choisi: true)
         #expect(s.hote == Self.hote, "nom d'hote du bonjour")
@@ -297,7 +297,7 @@ struct SondeReseauTests {
         await s.oublier()
         #expect(s.etat == .sansSonde && s.serie == nil && s.liaison == .usb)
         #expect(s.hote == Self.hote && s.empreinteAcces == "630DCD29", "nom d'hote garde : la cle est toujours la")
-        #expect(p.string(forKey: SondeMaillage.cleHote) == Self.hote)
+        #expect(p.string(forKey: SondeMaillageThread.cleHote) == Self.hote)
         #expect(s.erreurAcces == String(localized: "Clé de \(Self.hote).local non retirée du trousseau : \(TrousseauRetif.refus.localizedDescription)"))
         t.refuserOubli.withLock { $0 = false }
         await s.oublier()
@@ -364,7 +364,7 @@ struct SondeReseauTests {
         t.liberer()
         await oubli.value
         #expect(t.lister().isEmpty, "cle de l'ancien nom d'hote effacee")
-        #expect(s.hote == nouveau && p.string(forKey: SondeMaillage.cleHote) == nouveau)
+        #expect(s.hote == nouveau && p.string(forKey: SondeMaillageThread.cleHote) == nouveau)
         #expect(s.erreurAcces == nil)
         t.liberer()
         await s.oublier()
@@ -375,7 +375,7 @@ struct SondeReseauTests {
         for h in [nil, ""] as [String?] {
             let (p, domaine) = try SondeMaillageTests.preferences()
             defer { p.removePersistentDomain(forName: domaine) }
-            let t = TrousseauMemoire()
+            let t = TrousseauMemoireThread()
             let s = Self.sondeMaillage(p, usb: { _ in Self.sonde(cle: { [CleReseauTests.reponse($0, hote: h)] }) }, trousseau: t)
             await s.connecter(Self.port, choisi: true)
             await s.autoriserAccesReseau()
@@ -400,7 +400,7 @@ struct SondeReseauTests {
             if l.hasPrefix("cle nouvelle ") { return [CleReseauTests.reponse(Int(l.split(separator: " ").last?.dropLast() ?? "") ?? 0)] }
             return CanalRejoue.reseauMinimal(l)
         }
-        let s = Self.sondeMaillage(p, usb: { _ in canal }, trousseau: TrousseauMemoire())
+        let s = Self.sondeMaillage(p, usb: { _ in canal }, trousseau: TrousseauMemoireThread())
         await s.connecter(Self.port, choisi: true)
         await journal.attendre(SondeMaillageTests.listeRetenue)
         #expect(s.tourneeEnCours)
@@ -435,7 +435,7 @@ struct SondeReseauTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let reseau = ReseauFactice([.success(Self.sonde())])
-        let s = Self.sondeMaillage(p, trousseau: TrousseauMemoire(), reseau: reseau)
+        let s = Self.sondeMaillage(p, trousseau: TrousseauMemoireThread(), reseau: reseau)
         await s.connecter(Self.port, choisi: true)
         s.choisirLiaison(.reseau)
         #expect(s.liaison == .usb)
@@ -445,7 +445,7 @@ struct SondeReseauTests {
         await s.oublier()
     }
 
-    static func connecteeParUSB(_ s: SondeMaillage) -> Bool {
+    static func connecteeParUSB(_ s: SondeMaillageThread) -> Bool {
         s.liaison == .usb && SondeMaillageTests.connectee(s)
     }
 
@@ -479,7 +479,7 @@ struct SondeReseauTests {
         #expect(s.reseauDisponible)
         s.choisirLiaison(.reseau)
         #expect(s.liaison == .reseau)
-        #expect(p.string(forKey: SondeMaillage.cleLiaison) == SondeMaillage.Liaison.reseau.rawValue)
+        #expect(p.string(forKey: SondeMaillageThread.cleLiaison) == SondeMaillageThread.Liaison.reseau.rawValue)
         await SondeMaillageTests.attendre { SondeMaillageTests.connectee(s) }
         #expect(journal.cycle == ["ouvrir 1", "fermer 1", "fin 1"], "port USB ferme")
         let hotes = reseau.appels.map { $0.hote }
@@ -533,9 +533,9 @@ struct SondeReseauTests {
         defer { p.removePersistentDomain(forName: domaine) }
         _ = try Self.prete(p, liaison: .reseau)
         let reseau = ReseauFactice([.success(Self.sonde())])
-        let s = Self.sondeMaillage(p, trousseau: TrousseauMemoire(), reseau: reseau)
+        let s = Self.sondeMaillage(p, trousseau: TrousseauMemoireThread(), reseau: reseau)
         await s.connecterReseau()
-        #expect(s.etat == .erreur(ErreurTrousseau.absente(Self.hote).localizedDescription))
+        #expect(s.etat == .erreur(ErreurTrousseauThread.absente(Self.hote).localizedDescription))
         try await Task.sleep(for: .milliseconds(100))
         #expect(reseau.appels.isEmpty)
         await s.oublier()
@@ -564,9 +564,9 @@ struct SondeReseauTests {
         let t = try Self.prete(p, liaison: .reseau)
         let carte = CarteSimulee(cle: VecteursH1.psk, repondre: CanalReseauTests.sonde)
         let connexions = ConnexionsSimulees()
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in Self.sonde() }, trousseau: t,
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in Self.sonde() }, trousseau: t,
                               ouvrirReseau: { h, c in
-                                  try await CanalReseau.connecter(hote: h, cle: c, reglages: CanalReseauTests.rapides(),
+                                  try await CanalReseauUDP.connecter(hote: h, cle: c, reglages: CanalReseauTests.rapides(),
                                                                   reglagesTransport: TransportUDPTests.rapides()) { hh, pp in
                                       let x = ConnexionSimulee(hote: hh, port: pp, carte: carte)
                                       connexions.ajouter(x)
@@ -592,7 +592,7 @@ struct SondeReseauTests {
         let horloge = HorlogeFactice(Date(timeIntervalSince1970: 1_790_000_000))
         let premiere = Self.sonde()
         let reseau = ReseauFactice([.success(premiere), .failure(ErreurReseau.aucunDefi), .success(Self.sonde())])
-        let s = SondeMaillage(preferences: p, actif: true, ouvrirCanal: { _ in Self.sonde() }, trousseau: t,
+        let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in Self.sonde() }, trousseau: t,
                               ouvrirReseau: { h, c in try reseau.ouvrir(h, c) },
                               delaisReprise: [.milliseconds(200)], horloge: { horloge.maintenant })
         func hauteur() -> CGFloat { NSHostingView(rootView: DernierePerteSonde().environment(s)).fittingSize.height }
@@ -603,7 +603,7 @@ struct SondeReseauTests {
         horloge.avancer(60)
         premiere.fermer()
         await SondeMaillageTests.attendre { s.dernierePerte != nil }
-        let perdue = SondeMaillage.Perte(cause: String(localized: "liaison réseau perdue"), date: horloge.maintenant)
+        let perdue = SondeMaillageThread.Perte(cause: String(localized: "liaison réseau perdue"), date: horloge.maintenant)
         #expect(s.dernierePerte == perdue)
         #expect(hauteur() > 0, "montree dans les Reglages")
         // Premiere reprise en echec : l'etat change, la perte reste.
@@ -652,7 +652,7 @@ struct SondeReseauTests {
         await s.connecterReseau()
         #expect(SondeMaillageTests.connectee(s))
         s.choisirLiaison(.usb)
-        #expect(p.string(forKey: SondeMaillage.cleLiaison) == SondeMaillage.Liaison.usb.rawValue)
+        #expect(p.string(forKey: SondeMaillageThread.cleLiaison) == SondeMaillageThread.Liaison.usb.rawValue)
         await SondeMaillageTests.attendre { Self.connecteeParUSB(s) }
         #expect(journal.cycle == ["ouvrir reseau", "fermer reseau", "fin reseau", "ouvrir usb"])
         await s.oublier()
@@ -681,7 +681,7 @@ struct SondeReseauTests {
     @Test(.timeLimit(.minutes(1))) func releveSeulementConnectee() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let s = Self.sondeMaillage(p, usb: { _ in CanalRejoue { CanalRejoue.reseauMinimal($0) } }, trousseau: TrousseauMemoire())
+        let s = Self.sondeMaillage(p, usb: { _ in CanalRejoue { CanalRejoue.reseauMinimal($0) } }, trousseau: TrousseauMemoireThread())
         func hauteur() -> CGFloat { NSHostingView(rootView: ReleveSonde().environment(s)).fittingSize.height }
         await s.connecter(Self.port, choisi: true)
         await SondeMaillageTests.attendre { s.derniereTournee != nil && !s.tourneeEnCours }
@@ -722,11 +722,11 @@ struct SondeReseauTests {
     @Test func vueAccesReseau() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        func hauteur(_ s: SondeMaillage) -> CGFloat {
+        func hauteur(_ s: SondeMaillageThread) -> CGFloat {
             NSHostingView(rootView: Form { AccesReseauSonde() }.formStyle(.grouped).environment(s)).fittingSize.height
         }
         // En USB : etat, bouton et explication ; une erreur ajoute sa ligne.
-        let usb = Self.sondeMaillage(p, usb: { _ in Self.sonde(bonjour: Self.bonjour(hote: nil)) }, trousseau: TrousseauMemoire())
+        let usb = Self.sondeMaillage(p, usb: { _ in Self.sonde(bonjour: Self.bonjour(hote: nil)) }, trousseau: TrousseauMemoireThread())
         await usb.connecter(Self.port, choisi: true)
         let sansErreur = hauteur(usb)
         await usb.autoriserAccesReseau()
@@ -804,7 +804,7 @@ struct SondeReseauTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let lent = CanalLent(delai: .milliseconds(4200), repondre: Self.reponses())
-        let s = Self.sondeMaillage(p, usb: { _ in lent }, trousseau: TrousseauMemoire())
+        let s = Self.sondeMaillage(p, usb: { _ in lent }, trousseau: TrousseauMemoireThread())
         let debut = ContinuousClock.now
         await s.connecter(Self.port, choisi: true)
         #expect(s.etat == .refusee(SondeUSB.Erreur.sansReponse("bonjour").localizedDescription))
@@ -823,7 +823,7 @@ struct SondeReseauTests {
         #expect(s.etat == .sansSonde)
         #expect(t.lister().isEmpty)
         #expect(s.hote == nil && s.empreinteAcces == nil && s.liaison == .usb)
-        #expect(p.string(forKey: SondeMaillage.cleHote) == nil)
-        #expect(p.string(forKey: SondeMaillage.cleLiaison) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleHote) == nil)
+        #expect(p.string(forKey: SondeMaillageThread.cleLiaison) == nil)
     }
 }

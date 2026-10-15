@@ -40,13 +40,19 @@ public enum LigneJournal: Hashable, Sendable, Identifiable {
 }
 
 /// Regroupement des pertes, des changements de parent et des changements de chemin pour l'affichage (le journal
-/// garde chaque evenement).
+/// garde chaque evenement). Chaque regroupement est propre a un protocole : les evenements de deux protocoles ne se
+/// regroupent jamais.
 public enum Regroupement {
     /// Fenetre de regroupement, comptee depuis la premiere perte.
     public static let fenetre: TimeInterval = 600
     /// Fenetre des changements de parent d'un meme noeud, comptee depuis le premier (spec de la
     /// sonde, section 6 : « X a change 4 fois de parent en 1 h »).
     public static let fenetreParents: TimeInterval = 3600
+
+    /// Le genre (« parent » ou « chemin ») d'une cle de regroupement `<protocole>|<genre>|<cle>`.
+    private static func genre(_ cle: String) -> Substring {
+        cle.split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false)[1]
+    }
 
     /// Lignes du journal, les plus recentes d'abord : les pertes survenues dans
     /// une meme fenetre de 10 min forment une seule ligne ; les changements de parent d'un meme
@@ -56,32 +62,38 @@ public enum Regroupement {
         let tries = evenements.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }
             .map(\.element)
         var lignes: [LigneJournal] = []
-        var groupe: [Evenement] = []
-        // Changements de parent (ou de chemin) en cours de regroupement, par genre et par noeud
-        // (« parent| » ou « chemin| » + `politique.cleParent`).
+        // Pertes en cours de regroupement, par protocole (sans protocole : Thread) : une perte de Zigbee n'ouvre ni ne
+        // ferme la fenetre d'une perte de Thread.
+        var groupes: [Protocole: [Evenement]] = [:]
+        // Changements de parent (ou de chemin) en cours de regroupement, par protocole, genre et noeud :
+        // « <protocole>|parent|<cle> » ou « <protocole>|chemin|<cle> », la cle etant `politique.cleParent`. Deux
+        // noeuds de deux protocoles qui ont la meme cle ne se regroupent jamais (sans protocole : Thread).
         var parents: [String: [Evenement]] = [:]
-        func fermer() {
+        func fermer(_ protocole: Protocole) {
+            guard let groupe = groupes.removeValue(forKey: protocole) else { return }
             if groupe.count >= 2 {
                 lignes.append(.pertes(groupe))
             } else if let e = groupe.first {
                 lignes.append(.evenement(e))
             }
-            groupe = []
         }
         func fermerParents(_ noeud: String) {
             guard let g = parents.removeValue(forKey: noeud) else { return }
             if g.count >= 2 {
-                lignes.append(noeud.hasPrefix("chemin|") ? .chemins(g) : .parents(g))
+                lignes.append(genre(noeud) == "chemin" ? .chemins(g) : .parents(g))
             } else if let e = g.first {
                 lignes.append(.evenement(e))
             }
         }
         for e in tries {
             if politique.estPerte(e) {
-                if let premiere = groupe.first, e.date.timeIntervalSince(premiere.date) >= fenetre { fermer() }
-                groupe.append(e)
+                let protocole = e.protocole ?? .thread
+                if let premiere = groupes[protocole]?.first, e.date.timeIntervalSince(premiere.date) >= fenetre {
+                    fermer(protocole)
+                }
+                groupes[protocole, default: []].append(e)
             } else if let cle = politique.cleParent(e) {
-                let noeud = (politique.estChemin(e) ? "chemin|" : "parent|") + cle
+                let noeud = "\((e.protocole ?? .thread).rawValue)|\(politique.estChemin(e) ? "chemin" : "parent")|\(cle)"
                 if let premier = parents[noeud]?.first, e.date.timeIntervalSince(premier.date) >= fenetreParents {
                     fermerParents(noeud)
                 }
@@ -90,7 +102,7 @@ public enum Regroupement {
                 lignes.append(.evenement(e))
             }
         }
-        fermer()
+        for protocole in Protocole.allCases { fermer(protocole) }
         for noeud in parents.keys.sorted() { fermerParents(noeud) }
         return lignes.enumerated().sorted { ($0.element.date, $0.offset) > ($1.element.date, $1.offset) }.map(\.element)
     }

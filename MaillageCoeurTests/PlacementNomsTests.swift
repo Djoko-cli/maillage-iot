@@ -8,7 +8,7 @@ struct PlacementNomsTests {
     static let cadre = CGSize(width: 800, height: 600)
 
     static func noeud(_ id: String, largeur: CGFloat = 80) -> Etiquette {
-        Etiquette(.noeud(id), taille: CGSize(width: largeur, height: 15))
+        Etiquette(.noeud(idt(id)), taille: CGSize(width: largeur, height: 15))
     }
 
     static func pastille(_ x: CGFloat, _ y: CGFloat, _ r: CGFloat = 7) -> CGRect {
@@ -109,11 +109,11 @@ struct PlacementNomsTests {
         #expect(NiveauZoom(echelle: 0.59) == .routeurs)
         #expect(NiveauZoom(echelle: 0.6) == .tous)
         let g = try ScenePiecesTests.graphe(sonde: true)
-        let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: ["Apple TV": "Salon"], zones: nil,
-                            chefs: ["Apple TV"], piecesMaison: true)
+        let s = ScenePieces(graphe: g, libelles: ScenePiecesTests.libelles, piecesNoeuds: [idt("Apple TV"): "Salon"], zones: nil,
+                            chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
         var e = s.noeuds.map { Etiquette(.noeud($0.id), taille: CGSize(width: 50, height: 15)) }
         e.append(Etiquette(.piece(0), taille: CGSize(width: 90, height: 20)))
-        func voulus(_ niveau: NiveauZoom, survol: String? = nil) -> Set<String> {
+        func voulus(_ niveau: NiveauZoom, survol: IdNoeud? = nil) -> Set<IdNoeud> {
             PlacementNoms.regler(&e, scene: s, niveau: niveau, survol: survol, selection: nil, focus: nil, isolee: false,
                                  fk: Array(repeating: 0, count: s.pieces.count), s: 0, t: 0)
             return Set(e.compactMap { l in
@@ -122,13 +122,13 @@ struct PlacementNomsTests {
             })
         }
         #expect(voulus(.pieces).isEmpty)
-        #expect(voulus(.routeurs) == ["Apple TV", "HomePod", "E000000000000004"])
+        #expect(voulus(.routeurs) == [idt("Apple TV"), idt("HomePod"), idt("E000000000000004")])
         #expect(voulus(.tous).count == s.noeuds.count)
-        #expect(voulus(.pieces, survol: "E000000000000005") == ["E000000000000005"])
+        #expect(voulus(.pieces, survol: idt("E000000000000005")) == [idt("E000000000000005")])
         #expect(e.last?.voulu == true, "les pieces toujours")
-        #expect(e.first { $0.genre == .noeud("Apple TV") }?.prio == 5, "chef")
-        #expect(e.first { $0.genre == .noeud("E000000000000005") }?.prio == 2, "survole")
-        for (id, prio) in [("HomePod", 6), ("E000000000000004", 6), ("E000000000000003", 7)] {
+        #expect(e.first { $0.genre == .noeud(idt("Apple TV")) }?.prio == 5, "chef")
+        #expect(e.first { $0.genre == .noeud(idt("E000000000000005")) }?.prio == 2, "survole")
+        for (id, prio) in [(idt("HomePod"), 6), (idt("E000000000000004"), 6), (idt("E000000000000003"), 7)] {
             #expect(e.first { $0.genre == .noeud(id) }?.prio == prio, "\(id) : routeur de bordure, routeur, autre noeud")
         }
         let salon = try #require(s.pieces.firstIndex { $0.nom == .maison("Salon") })
@@ -146,9 +146,9 @@ struct PlacementNomsTests {
     @Test func nomsPendantUnIsolement() throws {
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: try ScenePiecesTests.graphe(sonde: true), libelles: ScenePiecesTests.libelles,
-                            piecesNoeuds: ["Apple TV": "Salon", "HomePod": "Chambre", "E000000000000002": "Bureau",
-                                           "E000000000000004": "Salon"],
-                            zones: zones, chefs: ["Apple TV"], piecesMaison: true)
+                            piecesNoeuds: [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
+                                           idt("E000000000000004"): "Salon"],
+                            zones: zones, chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
         let etage = try #require(s.etages.firstIndex { $0.nom == .zone("Étage") })
         var e = s.noeuds.map { Etiquette(.noeud($0.id), taille: CGSize(width: 50, height: 15)) }
         e += s.etages.indices.map { Etiquette(.etage($0), taille: CGSize(width: 60, height: 15)) }
@@ -157,11 +157,11 @@ struct PlacementNomsTests {
         let voiles = s.etages.indices.map { $0 == etage ? 1.0 : 0.15 }
         PlacementNoms.regler(&e, scene: s, niveau: .tous, survol: nil, selection: nil, focus: nil, isolee: false, fk: rien,
                              s: 0, t: 1, se: 1, voiles: voiles, etageIsole: etage, survolNomEtage: etage)
-        let noeuds = e.compactMap { l -> String? in
+        let noeuds = e.compactMap { l -> IdNoeud? in
             if case .noeud(let id) = l.genre, l.voulu { return id }
             return nil
         }
-        #expect(Set(noeuds) == ["HomePod", "E000000000000002"], "les appareils de l'etage isole")
+        #expect(Set(noeuds) == [idt("HomePod"), idt("E000000000000002")], "les appareils de l'etage isole")
         let etages = e.filter { if case .etage = $0.genre { true } else { false } }
         #expect(etages.allSatisfy(\.voulu) && etages.map(\.pale) == s.etages.indices.map { $0 != etage })
         #expect(etages.map(\.fort) == s.etages.indices.map { $0 == etage }, "souligne sous le pointeur")
@@ -170,11 +170,11 @@ struct PlacementNomsTests {
         let salon = try #require(s.pieces.firstIndex { $0.nom == .maison("Salon") })
         var fk = rien
         fk[salon] = 0.9
-        PlacementNoms.regler(&e, scene: s, niveau: .tous, survol: nil, selection: "E000000000000005", focus: salon,
+        PlacementNoms.regler(&e, scene: s, niveau: .tous, survol: nil, selection: idt("E000000000000005"), focus: salon,
                              isolee: false, fk: fk, s: 0.9, t: 0, se: 0.9, voiles: s.etages.indices.map { _ in 1.0 })
         let retour = e.filter { if case .noeud = $0.genre { $0.voulu } else { false } }.count
         #expect(retour == s.noeuds.count, "les noms de la maison, selon le zoom, pendant le retour")
-        #expect(e.first { $0.genre == .noeud("E000000000000005") }.map { $0.prio == 2 && $0.fort } == true, "choisi")
+        #expect(e.first { $0.genre == .noeud(idt("E000000000000005")) }.map { $0.prio == 2 && $0.fort } == true, "choisi")
     }
 
     /// Temps de calcul, en Release, dans une fenetre ordinaire (noms espaces) : le placement de 150 noms

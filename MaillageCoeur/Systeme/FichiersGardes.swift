@@ -2,12 +2,13 @@ import Foundation
 import os
 
 /// Fichiers JSON gardes dans le conteneur de l'app : les places des pieces (`positions-pieces.json`),
-/// les pieces choisies (`pieces-routeurs.json`), les surnoms (`surnoms.json`), les associations a la main
+/// les pieces choisies (`pieces-noeuds.json`), les surnoms (`surnoms.json`), les associations a la main
 /// (`associations.json`) et les identites des routeurs (`identites-routeurs.json`). Une regle commune, pour ne
 /// jamais perdre ce qu'ils gardent :
 /// - absent, ou lisible et d'une version connue : lu et ecrit comme d'habitude ;
-/// - d'une version plus recente (une app plus recente l'a ecrit, peut-etre sous un autre schema) : lu
-///   comme vide, et jamais reecrit ; l'app travaille en memoire, et le note une fois au journal du Mac ;
+/// - d'une version plus recente (une app plus recente l'a ecrit, peut-etre sous un autre schema), ou dont une cle de
+///   noeud porte un protocole que cette app ne connait pas (`FormatPlusRecent`) : lu comme vide, et jamais reecrit ;
+///   l'app travaille en memoire, et le note une fois au journal du Mac ;
 /// - present mais illisible : lu comme vide ; avant la premiere ecriture, il est mis de cote, renomme
 ///   `<nom>.illisible-AAAAMMJJ-HHMMSS.json` dans le meme dossier, et jamais efface.
 /// L'etat du fichier est relu avant chaque ecriture : rien n'est retenu d'une lecture a l'autre.
@@ -23,35 +24,66 @@ public enum FichiersGardes {
         var version: Int
     }
 
+    /// Meme lecture pour un fichier dont l'ancien format n'avait pas de version (un dictionnaire plat) : sans le champ,
+    /// `version` est nil ; un `version` present mais qui n'est pas un entier reste une erreur (fichier illisible).
+    private struct VersionFacultative: Decodable {
+        var version: Int?
+    }
+
+    /// Lancee par le decodage d'un fichier dont le contenu n'est pas de cette app : une cle de noeud d'un protocole
+    /// inconnu (`IdNoeud(texte:)` nil sur une cle d'un fichier a version), ecrite par une app plus recente. Le fichier
+    /// est alors d'une version plus recente (`Etat.plusRecent`) : lu comme vide, jamais reecrit ni mis de cote.
+    struct FormatPlusRecent: Error {}
+
+    /// L'identifiant de noeud d'une cle de fichier a version ; `FormatPlusRecent` si son protocole est inconnu.
+    static func idNoeud(_ cle: String) throws -> IdNoeud {
+        guard let id = IdNoeud(texte: cle) else { throw FormatPlusRecent() }
+        return id
+    }
+
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : le nom du fichier, jamais son contenu.
     static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "fichiers")
     /// Fichiers d'une version plus recente deja notes au journal, dans ce processus.
     private static let notes = OSAllocatedUnfairLock(initialState: Set<String>())
 
     /// L'etat du fichier, et son contenu s'il est lisible. `version` : la plus recente que l'app sait
-    /// lire ; nil pour un fichier sans version.
-    static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?) -> (etat: Etat, contenu: T?) {
+    /// lire ; nil pour un fichier sans version. `versionFacultative` : un fichier sans champ `version` est lisible quand
+    /// meme (l'ancien format, d'avant le champ), au lieu d'etre illisible ; son decodage reconnait alors les deux formats.
+    static func examiner<T: Decodable>(_ type: T.Type, _ url: URL, version: Int?,
+                                       versionFacultative: Bool = false) -> (etat: Etat, contenu: T?) {
         guard FileManager.default.fileExists(atPath: url.path) else { return (.absent, nil) }
         guard let d = try? Data(contentsOf: url) else { return (.illisible, nil) }
         if let version {
-            guard let v = try? JSONDecoder().decode(Version.self, from: d) else { return (.illisible, nil) }
-            if v.version > version { return (.plusRecent, nil) }
+            if versionFacultative {
+                guard let v = try? JSONDecoder().decode(VersionFacultative.self, from: d) else { return (.illisible, nil) }
+                if let n = v.version, n > version { return (.plusRecent, nil) }
+            } else {
+                guard let v = try? JSONDecoder().decode(Version.self, from: d) else { return (.illisible, nil) }
+                if v.version > version { return (.plusRecent, nil) }
+            }
         }
-        guard let contenu = try? JSONDecoder().decode(T.self, from: d) else { return (.illisible, nil) }
-        return (.lisible, contenu)
+        do {
+            return (.lisible, try JSONDecoder().decode(T.self, from: d))
+        } catch is FormatPlusRecent {
+            return (.plusRecent, nil)
+        } catch {
+            return (.illisible, nil)
+        }
     }
 
     /// Le contenu du fichier ; nil s'il manque, s'il est illisible ou d'une version plus recente.
-    public static func lire<T: Decodable>(_ type: T.Type, _ url: URL, version: Int? = nil) -> T? {
-        let (etat, contenu) = examiner(type, url, version: version)
+    public static func lire<T: Decodable>(_ type: T.Type, _ url: URL, version: Int? = nil,
+                                          versionFacultative: Bool = false) -> T? {
+        let (etat, contenu) = examiner(type, url, version: version, versionFacultative: versionFacultative)
         if etat == .plusRecent { noterPlusRecent(url) }
         return contenu
     }
 
     /// Ecrit `valeur` en JSON (cles triees, indente), d'un bloc. Sur un fichier d'une version plus
     /// recente, rien n'est ecrit, sans erreur. Un fichier illisible est d'abord mis de cote.
-    public static func ecrire<T: Codable>(_ valeur: T, dans url: URL, version: Int? = nil) throws {
-        switch examiner(T.self, url, version: version).etat {
+    public static func ecrire<T: Codable>(_ valeur: T, dans url: URL, version: Int? = nil,
+                                          versionFacultative: Bool = false) throws {
+        switch examiner(T.self, url, version: version, versionFacultative: versionFacultative).etat {
         case .plusRecent:
             noterPlusRecent(url)
             return

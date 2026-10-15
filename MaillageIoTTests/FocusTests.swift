@@ -10,7 +10,7 @@ import Testing
 @MainActor
 @Suite("Mode focus")
 struct FocusTests {
-    static let chef = "Apple TV 4K"
+    static let chef = idt("Apple TV 4K")
 
     /// Un appareil : lui, son parent et son lien vers lui, le chef, et le lien radio direct de son parent vers le chef
     /// s'il existe ; rien d'autre.
@@ -21,10 +21,10 @@ struct FocusTests {
             l.genre == .parent && g.noeud(l.de)?.routeur == false && l.vers != Self.chef
                 && g.liens.contains { $0.genre == .radio && Set([$0.de, $0.vers]) == [l.vers, Self.chef] }
         })
-        let m = try #require(e.miseEnAvant(de: lien.de))
+        let m = try #require(e.miseEnAvant(de: lien.de, liens: .tous, voisins: true))
         #expect(m.noeuds == [lien.de, lien.vers, Self.chef])
         #expect(m.liens == [MiseEnAvant.cle(lien.de, lien.vers), MiseEnAvant.cle(lien.vers, Self.chef)])
-        #expect(e.miseEnAvant(de: "absent") == nil)
+        #expect(e.miseEnAvant(de: idt("absent"), liens: .tous, voisins: true) == nil)
     }
 
     /// Un routeur : ses enfants et leurs liens, ses liens radio et ses voisins, le chef ; un lien radio entre deux autres
@@ -35,7 +35,7 @@ struct FocusTests {
         let r = try #require(g.noeuds.first { n in
             n.routeur && n.id != Self.chef && g.liens.contains { $0.genre == .parent && $0.vers == n.id }
         })
-        let m = try #require(e.miseEnAvant(de: r.id))
+        let m = try #require(e.miseEnAvant(de: r.id, liens: .tous, voisins: true))
         for l in g.liens where l.de == r.id || l.vers == r.id {
             if l.genre == .radio || (l.genre == .parent && l.vers == r.id) {
                 #expect(m.contient(lien: l), "\(l.de) - \(l.vers)")
@@ -56,7 +56,7 @@ struct FocusTests {
         let lien = try #require(e.graphe.liens.first { $0.genre == .parent && $0.vers != Self.chef })
         m.selection = lien.de
         let focus = try #require(m.miseEnAvant)
-        #expect(focus == e.miseEnAvant(de: lien.de))
+        #expect(focus == e.miseEnAvant(de: lien.de, liens: .tous, voisins: true))
         #expect(m.noeudsEstompes.count == e.scene.noeuds.count - focus.noeuds.filter { e.scene.noeud($0) != nil }.count)
         let estompe = try #require(e.scene.noeuds.first { !focus.noeuds.contains($0.id) }).id
         MoteurPiecesTests.dessiner(m)
@@ -72,7 +72,7 @@ struct FocusTests {
     /// un clic dans le vide le relache.
     @Test func secondClicEtVide() throws {
         let (m, e) = try MoteurPiecesTests.moteur()
-        func centre(_ id: String) throws -> CGPoint {
+        func centre(_ id: IdNoeud) throws -> CGPoint {
             MoteurPiecesTests.dessiner(m)
             return try #require(m.projetee?.disques.first { $0.noeud == id }).centre
         }
@@ -142,11 +142,11 @@ struct FocusTests {
         #expect(CourbesFiche.tirets(0).isEmpty && CourbesFiche.tirets(7).isEmpty)
         #expect(!CourbesFiche.tirets(8).isEmpty && CourbesFiche.tirets(8) != CourbesFiche.tirets(16))
         #expect(CourbesFiche.couleur(8) == CourbesFiche.couleur(0))
-        let base = CourbesFiche.identiteGraphe(id: "a", tous: false, periode: .jour)
-        #expect(base == CourbesFiche.identiteGraphe(id: "a", tous: false, periode: .jour))
-        #expect(base != CourbesFiche.identiteGraphe(id: "b", tous: false, periode: .jour))
-        #expect(base != CourbesFiche.identiteGraphe(id: "a", tous: true, periode: .jour))
-        #expect(base != CourbesFiche.identiteGraphe(id: "a", tous: false, periode: .semaine))
+        let base = CourbesFiche.identiteGraphe(id: idt("a"), tous: false, periode: .jour)
+        #expect(base == CourbesFiche.identiteGraphe(id: idt("a"), tous: false, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idt("b"), tous: false, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idt("a"), tous: true, periode: .jour))
+        #expect(base != CourbesFiche.identiteGraphe(id: idt("a"), tous: false, periode: .semaine))
         #expect(FicheNoeud.valeurPastille(qualite: 3) == String(localized: "qualité du lien : \(NiveauQualite.bonne.nom)"))
     }
 }

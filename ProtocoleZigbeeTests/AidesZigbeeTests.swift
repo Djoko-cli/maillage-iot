@@ -15,6 +15,6 @@ enum AidesZigbee {
 
     /// Un fichier `pieces-routeurs.json` dans un dossier temporaire neuf.
     static func fichierPieces() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-routeurs.json")
+        FileManager.default.temporaryDirectory.appendingPathComponent("routeurs-\(UUID().uuidString)/pieces-noeuds.json")
     }
 }

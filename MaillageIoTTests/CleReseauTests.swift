@@ -90,16 +90,16 @@ struct CleReseauTests {
         #expect(!String(describing: c).contains(Self.hexaCle) && !String(reflecting: c).contains(Self.hexaCle))
         #expect(vidage.contains("630DCD29"))
         let erreurs: [any Error] = [CleReseau.Erreur.cleIllisible, CleReseau.Erreur.empreinteIncoherente,
-                                    CleReseau.Erreur.sansNomDHote, ErreurTrousseau.absente("0123456789ABCDEF")]
+                                    CleReseau.Erreur.sansNomDHote, ErreurTrousseauThread.absente("0123456789ABCDEF")]
         let textes = erreurs.map { $0.localizedDescription }
         #expect(Set(textes).count == erreurs.count)
     }
 
     /// Trousseau en memoire (celui des tests) : ranger, lire, remplacer, oublier.
     @Test func trousseau() throws {
-        let t = TrousseauMemoire()
+        let t = TrousseauMemoireThread()
         #expect(t.lister().isEmpty)
-        #expect(throws: ErreurTrousseau.absente("0123456789ABCDEF")) { try t.lire(nom: "0123456789ABCDEF") }
+        #expect(throws: ErreurTrousseauThread.absente("0123456789ABCDEF")) { try t.lire(nom: "0123456789ABCDEF") }
         try t.ranger(nom: "0123456789ABCDEF", cle: VecteursH1.psk, empreinte: "630DCD29")
         #expect(t.lister() == [SondeConnue(nom: "0123456789ABCDEF", empreinte: "630DCD29")])
         #expect(try t.lire(nom: "0123456789ABCDEF") == VecteursH1.psk)
@@ -112,6 +112,6 @@ struct CleReseauTests {
         try t.oublier(nom: "0123456789ABCDEF")  // deja oubliee : sans erreur
         #expect(SondeConnue(nom: "0123456789ABCDEF", empreinte: "630DCD29").hote == "0123456789ABCDEF.local")
         // Le trousseau du Mac : service propre a la sonde (compte = nom d'hote).
-        #expect(TrousseauSysteme().service == "fr.djoko.maillage.iot.sonde-thread")
+        #expect(TrousseauSystemeThread().service == "fr.djoko.maillage.iot.sonde-thread")
     }
 }

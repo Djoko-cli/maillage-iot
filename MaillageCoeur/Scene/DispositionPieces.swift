@@ -219,7 +219,7 @@ public struct DispositionPieces: Hashable, Sendable {
             fixe = (0..<n).map { fixees[$0] != nil }
             parEtage = scene.etages.map { e in e.pieces.sorted { (-aire[$0], $0) < (-aire[$1], $1) } }
             // Place de chaque noeud dans sa carte.
-            var place: [String: (piece: Int, local: SIMD2<Double>, indice: Int)] = [:]
+            var place: [IdNoeud: (piece: Int, local: SIMD2<Double>, indice: Int)] = [:]
             for (i, p) in scene.pieces.enumerated() {
                 for (k, id) in p.noeuds.enumerated() {
                     place[id] = (i, k < cartes[i].places.count ? cartes[i].places[k] : .zero, scene.indice(id) ?? 0)

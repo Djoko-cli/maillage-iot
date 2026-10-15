@@ -12,8 +12,8 @@ struct CourbesFicheTests {
     static func surveillance() throws -> Surveillance {
         let s = JournalMaillageTests.surveillance(dossier: nil)
         let t = Date().addingTimeInterval(-600)
-        s.recevoir(try JournalMaillageTests.maillage(s, t, parent: 1), a: t)
-        s.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5), a: t.addingTimeInterval(300))
+        s.thread.recevoir(try JournalMaillageTests.maillage(s, t, parent: 1), a: t)
+        s.thread.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5), a: t.addingTimeInterval(300))
         return s
     }
 
@@ -22,17 +22,17 @@ struct CourbesFicheTests {
     @Test func clesEtNoms() throws {
         let s = try Self.surveillance()
         let id = JournalMaillageTests.appareil
-        #expect(s.cleHistorique(noeud: id) == id)
-        #expect(s.cleHistorique(noeud: "rloc:0400") == "rloc:0400")
-        let br = try #require(s.instantane?.routeurs.first { $0.adresseEtendue != nil })
-        #expect(s.cleHistorique(noeud: br.instance) == br.adresseEtendue)
-        #expect(s.cleHistorique(noeud: "instance:inconnue") == nil)
-        #expect(s.cleHistorique(noeud: "ＤＥＡＤＢＥＥＦ00000001") == nil, "hexadecimaux pleine chasse : pas une ExtMac")
+        #expect(s.thread.cleHistorique(noeud: id) == id)
+        #expect(s.thread.cleHistorique(noeud: "rloc:0400") == "rloc:0400")
+        let br = try #require(s.thread.instantane?.routeurs.first { $0.adresseEtendue != nil })
+        #expect(s.thread.cleHistorique(noeud: br.instance) == br.adresseEtendue)
+        #expect(s.thread.cleHistorique(noeud: "instance:inconnue") == nil)
+        #expect(s.thread.cleHistorique(noeud: "ＤＥＡＤＢＥＥＦ00000001") == nil, "hexadecimaux pleine chasse : pas une ExtMac")
         let xa = try #require(br.adresseEtendue)
-        let noms = s.nomsHistorique([id, "rloc:1400", xa, "E0000000000000FF"])
-        #expect(noms[id] == s.nom(try #require(s.appareil(id))))
+        let noms = s.thread.nomsHistorique([id, "rloc:1400", xa, "E0000000000000FF"])
+        #expect(noms[id] == s.thread.nom(try #require(s.thread.appareil(id))))
         #expect(noms["rloc:1400"] == String(localized: "Routeur · \("1400")"))
-        #expect(noms[xa] == s.nom(br))
+        #expect(noms[xa] == s.thread.nom(br))
         #expect(noms["E0000000000000FF"] == "E0000000000000FF", "inconnue : la cle")
         #expect(CourbesFiche.nomLien(CourbesNoeud.cleParent, noms) == String(localized: "Parent"))
     }
@@ -42,11 +42,11 @@ struct CourbesFicheTests {
     /// la sonde.
     @Test func courbes() throws {
         let s = try Self.surveillance()
-        let c = try #require(s.courbes(noeud: JournalMaillageTests.appareil, periode: .jour, fin: Date()))
+        let c = try #require(s.thread.courbes(noeud: JournalMaillageTests.appareil, periode: .jour, fin: Date()))
         #expect(c.liens.map(\.id) == [CourbesNoeud.cleParent])
         #expect(c.liens.first?.points.count == 2)
         #expect(c.parents.map(\.parent) == ["rloc:1400"])
-        let r = try #require(s.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
+        let r = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
         #expect(r.liens.map(\.id) == [JournalMaillageTests.appareil, "rloc:1400"])
         #expect(r.signal.map(\.valeur) == [-61, -61])
     }
@@ -58,15 +58,15 @@ struct CourbesFicheTests {
         for derniere in [true, false] {
             let s = JournalMaillageTests.surveillance(dossier: nil)
             let t = Date().addingTimeInterval(-600)
-            s.recevoir(try JournalMaillageTests.maillage(s, t, parent: 1, extMac1: derniere ? nil : x), a: t)
-            s.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5, extMac1: derniere ? x : nil),
+            s.thread.recevoir(try JournalMaillageTests.maillage(s, t, parent: 1, extMac1: derniere ? nil : x), a: t)
+            s.thread.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5, extMac1: derniere ? x : nil),
                        a: t.addingTimeInterval(300))
-            #expect(s.cleHistorique(noeud: "rloc:0400") == x, "derniere : \(derniere)")
-            let r = try #require(s.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
+            #expect(s.thread.cleHistorique(noeud: "rloc:0400") == x, "derniere : \(derniere)")
+            let r = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
             #expect(r.signal.map(\.valeur) == [-61, -61], "derniere : \(derniere)")
             #expect(r.liens.map(\.id) == [JournalMaillageTests.appareil, "rloc:1400"]
                     && r.courbe("rloc:1400")?.points.count == 2, "derniere : \(derniere)")
-            #expect(s.nomsHistorique([x])[x] == String(localized: "Routeur · \("0400")"), "derniere : \(derniere)")
+            #expect(s.thread.nomsHistorique([x])[x] == String(localized: "Routeur · \("0400")"), "derniere : \(derniere)")
         }
     }
 
@@ -81,40 +81,40 @@ struct CourbesFicheTests {
         let t = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) - 900)
         // Un lancement precedent : le routeur 1 identifie, sur le disque.
         let avant = JournalMaillageTests.surveillance(dossier: dossier)
-        avant.recevoir(try JournalMaillageTests.maillage(avant, t, parent: 1, extMac1: x), a: t)
+        avant.thread.recevoir(try JournalMaillageTests.maillage(avant, t, parent: 1, extMac1: x), a: t)
         let s = JournalMaillageTests.surveillance(dossier: dossier)
-        s.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5), a: t.addingTimeInterval(300))
+        s.thread.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(300), parent: 5), a: t.addingTimeInterval(300))
         func fiche() {
-            _ = s.courbes(noeud: "rloc:0400", periode: .jour, fin: Date())
-            _ = s.nomsHistorique(["rloc:0400", x])
-            _ = s.cleHistorique(noeud: "rloc:0400")
-            _ = s.evenements(de: "rloc:0400")
+            _ = s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: Date())
+            _ = s.thread.nomsHistorique(["rloc:0400", x])
+            _ = s.thread.cleHistorique(noeud: "rloc:0400")
+            _ = s.evenements(de: idt("rloc:0400"))
         }
         fiche()
         fiche()
-        #expect(s.constructionsCles == 1)
-        #expect(s.cleHistorique(noeud: "rloc:0400") == "rloc:0400", "le releve identifie n'est pas encore relu")
-        await s.chargerHistorique()
-        #expect(s.cleHistorique(noeud: "rloc:0400") == x, "refaite avec les releves relus")
-        #expect(s.constructionsCles == 2)
-        s.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(600), parent: 5), a: t.addingTimeInterval(600))
-        _ = s.evenements(de: "rloc:0400")
-        #expect(s.constructionsCles == 2, "les evenements ne resolvent rien")
+        #expect(s.thread.constructionsCles == 1)
+        #expect(s.thread.cleHistorique(noeud: "rloc:0400") == "rloc:0400", "le releve identifie n'est pas encore relu")
+        await s.thread.chargerHistorique()
+        #expect(s.thread.cleHistorique(noeud: "rloc:0400") == x, "refaite avec les releves relus")
+        #expect(s.thread.constructionsCles == 2)
+        s.thread.recevoir(try JournalMaillageTests.maillage(s, t.addingTimeInterval(600), parent: 5), a: t.addingTimeInterval(600))
+        _ = s.evenements(de: idt("rloc:0400"))
+        #expect(s.thread.constructionsCles == 2, "les evenements ne resolvent rien")
         fiche()
         fiche()
-        #expect(s.constructionsCles == 3)
+        #expect(s.thread.constructionsCles == 3)
     }
 
     /// L'echelle du signal de la fiche (polissage D, section 4.3) : celle du coeur, sur les valeurs de la courbe ; deux
     /// releves egaux a -61 dBm donnent -70 ... -50, gradue -70, -60, -50 ; sans valeur, -100 ... -40.
     @Test func echelleDuSignal() throws {
         let s = try Self.surveillance()
-        let r = try #require(s.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
-        let e = CourbesFiche.echelle(r)
+        let r = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: Date()))
+        let e = CourbesFiche.echelle(r, .dbm)
         #expect(e.domaine == -70 ... -50 && e.graduations == [-70, -60, -50])
-        let vide = try #require(s.courbes(noeud: JournalMaillageTests.appareil, periode: .jour, fin: Date()))
-        #expect(vide.signal.isEmpty && CourbesFiche.echelle(vide).domaine == -100 ... -40)
-        #expect(CourbesFiche.echelle(vide).graduations == [-100, -90, -80, -70, -60, -50, -40])
+        let vide = try #require(s.thread.courbes(noeud: JournalMaillageTests.appareil, periode: .jour, fin: Date()))
+        #expect(vide.signal.isEmpty && CourbesFiche.echelle(vide, .dbm).domaine == -100 ... -40)
+        #expect(CourbesFiche.echelle(vide, .dbm).graduations == [-100, -90, -80, -70, -60, -50, -40])
     }
 
     /// Ce que le graphe du signal affiche, decide sans fenetre (`GrapheSignal.affichage`, lu par la vue) : le domaine
@@ -126,18 +126,18 @@ struct CourbesFicheTests {
         let maintenant = Date()
         // Les deux releves (-61 dBm) datent des dix dernieres minutes : a droite d'une periode qui finit maintenant, a
         // gauche d'une periode qui finit 21 h plus tard.
-        let droite = try #require(s.courbes(noeud: "rloc:0400", periode: .jour, fin: maintenant))
+        let droite = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: maintenant))
         let tard = maintenant.addingTimeInterval(21 * 3600)
-        let gauche = try #require(s.courbes(noeud: "rloc:0400", periode: .jour, fin: tard))
+        let gauche = try #require(s.thread.courbes(noeud: "rloc:0400", periode: .jour, fin: tard))
         let p0 = try #require(droite.signal.first), q0 = try #require(gauche.signal.first)
-        let a = GrapheSignal.affichage(droite, survole: p0.date.addingTimeInterval(60), periode: .jour)
+        let a = GrapheSignal.affichage(droite, survole: p0.date.addingTimeInterval(60), periode: .jour, echelle: .dbm)
         #expect(a.domaine == -70 ... -50 && a.graduations == [-70, -60, -50])
         #expect(a.releve == p0 && a.alignement == .trailing)
-        let b = GrapheSignal.affichage(gauche, survole: q0.date, periode: .jour)
+        let b = GrapheSignal.affichage(gauche, survole: q0.date, periode: .jour, echelle: .dbm)
         #expect(b.releve == q0 && b.alignement == .leading)
         #expect(b.domaine == a.domaine && b.graduations == a.graduations)
-        #expect(GrapheSignal.affichage(droite, survole: nil, periode: .jour).releve == nil)
-        #expect(GrapheSignal.affichage(droite, survole: droite.debut, periode: .jour).releve == nil, "dans un trou")
+        #expect(GrapheSignal.affichage(droite, survole: nil, periode: .jour, echelle: .dbm).releve == nil)
+        #expect(GrapheSignal.affichage(droite, survole: droite.debut, periode: .jour, echelle: .dbm).releve == nil, "dans un trou")
     }
 
     /// Le pointeur : l'heure du releve le plus proche de sa position dans la zone de trace, la meme tant que ce releve
@@ -165,15 +165,15 @@ struct CourbesFicheTests {
     /// remplace les 190 et 360 pt fixes) ; pour un noeud sans historique, une ligne de texte.
     @Test func ficheEtMarge() throws {
         let s = try Self.surveillance()
-        #expect(FicheNoeud.courbesVisibles(dans: s))
+        #expect(FicheNoeud.courbesVisibles(de: idt("rloc:0400"), dans: s))
         let demo = Surveillance(mode: .demo, dossier: nil)
         demo.demarrer()
-        #expect(!FicheNoeud.courbesVisibles(dans: demo))
+        #expect(!FicheNoeud.courbesVisibles(de: idt("rloc:0400"), dans: demo))
         let entree = FenetrePiecesTests.entree(s)
         func pile(_ id: String) -> CGFloat {
             let v = VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 LigneDuBas(moteur: MoteurPieces(), entree: entree, legendeForcee: true)
-                FicheNoeud(id: id, entree: entree, instant: Date(), aRenommer: .constant(nil)) {}
+                FicheNoeud(id: idt(id), entree: entree, instant: Date(), aRenommer: .constant(nil)) {}
             }.frame(width: 1100 - 2 * FenetrePieces.bord)
             return NSHostingView(rootView: v.environment(s).environment(PiecesChoisies(fichier: nil))).fittingSize.height
         }
@@ -181,8 +181,8 @@ struct CourbesFicheTests {
         let sansCourbes = pile("instance:inconnue")
         #expect(FenetrePieces.margeBas(pile: avecCourbes) > FenetrePieces.margeBas(pile: sansCourbes) + 100,
                 "\(avecCourbes) \(sansCourbes)")
-        let avec = NSHostingView(rootView: CourbesFiche(id: JournalMaillageTests.appareil, instant: Date()).environment(s)).fittingSize
-        let sans = NSHostingView(rootView: CourbesFiche(id: "instance:inconnue", instant: Date()).environment(s)).fittingSize
+        let avec = NSHostingView(rootView: CourbesFiche(id: idt(JournalMaillageTests.appareil), instant: Date()).environment(s)).fittingSize
+        let sans = NSHostingView(rootView: CourbesFiche(id: idt("instance:inconnue"), instant: Date()).environment(s)).fittingSize
         #expect(avec.height > sans.height + 100, "\(avec) \(sans)")
     }
 

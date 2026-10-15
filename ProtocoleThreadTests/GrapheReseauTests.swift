@@ -9,7 +9,7 @@ struct GrapheReseauTests {
 
     static func affiches(_ i: Instantane) -> [AppareilAffiche] {
         i.appareils.map {
-            AppareilAffiche(id: $0.id, nom: $0.id, partition: $0.partition,
+            AppareilAffiche(id: idt($0.id), nom: $0.id, partition: $0.partition,
                             etat: $0.etat == .sansAdresse ? .sansAdresse : .joignable, endormi: $0.endormi)
         }
     }
@@ -19,17 +19,29 @@ struct GrapheReseauTests {
     @Test func releveReel() throws {
         let r = try #require(Self.instantane.reseaux.first)
         let g = GrapheReseau(reseau: r, appareils: Self.affiches(Self.instantane))
-        let atv = try #require(g.noeud("Apple TV 4K"))
+        let atv = try #require(g.noeud(idt("Apple TV 4K")))
         #expect(atv.genre == .centre && atv.routeur && atv.bordure && atv.partition == "73586B68")
         let homepods = g.noeuds.filter { $0.genre == .routeur }
-        #expect(homepods.map(\.id) == ["HomePod Avant", "HomePod Palier", "HomePod mini bureau", "HomePod mini chambre"])
+        #expect(homepods.map(\.id) == [idt("HomePod Avant"), idt("HomePod Palier"), idt("HomePod mini bureau"), idt("HomePod mini chambre")])
         #expect(homepods.allSatisfy { $0.bordure && !$0.inconnu })
         #expect(g.noeuds.filter { $0.genre == .appareil && $0.partition == "73586B68" }.count == 22)
-        #expect(g.noeud("Aqara HubM100 #DFEB")?.genre == .centre)
-        #expect(g.noeuds.filter { $0.partition.isEmpty }.map(\.id) == ["1E5019DAC2638F92", "724CC16B32D8F820"])
+        #expect(g.noeud(idt("Aqara HubM100 #DFEB"))?.genre == .centre)
+        #expect(g.noeuds.filter { $0.partition.isEmpty }.map(\.id) == [idt("1E5019DAC2638F92"), idt("724CC16B32D8F820")])
         #expect(g.liens.count == 26, "4 routeurs et 22 appareils vers l'Apple TV")
-        #expect(g.liens.allSatisfy { $0.vers == "Apple TV 4K" && $0.genre == .rattachement })
-        #expect(g.parent(de: "56B1E064401F74EF") == nil, "sans sonde : pas de parent connu")
+        #expect(g.liens.allSatisfy { $0.vers == idt("Apple TV 4K") && $0.genre == .rattachement })
+        #expect(g.parent(de: idt("56B1E064401F74EF")) == nil, "sans sonde : pas de parent connu")
+    }
+
+    /// Un appareil d'un autre protocole n'est pas un noeud de Thread : sa cle y serait prise pour une cle de Thread (la
+    /// liste d'appareils de la scene reunie porte ceux des deux protocoles).
+    @Test func ignoreLesAppareilsDUnAutreProtocole() throws {
+        let r = try #require(Self.instantane.reseaux.first)
+        let apps = Self.affiches(Self.instantane)
+        let intrus = AppareilAffiche(id: idz(apps[0].id.cle), nom: "Intrus", partition: apps[0].partition, etat: .joignable)
+        let seul = GrapheReseau(reseau: r, appareils: apps)
+        let mixte = GrapheReseau(reseau: r, appareils: apps + [intrus, AppareilAffiche(id: idz("A0000000000000EE"), nom: "Autre", etat: .joignable)])
+        #expect(mixte == seul)
+        #expect(mixte.noeuds.allSatisfy { $0.id.protocole == .thread })
     }
 
     /// L'ordre d'arrivee des appareils ne compte pas ; un appareil disparu reste un noeud.
@@ -39,7 +51,7 @@ struct GrapheReseauTests {
         let g = GrapheReseau(reseau: r, appareils: apps)
         #expect(GrapheReseau(reseau: r, appareils: apps.reversed()) == g)
         var avecDisparu = apps
-        let i = try #require(avecDisparu.firstIndex { $0.id == "56B1E064401F74EF" })
+        let i = try #require(avecDisparu.firstIndex { $0.id == idt("56B1E064401F74EF") })
         avecDisparu[i].etat = .disparu
         #expect(GrapheReseau(reseau: r, appareils: avecDisparu) == g)
     }
@@ -53,21 +65,21 @@ struct GrapheReseauTests {
         let r = try #require(i.reseaux.first)
         let m = MaillageAffiche(maillage: try await RapprochementTests.maillage(), reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
-        #expect(g.noeud("Apple TV")?.genre == .centre)
-        #expect(g.noeud("HomePod salon") == nil, "candidate : portee par les routeurs non identifies")
-        #expect(g.noeud("HomePod bureau")?.genre == .routeur)
-        let routeurAppareil = try #require(g.noeud("E000000000000002"))
+        #expect(g.noeud(idt("Apple TV"))?.genre == .centre)
+        #expect(g.noeud(idt("HomePod salon")) == nil, "candidate : portee par les routeurs non identifies")
+        #expect(g.noeud(idt("HomePod bureau"))?.genre == .routeur)
+        let routeurAppareil = try #require(g.noeud(idt("E000000000000002")))
         #expect(routeurAppareil.genre == .appareil && routeurAppareil.routeur && !routeurAppareil.bordure)
-        let inconnu = try #require(g.noeud("rloc:0400"))
+        let inconnu = try #require(g.noeud(idt("rloc:0400")))
         #expect(inconnu.genre == .routeur && inconnu.inconnu && inconnu.bordure)
-        #expect(g.noeud("rloc:6002")?.genre == .appareil && g.noeud("rloc:6002")?.inconnu == true)
+        #expect(g.noeud(idt("rloc:6002"))?.genre == .appareil && g.noeud(idt("rloc:6002"))?.inconnu == true)
         #expect(g.liens.filter { $0.genre == .radio }.count == 7)
-        #expect(g.liens.contains(GrapheReseau.Lien(de: "E000000000000004", vers: "E000000000000002", genre: .parent,
+        #expect(g.liens.contains(GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("E000000000000002"), genre: .parent,
                                                    qualite: 2)))
-        #expect(g.parent(de: "E000000000000004") == "E000000000000002")
-        #expect(g.liens.contains(GrapheReseau.Lien(de: "rloc:E400", vers: "Apple TV")), "sans lien connu : rattachement")
-        #expect(g.liens.contains(GrapheReseau.Lien(de: "Absent", vers: "Apple TV")))
-        #expect(!g.liens.contains { $0.de == "E000000000000004" && $0.genre == .rattachement })
+        #expect(g.parent(de: idt("E000000000000004")) == idt("E000000000000002"))
+        #expect(g.liens.contains(GrapheReseau.Lien(de: idt("rloc:E400"), vers: idt("Apple TV"))), "sans lien connu : rattachement")
+        #expect(g.liens.contains(GrapheReseau.Lien(de: idt("Absent"), vers: idt("Apple TV"))))
+        #expect(!g.liens.contains { $0.de == idt("E000000000000004") && $0.genre == .rattachement })
     }
 
     /// Un enfant vu deux fois (il a change de parent ; l'ancienne entree de la resolution sous un routeur muet
@@ -92,9 +104,9 @@ struct GrapheReseauTests {
         let m = MaillageAffiche(maillage: c.maillage(), reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
         #expect(!g.noeuds.contains { $0.inconnu && $0.genre == .appareil }, "pas de noeud en double")
-        #expect(g.noeud("rloc:0002") == nil && g.noeud("rloc:0405") == nil)
-        #expect(g.liens.filter { $0.de == "E000000000000004" }.count == 1)
-        #expect(g.parent(de: "E000000000000004") == attendu)
+        #expect(g.noeud(idt("rloc:0002")) == nil && g.noeud(idt("rloc:0405")) == nil)
+        #expect(g.liens.filter { $0.de == idt("E000000000000004") }.count == 1)
+        #expect(g.parent(de: idt("E000000000000004")) == idt(attendu))
     }
 
     /// Un enfant devenu routeur garde jusqu'a 30 minutes son entree de la resolution sous un routeur muet, sous
@@ -112,10 +124,10 @@ struct GrapheReseauTests {
         c.enfant(EnfantMaillage(rloc16: 0x0802, extMac: "E000000000000004", source: .resolution))
         let m = MaillageAffiche(maillage: c.maillage(), reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
-        #expect(g.noeud("rloc:0802") == nil, "pas de noeud en double")
+        #expect(g.noeud(idt("rloc:0802")) == nil, "pas de noeud en double")
         #expect(!g.noeuds.contains { $0.inconnu && $0.genre == .appareil })
-        #expect(g.noeud("E000000000000004")?.routeur == true, "l'appareil est le routeur 1")
-        #expect(!g.liens.contains { $0.de == "rloc:0802" })
+        #expect(g.noeud(idt("E000000000000004"))?.routeur == true, "l'appareil est le routeur 1")
+        #expect(!g.liens.contains { $0.de == idt("rloc:0802") })
         #expect(m.extMacs["rloc:0802"] == nil)
     }
 
@@ -130,7 +142,7 @@ struct GrapheReseauTests {
                                                                         0xCC00: "E0000000000000CC"])
         let m = MaillageAffiche(maillage: maillage, reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
-        #expect(g.noeuds.filter { $0.id == "HomePod palier" }.count == 1)
+        #expect(g.noeuds.filter { $0.id == idt("HomePod palier") }.count == 1)
         #expect(!g.noeuds.contains { $0.inconnu && $0.genre == .routeur })
     }
 
@@ -145,10 +157,10 @@ struct GrapheReseauTests {
         let m = MaillageAffiche(maillage: try await RapprochementTests.maillage(entendus: [0xE400: "E0000000000000E4"]),
                                 reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
-        #expect(g.noeud("HomePod avant") == nil && g.noeud("HomePod palier") == nil)
-        #expect(g.noeud("rloc:0400") != nil && g.noeud("rloc:CC00") != nil)
+        #expect(g.noeud(idt("HomePod avant")) == nil && g.noeud(idt("HomePod palier")) == nil)
+        #expect(g.noeud(idt("rloc:0400")) != nil && g.noeud(idt("rloc:CC00")) != nil)
         let sans = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i))
-        #expect(sans.noeud("HomePod avant") != nil && sans.noeud("HomePod palier") != nil)
+        #expect(sans.noeud(idt("HomePod avant")) != nil && sans.noeud(idt("HomePod palier")) != nil)
     }
 
     /// Reseau scinde : seules les annonces candidates de la partition de la sonde ne sont pas des
@@ -158,9 +170,9 @@ struct GrapheReseauTests {
         let r = try #require(i.reseaux.first)
         let m = MaillageAffiche(maillage: try await RapprochementTests.maillage(), reseau: r, appareils: i.appareils)
         let g = GrapheReseau(reseau: r, appareils: RapprochementTests.affiches(i), maillage: m)
-        #expect(g.noeud("HomePod salon") == nil)
-        #expect(g.noeud("Aqara")?.partition == "73586B68" && g.noeud("HomePod isole")?.partition == "73586B68")
-        #expect(g.noeud("Aqara")?.genre == .centre)
+        #expect(g.noeud(idt("HomePod salon")) == nil)
+        #expect(g.noeud(idt("Aqara"))?.partition == "73586B68" && g.noeud(idt("HomePod isole"))?.partition == "73586B68")
+        #expect(g.noeud(idt("Aqara"))?.genre == .centre)
     }
 
     /// Le centre peut etre candidat : il reste un noeud, au centre ; l'autre annonce candidate, non.
@@ -172,8 +184,8 @@ struct GrapheReseauTests {
         let r = try #require(i.reseaux.first)
         let m = try RapprochementTests.deuxRouteurs(i)
         let g = GrapheReseau(reseau: r, appareils: [], maillage: m)
-        #expect(g.noeud("Alpha")?.genre == .centre)
-        #expect(g.noeud("HomePod avant") == nil)
-        #expect(g.noeuds.map(\.id) == ["Alpha", "rloc:0400", "rloc:0800"])
+        #expect(g.noeud(idt("Alpha"))?.genre == .centre)
+        #expect(g.noeud(idt("HomePod avant")) == nil)
+        #expect(g.noeuds.map(\.id) == [idt("Alpha"), idt("rloc:0400"), idt("rloc:0800")])
     }
 }

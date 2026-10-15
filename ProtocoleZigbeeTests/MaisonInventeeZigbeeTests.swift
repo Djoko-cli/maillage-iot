@@ -26,8 +26,8 @@ enum MaisonInventeeZigbee {
             LienParent(enfant: appareil(j), parent: routeur((j % pieces) % routeurs), lqi: 120, date: date)
         }
         let m = MaillageZigbee(date: date, noeuds: noeuds, liens: liens, parents: parents)
-        let apps = (0..<routeurs).map { AppareilAffiche(id: routeur($0), nom: routeur($0), etat: .joignable) }
-            + (0..<appareils).map { AppareilAffiche(id: appareil($0), nom: appareil($0), etat: .joignable) }
+        let apps = (0..<routeurs).map { AppareilAffiche(id: idz(routeur($0)), nom: routeur($0), etat: .joignable) }
+            + (0..<appareils).map { AppareilAffiche(id: idz(appareil($0)), nom: appareil($0), etat: .joignable) }
         return GrapheReseau(maillage: m, appareils: apps)
     }
 }
@@ -45,7 +45,7 @@ enum ScenePiecesZigbee {
             NoeudZigbee(ieee: String(format: "E00000000000000%d", k), court: UInt16(0x2000 + k),
                         type: sonde && k == 4 ? .routeur : .final)
         }
-        let apps = noeuds.map { AppareilAffiche(id: $0.ieee, nom: $0.ieee, etat: .joignable) }
+        let apps = noeuds.map { AppareilAffiche(id: idz($0.ieee), nom: $0.ieee, etat: .joignable) }
         guard sonde else { return GrapheReseau(maillage: MaillageZigbee(date: date, noeuds: noeuds), appareils: apps) }
         let liens = [LienRadioZigbee(a: "Apple TV", b: "HomePod", lqiA: 200, lqiB: 120),
                      LienRadioZigbee(a: "Apple TV", b: "E000000000000004", lqiA: 120, lqiB: 120)]
@@ -53,7 +53,7 @@ enum ScenePiecesZigbee {
                        LienParent(enfant: "E000000000000003", parent: "HomePod", lqi: 120)]
         let m = MaillageZigbee(date: date, noeuds: noeuds, liens: liens, parents: parents)
         let g = GrapheReseau(maillage: m, appareils: apps)
-        return GrapheReseau(noeuds: g.noeuds, liens: g.liens + [GrapheReseau.Lien(de: "E000000000000005", vers: "Apple TV")])
+        return GrapheReseau(noeuds: g.noeuds, liens: g.liens + [GrapheReseau.Lien(de: idz("E000000000000005"), vers: idz("Apple TV"))])
     }
 }
 
@@ -63,11 +63,11 @@ struct FixturesZigbeeTests {
     typealias Commun = [String: [String]]
     static func commun(_ g: GrapheReseau) -> Commun {
         Dictionary(uniqueKeysWithValues: g.noeuds.map {
-            ($0.id, ["\($0.genre)", "\($0.routeur)", "\($0.inconnu)"])
+            ($0.id.cle, ["\($0.genre)", "\($0.routeur)", "\($0.inconnu)"])
         })
     }
 
-    static func cle(_ l: GrapheReseau.Lien) -> String { "\(l.de)>\(l.vers)|\(l.genre)|\(String(describing: l.qualite))|\(l.suppose)" }
+    static func cle(_ l: GrapheReseau.Lien) -> String { "\(l.de.cle)>\(l.vers.cle)|\(l.genre)|\(String(describing: l.qualite))|\(l.suppose)" }
 
     /// Les noeuds sont les memes (a l'ordre pres : Zigbee classe d'abord les routeurs) et les liens de la sonde aussi.
     /// Une difference de sens : E...04, qui route avec la sonde, est pour les fixtures du coeur un appareil qui route
@@ -99,7 +99,7 @@ struct FixturesZigbeeTests {
                                                  appareils: maison.appareils)
         #expect(Self.commun(manuel) == Self.commun(zigbee))
         #expect(manuel.noeuds.count == maison.routeurs + maison.appareils && zigbee.noeuds.count == manuel.noeuds.count)
-        #expect(manuel.noeuds.map(\.id) == zigbee.noeuds.map(\.id), "meme ordre : routeurs puis appareils")
+        #expect(manuel.noeuds.map(\.id.cle) == zigbee.noeuds.map(\.id.cle), "meme ordre : routeurs puis appareils")
         #expect(Set(manuel.liens.map(Self.cle)) == Set(zigbee.liens.map(Self.cle)))
         #expect(manuel.liens.count == zigbee.liens.count)
         #expect(zigbee.noeuds.allSatisfy { $0.partition == GrapheReseau.partitionUnique && !$0.bordure })
