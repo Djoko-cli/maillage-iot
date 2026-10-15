@@ -571,6 +571,45 @@ Décisions du plan 3a, d'après les inventaires `inventaire-etape3-*.md` (propos
 12. **Reportés à 3b** : « Identifier par la sonde » pour Thread et « Associer » pour Zigbee n'existent pas
     aujourd'hui ; 3b dira s'ils sont créés ou laissés au backlog.
 
+### 6.7 Ajustements du 15/10 pour l'étape 3b
+
+Validés par Djoko le 15/10 (banc de l'étape 3a et questions du plan 3b) :
+- **Routeurs Zigbee en violet**, en plus de l'hexagone ; le pont Hue aussi, avec sa couronne. Les routeurs de bordure
+  Thread gardent le bleu.
+- **Hexagone pointe en haut**, sommets sur le rayon du nœud (cercle circonscrit) ; ondes, pile, anneau pointillé et
+  anneau de sélection restent ronds, au-delà du rayon.
+- **Interrupteurs de vue dans la capsule de gauche**, après le nom de la maison : « ● Thread ⬢ Zigbee ». Masquer un
+  protocole est **stable** : les pièces et les autres nœuds ne bougent pas ; la fiche ou le focus d'un nœud masqué se
+  ferment. Un protocole éteint dans les Réglages y est grisé.
+- **En haut à gauche, le nom de la maison** (Maison) ; son menu liste les réseaux par protocole : Thread (réseaux,
+  partitions, choix du réseau affiché), puis Zigbee (le pont).
+- **Onglets Thread et Zigbee** : logos redessinés en vectoriel monochrome, en images modèles (teinte du système) ;
+  crédits des marques dans le README bilingue.
+- **Icône sans badge**, générée par un outil du dépôt : une constellation qui mêle nœuds ronds et hexagonaux, à toutes
+  les tailles du Dock ; la barre des menus garde le seul symbole du maillage.
+- **Journal** : interrupteurs Thread / Zigbee propres au journal (mémorisés), indépendants de la vue ; chaque ligne
+  porte la marque de son protocole (● ou ⬢, dans sa couleur).
+- **Démo** : `-demo` lance la démo combinée ; `-demo-thread` et `-demo-zigbee` gardent chacune la sienne seule (les deux
+  rejeux exacts). Dans la seule démo combinée, la démo Zigbee est recalée sur l'horloge de celle de Thread et les
+  homonymes sont renommés ; la scène combinée a sa propre référence, `docs/rejeu/maillage-iot-demo.json`, écrite une
+  fois puis jamais régénérée.
+- **Liaison « Automatique » pour la sonde Thread** (USB d'abord, sinon le réseau Thread), en miroir de Zigbee :
+  dernière tâche de 3b, avec sa relecture Opus. Défaut des nouvelles installations ; un choix existant est gardé.
+- **« Identifier par la sonde »** (Thread) est abandonné : impossible sans contrôleur Matter (précise 3.2). **« Associer »**
+  pour Zigbee va au backlog.
+
+Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
+1. La légende montre la ligne « ● Thread ⬢ Zigbee » seulement quand les deux protocoles sont dans la scène ; ses entrées
+   communes (joignable, disparu, sonde) restent rondes.
+2. `NiveauQualite` du cœur devient la bande commune (`BandeQualite`) ; `EchelleSignal` range une valeur en bande ; le 0
+   de Thread reste gris, comme aujourd'hui.
+3. Toute lecture d'horloge d'un nœud passe par l'horloge de son modèle (démo combinée : deux horloges cohérentes).
+4. Notifications : clés `notification.<protocole>.<catégorie>`, qui reprennent la valeur des clés communes actuelles ;
+   l'onglet les range par protocole ; mêmes défauts qu'aujourd'hui.
+5. L'onglet d'un protocole éteint est grisé, sauf « Activer ce protocole » (règle unique pour les deux sondes).
+6. Mesures : avant de toucher la vue, la référence de l'étape 1 (Thread seul) est relevée sur `e32f3a5` dans une
+   copie de travail à part ; l'outil mesure l'ouverture de la vue et le zoom ; la mesure finale la compare.
+
 ## 7. Risques et parades
 
 | Risque | Parade |
@@ -607,6 +646,8 @@ Décisions du plan 3a, d'après les inventaires `inventaire-etape3-*.md` (propos
 - « Identifier les candidats » dans le menu d'association (proposé chez Thread, gelé jusqu'à la fusion).
 - Mineurs reportés de Zigbee : pertes de parent de la sonde non journalisées (la nuit de comparaison du plan Wi-Fi
   est restée partielle), messages neutres affichés en rouge.
+- « Associer » pour Zigbee : associer à la main un appareil du pont à un accessoire de Maison (écriture dans
+  `MemoireAppariements`), à côté de l'appariement automatique (étape 3b, 15/10).
 - Fusion des deux firmwares de sonde, si un jour une carte porte les deux radios.
 - Icône de l'app (Dock et barre des menus) : retirer le badge « T » hérité de Maillage Thread, à l'étape 3 avec
   l'interface à deux protocoles (banc de l'étape 1, 14/10).
