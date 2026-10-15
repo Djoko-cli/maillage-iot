@@ -47,8 +47,7 @@ final class SurveillanceThread: ModeleProtocole {
     }
 
     let mode: Surveillance.Mode
-    /// Ce modele rejoue la panne du 27/09 ; faux : en demo, un modele muet (la demo n'a qu'un reseau a la fois, la demo
-    /// combinee est a l'etape 3b).
+    /// Ce modele rejoue la panne du 27/09 ; faux : en demo, un modele muet (`-demo-zigbee`).
     let rejoueLaDemo: Bool
     /// « Activer ce protocole » (spec 3.3) : faux, Thread est vraiment arrete (Bonjour, sonde, tournees) et ne montre ni
     /// n'ecrit plus rien ; l'activer le relance comme au lancement. Garde sous `thread.actif`, vrai par defaut ; la demo ne

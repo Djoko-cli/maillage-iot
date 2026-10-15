@@ -162,14 +162,17 @@ struct FenetrePieces: View {
 
     /// Hauteur de scene en dessous de laquelle la legende ouverte se replie d'elle-meme sous une fiche (pt) : les
     /// 230 pt environ que la spec de B garde a la scene dans la plus petite fenetre, avec la fiche et ses courbes
-    /// (section 3) ; la legende ne la fait pas descendre plus bas. Mesure sur la demo (reverification du 02/10, apres la
-    /// ligne de niveau montee sous le fil), dont la marge du haut est de 139 pt : dans la fenetre par defaut (1100 x 760),
-    /// la legende ouverte laisse 250 pt a la scene sous la fiche de l'Apple TV 4K, et reste ouverte, comme sous 20 des 31
-    /// fiches de la demo (235 pt au moins) ; sous les 11 autres (de 143 a 179 pt), elle n'en laisserait que 183 a 219 :
-    /// elle se replie, et la scene retrouve 380 a 416 pt. Dans la plus petite fenetre (820 x 732 pt, soit 680 pt sous la
-    /// barre de titre cachee), elle laisserait 184 pt sous la fiche de l'Apple TV 4K et 155 sous la plus haute : elle se
-    /// replie, comme sous 30 des 31 fiches, et la scene garde 381 et 352 pt ; sans fiche, elle en garde 344, la legende
-    /// ouverte (563, repliee).
+    /// (section 3) ; la legende ne la fait pas descendre plus bas. Une regle, pas une mesure : elle ne change pas quand la
+    /// legende grandit. Mesuree a nouveau le 15/10 (fiche en quatre colonnes, marge du haut de 139 pt) :
+    /// - Thread seul (legende de 240 pt) : dans la fenetre par defaut (1100 x 760), la scene garde de 136 a 234 pt sous les
+    ///   31 fiches (180 sous celle de l'Apple TV 4K) : elle se replie sous 30 ; a 1100 x 880, de 256 a 354 : elle reste ouverte.
+    /// - Zigbee seul (257 pt ; marge du haut de 109 pt) : de 165 a 238 pt sous les 23 fiches a 1100 x 760 (replie sous 21), de
+    ///   285 a 358 a 1100 x 880.
+    /// - La demo combinee (345 pt : les entrees des deux protocoles et la ligne « Thread / Zigbee », 21 pt) : de 31 a 129 pt a
+    ///   1100 x 760 (la legende seule y laisse 250 pt), de 151 a 249 a 1100 x 880 (replie sous 51 des 54 fiches), de 231 a
+    ///   329 a 1100 x 960 (`DemoCombineeLegendeTests.hauteAssez`) : elle y reste ouverte sous toutes.
+    /// Dans la plus petite fenetre (1000 x 680 sous la barre de titre cachee), elle se replie sous toutes les fiches de chaque
+    /// demo.
     static let sceneMinimale: CGFloat = 230
 
     /// La legende se replie d'elle-meme sous une fiche ouverte (verification du 02/10) si, ouverte au-dessus d'elle,
@@ -237,7 +240,8 @@ struct FenetrePieces: View {
                             if let h { legendeOuverteMesuree = h }
                         }
                         if let selection = moteur.selection {
-                            FicheNoeud(id: selection, entree: entree, instant: surveillance.maintenant(a: contexte.date),
+                            FicheNoeud(id: selection, entree: entree,
+                                       instant: surveillance.maintenant(de: selection.protocole, a: contexte.date),
                                        aRenommer: $aRenommer, choisir: { moteur.selection = $0 }) {
                                 moteur.selection = nil
                             }

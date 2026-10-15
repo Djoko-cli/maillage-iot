@@ -1,0 +1,1823 @@
+{
+  "domicile" : "Maison (démo)",
+  "etages" : [
+    {
+      "cle" : "zone:Combles",
+      "dehors" : false,
+      "niveau" : 3,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Jardin",
+      "dehors" : false,
+      "niveau" : 1,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Rez-de-chaussée",
+      "dehors" : false,
+      "niveau" : 0,
+      "principal" : true
+    },
+    {
+      "cle" : "zone:Étage",
+      "dehors" : false,
+      "niveau" : 2,
+      "principal" : true
+    }
+  ],
+  "liens" : [
+    {
+      "de" : "thread:1E5019DAC2638F92",
+      "genre" : "rattachement",
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:327DF9C45C82BBD6",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:3A5DFAFCAB581AAF",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:HomePod Avant"
+    },
+    {
+      "de" : "thread:462DA5B311AFFCC7",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:HomePod Palier"
+    },
+    {
+      "de" : "thread:46F77B36E071F8D0",
+      "genre" : "rattachement",
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:56B1E064401F74EF",
+      "genre" : "parent",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:HomePod mini bureau"
+    },
+    {
+      "de" : "thread:724CC16B32D8F820",
+      "genre" : "parent",
+      "suppose" : false,
+      "vers" : "thread:HomePod mini chambre"
+    },
+    {
+      "de" : "thread:7A3D0C7512F8E0A5",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:02A8C3C5600F136B"
+    },
+    {
+      "de" : "thread:7AF0B6D5006CF95F",
+      "genre" : "rattachement",
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:82570DF21CF3784B",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:0A84D1254BD246AD"
+    },
+    {
+      "de" : "thread:86E7BD1A75F28E6D",
+      "genre" : "parent",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:8A13154B7B48F32E",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:HomePod Avant"
+    },
+    {
+      "de" : "thread:8A7E6F2665F737C6",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:HomePod Palier"
+    },
+    {
+      "de" : "thread:9A28601B74FF90A7",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:HomePod mini bureau"
+    },
+    {
+      "de" : "thread:9A5C1F9FDFAB242D",
+      "genre" : "parent",
+      "suppose" : false,
+      "vers" : "thread:HomePod mini chambre"
+    },
+    {
+      "de" : "thread:AA3D322B8A4500C4",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:02A8C3C5600F136B"
+    },
+    {
+      "de" : "thread:Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:02A8C3C5600F136B"
+    },
+    {
+      "de" : "thread:Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:0A84D1254BD246AD"
+    },
+    {
+      "de" : "thread:Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:HomePod Avant"
+    },
+    {
+      "de" : "thread:Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:HomePod Palier"
+    },
+    {
+      "de" : "thread:Apple TV 4K",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:HomePod mini bureau"
+    },
+    {
+      "de" : "thread:C656F369B620027F",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:0A84D1254BD246AD"
+    },
+    {
+      "de" : "thread:C663573E49A1EC90",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:D661EE20B3E97C66",
+      "genre" : "rattachement",
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:D6ECDD6EF9C0CB0C",
+      "genre" : "parent",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:HomePod Avant"
+    },
+    {
+      "de" : "thread:DAEF22ACB58F651C",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "thread:HomePod Palier"
+    },
+    {
+      "de" : "thread:FA15027BC681BB16",
+      "genre" : "rattachement",
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "thread:HomePod Avant",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:02A8C3C5600F136B"
+    },
+    {
+      "de" : "thread:HomePod Palier",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:0A84D1254BD246AD"
+    },
+    {
+      "de" : "thread:rloc:041F",
+      "genre" : "parent",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "thread:Apple TV 4K"
+    },
+    {
+      "de" : "zigbee:A000000000000001",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000010"
+    },
+    {
+      "de" : "zigbee:A000000000000001",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000011"
+    },
+    {
+      "de" : "zigbee:A000000000000001",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000012"
+    },
+    {
+      "de" : "zigbee:A000000000000001",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000015"
+    },
+    {
+      "de" : "zigbee:A000000000000010",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000001"
+    },
+    {
+      "de" : "zigbee:A000000000000010",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000011"
+    },
+    {
+      "de" : "zigbee:A000000000000010",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000014"
+    },
+    {
+      "de" : "zigbee:A000000000000011",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000001"
+    },
+    {
+      "de" : "zigbee:A000000000000011",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000015"
+    },
+    {
+      "de" : "zigbee:A000000000000012",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000001"
+    },
+    {
+      "de" : "zigbee:A000000000000012",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000013"
+    },
+    {
+      "de" : "zigbee:A000000000000013",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000012"
+    },
+    {
+      "de" : "zigbee:A000000000000013",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001B"
+    },
+    {
+      "de" : "zigbee:A000000000000014",
+      "genre" : "chemin",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000010"
+    },
+    {
+      "de" : "zigbee:A000000000000014",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A0000000000000FD"
+    },
+    {
+      "de" : "zigbee:A000000000000015",
+      "genre" : "chemin",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000011"
+    },
+    {
+      "de" : "zigbee:A000000000000015",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000016"
+    },
+    {
+      "de" : "zigbee:A000000000000016",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000015"
+    },
+    {
+      "de" : "zigbee:A000000000000016",
+      "genre" : "radio",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000017"
+    },
+    {
+      "de" : "zigbee:A000000000000016",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000019"
+    },
+    {
+      "de" : "zigbee:A000000000000017",
+      "genre" : "chemin",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000016"
+    },
+    {
+      "de" : "zigbee:A000000000000017",
+      "genre" : "radio",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001A"
+    },
+    {
+      "de" : "zigbee:A000000000000019",
+      "genre" : "chemin",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000016"
+    },
+    {
+      "de" : "zigbee:A000000000000019",
+      "genre" : "radio",
+      "qualite" : 0,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001C"
+    },
+    {
+      "de" : "zigbee:A00000000000001A",
+      "genre" : "chemin",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000017"
+    },
+    {
+      "de" : "zigbee:A00000000000001A",
+      "genre" : "radio",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001C"
+    },
+    {
+      "de" : "zigbee:A00000000000001B",
+      "genre" : "chemin",
+      "qualite" : 1,
+      "suppose" : true,
+      "vers" : "zigbee:A000000000000013"
+    },
+    {
+      "de" : "zigbee:A00000000000001C",
+      "genre" : "chemin",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001A"
+    },
+    {
+      "de" : "zigbee:A000000000000020",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000016"
+    },
+    {
+      "de" : "zigbee:A000000000000021",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000001"
+    },
+    {
+      "de" : "zigbee:A000000000000022",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000012"
+    },
+    {
+      "de" : "zigbee:A000000000000023",
+      "genre" : "parent",
+      "qualite" : 1,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001B"
+    },
+    {
+      "de" : "zigbee:A000000000000024",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : true,
+      "vers" : "zigbee:A000000000000016"
+    },
+    {
+      "de" : "zigbee:A000000000000025",
+      "genre" : "parent",
+      "qualite" : 2,
+      "suppose" : false,
+      "vers" : "zigbee:A00000000000001C"
+    },
+    {
+      "de" : "zigbee:A000000000000026",
+      "genre" : "parent",
+      "qualite" : 0,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000013"
+    },
+    {
+      "de" : "zigbee:A0000000000000FD",
+      "genre" : "chemin",
+      "qualite" : 1,
+      "suppose" : true,
+      "vers" : "zigbee:A000000000000014"
+    },
+    {
+      "de" : "zigbee:A0000000000000FE",
+      "genre" : "parent",
+      "qualite" : 3,
+      "suppose" : false,
+      "vers" : "zigbee:A000000000000015"
+    }
+  ],
+  "noeuds" : [
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "02A8C3C5600F136B",
+      "genre" : "appareil",
+      "id" : "thread:02A8C3C5600F136B",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "0A84D1254BD246AD",
+      "genre" : "appareil",
+      "id" : "thread:0A84D1254BD246AD",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "sansAdresse",
+      "extMac" : "1E5019DAC2638F92",
+      "genre" : "appareil",
+      "id" : "thread:1E5019DAC2638F92",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "327DF9C45C82BBD6",
+      "genre" : "appareil",
+      "id" : "thread:327DF9C45C82BBD6",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : true
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "3A5DFAFCAB581AAF",
+      "genre" : "appareil",
+      "id" : "thread:3A5DFAFCAB581AAF",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "462DA5B311AFFCC7",
+      "genre" : "appareil",
+      "id" : "thread:462DA5B311AFFCC7",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "disparu",
+      "extMac" : "46F77B36E071F8D0",
+      "genre" : "appareil",
+      "id" : "thread:46F77B36E071F8D0",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "56B1E064401F74EF",
+      "genre" : "appareil",
+      "id" : "thread:56B1E064401F74EF",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "724CC16B32D8F820",
+      "genre" : "appareil",
+      "id" : "thread:724CC16B32D8F820",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "7A3D0C7512F8E0A5",
+      "genre" : "appareil",
+      "id" : "thread:7A3D0C7512F8E0A5",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "disparu",
+      "extMac" : "7AF0B6D5006CF95F",
+      "genre" : "appareil",
+      "id" : "thread:7AF0B6D5006CF95F",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "82570DF21CF3784B",
+      "genre" : "appareil",
+      "id" : "thread:82570DF21CF3784B",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "86E7BD1A75F28E6D",
+      "genre" : "appareil",
+      "id" : "thread:86E7BD1A75F28E6D",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "8A13154B7B48F32E",
+      "genre" : "appareil",
+      "id" : "thread:8A13154B7B48F32E",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "8A7E6F2665F737C6",
+      "genre" : "appareil",
+      "id" : "thread:8A7E6F2665F737C6",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "9A28601B74FF90A7",
+      "genre" : "appareil",
+      "id" : "thread:9A28601B74FF90A7",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "9A5C1F9FDFAB242D",
+      "genre" : "appareil",
+      "id" : "thread:9A5C1F9FDFAB242D",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "AA3D322B8A4500C4",
+      "genre" : "appareil",
+      "id" : "thread:AA3D322B8A4500C4",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "0274C96BE3FC6DFD",
+      "genre" : "centre",
+      "id" : "thread:Apple TV 4K",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "264548D39FE8DFEB",
+      "genre" : "centre",
+      "id" : "thread:Aqara HubM100 #DFEB",
+      "inconnu" : false,
+      "partition" : "E2E79FFC",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "C656F369B620027F",
+      "genre" : "appareil",
+      "id" : "thread:C656F369B620027F",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "C663573E49A1EC90",
+      "genre" : "appareil",
+      "id" : "thread:C663573E49A1EC90",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "disparu",
+      "extMac" : "D661EE20B3E97C66",
+      "genre" : "appareil",
+      "id" : "thread:D661EE20B3E97C66",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "D6ECDD6EF9C0CB0C",
+      "genre" : "appareil",
+      "id" : "thread:D6ECDD6EF9C0CB0C",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "DAEF22ACB58F651C",
+      "genre" : "appareil",
+      "id" : "thread:DAEF22ACB58F651C",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "disparu",
+      "extMac" : "FA15027BC681BB16",
+      "genre" : "appareil",
+      "id" : "thread:FA15027BC681BB16",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "96D26CBEC20F900F",
+      "genre" : "routeur",
+      "id" : "thread:HomePod Avant",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "EE8F695DF75B373F",
+      "genre" : "routeur",
+      "id" : "thread:HomePod Palier",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "864BDCE801F99266",
+      "genre" : "routeur",
+      "id" : "thread:HomePod mini bureau",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : true,
+      "endormi" : false,
+      "extMac" : "4AB6839EECEE0DBE",
+      "genre" : "routeur",
+      "id" : "thread:HomePod mini chambre",
+      "inconnu" : false,
+      "partition" : "73586B68",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "extMac" : "E0000000000000FF",
+      "genre" : "appareil",
+      "id" : "thread:rloc:041F",
+      "inconnu" : true,
+      "partition" : "73586B68",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000001",
+      "genre" : "centre",
+      "id" : "zigbee:A000000000000001",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000010",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000010",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000011",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000011",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000012",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000012",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000013",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000013",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000014",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000014",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000015",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000015",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000016",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000016",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000017",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000017",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "disparu",
+      "extMac" : "A000000000000018",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000018",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A000000000000019",
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000019",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A00000000000001A",
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001A",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A00000000000001B",
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001B",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "etat" : "joignable",
+      "extMac" : "A00000000000001C",
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001C",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000020",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000020",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000021",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000021",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000022",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000022",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000023",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000023",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000024",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000024",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000025",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000025",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : true,
+      "etat" : "joignable",
+      "extMac" : "A000000000000026",
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000026",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "extMac" : "A0000000000000FD",
+      "genre" : "routeur",
+      "id" : "zigbee:A0000000000000FD",
+      "inconnu" : true,
+      "partition" : "zigbee",
+      "routeur" : true,
+      "sonde" : false
+    },
+    {
+      "bordure" : false,
+      "endormi" : false,
+      "extMac" : "A0000000000000FE",
+      "genre" : "appareil",
+      "id" : "zigbee:A0000000000000FE",
+      "inconnu" : false,
+      "partition" : "zigbee",
+      "routeur" : false,
+      "sonde" : true
+    }
+  ],
+  "pieces" : [
+    {
+      "cle" : "piece:Abri",
+      "etage" : "zone:Jardin",
+      "noeuds" : [
+        "thread:82570DF21CF3784B",
+        "thread:C656F369B620027F",
+        "zigbee:A000000000000023"
+      ],
+      "teinte" : 3
+    },
+    {
+      "cle" : "piece:Buanderie",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "thread:Aqara HubM100 #DFEB",
+        "zigbee:A000000000000026"
+      ],
+      "teinte" : 4
+    },
+    {
+      "cle" : "piece:Bureau",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "thread:46F77B36E071F8D0",
+        "thread:56B1E064401F74EF",
+        "thread:HomePod mini bureau",
+        "zigbee:A000000000000015"
+      ],
+      "teinte" : 7
+    },
+    {
+      "cle" : "piece:Chambre",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "thread:462DA5B311AFFCC7",
+        "thread:D661EE20B3E97C66",
+        "thread:HomePod mini chambre",
+        "zigbee:A000000000000016",
+        "zigbee:A000000000000024"
+      ],
+      "teinte" : 3
+    },
+    {
+      "cle" : "piece:Chambre d'amis",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "thread:9A28601B74FF90A7",
+        "zigbee:A000000000000017"
+      ],
+      "teinte" : 6
+    },
+    {
+      "cle" : "piece:Cuisine",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "thread:D6ECDD6EF9C0CB0C",
+        "zigbee:A000000000000012",
+        "zigbee:A000000000000013",
+        "zigbee:A000000000000022"
+      ],
+      "teinte" : 1
+    },
+    {
+      "cle" : "piece:Entrée",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "thread:86E7BD1A75F28E6D",
+        "thread:FA15027BC681BB16",
+        "zigbee:A000000000000014",
+        "zigbee:A000000000000021"
+      ],
+      "teinte" : 7
+    },
+    {
+      "cle" : "piece:Grenier",
+      "etage" : "zone:Combles",
+      "noeuds" : [
+        "thread:327DF9C45C82BBD6",
+        "thread:3A5DFAFCAB581AAF",
+        "thread:9A5C1F9FDFAB242D",
+        "zigbee:A00000000000001C",
+        "zigbee:A000000000000025"
+      ],
+      "teinte" : 5
+    },
+    {
+      "cle" : "piece:Salle de bain",
+      "etage" : "zone:Étage",
+      "noeuds" : [
+        "thread:7A3D0C7512F8E0A5",
+        "zigbee:A000000000000019"
+      ],
+      "teinte" : 4
+    },
+    {
+      "cle" : "piece:Salle de jeux",
+      "etage" : "zone:Combles",
+      "noeuds" : [
+        "thread:02A8C3C5600F136B",
+        "thread:AA3D322B8A4500C4",
+        "thread:C663573E49A1EC90",
+        "zigbee:A00000000000001A"
+      ],
+      "teinte" : 6
+    },
+    {
+      "cle" : "piece:Salon",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "thread:724CC16B32D8F820",
+        "thread:7AF0B6D5006CF95F",
+        "thread:8A7E6F2665F737C6",
+        "thread:Apple TV 4K",
+        "thread:HomePod Avant",
+        "thread:HomePod Palier",
+        "zigbee:A000000000000001",
+        "zigbee:A000000000000010",
+        "zigbee:A000000000000011",
+        "zigbee:A000000000000018",
+        "zigbee:A000000000000020"
+      ],
+      "teinte" : 2
+    },
+    {
+      "cle" : "piece:Terrasse",
+      "etage" : "zone:Jardin",
+      "noeuds" : [
+        "thread:0A84D1254BD246AD",
+        "thread:DAEF22ACB58F651C",
+        "zigbee:A00000000000001B"
+      ],
+      "teinte" : 2
+    },
+    {
+      "cle" : "sans-piece",
+      "etage" : "zone:Rez-de-chaussée",
+      "noeuds" : [
+        "thread:1E5019DAC2638F92",
+        "thread:8A13154B7B48F32E",
+        "thread:rloc:041F",
+        "zigbee:A0000000000000FD",
+        "zigbee:A0000000000000FE"
+      ],
+      "teinte" : 3
+    }
+  ],
+  "scene" : [
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:02A8C3C5600F136B",
+      "libelle" : "Prise console",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:0A84D1254BD246AD",
+      "libelle" : "Prise terrasse",
+      "piece" : "piece:Terrasse",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:1E5019DAC2638F92",
+      "libelle" : "1E5019DAC2638F92",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:327DF9C45C82BBD6",
+      "libelle" : "Capteur d'humidité",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:3A5DFAFCAB581AAF",
+      "libelle" : "Eve Motion",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:462DA5B311AFFCC7",
+      "libelle" : "Fenêtre chambre",
+      "piece" : "piece:Chambre",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:46F77B36E071F8D0",
+      "libelle" : "Prise bureau",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:56B1E064401F74EF",
+      "libelle" : "Halo",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:724CC16B32D8F820",
+      "libelle" : "Volet salon",
+      "piece" : "piece:Salon",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:7A3D0C7512F8E0A5",
+      "libelle" : "Capteur salle de bain",
+      "piece" : "piece:Salle de bain",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:7AF0B6D5006CF95F",
+      "libelle" : "Prise salon",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:82570DF21CF3784B",
+      "libelle" : "Vanne d'arrosage",
+      "piece" : "piece:Abri",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:86E7BD1A75F28E6D",
+      "libelle" : "Nuki Ultra",
+      "piece" : "piece:Entrée",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:8A13154B7B48F32E",
+      "libelle" : "8A13154B7B48F32E",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:8A7E6F2665F737C6",
+      "libelle" : "Porte-fenêtre",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:9A28601B74FF90A7",
+      "libelle" : "Lampe chambre d'amis",
+      "piece" : "piece:Chambre d'amis",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:9A5C1F9FDFAB242D",
+      "libelle" : "Détecteur de chaleur allée",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:AA3D322B8A4500C4",
+      "libelle" : "Lampe arcade",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : true,
+      "genre" : "centre",
+      "id" : "thread:Apple TV 4K",
+      "libelle" : "Apple TV 4K",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 15
+    },
+    {
+      "chef" : false,
+      "genre" : "centre",
+      "id" : "thread:Aqara HubM100 #DFEB",
+      "libelle" : "Aqara HubM100 #DFEB",
+      "piece" : "piece:Buanderie",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 15
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:C656F369B620027F",
+      "libelle" : "Capteur porte de l'abri",
+      "piece" : "piece:Abri",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:C663573E49A1EC90",
+      "libelle" : "Capteur de lucarne",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:D661EE20B3E97C66",
+      "libelle" : "Thermo chambre",
+      "piece" : "piece:Chambre",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:D6ECDD6EF9C0CB0C",
+      "libelle" : "Interrupteur cuisine",
+      "piece" : "piece:Cuisine",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:DAEF22ACB58F651C",
+      "libelle" : "Météo terrasse",
+      "piece" : "piece:Terrasse",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:FA15027BC681BB16",
+      "libelle" : "Ampoule entrée",
+      "piece" : "piece:Entrée",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "thread:HomePod Avant",
+      "libelle" : "HomePod Avant",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "thread:HomePod Palier",
+      "libelle" : "HomePod Palier",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "thread:HomePod mini bureau",
+      "libelle" : "HomePod mini bureau",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "thread:HomePod mini chambre",
+      "libelle" : "HomePod mini chambre",
+      "piece" : "piece:Chambre",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 13
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "thread:rloc:041F",
+      "libelle" : "Non identifié · 041F",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : true,
+      "genre" : "centre",
+      "id" : "zigbee:A000000000000001",
+      "libelle" : "Pont Hue",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 1,
+      "rayon" : 15
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000010",
+      "libelle" : "Plafonnier salon",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000011",
+      "libelle" : "Lampadaire salon",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000012",
+      "libelle" : "Suspension de l'îlot",
+      "piece" : "piece:Cuisine",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000013",
+      "libelle" : "Ruban cuisine",
+      "piece" : "piece:Cuisine",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000014",
+      "libelle" : "Ampoule entrée (Hue)",
+      "piece" : "piece:Entrée",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000015",
+      "libelle" : "Lampe bureau",
+      "piece" : "piece:Bureau",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000016",
+      "libelle" : "Lampe chambre",
+      "piece" : "piece:Chambre",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000017",
+      "libelle" : "Lampe chambre d'amis (Hue)",
+      "piece" : "piece:Chambre d'amis",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000018",
+      "libelle" : "Prise salon (Hue)",
+      "piece" : "piece:Salon",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A000000000000019",
+      "libelle" : "Lampe Salle de Bain",
+      "piece" : "piece:Salle de bain",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001A",
+      "libelle" : "Lampe arcade (Hue)",
+      "piece" : "piece:Salle de jeux",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001B",
+      "libelle" : "Prise terrasse (Hue)",
+      "piece" : "piece:Terrasse",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A00000000000001C",
+      "libelle" : "Lampe grenier",
+      "piece" : "piece:Grenier",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000020",
+      "libelle" : "Interrupteur salon",
+      "piece" : "piece:Salon",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000021",
+      "libelle" : "Détecteur entrée",
+      "piece" : "piece:Entrée",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000022",
+      "libelle" : "Variateur cuisine",
+      "piece" : "piece:Cuisine",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000023",
+      "libelle" : "Détecteur abri",
+      "piece" : "piece:Abri",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000024",
+      "libelle" : "Télécommande chambre",
+      "piece" : "piece:Chambre",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000025",
+      "libelle" : "Capteur grenier",
+      "piece" : "piece:Grenier",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A000000000000026",
+      "libelle" : "Capteur de fuite",
+      "piece" : "piece:Buanderie",
+      "pile" : true,
+      "rang" : 3,
+      "rayon" : 7
+    },
+    {
+      "chef" : false,
+      "genre" : "routeur",
+      "id" : "zigbee:A0000000000000FD",
+      "libelle" : "A0000000000000FD",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 2,
+      "rayon" : 8
+    },
+    {
+      "chef" : false,
+      "genre" : "appareil",
+      "id" : "zigbee:A0000000000000FE",
+      "libelle" : "Sonde",
+      "piece" : "sans-piece",
+      "pile" : false,
+      "rang" : 3,
+      "rayon" : 7
+    }
+  ]
+}

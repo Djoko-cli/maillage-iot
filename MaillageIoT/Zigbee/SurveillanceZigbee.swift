@@ -35,9 +35,11 @@ final class SurveillanceZigbee: ModeleProtocole {
     typealias Fraicheur = Surveillance.Fraicheur
 
     let mode: Surveillance.Mode
-    /// Ce modele rejoue la demo de Zigbee (le faux reseau Hue) ; faux : en demo, un modele muet (la demo n'a qu'un
-    /// reseau a la fois, la demo combinee est a l'etape 3b).
+    /// Ce modele rejoue la demo de Zigbee (le faux reseau Hue) ; faux : en demo, un modele muet (`-demo-thread`).
     let rejoueLaDemo: Bool
+    /// La demo qu'il rejoue : la sienne seule (`-demo-zigbee`), ou recalee sur l'horloge de Thread et aux homonymes renommes
+    /// (`-demo`, la demo combinee). Ses dates et ses noms, et l'heure de ce modele en demo (`maintenant(a:)`).
+    let demo: DemoZigbee
     /// « Activer ce protocole » (spec 3.3) : faux, Zigbee est vraiment arrete (sonde, Bonjour, pont Hue) et ne montre ni
     /// n'ecrit plus rien ; l'activer le relance comme au lancement. Garde sous `zigbee.actif`, vrai par defaut ; la demo
     /// ne le lit ni ne l'ecrit.
@@ -122,11 +124,12 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// `dossier` : la racine des donnees de l'app ; les fichiers de Zigbee (dernier maillage, appariements de Maison,
     /// historique de la sonde) vont sous `Zigbee/` (nil : nulle part) ; `surnoms` : ceux de `surnoms.json`, de tous les
     /// protocoles (le resolveur de noms ne garde que ceux de Zigbee) ; `preferences` : `actif` (mode direct) ;
-    /// `rejoueLaDemo` : en demo, le faux reseau Hue.
+    /// `rejoueLaDemo` : en demo, le faux reseau Hue, tel que `demo` le donne.
     init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults = .standard,
-         rejoueLaDemo: Bool = true) {
+         rejoueLaDemo: Bool = true, demo: DemoZigbee = .seule) {
         self.mode = mode
         self.rejoueLaDemo = rejoueLaDemo
+        self.demo = demo
         self.preferences = preferences
         persisteActif = mode == .direct && Surveillance.activationPersistee(preferences)
         actif = persisteActif ? (preferences.object(forKey: Self.cleActif) as? Bool ?? true) : true
@@ -142,9 +145,9 @@ final class SurveillanceZigbee: ModeleProtocole {
             fichierAppariements = nil
             fichiersHistorique = nil
             if rejoueLaDemo {
-                nomsPont = NomsDemo.maisonPont
-                releveMaison = NomsDemo.releveMaison
-                let f = FusionNoms.fusionner(pont: NomsDemo.maisonPont, maison: NomsDemo.releveMaison)
+                nomsPont = demo.maisonPont
+                releveMaison = demo.releveMaison
+                let f = FusionNoms.fusionner(pont: demo.maisonPont, maison: demo.releveMaison)
                 noms = ResolveurNomsZigbee(maison: f.noms)
                 bilanFusion = f.bilan
             } else {
@@ -190,8 +193,8 @@ final class SurveillanceZigbee: ModeleProtocole {
         switch mode {
         case .demo:
             guard rejoueLaDemo else { return }
-            recevoir(MaillageDemoZigbee.maillageAvant, a: MaillageDemoZigbee.debut)
-            recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin)
+            recevoir(demo.maillageAvant, a: demo.debut)
+            recevoir(demo.maillage, a: demo.fin)
         case .direct:
             demarre = true
             if actif { lancer() }
@@ -361,7 +364,7 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// tard des modeles).
     func maintenant(a horloge: Date) -> Date {
         guard mode == .demo else { return horloge }
-        return rejoueLaDemo ? MaillageDemoZigbee.fin : .distantPast
+        return rejoueLaDemo ? demo.fin : .distantPast
     }
 
     /// Nom affiche d'un noeud par son adresse longue : surnom, nom sur le pont, « Sonde » pour la sonde, sinon

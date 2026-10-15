@@ -46,7 +46,7 @@ r = {
     "configuration": m.pop("compilation"),
     "machine": "Mac (Apple Silicon)" if arch == "arm64" else "Mac (Intel)",
     "systeme": "macOS " + systeme,
-    "scene": "demo (-demo), hors ecran, 1200 x 800",
+    "scene": "demo de Thread seule (-demo-thread), hors ecran, 1200 x 800",
     "unite": "ms (medianes)",
     "methode": "MaillageIoTTests/MesuresVueTests.swift, lancee par outils/mesurer.sh vue",
 }

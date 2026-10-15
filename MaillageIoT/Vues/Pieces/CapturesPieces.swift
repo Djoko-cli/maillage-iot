@@ -6,8 +6,9 @@ import ProtocoleZigbee
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Images de la vue par pieces rendues par l'app elle-meme, en mode demo (`--args -demo -captures
-/// <dossier>` pour la demo de Thread, `--args -demo-zigbee -captures <dossier>` pour celle de Zigbee, chacune seule),
+/// Images de la vue par pieces rendues par l'app elle-meme, en mode demo (`--args -demo-thread -captures
+/// <dossier>` pour la demo de Thread, `--args -demo-zigbee -captures <dossier>` pour celle de Zigbee, chacune seule,
+/// `--args -demo -captures <dossier>` pour la demo combinee, un choix d'images des deux protocoles ensemble),
 /// pour la relecture (spec de la vue par pieces, section 10) : 2D, envol, 3D, zooms,
 /// pieces isolees, survol, la fiche du chef (du pont pour Zigbee), la legende repliee ; puis les etages (polissage C, section 7) :
 /// la grille 2 x 2 dans une fenetre carree, la meme fenetre en rangee, le jardin dans la maison, un etage isole en 2D
@@ -190,13 +191,44 @@ enum CapturesPieces {
         },
     ]
 
+    /// Les images de la demo combinee, dans l'ordre : les vues d'ensemble des deux reseaux ensemble (2D, envol, 3D, zooms,
+    /// pieces isolees, survol), les fiches d'un noeud de chaque protocole (le chef de Thread, le pont de Zigbee), puis les deux
+    /// homonymes d'avant le renommage : la lampe de l'arcade de Thread, et celle de Zigbee, « Lampe arcade (Hue) ».
+    static let casCombinee: [Cas] = [
+        Cas(nom: "01-2d") { _, _ in },
+        Cas(nom: "02-envol-30") { m, _ in m.poserBascule(0.3) },
+        Cas(nom: "03-envol-55") { m, _ in m.poserBascule(0.55) },
+        Cas(nom: "04-envol-80") { m, _ in m.poserBascule(0.8) },
+        Cas(nom: "05-3d") { m, _ in m.poserBascule(1) },
+        Cas(nom: "06-3d-tournee") { m, _ in
+            m.poserBascule(1)
+            m.poserAzimut(-1.9)
+        },
+        Cas(nom: "07-2d-zoom-salon") { m, sc in m.poserZoom(echelle: 2.2, vers: m.centrePiece(piece(sc, "Salon"))) },
+        Cas(nom: "08-2d-mi-distance") { m, _ in m.poserZoom(echelle: 0.5, vers: nil) },
+        Cas(nom: "09-3d-isolee-salon") { m, sc in
+            m.poserBascule(1)
+            m.poserIsolement(piece(sc, "Salon"))
+        },
+        Cas(nom: "10-2d-survol-thread") { m, _ in m.poserSurvol(IdNoeud(.thread, "9A28601B74FF90A7")) },
+        Cas(nom: "11-2d-survol-zigbee") { m, _ in m.poserSurvol(IdNoeud(.zigbee, NomsDemo.Ieee.lampeChambreAmis)) },
+        Cas(nom: "12-2d-fiche-du-chef-thread") { m, _ in m.selection = IdNoeud(.thread, "Apple TV 4K") },
+        Cas(nom: "13-2d-fiche-du-pont-zigbee") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.pont) },
+        Cas(nom: "14-2d-legende-repliee", poser: { _, _ in }, legendeRepliee: true),
+        Cas(nom: "15-2d-fiche-lampe-arcade-thread") { m, _ in m.selection = IdNoeud(.thread, "AA3D322B8A4500C4") },
+        Cas(nom: "16-2d-fiche-lampe-arcade-zigbee") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeArcade) },
+    ]
+
     /// Evenements inventes des captures du journal regroupe de Zigbee : la lampe du bureau hesite entre plusieurs relais,
     /// le detecteur de l'abri entre deux parents, dans l'heure qui precede la fin de la demo (le changement de la demo
     /// s'y ajoute).
-    static var evenementsHesitants: [Evenement] {
+    static var evenementsHesitants: [Evenement] { evenementsHesitants(fin: MaillageDemoZigbee.fin) }
+
+    /// Les memes, dans l'heure qui precede `fin`, la fin de la demo de Zigbee rejouee (`DemoZigbee.fin`).
+    static func evenementsHesitants(fin: Date) -> [Evenement] {
         func changement(_ type: TypeEvenement, _ ieee: String, _ nom: String, _ minutes: Double, _ avant: String,
                         _ apres: String) -> Evenement {
-            Evenement(date: MaillageDemoZigbee.fin.addingTimeInterval(-minutes * 60), type: type, sujet: Sujet(id: ieee, nom: nom),
+            Evenement(date: fin.addingTimeInterval(-minutes * 60), type: type, sujet: Sujet(id: ieee, nom: nom),
                       avant: avant, apres: apres, details: ["ieee": ieee])
         }
         let b = NomsDemo.Ieee.lampeBureau, d = NomsDemo.Ieee.detecteurAbri
@@ -279,27 +311,34 @@ enum CapturesPieces {
         return (m, e)
     }
 
-    /// Ecrit les images de la demo de `protocole` dans `dossier` (la demo de Zigbee : sa maison nommee par Maison, sur quatre
-    /// etages, l'historique et les evenements inventes des captures) ; rend leurs noms.
+    /// Ecrit les images de la demo `demo` dans `dossier` (celle de Zigbee, seule ou combinee : sa maison nommee par Maison, sur
+    /// quatre etages, l'historique et les evenements inventes des captures) ; rend leurs noms.
     @discardableResult
-    static func ecrire(dans dossier: String, surveillance s: Surveillance, protocole: Protocole,
+    static func ecrire(dans dossier: String, surveillance s: Surveillance, demo: DemoLancee,
                        sonde: SondeMaillageThread, sondeZigbee: SondeMaillageZigbee, nomsMaison: NomsPasseur,
                        nomsPont: NomsPont) -> [String] {
         try? FileManager.default.createDirectory(atPath: dossier, withIntermediateDirectories: true)
         let r: Reseau?
         let liste: [Cas]
-        switch protocole {
+        let zigbee = s.zigbee.demo
+        if demo.rejoue(.zigbee) {
+            s.zigbee.noms.maison = zigbee.maisonFusionnee
+            s.zigbee.historiqueDeCapture(zigbee.historique)
+            s.evenementsDeCapture(evenementsHesitants(fin: zigbee.fin), de: .zigbee)
+            guard s.zigbee.aUnReseau else { return [] }
+        }
+        switch demo {
         case .thread:
             guard let reseau = s.thread.reseau else { return [] }
             r = reseau
             liste = cas
         case .zigbee:
-            s.zigbee.noms.maison = NomsDemo.maisonFusionnee
-            s.zigbee.historiqueDeCapture(MaillageDemoZigbee.historique)
-            s.evenementsDeCapture(evenementsHesitants, de: .zigbee)
-            guard s.zigbee.aUnReseau else { return [] }
             r = nil
             liste = casZigbee
+        case .combinee:
+            guard let reseau = s.thread.reseau else { return [] }
+            r = reseau
+            liste = casCombinee
         }
         let palette = Palette(sombre: true)
         // Hauteur d'une vue de la fenetre, rendue pour une capture, a la largeur `largeur` (sinon la sienne).
@@ -308,7 +347,7 @@ enum CapturesPieces {
                                                                          nomsPont: nomsPont)).fittingSize.height
         }
         // Marge du haut : la hauteur du haut de la fenetre, mesuree comme dans la fenetre.
-        let haut = hauteur(HautPieces(moteur: MoteurPieces(), troisD: .constant(false), protocoles: [protocole]))
+        let haut = hauteur(HautPieces(moteur: MoteurPieces(), troisD: .constant(false), protocoles: demo.protocoles))
         let marges = (FenetrePieces.margeHaut(bas: haut), FenetrePieces.margeBas(pile: nil))
         var noms: [String] = []
         for c in liste {
@@ -326,14 +365,14 @@ enum CapturesPieces {
             var repliee = c.legendeRepliee
             if let id = m.selection {
                 let largeur = taille.width - 2 * FenetrePieces.bord
-                let fiche = hauteur(FicheNoeud(id: id, entree: e, instant: s.maintenant, aRenommer: .constant(nil),
+                let fiche = hauteur(FicheNoeud(id: id, entree: e, instant: s.maintenant(de: id.protocole, a: Date()), aRenommer: .constant(nil),
                                                listeDepliee: c.listeVoisins, changementsDeplies: c.changementsDeplies) {},
                                     largeur: largeur)
                 repliee = repliee || FenetrePieces.repliDePlace(hauteur: taille.height, margeHaut: m.marges.haut,
                                                                 legende: ouverte, fiche: fiche)
                 let pile = hauteur(VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                     LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: repliee)
-                    FicheNoeud(id: id, entree: e, instant: s.maintenant, aRenommer: .constant(nil),
+                    FicheNoeud(id: id, entree: e, instant: s.maintenant(de: id.protocole, a: Date()), aRenommer: .constant(nil),
                                listeDepliee: c.listeVoisins, changementsDeplies: c.changementsDeplies) {}
                 }, largeur: largeur)
                 m.marges.bas = FenetrePieces.margeBas(pile: pile)
@@ -357,7 +396,7 @@ enum CapturesPieces {
         }
         // Zigbee : la page Reglages › Pont Hue, liee a un pont invente. (Le journal de la demo de Zigbee attend les textes
         // d'evenements des deux protocoles, tache 13.)
-        if protocole == .zigbee, let nom = ecrireReglagesPont(dans: dossier, noms: NomsDemo.maisonPont) { noms.append(nom) }
+        if demo.rejoue(.zigbee), let nom = ecrireReglagesPont(dans: dossier, noms: zigbee.maisonPont) { noms.append(nom) }
         return noms
     }
 
@@ -390,7 +429,7 @@ struct VueCapture: View {
                 Spacer()
                 LigneDuBas(moteur: moteur, entree: moteur.entree, legendeForcee: legendeRepliee)
                 if let id = moteur.selection {
-                    FicheNoeud(id: id, entree: moteur.entree, instant: surveillance.maintenant,
+                    FicheNoeud(id: id, entree: moteur.entree, instant: surveillance.maintenant(de: id.protocole, a: Date()),
                                aRenommer: .constant(nil), listeDepliee: listeVoisins,
                                changementsDeplies: changementsDeplies) {}
                 }

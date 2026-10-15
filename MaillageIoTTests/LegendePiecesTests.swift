@@ -152,8 +152,13 @@ struct LegendePiecesTests {
         }
         let h = hauteur(LigneDuBas(moteur: MoteurPieces(), entree: e, legendeForcee: false))
         #expect(h > 150, "la legende de la demo, ouverte : \(h)")
-        let rubriques = LegendePieces.rubriques(LegendePieces.Lecture(e, ailleurs: false))
-        #expect(h == hauteur(LegendePieces(rubriques: rubriques, repliee: .constant(false))), "la legende seule, sans la ligne de niveau")
+        let lecture = LegendePieces.Lecture(e, ailleurs: false)
+        let rubriques = LegendePieces.rubriques(lecture)
+        // Un seul protocole dans la scene : pas de ligne « Thread / Zigbee » ; avec les deux (la demo combinee), la rangee la
+        // porte (`DemoCombineeTests.margeDuBasDeuxProtocoles`).
+        let ligne = LegendePieces.montreLesProtocoles(lecture)
+        #expect(!ligne, "la demo d'un protocole seul : pas de ligne des protocoles")
+        #expect(h == hauteur(LegendePieces(rubriques: rubriques, ligneProtocoles: ligne, repliee: .constant(false))), "la legende seule, sans la ligne de niveau")
         #expect(FenetrePieces.margeBas(pile: h) == FenetrePieces.bord + ceil(h) + FenetrePieces.espacement)
         #expect(FenetrePieces.margeBas(pile: nil) == 30, "repliee, sans fiche")
         #expect(FenetrePieces.margeBas(pile: 2) == 30)

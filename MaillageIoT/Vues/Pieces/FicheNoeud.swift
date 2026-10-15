@@ -174,7 +174,7 @@ struct FicheNoeud: View {
                     Text("Fabriques : \(a.fabriques.count)").foregroundStyle(.secondary)
                 }
                 ligneSonde
-                let verifie = surveillance.thread.verification(a.id, a: surveillance.maintenant) != nil
+                let verifie = surveillance.thread.verification(a.id, a: surveillance.thread.maintenant) != nil
                 lignesPartition(partition: surveillance.thread.partitionAffichee(a, verifie: verifie), prefixe: a.prefixe,
                                 incertaine: surveillance.thread.instantane?.partitionIncertaine(a) == true)
             } else if let m = sonde, let n = m.noeud(cle) {

@@ -183,10 +183,10 @@ D'après `inventaire-etape3b.md` §10 ; spec 3.6, 6.7, décision 3.
 - Create: `MaillageIoTTests/ReferenceRejeuCombineeTests.swift` (identifiants préfixés), `docs/rejeu/maillage-iot-demo.json` (écrit une fois en bac à sable, relu, commité, jamais régénéré) ; un test « union » qui relit les deux références existantes.
 - Test: les deux rejeux existants inchangés (par `-demo-thread` / `-demo-zigbee`) ; `horlogeDuModeleDuNoeud` (un nœud Thread de la démo combinée n'est pas périmé).
 
-- [ ] **Step 1: RED** — tests ci-dessus (la référence combinée est créée à l'étape 2, puis le test doit passer sans la régénérer).
-- [ ] **Step 2: GREEN** — implémenter ; écrire la référence une seule fois.
-- [ ] **Step 3: Vérifier** — porte de la tâche (trois références exactes).
-- [ ] **Step 4: Commit** — « Demo combinee : -demo, horloge par modele, reference de la scene combinee ».
+- [x] **Step 1: RED** — tests ci-dessus (la référence combinée est créée à l'étape 2, puis le test doit passer sans la régénérer).
+- [x] **Step 2: GREEN** — implémenter ; écrire la référence une seule fois.
+- [x] **Step 3: Vérifier** — porte de la tâche (trois références exactes).
+- [x] **Step 4: Commit** — « Demo combinee : -demo, horloge par modele, reference de la scene combinee ».
 
 ---
 

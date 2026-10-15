@@ -4,7 +4,7 @@
   "configuration": "Release",
   "machine": "Mac (Apple Silicon)",
   "systeme": "macOS 27.0.1",
-  "scene": "demo (-demo), hors ecran, 1200 x 800",
+  "scene": "demo de Thread seule (-demo-thread), hors ecran, 1200 x 800",
   "unite": "ms (medianes)",
   "methode": "MaillageIoTTests/MesuresVueTests.swift, lancee par outils/mesurer.sh vue",
   "noeuds": 31,
