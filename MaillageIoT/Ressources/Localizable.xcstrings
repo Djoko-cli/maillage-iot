@@ -417,6 +417,22 @@
         }
       }
     },
+    "%@ est éteint dans les Réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is turned off in Settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est éteint dans les Réglages"
+          }
+        }
+      }
+    },
     "%@ n'a plus de parent" : {
       "localizations" : {
         "en" : {
@@ -493,6 +509,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld partitions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld partitions"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld partitions"
           }
         }
       }
@@ -1569,18 +1601,34 @@
         }
       }
     },
-    "Alerte dans l'heure" : {
+    "Alerte Thread dans l'heure" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alert in the last hour"
+            "value" : "Thread alert in the last hour"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alerte dans l'heure"
+            "value" : "Alerte Thread dans l'heure"
+          }
+        }
+      }
+    },
+    "Alerte Zigbee dans l'heure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee alert in the last hour"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alerte Zigbee dans l'heure"
           }
         }
       }
@@ -2705,6 +2753,22 @@
         }
       }
     },
+    "Démo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démo"
+          }
+        }
+      }
+    },
     "Dépendants" : {
       "localizations" : {
         "en" : {
@@ -2909,6 +2973,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entre %1$@ et %2$@ : %3$@"
+          }
+        }
+      }
+    },
+    "Erreur (voir les Réglages)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error (see Settings)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erreur (voir les Réglages)"
           }
         }
       }
@@ -3201,6 +3281,22 @@
         }
       }
     },
+    "Identifier par Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identify via Hue"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Identifier par Hue"
+          }
+        }
+      }
+    },
     "Identifier par Maison" : {
       "localizations" : {
         "en" : {
@@ -3245,6 +3341,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Installer automatiquement"
+          }
+        }
+      }
+    },
+    "Introuvable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not found"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introuvable"
           }
         }
       }
@@ -3697,6 +3809,22 @@
         }
       }
     },
+    "Liaison en cours…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linking…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liaison en cours…"
+          }
+        }
+      }
+    },
     "Liaison refusée par le pont : %@" : {
       "localizations" : {
         "en" : {
@@ -3773,6 +3901,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Liste des routeurs"
+          }
+        }
+      }
+    },
+    "Lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lié"
           }
         }
       }
@@ -3917,6 +4061,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maison indisponible pour Passeur Noms."
+          }
+        }
+      }
+    },
+    "Masquer %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer %@"
+          }
+        }
+      }
+    },
+    "Masquer %@ dans le journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide %@ in the journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer %@ dans le journal"
           }
         }
       }
@@ -4097,6 +4273,38 @@
         }
       }
     },
+    "Montrer %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montrer %@"
+          }
+        }
+      }
+    },
+    "Montrer %@ dans le journal" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show %@ in the journal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montrer %@ dans le journal"
+          }
+        }
+      }
+    },
     "Mot de passe" : {
       "localizations" : {
         "en" : {
@@ -4205,6 +4413,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Non identifié · %@"
+          }
+        }
+      }
+    },
+    "Non lié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not linked"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non lié"
           }
         }
       }
@@ -5137,22 +5361,6 @@
         }
       }
     },
-    "Rafraîchir : rien à relever sans sonde connectée" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refresh: nothing to read without a connected probe"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rafraîchir : rien à relever sans sonde connectée"
-          }
-        }
-      }
-    },
     "Rafraîchir : réseau" : {
       "localizations" : {
         "en" : {
@@ -5213,22 +5421,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rafraîchir : réseau, tournée de la sonde et noms de Maison"
-          }
-        }
-      }
-    },
-    "Rafraîchir : tournée de la sonde" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Refresh: probe round"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rafraîchir : tournée de la sonde"
           }
         }
       }
@@ -5921,22 +6113,6 @@
         }
       }
     },
-    "Réseau Zigbee" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zigbee network"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Réseau Zigbee"
-          }
-        }
-      }
-    },
     "Réseau Zigbee normal" : {
       "localizations" : {
         "en" : {
@@ -6465,6 +6641,38 @@
         }
       }
     },
+    "Thread est masqué" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread is hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread est masqué"
+          }
+        }
+      }
+    },
+    "Thread et Zigbee sont masqués" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread and Zigbee are hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread et Zigbee sont masqués"
+          }
+        }
+      }
+    },
     "Tournée" : {
       "localizations" : {
         "en" : {
@@ -6973,6 +7181,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zigbee"
+          }
+        }
+      }
+    },
+    "Zigbee est masqué" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee is hidden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee est masqué"
           }
         }
       }
@@ -7665,18 +7889,18 @@
         }
       }
     },
-    "coordinateur (le pont)" : {
+    "coordinateur Zigbee (le pont)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "coordinator (the bridge)"
+            "value" : "Zigbee coordinator (the bridge)"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "coordinateur (le pont)"
+            "value" : "coordinateur Zigbee (le pont)"
           }
         }
       }
@@ -9137,6 +9361,38 @@
         }
       }
     },
+    "routeur Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thread router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur Thread"
+          }
+        }
+      }
+    },
+    "routeur Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zigbee router"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur Zigbee"
+          }
+        }
+      }
+    },
     "routeur de bordure" : {
       "localizations" : {
         "en" : {
@@ -9533,6 +9789,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vérifié par la sonde %@"
+          }
+        }
+      }
+    },
+    "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau »." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Thread Network” is available once network access is allowed: plug the probe in over USB, then “Allow Network Access”."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau »."
           }
         }
       }

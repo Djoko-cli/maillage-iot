@@ -5,11 +5,17 @@ import SwiftUI
 /// routeur en sphere brillante (degrade du blanc vers sa couleur, decale en haut a gauche) avec un
 /// halo, appareil en pastille pleine de la couleur de son etat avec un halo, appareil disparu en
 /// anneau ; cercle bleu autour d'un routeur Thread qui n'est pas de bordure ; ondes de part et d'autre de la sonde ;
-/// anneau blanc de la selection ; pastille orange d'une batterie faible.
+/// anneau blanc de la selection ; pastille orange d'une batterie faible. Le protocole se lit au contour (spec 3.1 et 6.7) :
+/// Thread est rond, Zigbee un hexagone, pointe en haut, dont les sommets sont sur le rayon du noeud (le cercle
+/// circonscrit) ; les ornements (cercle, anneau pointille, ondes, anneau de selection) restent ronds, au-dela du rayon :
+/// ils ne touchent aucun sommet.
 enum DessinNoeud {
     /// Couleur d'un noeud, resolue par la palette au dessin.
     enum Couleur: Hashable {
         case routeur(principale: Bool)
+        /// Routeur de Zigbee, pont Hue compris : violet, une teinte que ni les etats ni le bleu des routeurs de bordure de
+        /// Thread n'emploient.
+        case routeurZigbee
         /// Routeur que seule la sonde connait.
         case routeurInconnu
         case appareil(EtatAffiche)
@@ -23,6 +29,12 @@ enum DessinNoeud {
         case anneau
     }
 
+    /// Le contour d'un noeud : le rond de Thread, l'hexagone de Zigbee.
+    enum Contour: Hashable {
+        case rond
+        case hexagone
+    }
+
     struct Apparence: Hashable {
         var forme: Forme
         var couleur: Couleur
@@ -33,6 +45,8 @@ enum DessinNoeud {
         /// L'anneau pointille jaune d'un appareil joignable que la sonde a trouve, alors qu'il n'annonce plus
         /// d'adresse (variante B, choisie par Djoko le 12/10).
         var verifie = false
+        /// Le rond (Thread) ou l'hexagone (Zigbee) de la forme ; les ornements restent ronds.
+        var contour: Contour = .rond
     }
 
     /// Apparence d'un noeud : sphere pour un routeur de bordure (Thread), un routeur ou le coordinateur (Zigbee) ou un
@@ -47,9 +61,9 @@ enum DessinNoeud {
         let zigbee = n.id.protocole == .zigbee
         var a = switch n.genre {
         case .centre, .routeur:
-            apparenceRouteur(centre: n.genre == .centre, inconnu: n.inconnu, principale: zigbee || principale)
+            apparenceRouteur(centre: n.genre == .centre, inconnu: n.inconnu, principale: principale, protocole: n.id.protocole)
         case .appareil:
-            zigbee ? apparenceAppareil(n.inconnu ? .inconnu : etat)
+            zigbee ? apparenceAppareil(n.inconnu ? .inconnu : etat, protocole: .zigbee)
                 : apparenceAppareil(etat, routeur: n.routeur, verifie: verifie)
         }
         a.sonde = sonde
@@ -64,18 +78,28 @@ enum DessinNoeud {
     }
 
     /// Un routeur : sphere brillante, au halo de 10 pour le centre de sa partition, de 5 sinon ; grise s'il n'est
-    /// connu que de la sonde, sinon de la couleur de sa partition, principale ou non.
-    static func apparenceRouteur(centre: Bool = false, inconnu: Bool, principale: Bool = true) -> Apparence {
-        Apparence(forme: .sphere(halo: centre ? 10 : 5), couleur: inconnu ? .routeurInconnu : .routeur(principale: principale))
+    /// connu que de la sonde, sinon de la couleur de sa partition, principale ou non. `protocole` : celui du noeud ; un
+    /// routeur de Zigbee (le pont compris) est un hexagone violet, sans partition (`principale` n'y compte pas).
+    static func apparenceRouteur(centre: Bool = false, inconnu: Bool, principale: Bool = true,
+                                 protocole: Protocole = .thread) -> Apparence {
+        let forme = Forme.sphere(halo: centre ? 10 : 5)
+        switch protocole {
+        case .thread:
+            return Apparence(forme: forme, couleur: inconnu ? .routeurInconnu : .routeur(principale: principale))
+        case .zigbee:
+            return Apparence(forme: forme, couleur: inconnu ? .routeurInconnu : .routeurZigbee, contour: .hexagone)
+        }
     }
 
     /// Un appareil : pastille de la couleur de son etat (inconnu sans etat), anneau s'il a disparu ; entoure du cercle
     /// bleu s'il route, sauf disparu (il ne route plus) ; entoure de l'anneau pointille jaune s'il est joignable
     /// grace a la sonde (`verifie`, sans effet sur un autre etat).
-    static func apparenceAppareil(_ etat: EtatAffiche?, routeur: Bool = false, verifie: Bool = false) -> Apparence {
+    static func apparenceAppareil(_ etat: EtatAffiche?, routeur: Bool = false, verifie: Bool = false,
+                                  protocole: Protocole = .thread) -> Apparence {
         let e = etat ?? .inconnu
         return Apparence(forme: e == .disparu ? .anneau : .pastille, couleur: .appareil(e),
-                         cercle: routeur && e != .disparu, verifie: verifie && e == .joignable)
+                         cercle: routeur && e != .disparu, verifie: verifie && e == .joignable,
+                         contour: protocole == .zigbee ? .hexagone : .rond)
     }
 
     /// L'anneau d'un appareil verifie : jaune, de 2 points, en tirets de 3 pour 3. Son rayon est celui du point plus
@@ -95,31 +119,70 @@ enum DessinNoeud {
     static func couleur(_ c: Couleur, palette: Palette) -> Color {
         switch c {
         case .routeur(let p): palette.routeur(principale: p)
+        case .routeurZigbee: palette.routeurZigbee
         case .routeurInconnu: palette.routeurInconnu
         case .appareil(let e): palette.appareil(e)
+        }
+    }
+
+    /// Les six sommets de l'hexagone de rayon circonscrit `r`, centre en `c` : le premier pointe en haut, les autres de
+    /// 60 degres en 60 degres, dans le sens des aiguilles d'une montre.
+    static func sommetsHexagone(centre c: CGPoint, rayon r: CGFloat) -> [CGPoint] {
+        (0..<6).map { k in
+            let angle = Double(k) * .pi / 3 - .pi / 2
+            return CGPoint(x: c.x + r * cos(angle), y: c.y + r * sin(angle))
+        }
+    }
+
+    /// Le contour du noeud : un cercle de rayon `r`, ou l'hexagone de rayon circonscrit `r` (`sommetsHexagone`).
+    static func trace(centre c: CGPoint, rayon r: CGFloat, _ contour: Contour) -> Path {
+        switch contour {
+        case .rond:
+            return Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r))
+        case .hexagone:
+            var chemin = Path()
+            chemin.addLines(sommetsHexagone(centre: c, rayon: r))
+            chemin.closeSubpath()
+            return chemin
+        }
+    }
+
+    /// Les six facettes de la sphere hexagonale : un triangle du centre a chaque cote, eclairci du cote de la lumiere (en
+    /// haut a gauche, d'ou vient le reflet du degrade) et assombri du cote oppose. Elles tiennent dans l'hexagone.
+    private static func dessinerFacettes(_ ctx: inout GraphicsContext, centre c: CGPoint, rayon r: CGFloat) {
+        let s = sommetsHexagone(centre: c, rayon: r)
+        for k in 0..<6 {
+            var facette = Path()
+            facette.addLines([c, s[k], s[(k + 1) % 6]])
+            facette.closeSubpath()
+            // La normale de la facette est au milieu de son cote : de -60 degres, de 60 en 60 ; la lumiere vient de -135.
+            let eclairage = cos((Double(k) * 60 - 60 + 135) * .pi / 180)
+            ctx.fill(facette, with: .color(eclairage > 0 ? Color.white.opacity(0.22 * eclairage)
+                                                          : Color.black.opacity(0.16 * -eclairage)))
         }
     }
 
     /// Le noeud, centre en `centre`, de rayon `rayon`.
     static func dessiner(_ ctx: inout GraphicsContext, centre c: CGPoint, rayon r: CGFloat, apparence: Apparence,
                          palette: Palette) {
-        let rect = CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)
+        let contour = trace(centre: c, rayon: r, apparence.contour)
         let couleur = couleur(apparence.couleur, palette: palette)
         switch apparence.forme {
         case .sphere(let halo):
             ctx.drawLayer { l in
                 l.addFilter(.shadow(color: couleur.opacity(0.8), radius: halo))
-                l.fill(Path(ellipseIn: rect), with: .radialGradient(Gradient(colors: [.white.opacity(0.9), couleur]),
-                                                                    center: CGPoint(x: c.x - r / 3, y: c.y - r / 3),
-                                                                    startRadius: 0, endRadius: r * 1.3))
+                l.fill(contour, with: .radialGradient(Gradient(colors: [.white.opacity(0.9), couleur]),
+                                                      center: CGPoint(x: c.x - r / 3, y: c.y - r / 3),
+                                                      startRadius: 0, endRadius: r * 1.3))
             }
+            if apparence.contour == .hexagone { dessinerFacettes(&ctx, centre: c, rayon: r) }
         case .pastille:
             ctx.drawLayer { l in
                 l.addFilter(.shadow(color: couleur.opacity(0.8), radius: 4))
-                l.fill(Path(ellipseIn: rect), with: .color(couleur))
+                l.fill(contour, with: .color(couleur))
             }
         case .anneau:
-            ctx.stroke(Path(ellipseIn: rect), with: .color(couleur), lineWidth: 2)
+            ctx.stroke(contour, with: .color(couleur), style: StrokeStyle(lineWidth: 2, lineJoin: .round))
         }
         if apparence.cercle {
             let a = r + ecartCercle - epaisseurCercle / 2

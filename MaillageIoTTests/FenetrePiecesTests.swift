@@ -79,6 +79,13 @@ struct FenetrePiecesTests {
         }
     }
 
+    /// Ce que la mesure peut lire de la duree de la legende (0,45 s) et de celle de la fiche (0,3 s). L'horloge est la
+    /// vraie et l'echantillonnage de 3 ms : sous charge, un retard ne fait que rallonger la duree lue, jamais la
+    /// raccourcir. La borne basse reste serree (le recadrage ne doit pas etre plus court que sa duree), la haute laisse
+    /// 0,25 s de retard a la legende ; celle de la fiche reste sous 0,45 s, pour qu'on ne la prenne pas pour la legende.
+    static let dureeLegendeMesuree = (Apparition.dureeLegende - 0.07) ... (Apparition.dureeLegende + 0.25)
+    static let dureeFicheMesuree = (Apparition.duree - 0.07) ... 0.42
+
     /// Duree du recadrage de la vue (les marges en route, `margesEnRoute`) : du premier echantillon ou elles le sont au
     /// premier ou elles ne le sont plus ; nil si elles ne partent pas, ou ne s'arretent pas, en 2 s.
     static func dureeDuRecadrage(_ moteur: MoteurPieces) async throws -> Double? {
@@ -333,7 +340,7 @@ struct FenetrePiecesTests {
         let defaut = CGSize(width: 1100, height: 760)
         // Petite fenetre, fiche de la demo : repliee faute de place, puis rouverte.
         let (sousPetite, apresPetite) = try await essai(demo, petite, "Apple TV 4K", repliee: false)
-        #expect(sousPetite < 40 && apresPetite > 150, "820 x 680 : repliee sous la fiche (\(sousPetite)), rouverte ensuite (\(apresPetite))")
+        #expect(sousPetite < 40 && apresPetite > 150, "1000 x 680 : repliee sous la fiche (\(sousPetite)), rouverte ensuite (\(apresPetite))")
         // Fenetre assez haute, fiche de la demo : la place suffit, elle reste ouverte (dans la fenetre par defaut, la fiche
         // en quatre colonnes la fait replier).
         let (sousHaute, _) = try await essai(demo, Self.hauteAssez, "Apple TV 4K", repliee: false)
@@ -378,7 +385,7 @@ struct FenetrePiecesTests {
         #expect(moteur.basGrille == 30, "repli garde par Djoko, sous la fiche : 30 pt")
     }
 
-    /// Taille minimale du contenu de la fenetre : 820 x 680 pt, sous la barre de titre cachee (la fenetre, elle, fait
+    /// Taille minimale du contenu de la fenetre : 1000 x 680 pt, sous la barre de titre cachee (la fenetre, elle, fait
     /// 732 pt de haut au moins, avec la barre d'outils invisible).
     @Test func tailleMinimale() throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
@@ -388,7 +395,7 @@ struct FenetrePiecesTests {
             .environment(s)
             .environment(NomsPasseur())
             .environment(SondeMaillageThread(preferences: p, actif: false))
-        #expect(FenetrePieces.tailleMinimale == CGSize(width: 820, height: 680))
+        #expect(FenetrePieces.tailleMinimale == CGSize(width: 1000, height: 680))
         #expect(NSHostingView(rootView: vue).fittingSize == FenetrePieces.tailleMinimale)
     }
 
@@ -398,7 +405,7 @@ struct FenetrePiecesTests {
     /// du 02/10), ouverte ou repliee faute de place ; la fiche fermee, elle revient a sa place. La marge du bas suit
     /// la hauteur mesuree de la legende seule, puis de la legende et de la fiche : la ligne de niveau n'y compte plus.
     /// Les images de demo ne le montrent pas : `VueCapture` refait sa mise en page, alignee a gauche.
-    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 820, height: 680)])
+    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 1000, height: 680)])
     func rangeeDuBasAGauche(_ taille: CGSize) async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
@@ -465,7 +472,7 @@ struct FenetrePiecesTests {
     /// meme colonne. Les noms de la scene evitent ces nouvelles places (`cadresInterface`). Et la marge du haut de la
     /// vue d'ensemble compte la ligne de niveau, qui est toujours la : elle ne change ni quand la ligne change de
     /// texte (le zoom, une piece isolee, dont le texte est le plus long), ni quand la pastille parait ou repart.
-    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 820, height: 680)])
+    @Test(.timeLimit(.minutes(1)), arguments: [CGSize(width: 1100, height: 760), CGSize(width: 1000, height: 680)])
     func ligneDeNiveauSousLeFil(_ taille: CGSize) async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
@@ -596,6 +603,11 @@ struct FenetrePiecesTests {
         #expect(Apparition.animationLegende(reduire: true) == .easeInOut(duration: 0.45))
         #expect(Apparition.animationDuConteneurLegende(reduire: false) == courbe)
         #expect(Apparition.animationDuConteneurLegende(reduire: true) == nil, "avec le reglage, rien ne se decale en glissant")
+        let bascule = PlanTransition.pour(.bascule).glissement
+        #expect(Apparition.animationDuContenuLegende(reduire: false)
+                    == .timingCurve(0.645, 0.045, 0.355, 1, duration: bascule.duree) && bascule.duree == 0.9,
+                "le contenu qui change au masquage : la duree du mouvement unique de la bascule d'un protocole")
+        #expect(Apparition.animationDuContenuLegende(reduire: true) == nil, "avec le reglage, le contenu change d'un coup")
     }
 
     /// Un vrai clic sur l'etiquette de la legende (son en-tete, ouverte), dans la vraie fenetre, recadre la vue en
@@ -620,18 +632,18 @@ struct FenetrePiecesTests {
         var legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.minX + 40, y: legende.minY + 16))
         let repli = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(repli - Apparition.dureeLegende) < 0.07, "repli par clic : \(repli) s")
+        #expect(Self.dureeLegendeMesuree.contains(repli), "repli par clic : \(repli) s")
         try await Task.sleep(for: .milliseconds(600))
         // Repliee : un clic sur son etiquette l'ouvre.
         legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.midX, y: legende.midY))
         let ouverture = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(ouverture - Apparition.dureeLegende) < 0.07, "ouverture par clic : \(ouverture) s")
+        #expect(Self.dureeLegendeMesuree.contains(ouverture), "ouverture par clic : \(ouverture) s")
         try await Task.sleep(for: .milliseconds(600))
         // La fiche, elle, garde ses 0,3 s.
         moteur.selection = idt("Apple TV 4K")
         let fiche = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(abs(fiche - Apparition.duree) < 0.07, "fiche : \(fiche) s")
+        #expect(Self.dureeFicheMesuree.contains(fiche), "fiche : \(fiche) s")
     }
 
     /// Avec « Reduire les animations », rien ne glisse ni ne s'attarde en haut non plus (spec de B, sections 1 et 3 :
@@ -1121,7 +1133,7 @@ struct FenetrePiecesTests {
         let noms = NomsPasseur()
         let s = Surveillance(mode: .demo, dossier: nil)
         s.demarrer()
-        let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
+        let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1400, height: 700),
                                styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
                                defer: false)
         fenetre.isReleasedWhenClosed = false
@@ -1137,11 +1149,11 @@ struct FenetrePiecesTests {
         let cadre = try #require(hote.superview)
         func sous(_ x: CGFloat, _ y: CGFloat) -> NSView? { cadre.hitTest(NSPoint(x: x, y: fenetre.frame.height - y)) }
         let milieu = CadreFeux.defaut.milieu
-        #expect(sous(500, milieu) is BandeFenetre.Vue, "entre les capsules")
-        #expect(sous(500, 2) !== hote, "au bord du haut : le cadre de la fenetre")
+        #expect(sous(800, milieu) is BandeFenetre.Vue, "entre les capsules")
+        #expect(sous(800, 2) !== hote, "au bord du haut : le cadre de la fenetre")
         #expect(!(sous(CadreFeux.defaut.droite + HautPieces.ecartFeux + 20, milieu) is BandeFenetre.Vue), "la capsule de gauche")
-        #expect(!(sous(1000 - HautPieces.bordDroit - 20, milieu) is BandeFenetre.Vue), "la capsule de droite")
-        #expect(!(sous(500, 200) is BandeFenetre.Vue), "la scene")
+        #expect(!(sous(1400 - HautPieces.bordDroit - 20, milieu) is BandeFenetre.Vue), "la capsule de droite")
+        #expect(!(sous(800, 200) is BandeFenetre.Vue), "la scene")
     }
 
     /// La premiere sous-vue de ce type, dans `racine` ou plus bas.

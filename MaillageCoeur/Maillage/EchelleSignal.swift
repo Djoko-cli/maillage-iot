@@ -1,10 +1,23 @@
 import Foundation
 
+/// Les seuils qui rangent une valeur de signal en bande : `bonne` et plus, bonne ; de `moyenne` (compris) a `bonne`,
+/// moyenne ; au-dessous, faible. Chaque protocole donne les siens, dans l'unite de son echelle.
+public struct SeuilsBandes: Sendable, Equatable {
+    public var bonne: Double
+    public var moyenne: Double
+
+    public init(bonne: Double, moyenne: Double) {
+        self.bonne = bonne
+        self.moyenne = moyenne
+    }
+}
+
 /// Le signal vu par la sonde, dans la fiche (polissage D, section 4.3) : son echelle, toujours visible, meme pour un
 /// seul point ou des valeurs toutes egales ; le releve sous le pointeur et son etiquette.
 ///
 /// Une echelle par protocole (dBm pour Thread, LQI pour Zigbee) : l'unite, ou elle se place, le pas des graduations,
-/// la marge du domaine autour des valeurs, les bornes dures de la grandeur et le domaine sans valeur. Le coeur n'en
+/// la marge du domaine autour des valeurs, les bornes dures de la grandeur, le domaine sans valeur et les seuils des
+/// bandes de qualite (`bande(_:)`). Le coeur n'en
 /// nomme aucune (chaque protocole declare la sienne, `EchelleSignal.dbm` dans ProtocoleThread). Ce qui ne depend pas de
 /// l'unite (`portee`, `seuil`, `plusProche`, `heure`, `aGauche`) reste statique.
 public struct EchelleSignal: Sendable {
@@ -20,15 +33,26 @@ public struct EchelleSignal: Sendable {
     public var bornes: ClosedRange<Double>?
     /// Le domaine quand le noeud n'a aucune valeur : -100 a -40 (dBm), 0 a 255 (LQI).
     public var domaineParDefaut: ClosedRange<Double>
+    /// Les seuils qui rangent une valeur en bande de qualite : -80 et -90 dBm, 170 et 100 LQI.
+    public var bandes: SeuilsBandes
 
     public init(unite: String, uniteAvant: Bool, pas: Double, marge: Double, bornes: ClosedRange<Double>?,
-                domaineParDefaut: ClosedRange<Double>) {
+                domaineParDefaut: ClosedRange<Double>, bandes: SeuilsBandes) {
         self.unite = unite
         self.uniteAvant = uniteAvant
         self.pas = pas
         self.marge = marge
         self.bornes = bornes
         self.domaineParDefaut = domaineParDefaut
+        self.bandes = bandes
+    }
+
+    /// La bande de qualite d'une valeur de cette echelle : bonne des `bandes.bonne`, moyenne des `bandes.moyenne`,
+    /// faible au-dessous (un lien reel mais tres faible compris) ; inconnue sans valeur (NaN).
+    public func bande(_ valeur: Double) -> BandeQualite {
+        if valeur.isNaN { return .inconnue }
+        if valeur >= bandes.bonne { return .bonne }
+        return valeur >= bandes.moyenne ? .moyenne : .faible
     }
 
     /// Un releve ne compte au survol qu'a moins de 2 % de la duree de la periode du pointeur (et d'un trou : `seuil`).

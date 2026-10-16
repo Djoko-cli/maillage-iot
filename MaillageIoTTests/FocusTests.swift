@@ -147,6 +147,6 @@ struct FocusTests {
         #expect(base != CourbesFiche.identiteGraphe(id: idt("b"), tous: false, periode: .jour))
         #expect(base != CourbesFiche.identiteGraphe(id: idt("a"), tous: true, periode: .jour))
         #expect(base != CourbesFiche.identiteGraphe(id: idt("a"), tous: false, periode: .semaine))
-        #expect(FicheNoeud.valeurPastille(qualite: 3) == String(localized: "qualité du lien : \(NiveauQualite.bonne.nom)"))
+        #expect(FicheNoeud.valeurPastille(qualite: 3) == String(localized: "qualité du lien : \(BandeQualite.bonne.nom)"))
     }
 }

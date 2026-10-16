@@ -566,7 +566,7 @@ struct IsolementZigbeeTests {
         let part = try #require(m.fk["piece:Salon"]), partEtage = try #require(m.ek["zone:Rez-de-chaussée"])
         #expect(part > 0 && part < 1 && partEtage > 0 && partEtage < 1, "en plein fondu : \(part), \(partEtage)")
         var autre = e
-        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu))
+        autre.apparences[idz(NomsDemo.Ieee.pont)] = DessinNoeud.Apparence(forme: .anneau, couleur: .appareil(.disparu), contour: .hexagone)
         m.installerMaintenant(autre)
         #expect(m.entree == autre && m.fk["piece:Salon"] == part && m.ek["zone:Rez-de-chaussée"] == partEtage && m.estIsolee)
     }

@@ -10,14 +10,22 @@ struct NoeudChoisi: Identifiable {
     let id: IdNoeud
 }
 
-/// Capsule de gauche du haut de la fenetre : reseau, appareils IP, journal, rafraichir.
+/// Capsule de gauche du haut de la fenetre, la meme pour toutes les scenes : le nom de la maison (le releve de Maison) et son
+/// menu des reseaux par protocole (Thread : ses reseaux et le choix de celui qui est montre ; Zigbee : le pont), les
+/// interrupteurs de vue « ● Thread ⬢ Zigbee », « Appareils IP · N » (Thread montre seulement), le journal, rafraichir.
 struct BarreOutils: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(SondeMaillageThread.self) private var sonde
     @Environment(SondeMaillageZigbee.self) private var sondeZigbee: SondeMaillageZigbee?
     @Environment(NomsPasseur.self) private var nomsMaison
+    /// Le pont Hue du menu ; nil dans les vues de test sans lui.
+    @Environment(NomsPont.self) private var pont: NomsPont?
     @Environment(\.openWindow) private var openWindow
     @State private var appareilsIP = false
+    private let vue = PreferencesVue()
+    /// Largeur maximale du nom de la maison dans la capsule (pt) : un nom plus long est coupe (le menu dit le reste), pour que
+    /// la capsule ne depasse jamais ce que la plus petite fenetre lui laisse (`FenetrePieces.tailleMinimale`).
+    static let largeurMaxNomMaison: CGFloat = 110
 
     /// Rafraichir lance aussi le passeur des noms de Maison, en mode direct seulement (sauf
     /// pendant un releve, qui ignore la demande).
@@ -26,7 +34,7 @@ struct BarreOutils: View {
     }
 
     /// Aide du bouton rafraichir : ce qu'il lancera vraiment. Le reseau toujours ; une tournee
-    /// si la sonde est connectee et libre (`SondeMaillageThread.tourneeAuRafraichir`) ; les noms de
+    /// si la sonde est connectee et libre (`SondeMaillageThread.tourneeAuRafraichir`, ou celle de Zigbee) ; les noms de
     /// Maison si le passeur sera lance (`lancePasseur`).
     static func aideRafraichir(tournee: Bool, passeur: Bool) -> String {
         switch (tournee, passeur) {
@@ -38,33 +46,46 @@ struct BarreOutils: View {
     }
 
     var body: some View {
+        let actifs = surveillance.protocolesActifs
+        let preferes = vue.preferes
+        let montres = InterrupteursVue.montres(preferes: preferes, actifs: actifs)
         HStack(spacing: 5) {
-            // « Reseau demo ▾ » : le menu, dessine comme les autres boutons de la capsule.
+            // Le nom de la maison ▾ : le menu des reseaux par protocole, dessine comme les autres boutons de la capsule.
             Menu {
-                ForEach(surveillance.thread.instantane?.reseaux ?? []) { r in
-                    Button(r.nom) { surveillance.thread.reseauChoisi = r.id }
-                }
+                MenuDesReseaux(contenu: MenuReseaux.contenu(surveillance, pont: pont))
             } label: {
-                Text(verbatim: (surveillance.thread.reseau?.nom ?? String(localized: "Aucun réseau Thread")) + " ▾")
+                Text(verbatim: MenuReseaux.nomDeLaMaison(surveillance) + " ▾")
+                    .lineLimit(1)
+                    .frame(maxWidth: BarreOutils.largeurMaxNomMaison)
             }
             .menuStyle(.button)
             .buttonStyle(StyleBoutonCapsule())
             .fixedSize()
-            Button {
-                appareilsIP = true
-            } label: {
-                Text("Appareils IP · \(surveillance.thread.instantane?.appareilsIP.count ?? 0)")
+            // « ● Thread ⬢ Zigbee » : un protocole eteint dans les Reglages y est grise.
+            ForEach(Protocole.allCases, id: \.self) { p in
+                InterrupteurProtocole(protocole: p, etat: InterrupteursVue.etat(p, preferes: preferes, actifs: actifs)) {
+                    vue.basculer(p)
+                }
             }
-            .buttonStyle(StyleBoutonCapsule())
-            .popover(isPresented: $appareilsIP) { ListeAppareilsIP() }
+            if ContenuHaut(protocoles: [], montres: montres).appareilsIP {
+                Button {
+                    appareilsIP = true
+                } label: {
+                    Text("Appareils IP · \(surveillance.thread.instantane?.appareilsIP.count ?? 0)")
+                }
+                .buttonStyle(StyleBoutonCapsule())
+                .popover(isPresented: $appareilsIP) { ListeAppareilsIP() }
+            }
             Button("Journal") {
                 openWindow(id: "journal")
             }
             .buttonStyle(StyleBoutonCapsule())
             // Pendant une tournee : le reseau et les noms, sans seconde tournee.
             Button {
-                surveillance.thread.rafraichir()
-                sonde.rafraichir()
+                if surveillance.thread.actif {
+                    surveillance.thread.rafraichir()
+                    sonde.rafraichir()
+                }
                 // Une scene qui montre aussi Zigbee : sa sonde fait sa tournee de meme.
                 if surveillance.zigbee.aUnReseau { sondeZigbee?.rafraichir() }
                 if Self.lancePasseur(mode: surveillance.mode) {
@@ -77,6 +98,37 @@ struct BarreOutils: View {
             .help(Self.aideRafraichir(tournee: sonde.tourneeAuRafraichir
                                           || (surveillance.zigbee.aUnReseau && sondeZigbee?.tourneeAuRafraichir == true),
                                       passeur: Self.lancePasseur(mode: surveillance.mode)))
+        }
+    }
+}
+
+/// Le menu des reseaux : une section par protocole actif, Thread d'abord. Thread : ses reseaux (un article coche pour celui
+/// que la vue montre ; un autre le choisit) ; Zigbee : le pont, son nom, son modele et son etat. Aucun protocole actif :
+/// une ligne le dit (grisee, comme tout texte d'un menu).
+struct MenuDesReseaux: View {
+    @Environment(Surveillance.self) private var surveillance
+    let contenu: MenuReseaux
+
+    var body: some View {
+        if contenu.sansProtocole {
+            // Le texte de la fenetre de la barre des menus (meme cle du catalogue).
+            Text(MenuBarre.titreSansProtocole)
+        }
+        if let thread = contenu.thread {
+            Section(LegendePieces.nomProtocole(.thread)) {
+                if thread.isEmpty {
+                    Text("Aucun réseau Thread")
+                }
+                ForEach(thread) { r in
+                    Toggle(r.titre, isOn: Binding(get: { r.choisi }, set: { _ in surveillance.thread.reseauChoisi = r.id }))
+                }
+            }
+        }
+        if let pont = contenu.zigbee {
+            Section(LegendePieces.nomProtocole(.zigbee)) {
+                Text(verbatim: pont.titre)
+                Text(verbatim: pont.etat)
+            }
         }
     }
 }

@@ -174,7 +174,7 @@ struct FicheNoeud: View {
                     Text("Fabriques : \(a.fabriques.count)").foregroundStyle(.secondary)
                 }
                 ligneSonde
-                let verifie = surveillance.thread.verification(a.id, a: surveillance.maintenant) != nil
+                let verifie = surveillance.thread.verification(a.id, a: surveillance.thread.maintenant) != nil
                 lignesPartition(partition: surveillance.thread.partitionAffichee(a, verifie: verifie), prefixe: a.prefixe,
                                 incertaine: surveillance.thread.instantane?.partitionIncertaine(a) == true)
             } else if let m = sonde, let n = m.noeud(cle) {
@@ -301,7 +301,7 @@ struct FicheNoeud: View {
 
     /// Ce que le point de couleur d'une pastille d'enfant dit a VoiceOver : « qualité du lien : bonne ».
     static func valeurPastille(qualite: Int?) -> String {
-        String(localized: "qualité du lien : \(NiveauQualite(qualite).nom)")
+        String(localized: "qualité du lien : \(BandeQualite(qualite).nom)")
     }
 
     /// « 4 enfants ».

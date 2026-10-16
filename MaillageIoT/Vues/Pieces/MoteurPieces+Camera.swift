@@ -54,14 +54,16 @@ extension MoteurPieces {
     }
 
     /// Le depart d'un glissement vers `g`, la geometrie de la scene : la geometrie `image`, remise dans l'ordre des
-    /// plateaux de la scene (`anciens` : celui de l'image), chaque plateau a sa place d'avant, retrouvee par sa cle ;
-    /// la boite, le pas, la sphere et le cadrage de l'image. Un plateau nouveau part de sa place d'arrivee.
+    /// plateaux de la scene (`anciens` : celui de l'image), chaque plateau a sa place et a son rayon d'avant,
+    /// retrouves par sa cle ; la boite, le pas, la sphere et le cadrage de l'image. Un plateau nouveau part de sa
+    /// place et de son rayon d'arrivee.
     func depart(_ image: GeometrieMaison, anciens: [String], vers g: GeometrieMaison) -> GeometrieMaison {
         var depart = g
         for (i, c) in (scene?.etages.map(\.id) ?? []).enumerated() {
             guard let j = anciens.firstIndex(of: c), j < image.centres2D.count else { continue }
             depart.centres2D[i] = image.centres2D[j]
             depart.centres3D[i] = image.centres3D[j]
+            if j < image.rayons.count { depart.rayons[i] = image.rayons[j] }
         }
         depart.boite = image.boite
         depart.pasEtage = image.pasEtage

@@ -1,3 +1,4 @@
+import MaillageCoeur
 import SwiftUI
 
 /// Apparition d'un element pose sur la vue (polissage B ; maquette de la fiche, carte A) : la fiche
@@ -67,6 +68,18 @@ enum Apparition: Equatable {
     static func animationDuConteneurLegende(reduire: Bool) -> Animation? {
         reduire ? nil : animationLegende(reduire: false)
     }
+
+    /// Le contenu de la legende qui change quand on montre ou masque un protocole (la ligne des protocoles, les
+    /// entrees et les groupes qui entrent ou sortent) : la taille du panneau et ses lignes suivent le mouvement unique
+    /// de la bascule (`PlanTransition.pour(.bascule)`, banc de l'etape 3b), meme duree, sur une courbe cubique
+    /// entree-sortie comme celle des pieces ; avec « Reduire les animations », rien ne glisse, le contenu change d'un
+    /// coup.
+    static func animationDuContenuLegende(reduire: Bool) -> Animation? {
+        reduire ? nil : .timingCurve(0.645, 0.045, 0.355, 1, duration: PlanTransition.pour(.bascule).glissement.duree)
+    }
+
+    /// Une ligne ou un groupe de la legende qui entre ou sort quand un protocole est montre ou masque : un fondu.
+    static var transitionLigneLegende: AnyTransition { .opacity }
 
     /// La courbe de la maquette, `cubic-bezier(.2, .8, .2, 1)` : l'avancement en fonction du temps, de 0
     /// a 1. Le moteur y fait glisser les marges de la vue avec la fiche, les bandeaux et la legende.

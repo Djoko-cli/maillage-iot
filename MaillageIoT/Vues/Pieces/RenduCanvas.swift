@@ -261,7 +261,9 @@ enum RenduCanvas {
             switch l.genre {
             case .noeud(let id):
                 guard let libelle = image.textes.noeuds[id] else { continue }
-                g.opacity *= Self.facteurNom(image.projetee.facteur(noeud: id), fort: l.fort)
+                // Le nom suit son noeud qui arrive ou qui s'efface (banc de l'etape 3b), et le mode focus.
+                g.opacity *= (image.projetee.opacitesNoms[id] ?? 1)
+                    * Self.facteurNom(image.projetee.facteur(noeud: id), fort: l.fort)
                 let routeur = image.routeurs.contains(id)
                 let texte = cache.resolu(g, "n|\(routeur)|\(l.fort)|" + libelle.texte, echelle: e) {
                     texteNom(libelle.texte, routeur: routeur, fort: l.fort, palette: palette)

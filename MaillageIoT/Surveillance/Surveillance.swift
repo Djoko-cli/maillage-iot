@@ -41,11 +41,15 @@ final class Surveillance {
     /// Les modeles de protocole de l'app.
     var modeles: [any ModeleProtocole] { [thread, zigbee] }
 
-    /// Les modeles dont l'app parle (menu, ecran d'attente) : les protocoles actifs ; en demo, celui dont la demo est rejouee
+    /// Les modeles dont l'app parle (menu, ecran d'attente) : les protocoles actifs ; en demo, ceux dont la demo est rejouee
     /// (l'autre, muet, n'a rien a dire).
     var modelesMontres: [any ModeleProtocole] {
         modeles.filter { $0.actif && (mode != .demo || $0.rejoueLaDemo) }
     }
+
+    /// Les protocoles actifs (« Activer ce protocole ») : ceux dont l'interrupteur de vue peut s'allumer, et dont la scene a des
+    /// noeuds. Un protocole eteint est masque quelle que soit la preference de la vue.
+    var protocolesActifs: Set<Protocole> { Set(modeles.filter(\.actif).map(\.protocole)) }
 
     /// Le modele d'un protocole ; nil si l'app n'en porte pas.
     func modele(pour protocole: Protocole) -> (any ModeleProtocole)? {
@@ -108,11 +112,13 @@ final class Surveillance {
     /// `dossier` : la racine des donnees de l'app, ou garder le journal et les surnoms ; les fichiers de chaque protocole
     /// vont sous son dossier (`Thread/` : associations, dernier maillage, adresses gardees, historique de la sonde ;
     /// `Zigbee/` : dernier maillage, appariements, historique ; nil : nulle part) ; `preferences` : les scissions deja
-    /// notifiees (mode direct, une fois demarree) ; `demo` : en mode demo, le protocole dont la demo est rejouee (la demo
-    /// n'a qu'un reseau a la fois, chacune l'autre protocole eteint ; la demo combinee est a l'etape 3b) ; `recenseur` :
-    /// l'ecoute Bonjour de Thread (mode direct ; les tests en donnent une a navigateurs factices).
-    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: Protocole = .thread,
-         recenseur: Recenseur? = nil) {
+    /// notifiees (mode direct, une fois demarree) ; `demo` : en mode demo, celle qui est rejouee (Thread seule par defaut :
+    /// c'est elle que rejoue la reference de Thread ; Zigbee seule ; ou la combinee, les deux a la fois, l'horloge de Zigbee
+    /// recalee sur celle de Thread) ; `demoZigbee` : la demo de Zigbee a la place de celle que `demo` donne (pour les tests,
+    /// deux horloges qui different) ; `recenseur` : l'ecoute Bonjour de Thread (mode direct ; les tests en donnent une a
+    /// navigateurs factices).
+    init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: DemoLancee = .thread,
+         demoZigbee: DemoZigbee? = nil, recenseur: Recenseur? = nil) {
         self.mode = mode
         var surnoms: [IdNoeud: String] = [:]
         switch mode {
@@ -129,9 +135,9 @@ final class Surveillance {
             fichierSurnoms = nil
         }
         thread = SurveillanceThread(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
-                                    rejoueLaDemo: demo == .thread, recenseur: recenseur)
+                                    rejoueLaDemo: demo.rejoue(.thread), recenseur: recenseur)
         zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
-                                    rejoueLaDemo: demo == .zigbee)
+                                    rejoueLaDemo: demo.rejoue(.zigbee), demo: demoZigbee ?? demo.zigbeeRejouee)
         thread.coque = self
         zigbee.coque = self
     }
@@ -140,11 +146,19 @@ final class Surveillance {
         switch mode {
         case .demo:
             modeles.forEach { $0.demarrer() }
+            ordonnerLeJournalDeLaDemo()
         case .direct:
             chargerJournal()
             modeles.forEach { $0.demarrer() }
             observerVeille()
         }
+    }
+
+    /// Les demos des deux protocoles se jouent l'une apres l'autre : les evenements de la seconde (Zigbee, recalee sur
+    /// l'horloge de la panne de Thread dans la demo combinee) peuvent preceder la fin de ceux de la premiere. Le journal les
+    /// remet dans l'ordre du temps, a date egale dans celui de leur arrivee ; une demo seule, deja ordonnee, n'y change rien.
+    private func ordonnerLeJournalDeLaDemo() {
+        evenements = evenements.enumerated().sorted { ($0.element.date, $0.offset) < ($1.element.date, $1.offset) }.map(\.element)
     }
 
     /// Purge le journal (mois finis depuis plus de 90 jours) puis le lit. Une purge qui echoue
@@ -291,24 +305,32 @@ final class Surveillance {
 
     // MARK: - Pour les vues
 
-    /// Reference a l'heure du Mac : la fraicheur du graphe et le maillage de la demo ; la fin de la
-    /// panne rejouee en demo. La fiche passe par `maintenant(a:)`, a l'heure de sa fenetre.
+    /// Reference a l'heure du Mac, pour ce qui n'est pas lie a un noeud : en demo, la plus tardive des fins de demo (le plus
+    /// tard des modeles). Un noeud se lit a l'horloge de son modele (`maintenant(de:a:)`), jamais a celle-ci : en demo
+    /// combinee, l'horloge de l'autre protocole peut etre en avance et ferait paraitre ce noeud perime.
     var maintenant: Date { maintenant(a: Date()) }
 
     /// Reference des durees a l'heure `horloge` (celle de la fenetre du graphe, que sa `TimelineView`
-    /// avance chaque minute) : cette heure, ou, en demo, la fin de la panne rejouee (le plus tard des modeles).
+    /// avance chaque minute) : cette heure, ou, en demo, la plus tardive des fins de demo (le plus tard des modeles).
     func maintenant(a horloge: Date) -> Date { modeles.map { $0.maintenant(a: horloge) }.max() ?? horloge }
+
+    /// Reference des durees d'un noeud de `protocole`, a l'heure `horloge` : l'horloge de SON modele (la fin de sa demo en
+    /// demo). C'est elle que lisent la fiche d'un noeud, la fenetre et l'alerte d'un protocole : ses durees (« vu il y a »,
+    /// fraicheur, evenements de l'heure) ne dependent jamais de l'horloge de l'autre protocole.
+    func maintenant(de protocole: Protocole, a horloge: Date) -> Date {
+        modele(pour: protocole)?.maintenant(a: horloge) ?? horloge
+    }
 
     /// Alerte en cours : celle d'un protocole actif (`alerte(de:)`). Un protocole eteint n'en signale aucune.
     var alerte: Bool { modeles.contains { alerte(de: $0.protocole) } }
 
     /// Alerte en cours d'un protocole : son reseau est lui-meme une alerte (`ModeleProtocole.alerteReseau` : un reseau
-    /// scinde), ou il a un evenement grave dans l'heure (a l'heure de `maintenant` : la fin de la demo rejouee en demo).
+    /// scinde), ou il a un evenement grave dans l'heure (a l'heure de son modele : la fin de sa demo rejouee en demo).
     /// Faux s'il est eteint, et les evenements graves qu'il a ecrits avant ne comptent plus.
     func alerte(de protocole: Protocole) -> Bool {
         guard let m = modele(pour: protocole), m.actif else { return false }
         if m.alerteReseau { return true }
-        let recent = maintenant.addingTimeInterval(-3600)
+        let recent = m.maintenant.addingTimeInterval(-3600)
         return evenements.reversed().prefix { $0.date >= recent }.contains {
             $0.gravite == .alerte && ($0.protocole ?? SurveillanceThread.protocole) == protocole
         }

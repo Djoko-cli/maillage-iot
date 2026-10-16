@@ -87,6 +87,47 @@ struct TransitionSceneTests {
         }
     }
 
+    /// Le plan des phases selon la cause du changement : pour un changement du reseau, le plan d'avant (le glissement de
+    /// 0,9 s et les fondus de 0,3 s, tous deux des l'instant 0, les fondus en ligne droite) ; pour la bascule d'un
+    /// protocole, un seul mouvement : toutes les phases commencent a 0, de la duree du glissement, sur sa courbe.
+    @Test func planDesPhases() {
+        let reseau = PlanTransition.pour(.reseau)
+        #expect(reseau.glissement == PlanTransition.Phase(debut: 0, duree: 0.9, courbe: .rampe))
+        #expect(reseau.fondu == PlanTransition.Phase(debut: 0, duree: 0.3, courbe: .lineaire))
+        #expect(reseau.glissement.duree == TransitionScene.duree && reseau.fondu.duree == TransitionScene.dureeFondu)
+        let bascule = PlanTransition.pour(.bascule)
+        #expect(bascule.glissement == PlanTransition.Phase(debut: 0, duree: 0.9, courbe: .rampe))
+        #expect(bascule.fondu == bascule.glissement, "meme debut, meme duree, meme courbe")
+        #expect([bascule.glissement, bascule.fondu].allSatisfy { $0.debut == 0 })
+        #expect(abs(bascule.fondu.avancement(a: 0.45) - 0.5) < 1e-12 && bascule.fondu.avancement(a: 0.9) == 1)
+        #expect(abs(reseau.fondu.avancement(a: 0.15) - 0.5) < 1e-12 && reseau.fondu.avancement(a: 5) == 1)
+    }
+
+    /// La bascule d'un protocole en un seul mouvement : ce qui arrive ou part se fond pendant tout le glissement, sur
+    /// sa courbe (ni une apparition en 0,3 s, ni apres coup) et la transition dure 0,9 s ; pour un changement du reseau,
+    /// les fondus restent de 0,3 s. Les pieces et les noeuds qui restent glissent pareil dans les deux cas.
+    @Test func basculeEnUnSeulMouvement() throws {
+        var d = PosesScene(), a = PosesScene()
+        d.pieces["p"] = Self.piece(x: 0)
+        a.pieces["p"] = Self.piece(x: 10)
+        d.noeuds[idt("part")] = Self.noeud("a", x: 1)
+        a.noeuds[idt("arrive")] = Self.noeud("b", x: 2)
+        let bascule = try #require(TransitionScene(de: d, vers: a, a: 0, cause: .bascule))
+        let reseau = try #require(TransitionScene(de: d, vers: a, a: 0, cause: .reseau))
+        #expect(TransitionScene(de: d, vers: a, a: 0) == reseau, "sans cause : un changement du reseau")
+        #expect(bascule.dureeTotale == 0.9 && reseau.dureeTotale == 0.9)
+        for (instant, e) in [(0.0, 0.0), (0.225, 0.0625), (0.3, 4.0 / 27), (0.45, 0.5), (0.675, 0.9375), (0.9, 1.0)] {
+            let p = bascule.poses(a: instant)
+            #expect(abs((p.noeuds[idt("arrive")]?.opacite ?? -1) - e) < 1e-9, "a \(instant) s, ce qui arrive")
+            #expect(abs((p.noeuds[idt("part")]?.opacite ?? -1) - (1 - e)) < 1e-9, "a \(instant) s, ce qui part")
+            #expect(abs((Self.x(p.pieces["p"]) ?? -1) - 10 * e) < 1e-9, "a \(instant) s, la piece glisse sur la meme courbe")
+        }
+        #expect(!bascule.finie(a: 0.89) && bascule.finie(a: 0.9))
+        #expect(reseau.poses(a: 0.3).noeuds[idt("arrive")]?.opacite == 1, "un changement du reseau : fondu de 0,3 s")
+        #expect(reseau.poses(a: 0.3).noeuds[idt("part")]?.opacite == 0)
+        #expect(Self.x(reseau.poses(a: 0.45).pieces["p"]) == Self.x(bascule.poses(a: 0.45).pieces["p"]))
+    }
+
     /// Rien ne change : pas de transition ; un lien deja la, ou la qualite seule change, non plus. « Reduire les
     /// animations » : jamais de transition, tout est immediat. La transition ne garde que ce qui change.
     @Test func ceQuiChange() throws {
@@ -485,5 +526,64 @@ struct TransitionSceneTests {
         let flou2 = try #require(q.disques.first { $0.noeud == idt("E000000000000008") })
         #expect(flou.focus == MiseEnAvant.opaciteEstompee && flou2.focus == MiseEnAvant.facteur(0.5))
         #expect(flou.opacite == disque.opacite, "le focus ne change pas l'opacite du fondu")
+    }
+
+    /// Banc de l'etape 3b (retouche 4) : la taille d'un plateau se glisse comme sa place. Les rayons en route sont
+    /// strictement entre l'ancien et le nouveau, a la meme courbe que le reste (`k2` en 2D, `k3` en 3D : le plus lent des
+    /// deux, ils arrivent ensemble) ; au debut ceux du depart, a la fin ceux de l'arrivee, exactement.
+    @Test func rayonsDesPlateauxEnRoute() {
+        let depart = GeometrieMaison(rayons: [6, 12])
+        let arrivee = GeometrieMaison(rayons: [10, 8])
+        for k in [0.0, 0.0625, 0.5, 0.9375, 1.0] {
+            let v = depart.vers(arrivee, k2: k, k3: k)
+            #expect(v.rayons == [6 + 4 * k, 12 - 4 * k], "rayons a \(k)")
+            if k > 0 && k < 1 {
+                #expect(v.rayons[0] > 6 && v.rayons[0] < 10 && v.rayons[1] < 12 && v.rayons[1] > 8, "strictement entre")
+            }
+        }
+        // Deux avancements distincts : le rayon suit le plus lent, il ne saute pas avant que les deux soient finis.
+        #expect(depart.vers(arrivee, k2: 1, k3: 0.5).rayons == [8, 10])
+        #expect(depart.vers(arrivee, k2: 0.5, k3: 1).rayons == [8, 10])
+        #expect(depart.vers(arrivee, k2: 1, k3: 1).rayons == arrivee.rayons)
+    }
+
+    /// Le nom d'un noeud suit l'opacite de son noeud : celui qui part (absent de la scene, `fantomes`) a sa place
+    /// affichee (`ancresFantomes`, qui n'est pas celle d'un noeud pose) et une opacite de nom qui decroit avec celle de la
+    /// pastille ; celui qui arrive, de meme, croissante. Sans transition, rien.
+    @Test func nomsQuiPartentEtQuiArrivent() throws {
+        let (s, c, d, g) = try SceneProjeteeTests.scene()
+        let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count))
+        let o = CameraScene.canonique(g, aspect: 1.5, u: 0)
+        let arrivee = PosesScene(scene: s, cartes: c, positions: d.positions)
+        let parti = idt("E000000000000009"), venu = idt("HomePod")
+        var depart = arrivee
+        depart.noeuds[parti] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(0, 0))], decalage: .zero,
+                                                rayon: 7)
+        depart.noeuds[venu] = nil
+        let tr = try #require(TransitionScene(de: depart, vers: arrivee, a: 0, cause: .bascule))
+        func projeter(_ poses: PosesScene) -> SceneProjetee {
+            SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e, orbite: o,
+                          cadre: SceneProjeteeTests.cadre, poses: poses)
+        }
+        let sans = projeter(PosesScene())
+        #expect(sans.opacitesNoms.isEmpty && sans.ancresFantomes.isEmpty)
+        var partant: [Double] = [], arrivant: [Double] = []
+        for temps in [0.0, 0.225, 0.45, 0.675, 0.9] {
+            let p = projeter(tr.poses(a: temps))
+            let disque = try #require(p.disques.first { $0.noeud == parti })
+            if temps < 0.9 {
+                let nom = try #require(p.opacitesNoms[parti], "le nom du partant \(temps)")
+                #expect(abs(nom - disque.opacite) < 1e-12, "le nom suit la pastille")
+                #expect(p.ancresFantomes[parti] != nil && p.ancresNoeuds[parti] == nil)
+                partant.append(nom)
+                arrivant.append(try #require(p.opacitesNoms[venu], "le nom de l'arrivant \(temps)"))
+            } else {
+                #expect(p.opacitesNoms[parti] == 0 && p.opacitesNoms[venu] == nil, "au bout : efface, et net")
+            }
+        }
+        #expect(partant.first == 1 && zip(partant, partant.dropFirst()).allSatisfy { $0 > $1 }, "le nom du partant decroit")
+        #expect(arrivant.first == 0 && zip(arrivant, arrivant.dropFirst()).allSatisfy { $0 < $1 }, "celui de l'arrivant croit")
+        let mi = projeter(tr.poses(a: 0.45))
+        #expect(abs((mi.opacitesNoms[parti] ?? -1) - 0.5) < 1e-9 && abs((mi.opacitesNoms[venu] ?? -1) - 0.5) < 1e-9)
     }
 }

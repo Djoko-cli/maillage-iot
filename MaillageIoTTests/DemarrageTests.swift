@@ -16,21 +16,27 @@ struct DemarrageTests {
         #expect(Set(attendus).count == 6, "six types, aucun en double")
     }
 
-    /// Les arguments de lancement des demos : `-demo` rejoue Thread, `-demo-zigbee` Zigbee, chacune seule ; rien hors demo.
-    /// Chaque demo fait tourner un seul modele, l'autre muet (`ModulesApp(demo:)`).
+    /// Les arguments de lancement des demos : `-demo` lance la combinee (Thread et Zigbee ensemble), `-demo-thread` et
+    /// `-demo-zigbee` chacune seule ; rien hors demo. Chaque demo seule fait tourner un seul modele, l'autre muet
+    /// (`ModulesApp(demo:)`) ; la combinee, les deux.
     @MainActor
     @Test func argumentsDeLaDemo() {
-        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT"]) == nil)
-        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo"]) == .thread)
-        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo-zigbee"]) == .zigbee)
-        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo", "-captures", "x"]) == .thread)
-        #expect(ModulesApp.protocoleDeLaDemo(arguments: ["Maillage IoT", "-demo", "-demo-zigbee"]) == .zigbee)
-        for protocole in Protocole.allCases {
-            let m = ModulesApp(demo: protocole, sousTests: true)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT"]) == nil)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo"]) == .combinee)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo-thread"]) == .thread)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo-zigbee"]) == .zigbee)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo", "-captures", "x"]) == .combinee)
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo", "-demo-zigbee"]) == .zigbee, "la plus precise")
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo", "-demo-thread"]) == .thread, "la plus precise")
+        #expect(DemoLancee.depuis(arguments: ["Maillage IoT", "-demo-thread", "-demo-zigbee"]) == .combinee, "les deux seules : la combinee")
+        for demo in [DemoLancee.thread, .zigbee, .combinee] {
+            let m = ModulesApp(demo: demo, sousTests: true)
             m.surveillance.demarrer()
             let scene = EntreeScene(surveillance: m.surveillance, places: PlacesGardees())
-            #expect(scene.protocoles == [protocole], "la demo de \(protocole.rawValue), seule")
-            #expect(m.surveillance.modeles.filter { $0.graphe.noeuds.isEmpty }.map(\.protocole) == Protocole.allCases.filter { $0 != protocole })
+            #expect(scene.protocoles == demo.protocoles, "la demo \(demo)")
+            #expect(m.surveillance.modeles.filter { $0.graphe.noeuds.isEmpty }.map(\.protocole)
+                    == Protocole.allCases.filter { !demo.rejoue($0) })
+            #expect(m.surveillance.modelesMontres.map(\.protocole) == Protocole.allCases.filter { demo.rejoue($0) })
         }
     }
 

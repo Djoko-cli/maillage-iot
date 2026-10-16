@@ -4,8 +4,8 @@ import ProtocoleThread
 import ProtocoleZigbee
 import SwiftUI
 
-/// Icone de la barre des menus : le maillage et, en bas a droite, le symbole de Thread ; orange quand il y a une
-/// alerte. Ouvre le graphe au lancement quand on le lui demande (mode demo, premier lancement).
+/// Icone de la barre des menus : le symbole du maillage seul ; orange quand il y a une alerte. Ouvre le graphe au
+/// lancement quand on le lui demande (mode demo, premier lancement).
 struct IconeBarre: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(\.openWindow) private var openWindow
@@ -22,26 +22,13 @@ struct IconeBarre: View {
             }
     }
 
-    /// Le maillage (symbole du systeme), et le symbole de Thread en badge dans son coin vide, en bas a droite : 11 pt
-    /// pour un maillage de 15 pt de haut, le canevas agrandi d'un quart du badge vers le bas et de pres de la moitie de
-    /// sa largeur vers la droite, sa silhouette detouree de 1,5 pt (essais du 08/10, choix de Djoko). Image modele,
-    /// sauf en alerte : orange.
+    /// Le maillage, le seul symbole (celui du systeme), sans badge (demande de Djoko du 15/10). Image modele, sauf en
+    /// alerte : orange.
     static func image(alerte: Bool) -> NSImage {
         let symbole = NSImage(systemSymbolName: "point.3.connected.trianglepath.dotted",
                               accessibilityDescription: nil) ?? NSImage()
         let couleur: NSColor = alerte ? .systemOrange : .black
-        let base = symbole.withSymbolConfiguration(.init(paletteColors: [couleur])) ?? symbole
-        let b = base.size
-        let badge = CGSize(width: 11 * b.height / 15 * MarqueThread.proportion, height: 11 * b.height / 15)
-        let taille = NSSize(width: b.width + badge.width * 0.45, height: b.height + badge.height * 0.25)
-        let image = NSImage(size: taille, flipped: false) { _ in
-            guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            base.draw(in: NSRect(x: 0, y: taille.height - b.height, width: b.width, height: b.height))
-            MarqueThread.dessiner(ctx, dans: CGRect(x: taille.width - badge.width, y: 0, width: badge.width,
-                                                    height: badge.height),
-                                  couleur: couleur, detourage: 1.5)
-            return true
-        }
+        let image = symbole.withSymbolConfiguration(.init(paletteColors: [couleur])) ?? symbole
         image.accessibilityDescription = "Maillage IoT"
         image.isTemplate = !alerte
         return image
@@ -239,21 +226,29 @@ struct MenuBarre: View {
     /// Le menu quand aucun protocole n'est actif.
     static var titreSansProtocole: String { String(localized: "Aucun protocole actif") }
 
+    /// Titre d'un bloc en alerte dans l'heure : il nomme son protocole, car deux blocs s'empilent dans le menu.
+    static func titreAlerte(_ protocole: Protocole) -> String {
+        switch protocole {
+        case .thread: String(localized: "Alerte Thread dans l'heure")
+        case .zigbee: String(localized: "Alerte Zigbee dans l'heure")
+        }
+    }
+
     /// Titre du bloc de Thread : l'ecoute du reseau local tant qu'il n'a rien releve, le silence du Mac, puis l'etat du
-    /// reseau. `alerte` : celle de Thread.
+    /// reseau (l'alerte de l'heure nomme son protocole : deux blocs s'empilent). `alerte` : celle de Thread.
     static func titreThread(_ t: SurveillanceThread, alerte: Bool) -> String {
         if t.instantane == nil { return String(localized: "Écoute du réseau local…") }
         if let d = t.rienVuDepuis { return String(localized: "Rien de visible sur le réseau local depuis \(TexteEvenement.heure(d))") }
         guard let r = t.reseau else { return String(localized: "Aucun réseau Thread visible") }
         if r.estScinde { return String(localized: "Réseau scindé") }
-        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Thread normal")
+        return alerte ? titreAlerte(.thread) : String(localized: "Réseau Thread normal")
     }
 
     /// Titre du bloc de Zigbee : en attente tant qu'il n'y a rien a montrer, sinon l'alerte de l'heure, ou le reseau normal.
     /// `alerte` : celle de Zigbee.
     static func titreZigbee(resume: ResumeReseauZigbee?, alerte: Bool) -> String {
         guard resume != nil else { return String(localized: "En attente du maillage de la sonde…") }
-        return alerte ? String(localized: "Alerte dans l'heure") : String(localized: "Réseau Zigbee normal")
+        return alerte ? titreAlerte(.zigbee) : String(localized: "Réseau Zigbee normal")
     }
 
     /// Ligne de la sonde, sous le nom donne (celui de la sonde retenue quand l'etat la concerne,

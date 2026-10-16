@@ -83,12 +83,15 @@ struct AffichageSondeTests {
         #expect(!FicheNoeud.texteElimination.isEmpty)
     }
 
+    /// La bande d'un lien dans la scene (`Palette.bande`) : 3, 2, 1 bonne, moyenne, faible ; le 0 et l'inconnue, grises
+    /// (inconnue), pour Thread ; la fiche, elle, lit le 0 « faible » (`BandeQualite.init`).
     @Test func niveaux() {
-        #expect(Palette.NiveauLien(3) == .bon)
-        #expect(Palette.NiveauLien(2) == .moyen)
-        #expect(Palette.NiveauLien(1) == .faible)
-        #expect(Palette.NiveauLien(0) == .inconnu)
-        #expect(Palette.NiveauLien(nil) == .inconnu)
+        #expect(Palette.bande(3, protocole: .thread) == .bonne)
+        #expect(Palette.bande(2, protocole: .thread) == .moyenne)
+        #expect(Palette.bande(1, protocole: .thread) == .faible)
+        #expect(Palette.bande(0, protocole: .thread) == .inconnue)
+        #expect(Palette.bande(nil, protocole: .thread) == .inconnue)
+        #expect(BandeQualite(0) == .faible && BandeQualite(nil) == .inconnue)
     }
 
     /// Mode demo : maillage de demo ; fiche d'un enfant et d'un routeur.

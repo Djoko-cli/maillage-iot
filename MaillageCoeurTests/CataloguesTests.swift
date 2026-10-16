@@ -54,11 +54,26 @@ enum CasCatalogue: Equatable {
 }
 
 extension AppCatalogue {
-    /// Le cas de l'app d'apres le nombre de ses `.stringsdata` :
-    /// - elle en a : on verifie ;
-    /// - elle n'en a pas : on saute. Le coeur se teste seul (outils/tester-coeur.sh, DerivedData neuf) sans compiler
-    ///   l'app ; la porte complete (outils/tester.sh) compile l'app avant, donc n'y saute jamais.
-    static func cas(_ app: String, nombres: [String: Int]) -> CasCatalogue {
+    /// Variable posee par `outils/tester-coeur.sh` (en `TEST_RUNNER_MAILLAGE_COEUR_SEUL`, que xcodebuild passe aux tests
+    /// sans le prefixe) : le coeur se teste seul, l'app n'est pas compilee.
+    static let variableCoeurSeul = "MAILLAGE_COEUR_SEUL"
+
+    /// Vrai quand l'environnement demande le coeur seul (variable non vide et differente de `0`).
+    static func coeurSeul(_ environnement: [String: String] = ProcessInfo.processInfo.environment) -> Bool {
+        guard let v = environnement[variableCoeurSeul] else { return false }
+        return !v.isEmpty && v != "0"
+    }
+
+    /// Le cas de l'app :
+    /// - coeur seul (`outils/tester-coeur.sh`) : on saute toujours. Des `.stringsdata` d'un ancien DerivedData peuvent
+    ///   trainer sans que l'app soit compilee ; les comparer au catalogue ferait echouer le coeur seul ;
+    /// - sinon, l'app a ses `.stringsdata` : on verifie ;
+    /// - sinon on saute : DerivedData neuf, app non compilee. La porte complete (outils/tester.sh) compile l'app avant et
+    ///   retire la variable : elle verifie toujours.
+    static func cas(_ app: String, nombres: [String: Int], coeurSeul: Bool = AppCatalogue.coeurSeul()) -> CasCatalogue {
+        if coeurSeul {
+            return .sauter("coeur teste seul (\(variableCoeurSeul)) : le catalogue de \(app) est verifie par la porte complete outils/tester.sh")
+        }
         if nombres[app, default: 0] > 0 { return .verifier }
         return .sauter("produits de compilation introuvables : \(app) (l'app n'est pas compilee ; la porte complete outils/tester.sh la compile avant)")
     }
@@ -152,16 +167,30 @@ struct CataloguesTests {
         #expect(catalogue.subtracting(extraites).sorted() == [], "inutilisees dans le catalogue de \(app.nom)")
     }
 
-    /// La selection des cas, sans produits reels : verifie si l'app a ses `.stringsdata`, saute sinon.
+    /// La selection des cas, sans produits reels : verifie si l'app a ses `.stringsdata`, saute sinon, et saute toujours
+    /// quand le coeur est teste seul (meme avec de vieux `.stringsdata`).
     @Test func selectionDesCas() {
-        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3]) == .verifier)
-        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0]) else {
+        #expect(AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3], coeurSeul: false) == .verifier)
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 0], coeurSeul: false) else {
             Issue.record("sans produits : doit sauter")
             return
         }
-        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:]) else {
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: [:], coeurSeul: false) else {
             Issue.record("aucun decompte : doit sauter")
             return
         }
+        guard case .sauter = AppCatalogue.cas("MaillageIoT", nombres: ["MaillageIoT": 3], coeurSeul: true) else {
+            Issue.record("coeur seul, vieux produits presents : doit sauter")
+            return
+        }
+    }
+
+    /// La variable du coeur seul : posee et non vide (sauf `0`), vrai ; absente, vide ou `0`, faux.
+    @Test func lectureDeLaVariableCoeurSeul() {
+        let v = AppCatalogue.variableCoeurSeul
+        #expect(AppCatalogue.coeurSeul([v: "1"]))
+        #expect(!AppCatalogue.coeurSeul([:]))
+        #expect(!AppCatalogue.coeurSeul([v: ""]))
+        #expect(!AppCatalogue.coeurSeul([v: "0"]))
     }
 }

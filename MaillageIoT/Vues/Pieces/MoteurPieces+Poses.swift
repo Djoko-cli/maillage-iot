@@ -54,7 +54,7 @@ extension MoteurPieces {
     /// noeuds, et les plateaux qui glissent avec eux.
     func poserTransition(_ q: Double) {
         guard let tr = transition else { return }
-        posesAffichees = tr.poses(a: tr.debut + q * TransitionScene.duree)
+        posesAffichees = tr.poses(a: tr.debut + q * tr.dureeTotale)
         if let gl = glissementPlateaux { geometrie = geometrie(a: gl.debut + q * max(gl.duree2D, gl.duree3D)) }
     }
 

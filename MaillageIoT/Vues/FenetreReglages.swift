@@ -23,7 +23,7 @@ enum OngletReglages: String, CaseIterable {
         }
     }
 
-    /// Symbole SF de l'onglet.
+    /// Symbole SF de l'onglet (le repli des deux onglets a logo).
     var symbole: String {
         switch self {
         case .general: "gearshape"
@@ -34,10 +34,31 @@ enum OngletReglages: String, CaseIterable {
         case .diagnostic: "stethoscope"
         }
     }
+
+    /// Le logo redessine de Thread ou de Zigbee, en vectoriel monochrome (`Logos.xcassets`, trace par
+    /// `outils/icone/generer.swift`) : une image modele, teintee par la barre d'outils comme les symboles voisins
+    /// (bleu quand l'onglet est choisi, clair en mode sombre). Les autres onglets n'en ont pas.
+    var logo: NSImage? {
+        let nom: String
+        switch self {
+        case .thread: nom = "LogoThread"
+        case .zigbee: nom = "LogoZigbee"
+        default: return nil
+        }
+        guard let image = NSImage(named: nom) else { return nil }
+        image.isTemplate = true
+        image.accessibilityDescription = titre
+        return image
+    }
+
+    /// L'image de l'onglet dans la barre d'outils : son logo, sinon son symbole SF.
+    var image: NSImage {
+        logo ?? NSImage(systemSymbolName: symbole, accessibilityDescription: titre) ?? NSImage()
+    }
 }
 
 /// Une page des Reglages, celle d'un onglet : General (ouverture a la connexion, mises a jour, langue, vue par
-/// pieces : les etages en 2D), Notifications (par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
+/// pieces : les etages en 2D), Notifications (une section par protocole, par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
 /// `ReglagesMaison`), Thread (liaison USB ou reseau Thread de la sonde, acces reseau, Thread Route), Zigbee (le pont Hue
 /// et la sonde Zigbee : `ReglagesZigbee`), Diagnostic (ecoute de Thread, maillage de Zigbee, captures, journal). La
 /// fenetre et ses onglets sont dans `ControleurReglages`.
@@ -49,10 +70,6 @@ struct FenetreReglages: View {
     @Environment(OuvertureSession.self) private var ouverture
     @Environment(SondeMaillageThread.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
-    @AppStorage(Notifications.cle(.scission)) private var scission = CategorieAlerte.scission.parDefaut
-    @AppStorage(Notifications.cle(.routeurDisparu)) private var routeurDisparu = CategorieAlerte.routeurDisparu.parDefaut
-    @AppStorage(Notifications.cle(.pertes)) private var pertes = CategorieAlerte.pertes.parDefaut
-    @AppStorage(Notifications.cle(.informations)) private var informations = CategorieAlerte.informations.parDefaut
     @AppStorage(FenetrePieces.cleGrille) private var etagesEnGrille = true
     @State private var messageCapture: String?
     @State private var langue = LangueApp.lire()
@@ -75,9 +92,10 @@ struct FenetreReglages: View {
             case .maison: page { ReglagesMaison() }
             case .thread:
                 page {
-                    ActivationProtocole(protocole: .thread)
-                    reglagesSonde
-                    threadRoute
+                    PageProtocole(protocole: .thread) {
+                        reglagesSonde
+                        threadRoute
+                    }
                 }
             case .zigbee: ReglagesZigbee()
             case .diagnostic:
@@ -114,13 +132,11 @@ struct FenetreReglages: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// Onglet Notifications : une categorie par interrupteur.
+    /// Onglet Notifications : une section par protocole (Thread, puis Zigbee), une categorie par interrupteur ; la section
+    /// d'un protocole eteint est grisee, comme son onglet.
     private var notifications: some View {
-        Section {
-            Toggle("Réseau scindé", isOn: $scission)
-            Toggle("Routeur de bordure disparu", isOn: $routeurDisparu)
-            Toggle("Au moins 3 appareils perdus en 10 min (une notification groupée)", isOn: $pertes)
-            Toggle("Autres changements", isOn: $informations)
+        ForEach(Protocole.allCases, id: \.self) { protocole in
+            SectionNotifications(protocole: protocole)
         }
     }
 
@@ -193,17 +209,26 @@ struct FenetreReglages: View {
             if surveillance.mode == .demo {
                 Text("Mode démo : pas de sonde.").foregroundStyle(.secondary)
             } else {
-                // Le reseau se propose une fois l'acces autorise (cle de ce Mac pour la sonde).
-                if sonde.reseauDisponible || sonde.liaison == .reseau {
-                    Picker("Liaison", selection: Binding(get: { sonde.liaison }, set: { sonde.choisirLiaison($0) })) {
-                        Text("USB").tag(SondeMaillageThread.Liaison.usb)
-                        Text("Réseau Thread").tag(SondeMaillageThread.Liaison.reseau)
+                // Toujours la : « Réseau Thread » ne se choisit qu'une fois l'accès autorisé (cle de ce Mac pour la sonde) ;
+                // avant, ce seul segment est grise (`selectionDisabled`), `choisirLiaison` reste la garde et la note dit pourquoi.
+                Picker("Liaison", selection: Binding(get: { sonde.reglage }, set: { sonde.choisirLiaison($0) })) {
+                    ForEach(ReglageLiaison.allCases, id: \.self) {
+                        Text($0.libelle).tag($0)
+                            .selectionDisabled($0 == .reseau && !sonde.reseauDisponible && sonde.reglage != .reseau)
                     }
-                    .pickerStyle(.segmented)
+                }
+                .pickerStyle(.segmented)
+                if let note = Self.noteReseauIndisponible(reseauDisponible: sonde.reseauDisponible) {
+                    Text(note).font(.caption).foregroundStyle(.secondary)
+                }
+                // Le chemin en service ne s'apprend qu'en Automatique : les deux autres liaisons l'imposent.
+                if sonde.reglage == .automatique, case .connectee = sonde.etat {
+                    LabeledContent("Chemin", value: sonde.liaison.libelle)
                 }
                 if sonde.liaison == .reseau {
                     LabeledContent("Nom d'hôte", value: Self.texteHote(sonde.hote))
-                } else {
+                }
+                if sonde.reglage != .reseau {
                     Picker("Port", selection: Binding(
                         get: { sonde.ports.first { $0.serie != nil && $0.serie == sonde.serie }?.chemin ?? "" },
                         set: { c in if let p = sonde.ports.first(where: { $0.chemin == c }) { sonde.choisir(p) } })) {
@@ -338,6 +363,13 @@ struct FenetreReglages: View {
     static func noteCodeMatter(_ b: Bonjour, liaison: SondeMaillageThread.Liaison) -> String? {
         guard liaison == .reseau, (b.qr ?? "").isEmpty, (b.code ?? "").isEmpty else { return nil }
         return String(localized: "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher.")
+    }
+
+    /// Ce que dit la page tant que « Réseau Thread » n'est pas choisissable (pas de cle de ce Mac pour la sonde) ; nil sinon.
+    /// Le selecteur de liaison reste visible : c'est ici qu'on apprend pourquoi ce choix est indisponible.
+    static func noteReseauIndisponible(reseauDisponible: Bool) -> String? {
+        reseauDisponible ? nil
+            : String(localized: "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau ».")
     }
 
     /// Nom d'hote vise par la liaison reseau : « 0123456789ABCDEF.local ».
@@ -536,5 +568,47 @@ struct CodeMatterSonde: View {
             }
         }
         .task(id: qr) { image = qr.flatMap(CodeMatter.imageQR) }
+    }
+}
+
+/// Les interrupteurs de notification d'un protocole (spec 3.5), dans l'onglet Notifications : ses categories, sous ses
+/// propres cles (`Notifications.cle`), avec les memes defauts pour les deux. Grisee quand le protocole est eteint : ses
+/// notifications ne partent pas, l'onglet le dit comme celui du protocole.
+struct SectionNotifications: View {
+    @Environment(Surveillance.self) private var surveillance
+    let protocole: Protocole
+
+    var body: some View {
+        Section(Self.titre(protocole)) {
+            ForEach(Notifications.categories(de: protocole), id: \.self) { c in
+                InterrupteurNotification(protocole: protocole, categorie: c)
+            }
+        }
+        .disabled(!surveillance.protocoleReglable(protocole))
+    }
+
+    /// Titre de la section : le nom du protocole.
+    static func titre(_ protocole: Protocole) -> String {
+        switch protocole {
+        case .thread: String(localized: "Thread")
+        case .zigbee: String(localized: "Zigbee")
+        }
+    }
+}
+
+/// Un interrupteur de notification : la categorie d'un protocole, sous sa cle (le defaut est celui de la categorie).
+struct InterrupteurNotification: View {
+    let protocole: Protocole
+    let categorie: CategorieAlerte
+    @AppStorage private var allume: Bool
+
+    init(protocole: Protocole, categorie: CategorieAlerte) {
+        self.protocole = protocole
+        self.categorie = categorie
+        _allume = AppStorage(wrappedValue: categorie.parDefaut, Notifications.cle(categorie, de: protocole))
+    }
+
+    var body: some View {
+        Toggle(Notifications.titre(categorie, de: protocole), isOn: $allume)
     }
 }

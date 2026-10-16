@@ -32,12 +32,16 @@ extension MoteurPieces {
                              liensEstompes: liensEstompes)
         let p = SceneProjetee(scene: scene, cartes: cartes, positions: positions, geometrie: geometrie, etat: etat,
                               orbite: orbite, cadre: cadre, poses: posesAffichees)
+        // Le nom d'un noeud qui s'est efface s'en va avec lui : plus de noeud en fondu, plus de nom.
+        etiquettes.removeAll { l in
+            if case .noeud(let id) = l.genre { scene.noeud(id) == nil && !p.fantomes.contains(id) } else { false }
+        }
         PlacementNoms.regler(&etiquettes, scene: scene, niveau: p.niveau, survol: survol, selection: selection,
                              focus: focus, isolee: estIsolee, fk: parts, s: s, t: t, se: se, voiles: p.voilesEtages,
-                             etageIsole: indiceEtageIsole, survolNomEtage: survolNomEtage)
+                             etageIsole: indiceEtageIsole, survolNomEtage: survolNomEtage, fantomes: p.fantomes)
         let ancres: [CGRect?] = etiquettes.map { l in
             switch l.genre {
-            case .noeud(let id): p.ancresNoeuds[id]
+            case .noeud(let id): p.ancresNoeuds[id] ?? p.ancresFantomes[id]
             case .piece(let i): p.ancresPieces[i]
             case .etage(let i): p.ancresEtages[i]
             case .maison: p.ancreMaison
@@ -53,11 +57,14 @@ extension MoteurPieces {
         projetee = p
         var g = ctx
         g.opacity = opaciteFondu * opaciteMarges
-        RenduCanvas.dessiner(&g, ImagePieces(projetee: p, etiquettes: etiquettes, traits: traits, textes: textes,
-                                             apparences: apparences, routeurs: routeurs,
+        RenduCanvas.dessiner(&g, ImagePieces(projetee: p, etiquettes: etiquettes, traits: traits, textes: textesDessines(p),
+                                             apparences: apparences, routeurs: routeurs.union(routeursPartis),
                                              teintesPieces: teintes, selection: selection, echelle: echelle),
                              palette: palette, cache: cache)
-        let nouvelle = ligne(p.niveau, ancres: ancres)
+        // Les noms des noeuds qui s'effacent ne comptent pas parmi les noms masques faute de place.
+        let nouvelle = ligne(p.niveau, ancres: zip(etiquettes, ancres).map { l, a in
+            if case .noeud(let id) = l.genre, p.fantomes.contains(id) { nil } else { a }
+        })
         if nouvelle != ligneNiveau {
             // Hors du rendu, sauf pour une capture (rendue d'un trait).
             if fige {
@@ -67,6 +74,14 @@ extension MoteurPieces {
             }
         }
         if !fige && !doitContinuer(now) { endormir() }
+    }
+
+    /// Les textes de l'image : ceux de la scene, et le nom des noeuds qui s'effacent, de la scene d'avant.
+    private func textesDessines(_ p: SceneProjetee) -> TextesScene {
+        guard !p.fantomes.isEmpty else { return textes }
+        var t = textes
+        for id in p.fantomes where t.noeuds[id] == nil { t.noeuds[id] = nomsPartis[id] }
+        return t
     }
 
     /// Le dessin des pastilles : celles de la scene, et celles qui s'effacent, de la scene d'avant.
@@ -84,6 +99,9 @@ extension MoteurPieces {
         let visees = glissement?.arrivee ?? actuelles
         if marges.haut != visees.haut || marges.bas != visees.bas {
             if pret, !fige, margesCadre != nil {
+                // Une duree annoncee par une bascule de protocole ne vaut que peu de temps : si le cadre ne bouge
+                // pas, elle ne doit pas servir a un recadrage venu bien apres.
+                if let jusqua = dureeAnnonceeJusqua, now > jusqua { dureeAnnoncee = nil }
                 glissement = GlissementMarges(depart: actuelles, arrivee: marges, debut: now,
                                               duree: dureeAnnoncee ?? Apparition.duree, fondu: reduire)
                 // Le glissement demande des images : l'horloge repart, hors du rendu.
@@ -92,6 +110,7 @@ extension MoteurPieces {
                 glissement = nil
             }
             dureeAnnoncee = nil
+            dureeAnnonceeJusqua = nil
         }
         guard let g = glissement else {
             margesCadre = marges
@@ -126,7 +145,21 @@ extension MoteurPieces {
     /// marges) prend sa duree, 0,45 s (`Apparition.dureeLegende`), au lieu des 0,3 s de la fiche et des bandeaux.
     func legendeBasculee() {
         dureeAnnoncee = Apparition.dureeLegende
+        dureeAnnonceeJusqua = nil
     }
+
+    /// Un protocole est montre ou masque : la legende change de taille avec le glissement des pieces
+    /// (`Apparition.animationDuContenuLegende`), et le recadrage qui l'accompagne prend la meme duree, en un seul
+    /// mouvement. L'annonce ne vaut qu'un instant : le cadre peut ne pas bouger. Avec « Reduire les animations », rien
+    /// ne glisse : le recadrage garde sa duree habituelle.
+    func protocolesBascules() {
+        guard !reduire else { return }
+        dureeAnnoncee = PlanTransition.pour(.bascule).glissement.duree
+        dureeAnnonceeJusqua = Self.maintenant() + Self.delaiDeLAnnonceDeBascule
+    }
+
+    /// Le temps qu'une bascule de protocole a pour recadrer la vue sur la duree annoncee.
+    static let delaiDeLAnnonceDeBascule = 1.5
 
     private func ligne(_ niveau: NiveauZoom, ancres: [CGRect?]) -> LigneNiveau {
         if estIsolee, let nom = isolee { return .isolee(nom) }
@@ -276,6 +309,11 @@ extension MoteurPieces {
         transition = nil
         posesAffichees = PosesScene()
         apparencesParties = [:]
+        nomsPartis = [:]
+        routeursPartis = []
+        etiquettes.removeAll { l in
+            if case .noeud(let id) = l.genre { scene?.noeud(id) == nil } else { false }
+        }
     }
 
     /// Vitesse de l'estompement du mode focus : la part du chemin faite par seconde (les deux tiers en 0,2 s, presque

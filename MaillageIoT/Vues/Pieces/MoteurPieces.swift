@@ -183,6 +183,10 @@ final class MoteurPieces {
     @ObservationIgnored var posesAffichees = PosesScene()
     /// Le dessin des pastilles qui s'effacent, absentes de la scene : celui de la scene d'avant.
     @ObservationIgnored var apparencesParties: [IdNoeud: DessinNoeud.Apparence] = [:]
+    /// Le nom des noeuds qui s'effacent, et ceux d'entre eux qui sont des routeurs (leur nom en 12 points) : ceux de la
+    /// scene d'avant. Leur nom s'efface avec eux (banc de l'etape 3b).
+    @ObservationIgnored var nomsPartis: [IdNoeud: LibellesNoeuds.Libelle] = [:]
+    @ObservationIgnored var routeursPartis: Set<IdNoeud> = []
     /// La politique de la grille 2D (polissage C, section 3 ; dans le coeur depuis le polissage D, section 5) : le
     /// reglage « Etages en 2D », pose par la fenetre, les colonnes choisies, une demande qui attend la vue d'ensemble
     /// 2D (`aLaVueDEnsemble2D`).
@@ -211,6 +215,8 @@ final class MoteurPieces {
     /// Duree du prochain glissement des marges : celle de la legende, qui vient de s'ouvrir ou de se replier
     /// (`legendeBasculee`) ; nil, celle de la fiche et des bandeaux.
     @ObservationIgnored var dureeAnnoncee: Double?
+    /// L'instant jusqu'auquel `dureeAnnoncee` vaut, pour une annonce qui peut rester sans effet (bascule d'un protocole) ; nil, sans limite.
+    @ObservationIgnored var dureeAnnonceeJusqua: Double?
     /// Opacite de la scene pendant le fondu des marges (« Reduire les animations ») ; 1 sinon.
     @ObservationIgnored var opaciteMarges = 1.0
     @ObservationIgnored var cadre = CGRect(x: 0, y: 0, width: 1, height: 1)

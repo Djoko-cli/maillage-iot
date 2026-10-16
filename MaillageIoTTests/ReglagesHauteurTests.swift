@@ -23,7 +23,8 @@ struct ReglagesHauteurTests {
     /// donc animee comme dans l'app, sans rien montrer. Les deux sondes sont connectees par leur port USB, sans reseau ni
     /// trousseau du Mac ; l'onglet retenu est ecrit dans des preferences en memoire, jamais dans celles de l'app.
     static func fenetre(onglet: OngletReglages, sondeThread: SondeMaillageThread? = nil,
-                        sondeZigbee: SondeMaillageZigbee? = nil) async throws -> (NSWindow, OngletsReglages) {
+                        sondeZigbee: SondeMaillageZigbee? = nil,
+                        surveillance: Surveillance = Surveillance(mode: .direct, dossier: nil)) async throws -> (NSWindow, OngletsReglages) {
         let (p, _) = try SondeMaillageTests.preferences()
         let thread = try sondeThread ?? {
             let (pt, _) = try SondeMaillageTests.preferences()
@@ -34,7 +35,7 @@ struct ReglagesHauteurTests {
             return SondeMaillageZigbee(preferences: pz, actif: true, trousseau: TrousseauMemoireZigbee(),
                                        ouvrirCanal: { _ in CanalRejoueZigbee { CanalRejoueZigbee.sondeMinimale($0) } })
         }()
-        let controleur = ControleurReglages(surveillance: Surveillance(mode: .direct, dossier: nil),
+        let controleur = ControleurReglages(surveillance: surveillance,
                                             ouverture: OuvertureSession(), nomsMaison: NomsPasseur(), nomsPont: NomsPont(),
                                             sonde: thread, sondeZigbee: zigbee, misesAJour: MisesAJour(demarrer: false),
                                             preferences: p)
@@ -42,6 +43,9 @@ struct ReglagesHauteurTests {
         await zigbee.connecter(SondeMaillageZigbeeTests.port, choisi: true)
         p.set(onglet.rawValue, forKey: OngletReglages.cle)
         let fenetre = controleur.creerFenetre()
+        // Sans animation d'ouverture ni de fermeture : une animation de fenetre qui ne finit jamais (ecran verrouille, fenetre
+        // cachee) bloque un fil du pool de Dispatch, et le pool epuise fait taire tout test qui attend le reseau.
+        fenetre.animationBehavior = .none
         fenetre.alphaValue = 0
         fenetre.setFrameOrigin(NSPoint(x: -6000, y: -6000))
         fenetre.orderFrontRegardless()

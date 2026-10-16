@@ -215,6 +215,15 @@ struct IdentifierTests {
         #expect(b.pont.identification(ieee: Self.lampe) == nil && b.pont.identifications.isEmpty)
     }
 
+    // MARK: Libelle
+
+    /// Le bouton de la fiche Zigbee s'appelle « Identifier par Hue », pour aller avec « Identifier par Maison » ; le
+    /// pendant « Identification… » reste pendant l'envoi. Le bouton Thread garde « Identifier ».
+    @Test func libelleParHue() {
+        #expect(BoutonIdentifierHue.titre(enCours: false) == String(localized: "Identifier par Hue"))
+        #expect(BoutonIdentifierHue.titre(enCours: true) == String(localized: "Identification…"))
+    }
+
     // MARK: L'identifiant du device
 
     /// L'identifiant du device suit l'appareil : lu sur le pont, garde dans `noms-pont.json`, relu au lancement (avant

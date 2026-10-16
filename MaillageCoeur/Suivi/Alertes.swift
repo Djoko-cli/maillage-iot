@@ -1,7 +1,7 @@
 import Foundation
 
-/// Categories de notifications (cases des reglages ; restent celles de Thread tant que les notifications ne
-/// sont pas decidees par protocole).
+/// Categories de notifications (cases des reglages). Chaque protocole a ses interrupteurs, sous ses propres cles
+/// (`Notifications.cle`) : Thread a les quatre, Zigbee n'a pas de scission.
 public enum CategorieAlerte: String, Codable, Hashable, Sendable, CaseIterable {
     /// Reseau scinde (par defaut : oui).
     case scission
@@ -26,6 +26,10 @@ public struct AlerteAEnvoyer: Hashable, Sendable {
         self.identifiant = identifiant
         self.evenements = evenements
     }
+
+    /// Le protocole de la notification : celui de son premier evenement ; sans protocole (journal d'avant l'etape 3),
+    /// Thread. Les interrupteurs des reglages sont par protocole.
+    public var protocole: Protocole { evenements.first?.protocole ?? .thread }
 }
 
 /// Decide des notifications a partir des nouveaux evenements.

@@ -160,6 +160,71 @@ public struct PosesScene: Hashable, Sendable {
     }
 }
 
+/// Le plan des phases d'une transition (banc de l'etape 3b) : quand chaque phase commence (en secondes, depuis le debut
+/// de la transition), combien elle dure, sur quelle courbe. Il depend de la cause du changement. Un changement du reseau
+/// (un appareil qui arrive ou disparait) garde l'enchainement d'origine : le glissement des pieces, des noeuds et des
+/// plateaux en 0,9 s, cubique entree-sortie, et, des l'instant 0, les apparitions et disparitions en fondu de 0,3 s, en
+/// ligne droite. La bascule d'un protocole (montre ou masque) est un seul mouvement : toutes les phases commencent a 0,
+/// durent autant que le glissement et suivent sa courbe.
+public struct PlanTransition: Hashable, Sendable {
+    /// Ce qui a change.
+    public enum Cause: Hashable, Sendable {
+        /// Un appareil arrive ou disparait, un lien change : la disposition du reseau reel.
+        case reseau
+        /// Un protocole est montre ou masque.
+        case bascule
+    }
+
+    public enum Courbe: Hashable, Sendable {
+        /// Cubique entree-sortie (`CameraScene.rampe`).
+        case rampe
+        case lineaire
+    }
+
+    public struct Phase: Hashable, Sendable {
+        public var debut: Double
+        public var duree: Double
+        public var courbe: Courbe
+
+        public init(debut: Double, duree: Double, courbe: Courbe) {
+            self.debut = debut
+            self.duree = duree
+            self.courbe = courbe
+        }
+
+        /// L'avancement de la phase, de 0 a 1, `t` secondes apres le debut de la transition.
+        public func avancement(a t: Double) -> Double {
+            let q = min(1, max(0, (t - debut) / duree))
+            switch courbe {
+            case .rampe: return CameraScene.rampe(q)
+            case .lineaire: return q
+            }
+        }
+
+        /// L'instant de sa fin, depuis le debut de la transition.
+        public var fin: Double { debut + duree }
+    }
+
+    /// Les pieces, les noeuds et les liens qui restent glissent ; les plateaux et le cadrage de la vue aussi.
+    public var glissement: Phase
+    /// Ce qui arrive ou part (pieces, noeuds, liens) se fond.
+    public var fondu: Phase
+
+    public static func pour(_ cause: Cause) -> PlanTransition {
+        let glissement = Phase(debut: 0, duree: TransitionScene.duree, courbe: .rampe)
+        switch cause {
+        case .reseau:
+            return PlanTransition(glissement: glissement,
+                                  fondu: Phase(debut: 0, duree: TransitionScene.dureeFondu, courbe: .lineaire))
+        case .bascule:
+            return PlanTransition(glissement: glissement, fondu: glissement)
+        }
+    }
+
+    /// La fin de la derniere phase.
+    public var dureeTotale: Double { max(glissement.fin, fondu.fin) }
+}
+
 /// Le glissement d'une disposition a l'autre (polissage D, section 1) : de la pose affichee a la pose nouvelle, chaque
 /// piece (son centre et sa taille) et chaque noeud (sa place dans le monde) glisse en 0,9 s, en cubique entree-sortie ;
 /// un element present d'un seul cote apparait ou s'efface en fondu de 0,3 s, a sa place ; un lien suit ses bouts. Elle
@@ -176,10 +241,14 @@ public struct TransitionScene: Hashable, Sendable {
     public var depart: PosesScene
     public var arrivee: PosesScene
     public var debut: Double
+    /// Le plan de ses phases, selon la cause du changement.
+    public var plan: PlanTransition
 
     /// La transition de `affichee`, la pose affichee de la scene d'avant, a `arrivee`, la nouvelle, depuis l'instant
-    /// `debut` ; nil si rien ne change, ou avec « Reduire les animations ».
-    public init?(de affichee: PosesScene, vers arrivee: PosesScene, a debut: Double, reduire: Bool = false) {
+    /// `debut` ; nil si rien ne change, ou avec « Reduire les animations ». `cause` : le plan des phases (`PlanTransition`) ;
+    /// un changement du reseau, sauf bascule d'un protocole.
+    public init?(de affichee: PosesScene, vers arrivee: PosesScene, a debut: Double, reduire: Bool = false,
+                 cause: PlanTransition.Cause = .reseau) {
         guard !reduire else { return nil }
         // Ce qui est deja efface (opacite 0) et absent de l'arrivee n'existe plus : ce n'est pas un changement.
         let affichee = affichee.sansEfface(devant: arrivee)
@@ -201,16 +270,21 @@ public struct TransitionScene: Hashable, Sendable {
         depart = d
         self.arrivee = a
         self.debut = debut
+        plan = .pour(cause)
     }
 
-    /// Le glissement est fini a l'instant `now`.
-    public func finie(a now: Double) -> Bool { now - debut >= Self.duree }
+    /// De son debut a la fin de sa derniere phase.
+    public var dureeTotale: Double { plan.dureeTotale }
 
-    /// Les poses de ce qui change, a l'instant `now` : en route en cubique entree-sortie ; l'opacite en route, en
-    /// 0,3 s, vers 1 pour ce qui arrive, vers 0 pour ce qui part, depuis celle du depart (une transition interrompue).
+    /// La transition est finie a l'instant `now`.
+    public func finie(a now: Double) -> Bool { now - debut >= dureeTotale }
+
+    /// Les poses de ce qui change, a l'instant `now` : en route selon la phase du glissement (par defaut en cubique
+    /// entree-sortie) ; l'opacite en route selon celle du fondu (par defaut 0,3 s en ligne droite), vers 1 pour ce qui
+    /// arrive, vers 0 pour ce qui part, depuis celle du depart (une transition interrompue).
     public func poses(a now: Double) -> PosesScene {
-        let e = CameraScene.rampe(min(1, max(0, (now - debut) / Self.duree)))
-        let f = min(1, max(0, (now - debut) / Self.dureeFondu))
+        let e = plan.glissement.avancement(a: now - debut)
+        let f = plan.fondu.avancement(a: now - debut)
         func opacite(_ o0: Double?, _ o1: Double?) -> Double {
             let a = o0 ?? 0, b = o1 == nil ? 0 : 1.0
             return a + (b - a) * f

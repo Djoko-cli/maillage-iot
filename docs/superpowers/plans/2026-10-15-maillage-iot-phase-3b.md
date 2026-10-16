@@ -46,10 +46,10 @@ D'après `inventaire-etape3b.md` §14. Le critère de l'étape 3 (spec 6.1) comp
 - Create: `MaillageIoTTests/MesuresVueTests.swift` (temps d'ouverture de la scène de démo et coût d'une suite de zooms, mesurés hors écran ; écrits dans un fichier de résultats, jamais une assertion de durée) ; `docs/mesures/etape-1.json` (référence).
 - Modify: `outils/mesurer.sh` (seconde ligne : les mesures de la vue).
 
-- [ ] **Step 1: Outil** — écrire `MesuresVueTests` (désactivé par défaut dans la porte, lancé par `outils/mesurer.sh vue`) et sa ligne dans `mesurer.sh`.
-- [ ] **Step 2: Référence** — dans une copie de travail à part (`git worktree add --detach /private/tmp/claude-501/mesure-e32f3a5 e32f3a5`, DerivedData à part), y copier l'outil adapté si besoin, mesurer Thread seul, écrire `docs/mesures/etape-1.json` dans le dépôt principal, puis `git worktree remove`.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; `outils/mesurer.sh vue` sur `main` donne des valeurs du même ordre (noté au rapport).
-- [ ] **Step 4: Commit** — « Mesures de la vue : outil et reference de l'etape 1 ».
+- [x] **Step 1: Outil** — écrire `MesuresVueTests` (désactivé par défaut dans la porte, lancé par `outils/mesurer.sh vue`) et sa ligne dans `mesurer.sh`.
+- [x] **Step 2: Référence** — dans une copie de travail à part (`git worktree add --detach /private/tmp/claude-501/mesure-e32f3a5 e32f3a5`, DerivedData à part), y copier l'outil adapté si besoin, mesurer Thread seul, écrire `docs/mesures/etape-1.json` dans le dépôt principal, puis `git worktree remove`.
+- [x] **Step 3: Vérifier** — porte de la tâche ; `outils/mesurer.sh vue` sur `main` donne des valeurs du même ordre (noté au rapport).
+- [x] **Step 4: Commit** — « Mesures de la vue : outil et reference de l'etape 1 ».
 
 ---
 
@@ -61,10 +61,10 @@ D'après `inventaire-etape3b.md` §5 ; spec 6.7, décision 2.
 - Modify: `MaillageCoeur` (`NiveauQualite` devient `BandeQualite`, avec un alias de transition si utile ; `EchelleSignal.bande(_:)`), `MaillageIoT/Vues/Pieces/Palette.swift` (`NiveauLien` supprimé), la fiche (`CourbesFiche`, `ComposantsFiche`).
 - Test: tests du cœur sur `EchelleSignal` (dBm et LQI), `qualiteDUnLienSelonLeProtocole` (le 0 de Thread reste gris).
 
-- [ ] **Step 1: RED** — `bandeSelonLEchelle` (des valeurs dBm et LQI rangées dans les bonnes bandes) ; un lien Thread de qualité 0 reste gris dans la scène et « faible » nulle part ailleurs qu'aujourd'hui.
-- [ ] **Step 2: GREEN** — implémenter, sans changer une couleur affichée.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
-- [ ] **Step 4: Commit** — « Bandes de qualite communes aux deux protocoles ».
+- [x] **Step 1: RED** — `bandeSelonLEchelle` (des valeurs dBm et LQI rangées dans les bonnes bandes) ; un lien Thread de qualité 0 reste gris dans la scène et « faible » nulle part ailleurs qu'aujourd'hui.
+- [x] **Step 2: GREEN** — implémenter, sans changer une couleur affichée.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts).
+- [x] **Step 4: Commit** — « Bandes de qualite communes aux deux protocoles ».
 
 ---
 
@@ -76,10 +76,10 @@ D'après `inventaire-etape3b.md` §1, §2, §6 ; spec 3.1, 6.7.
 - Modify: `MaillageIoT/Vues/Pieces/DessinNoeud.swift` (`Apparence` gagne la forme du protocole, valeur par défaut ronde), `Palette.swift` (couleur `routeurZigbee` violette, pont compris), `RenduCanvas.swift` (2D et 3D), `LegendePieces.swift` / `SigneLegende.swift` (ligne « ● Thread ⬢ Zigbee » seulement quand les deux protocoles sont dans la scène ; entrées communes rondes).
 - Test: les ~30 assertions sur `Apparence` réécrites dans cette tâche ; `ondesDessinees` (`MaillageIoTTests/…/LegendePiecesZigbeeTests.swift`) étendu à l'hexagone (ondes, pile, anneau pointillé et sélection n'empiètent sur aucun sommet) ; constantes de hauteur de la légende.
 
-- [ ] **Step 1: RED** — `hexagoneZigbee` (routeur facetté, pastille et anneau hexagonaux pour un appareil et un disparu, pointe en haut, sommets sur le rayon) ; `routeurZigbeeViolet` (pont compris) ; `routeurDeBordureBleu` inchangé ; test de pixels étendu ; légende : la ligne de protocole présente avec deux protocoles, absente avec un seul.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : aucune forme ni couleur dans les références).
-- [ ] **Step 4: Commit** — « Silhouettes : hexagone violet pour Zigbee, ligne de protocole dans la legende ».
+- [x] **Step 1: RED** — `hexagoneZigbee` (routeur facetté, pastille et anneau hexagonaux pour un appareil et un disparu, pointe en haut, sommets sur le rayon) ; `routeurZigbeeViolet` (pont compris) ; `routeurDeBordureBleu` inchangé ; test de pixels étendu ; légende : la ligne de protocole présente avec deux protocoles, absente avec un seul.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : aucune forme ni couleur dans les références).
+- [x] **Step 4: Commit** — « Silhouettes : hexagone violet pour Zigbee, ligne de protocole dans la legende ».
 
 ---
 
@@ -92,10 +92,10 @@ D'après `inventaire-etape3b.md` §11 ; spec 6.7.
 - Modify: `MaillageIoT/Ressources` (icône de l'app, logos), `IconeBarre` (barre des menus : le seul symbole du maillage, sans `MarqueThread`), onglets Thread et Zigbee des Réglages (logos en images modèles), README (crédits des marques, anglais puis français) ; supprimer `MarqueThread` s'il n'a plus d'usage.
 - Test: `MenuTests.icone` réécrit (aucun badge) ; un test que les onglets chargent leurs logos (images modèles).
 
-- [ ] **Step 1: RED** — tests ci-dessus.
-- [ ] **Step 2: GREEN** — générer l'icône par l'outil (commande au rapport), brancher logos et icône. Les images ne contiennent aucun texte ni donnée réelle.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; images jointes au rapport (chemins), pour le banc.
-- [ ] **Step 4: Commit** — « Icones : constellation sans badge generee, logos de Thread et de Zigbee ».
+- [x] **Step 1: RED** — tests ci-dessus.
+- [x] **Step 2: GREEN** — générer l'icône par l'outil (commande au rapport), brancher logos et icône. Les images ne contiennent aucun texte ni donnée réelle.
+- [x] **Step 3: Vérifier** — porte de la tâche ; images jointes au rapport (chemins), pour le banc.
+- [x] **Step 4: Commit** — « Icones : constellation sans badge generee, logos de Thread et de Zigbee ».
 
 ---
 
@@ -107,10 +107,10 @@ D'après `inventaire-etape3b.md` §3, §4 ; spec 3.1, 3.3, 6.7.
 - Modify: `MaillageIoT/Vues/Pieces/` (`ContenuHaut`, `BandeauPieces`, `HautPieces` : capsule de gauche = nom de la maison (Maison), menu des réseaux par protocole — Thread : réseaux, partitions, choix du réseau affiché ; Zigbee : le pont —, puis « ● Thread ⬢ Zigbee » ; « Appareils IP · N » seulement si Thread est montré ; ligne de tournée d'un protocole masqué cachée), `EntreeScene` (paramètre des protocoles montrés, combiné à `actif` ; masquage **stable** : la disposition est calculée sur les protocoles actifs, le masquage n'agit qu'au dessin), `FenetrePieces` (fiche, focus et isolement d'un nœud masqué fermés ; écran quand tout est masqué), préférences `vue.thread` / `vue.zigbee` (vrai par défaut).
 - Test: `masquageStable` (positions des pièces et des nœuds visibles identiques, protocole montré ou masqué) ; `ficheFermeeAuMasquage` ; `interrupteurGriseProtocoleEteint` ; `appareilsIPSelonThread` ; constantes de largeur et de hauteur de la barre.
 
-- [ ] **Step 1: RED** — tests ci-dessus.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : le masquage n'entre pas dans la scène calculée).
-- [ ] **Step 4: Commit** — « Barre du haut : nom de la maison, interrupteurs de vue, masquage stable ».
+- [x] **Step 1: RED** — tests ci-dessus.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche (deux rejeux exacts : le masquage n'entre pas dans la scène calculée).
+- [x] **Step 4: Commit** — « Barre du haut : nom de la maison, interrupteurs de vue, masquage stable ».
 
 ---
 
@@ -122,10 +122,10 @@ D'après `registre-etape-3a.md` (T12 m3, T11 M5) ; spec 6.7, décision 5.
 - Modify: pages Thread et Zigbee des Réglages (tout grisé sauf « Activer ce protocole »).
 - Test: `ongletGriseProtocoleEteint` pour chacun ; « Activer ce protocole » reste actif.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; `ReglagesHauteurTests` vert.
-- [ ] **Step 4: Commit** — « Reglages : onglet d'un protocole eteint grise ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche ; `ReglagesHauteurTests` vert.
+- [x] **Step 4: Commit** — « Reglages : onglet d'un protocole eteint grise ».
 
 ---
 
@@ -137,10 +137,10 @@ D'après `inventaire-etape3b.md` §7 ; spec 3.5, 6.7.
 - Modify: `FenetreJournal` et ses familles (interrupteurs Thread / Zigbee propres au journal, mémorisés `journal.thread` / `journal.zigbee` ; marque ● ou ⬢ dans la couleur du protocole sur chaque ligne ; familles propres à un protocole filtré grisées).
 - Test: `filtreDuJournalParProtocole`, `marqueDeLigne`, préférence gardée.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Journal : filtres et marques par protocole ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Journal : filtres et marques par protocole ».
 
 ---
 
@@ -152,10 +152,10 @@ D'après `inventaire-etape3b.md` §8, §9 ; `registre-etape-3a.md` (Final m3 : d
 - Modify: `Notifications` / `Alertes` (catégories par protocole, clés `notification.<protocole>.<catégorie>` qui reprennent à la première lecture la valeur des clés communes actuelles), onglet Notifications (sections Thread et Zigbee, mêmes défauts), `MenuBarre` (chaque bloc d'alerte dit son protocole ; une ligne de résumé par protocole actif), `IconeBarre` (pire des deux réseaux actifs, déjà en place : test seulement).
 - Test: `reprisesDesClesCommunes` (une catégorie coupée en 3a reste coupée pour les deux protocoles), `notificationSelonSonProtocole`, `menuAlerteAvecProtocole`.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Notifications par protocole, menu de la barre avec le protocole des alertes ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Notifications par protocole, menu de la barre avec le protocole des alertes ».
 
 ---
 
@@ -167,10 +167,10 @@ D'après `inventaire-etape3b.md` §13 ; spec 6.7, backlog.
 - Modify: fiche Zigbee (`BoutonIdentifier` de Zigbee : « Identifier par Hue », « Identification… »), catalogue ; la spec 3.2 est déjà précisée (6.7).
 - Test: libellé du bouton.
 
-- [ ] **Step 1: RED** — test du libellé.
-- [ ] **Step 2: GREEN** — renommer.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Fiche Zigbee : Identifier par Hue ».
+- [x] **Step 1: RED** — test du libellé.
+- [x] **Step 2: GREEN** — renommer.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Fiche Zigbee : Identifier par Hue ».
 
 ---
 
@@ -183,10 +183,10 @@ D'après `inventaire-etape3b.md` §10 ; spec 3.6, 6.7, décision 3.
 - Create: `MaillageIoTTests/ReferenceRejeuCombineeTests.swift` (identifiants préfixés), `docs/rejeu/maillage-iot-demo.json` (écrit une fois en bac à sable, relu, commité, jamais régénéré) ; un test « union » qui relit les deux références existantes.
 - Test: les deux rejeux existants inchangés (par `-demo-thread` / `-demo-zigbee`) ; `horlogeDuModeleDuNoeud` (un nœud Thread de la démo combinée n'est pas périmé).
 
-- [ ] **Step 1: RED** — tests ci-dessus (la référence combinée est créée à l'étape 2, puis le test doit passer sans la régénérer).
-- [ ] **Step 2: GREEN** — implémenter ; écrire la référence une seule fois.
-- [ ] **Step 3: Vérifier** — porte de la tâche (trois références exactes).
-- [ ] **Step 4: Commit** — « Demo combinee : -demo, horloge par modele, reference de la scene combinee ».
+- [x] **Step 1: RED** — tests ci-dessus (la référence combinée est créée à l'étape 2, puis le test doit passer sans la régénérer).
+- [x] **Step 2: GREEN** — implémenter ; écrire la référence une seule fois.
+- [x] **Step 3: Vérifier** — porte de la tâche (trois références exactes).
+- [x] **Step 4: Commit** — « Demo combinee : -demo, horloge par modele, reference de la scene combinee ».
 
 ---
 
@@ -194,9 +194,9 @@ D'après `inventaire-etape3b.md` §10 ; spec 3.6, 6.7, décision 3.
 
 D'après la tâche 1 ; critère de l'étape 3 (spec 6.1).
 
-- [ ] **Step 1: Mesurer** — `outils/mesurer.sh vue` sur la démo combinée et sur la démo Thread seule ; écrire `docs/mesures/etape-3b.json`.
-- [ ] **Step 2: Comparer** — tableau au rapport contre `docs/mesures/etape-1.json` ; un écart de plus de 20 % sur l'ouverture ou le zoom de la démo Thread seule est un constat à remonter, pas à masquer.
-- [ ] **Step 3: Commit** — « Mesures de la vue : etape 3b contre l'etape 1 ».
+- [x] **Step 1: Mesurer** — `outils/mesurer.sh vue` sur la démo combinée et sur la démo Thread seule ; écrire `docs/mesures/etape-3b.json`.
+- [x] **Step 2: Comparer** — tableau au rapport contre `docs/mesures/etape-1.json` ; un écart de plus de 20 % sur l'ouverture ou le zoom de la démo Thread seule est un constat à remonter, pas à masquer.
+- [x] **Step 3: Commit** — « Mesures de la vue : etape 3b contre l'etape 1 ».
 
 ---
 
@@ -208,10 +208,10 @@ D'après `inventaire-etape3b.md` §12 ; spec 6.7. Tâche la plus risquée : rele
 - Modify: `MaillageIoT/Thread/Sonde/SondeMaillageThread.swift` (réglage séparé du chemin, comme `ReglageChemin` / `CheminSonde` de Zigbee : Automatique, USB, Réseau Thread ; Automatique = USB d'abord si la carte retenue est branchée, sinon le réseau Thread si la clé est connue et la sonde annoncée ; signal « annoncée » à créer côté Thread), la page Thread des Réglages (sélecteur toujours visible ; Réseau indisponible tant que la clé est inconnue, avec son explication), préférence (Automatique par défaut des nouvelles installations ; un choix existant gardé).
 - Test: miroir des tests de chemin de Zigbee (`CheminSondeTests`) : choix du chemin selon branchée / clé connue / annoncée ; aucune carte de Zigbee ni carte inconnue ouverte ; pas de bascule sans fin (USB et réseau qui se disputent) ; choix existant gardé.
 
-- [ ] **Step 1: RED** — tests.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; tests de la sonde Thread ×3.
-- [ ] **Step 4: Commit** — « Sonde Thread : liaison Automatique, USB d'abord puis le reseau Thread ».
+- [x] **Step 1: RED** — tests.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche ; tests de la sonde Thread ×3.
+- [x] **Step 4: Commit** — « Sonde Thread : liaison Automatique, USB d'abord puis le reseau Thread ».
 
 ---
 
@@ -219,6 +219,6 @@ D'après `inventaire-etape3b.md` §12 ; spec 6.7. Tâche la plus risquée : rele
 
 Fait par l'orchestrateur avec Djoko, après la relecture finale et ses correctifs.
 
-- [ ] **Step 1: Préparer** — compiler `MaillageIoT` (Debug) ; images de l'icône et des logos ; tableau des mesures.
-- [ ] **Step 2: Comparer** — les deux réseaux réels ensemble avec la vue A (hexagones violets, légende, interrupteurs, nom de la maison), masquage stable, journal et notifications par protocole, démo combinée (`-demo`), icône au Dock et dans la barre, logos des onglets ; la sonde Thread en Automatique (USB puis réseau) ; **places de la sonde Zigbee** (3 places TCP, 2 sessions H1) observées avec Zigbee 1.1.1 ouverte en même temps (critère 6.1).
-- [ ] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
+- [x] **Step 1: Préparer** — compiler `MaillageIoT` (Debug) ; images de l'icône et des logos ; tableau des mesures.
+- [x] **Step 2: Comparer** — les deux réseaux réels ensemble avec la vue A (hexagones violets, légende, interrupteurs, nom de la maison), masquage stable, journal et notifications par protocole, démo combinée (`-demo`), icône au Dock et dans la barre, logos des onglets ; la sonde Thread en Automatique (USB puis réseau), dont **l'invite du trousseau** : en Automatique, la clé de Thread 1.3.0 est reprise sans geste explicite et macOS peut demander l'accord, une fois par sonde (à observer, et à noter dans les notes de version de la 1.0.0, étape 5, anglais puis français, spec §5.2) ; **places de la sonde Zigbee** (3 places TCP, 2 sessions H1) observées avec Zigbee 1.1.1 ouverte en même temps (critère 6.1).
+- [x] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.

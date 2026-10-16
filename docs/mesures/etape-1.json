@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-15",
+  "commit": "e32f3a5",
+  "configuration": "Release",
+  "machine": "Mac (Apple Silicon)",
+  "systeme": "macOS 27.0.1",
+  "scene": "demo de Thread seule (-demo-thread), hors ecran, 1200 x 800",
+  "unite": "ms (medianes)",
+  "methode": "MaillageIoTTests/MesuresVueTests.swift, lancee par outils/mesurer.sh vue",
+  "noeuds": 31,
+  "ouverture_disposition_ms": 28.439,
+  "ouverture_froide_ms": 65.573,
+  "ouverture_ms": 49.821,
+  "ouverture_premiere_image_ms": 1.008,
+  "ouverture_scene_ms": 20.333,
+  "pas_de_zoom": 60,
+  "passages": 9,
+  "pieces": 13,
+  "zoom_image_ms": 0.416,
+  "zoom_image_p95_ms": 0.699,
+  "zoom_pire_image_ms": 12.434,
+  "zoom_suite_ms": 24.771
+}

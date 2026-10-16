@@ -70,4 +70,15 @@ struct EchelleSignalZigbeeTests {
         #expect(valeur(0.4) == "LQI 0")
         #expect(valeur(254.6) == "LQI 255")
     }
+
+    /// La bande d'un LQI : celle de la qualite 0 a 3 que `QualiteLien` en tire, pour les 256 valeurs ; la qualite 0
+    /// (sous 50) est un lien faible. Les seuils de l'echelle sont ceux de `QualiteLien` (une seule source).
+    @Test func bandeDUnLQI() {
+        let e = EchelleSignal.lqi
+        for lqi in 0 ... 255 {
+            #expect(e.bande(Double(lqi)) == BandeQualite(QualiteLien.depuis(lqi: lqi) as Int), "LQI \(lqi)")
+        }
+        #expect(e.bande(182) == .bonne && e.bande(130) == .moyenne && e.bande(60) == .faible && e.bande(10) == .faible)
+        #expect(e.bandes == SeuilsBandes(bonne: Double(QualiteLien.seuilBonne), moyenne: Double(QualiteLien.seuilMoyenne)))
+    }
 }

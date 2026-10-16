@@ -19,20 +19,13 @@ struct ModulesApp {
     let sondeZigbee: SondeMaillageZigbee
     /// Les cartes que chaque sonde retient : partage par les deux, une carte de l'une n'est ni proposee ni ouverte par l'autre.
     let cartes: CartesRetenues
-    /// Le protocole dont la demo est rejouee (`-demo`) ; nil hors demo.
-    let demo: Protocole?
+    /// La demo rejouee (`-demo` : la combinee, `-demo-thread`, `-demo-zigbee`, `DemoLancee.depuis(arguments:)`) ; nil hors demo.
+    let demo: DemoLancee?
     let sousTests: Bool
 
-    /// Le protocole dont la demo est rejouee d'apres les arguments de lancement : `-demo-zigbee` (le faux reseau Hue),
-    /// `-demo` (la panne de Thread) ; nil hors demo. Une demo a la fois (la demo combinee est a l'etape 3b) ; si les deux
-    /// sont donnes, celle de Zigbee, la plus precise.
-    static func protocoleDeLaDemo(arguments: [String]) -> Protocole? {
-        arguments.contains("-demo-zigbee") ? .zigbee : arguments.contains("-demo") ? .thread : nil
-    }
-
-    /// `demo` : le protocole dont la demo est rejouee ; nil hors demo. `sousTests` : lance par les tests, qui ne touchent
-    /// jamais aux fichiers de l'app, au trousseau ni au reseau.
-    init(demo: Protocole?, sousTests: Bool = Surveillance.sousTests) {
+    /// `demo` : la demo rejouee ; nil hors demo. `sousTests` : lance par les tests, qui ne touchent jamais aux fichiers de
+    /// l'app, au trousseau ni au reseau.
+    init(demo: DemoLancee?, sousTests: Bool = Surveillance.sousTests) {
         self.demo = demo
         self.sousTests = sousTests
         let inerte = demo != nil || sousTests
@@ -40,16 +33,20 @@ struct ModulesApp {
         let dossier: URL? = inerte ? nil : Surveillance.dossierParDefaut
         surveillance = Surveillance(mode: demo != nil ? .demo : .direct, dossier: dossier, demo: demo ?? .thread)
         ouverture = OuvertureSession()
-        // Les noms de Maison : le releve invente de la demo de Zigbee ; inerte sinon en demo et sous les tests (aucun
-        // releve lu, ecrit ni demande au demon Passeur Noms) ; sinon le demon, son dernier releve garde dans
+        // La demo de Zigbee rejouee (la sienne, ou celle de la combinee : recalee, ses homonymes renommes), la meme que celle
+        // du modele.
+        let zigbee = surveillance.zigbee.demo
+        let avecZigbee = demo?.rejoue(.zigbee) == true
+        // Les noms de Maison : le releve invente de la demo de Zigbee (seule ou combinee) ; inerte sinon en demo et sous les
+        // tests (aucun releve lu, ecrit ni demande au demon Passeur Noms) ; sinon le demon, son dernier releve garde dans
         // `releve-maison.json`, a la racine du dossier de l'app.
-        nomsMaison = demo == .zigbee ? NomsPasseur(demo: NomsDemo.releveMaison)
+        nomsMaison = avecZigbee ? NomsPasseur(demo: zigbee.releveMaison)
             : inerte ? NomsPasseur()
             : NomsPasseur(cache: NomsPasseur.fichierCache(dossier: Surveillance.dossierParDefaut),
                           lanceur: NomsPasseur.lancerPasseurDuMac)
-        // Les noms du pont : ceux de la demo de Zigbee ; inertes sinon en demo et sous les tests (ni reseau, ni trousseau,
-        // ni fichier) ; sinon le client du pont, son dernier releve garde dans `Zigbee/noms-pont.json`.
-        nomsPont = demo == .zigbee ? NomsPont(noms: NomsDemo.maisonPont)
+        // Les noms du pont : ceux de la demo de Zigbee (seule ou combinee) ; inertes sinon en demo et sous les tests (ni
+        // reseau, ni trousseau, ni fichier) ; sinon le client du pont, son dernier releve garde dans `Zigbee/noms-pont.json`.
+        nomsPont = avecZigbee ? NomsPont(noms: zigbee.maisonPont)
             : inerte ? NomsPont()
             : NomsPont(dependances: .systeme(cache: Surveillance.dossierZigbee(Surveillance.dossierParDefaut)
                 .appendingPathComponent("noms-pont.json")))
@@ -98,6 +95,8 @@ struct ModulesApp {
         st.surOubli = { [weak s] in s?.thread.oublierMaillage() }
         st.appareilsAResoudre = { [weak s] in s?.thread.appareilsAResoudre() ?? [] }
         st.reseauConnu = { [weak s] in s?.thread.instantane != nil }
+        // Automatique : la sonde est « annoncee » quand son hote est dans l'instantane (ce que Bonjour voit deja).
+        s.thread.surAnnonces = { [weak st] hotes in st?.annoncesChangees(hotes) }
         s.thread.surActivite = { [weak st] actif in
             if actif { st?.demarrer() } else { st?.arreter() }
         }

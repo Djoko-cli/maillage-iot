@@ -9,9 +9,9 @@ struct EchelleSignalTests {
     /// Les deux echelles d'essai : le coeur n'en nomme aucune, chaque protocole a la sienne (`.dbm` de Thread,
     /// `.lqi` de Zigbee). Memes reglages qu'elles, pour que les attentes ci-dessous soient celles des protocoles.
     static let dbm = EchelleSignal(unite: "dBm", uniteAvant: false, pas: 10, marge: 5, bornes: nil,
-                                   domaineParDefaut: -100 ... -40)
+                                   domaineParDefaut: -100 ... -40, bandes: SeuilsBandes(bonne: -80, moyenne: -90))
     static let lqi = EchelleSignal(unite: "LQI", uniteAvant: true, pas: 50, marge: 10, bornes: 0 ... 255,
-                                   domaineParDefaut: 0 ... 255)
+                                   domaineParDefaut: 0 ... 255, bandes: SeuilsBandes(bonne: 170, moyenne: 100))
 
     /// Le domaine : un seul point (−67 donne −80 ... −60) ; des valeurs egales ; des valeurs etalees ; des valeurs deja
     /// sur une dizaine (−70 donne −80 ... −60, pas −70 ... −70). Toujours 10 dB au moins, et deux graduations au moins,
@@ -186,5 +186,21 @@ struct EchelleSignalTests {
         #expect(valeur(66.5) == "LQI 67")
         #expect(valeur(0.4) == "LQI 0")
         #expect(valeur(254.6) == "LQI 255")
+    }
+
+    /// La bande d'une valeur, selon l'echelle : en dBm, -80 et plus bonne, -90 a -80 moyenne, au-dessous faible ; en LQI,
+    /// 170 et plus bonne, 100 a 170 moyenne, au-dessous faible (50 et moins compris : un lien reel, tres faible). Un seuil
+    /// appartient a la bande du dessus. Sans valeur (NaN), inconnue.
+    @Test func bandeSelonLEchelle() {
+        let dbm = Self.dbm, lqi = Self.lqi
+        #expect(dbm.bande(-55) == .bonne && dbm.bande(-79.9) == .bonne && dbm.bande(-80) == .bonne)
+        #expect(dbm.bande(-80.1) == .moyenne && dbm.bande(-85) == .moyenne && dbm.bande(-90) == .moyenne)
+        #expect(dbm.bande(-90.1) == .faible && dbm.bande(-97) == .faible && dbm.bande(-120) == .faible)
+        #expect(lqi.bande(255) == .bonne && lqi.bande(182) == .bonne && lqi.bande(170) == .bonne)
+        #expect(lqi.bande(169) == .moyenne && lqi.bande(130) == .moyenne && lqi.bande(100) == .moyenne)
+        #expect(lqi.bande(99) == .faible && lqi.bande(50) == .faible && lqi.bande(49) == .faible && lqi.bande(0) == .faible)
+        #expect(dbm.bande(.nan) == .inconnue && lqi.bande(.nan) == .inconnue)
+        #expect(dbm.bande(182) == .bonne && dbm.bande(100) == .bonne, "une valeur dBm sans sens en LQI : bonne en dBm (ses seuils)")
+        #expect(lqi.bande(-67) == .faible, "et inversement : les seuils sont ceux de l'echelle")
     }
 }

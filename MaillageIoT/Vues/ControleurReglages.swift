@@ -79,7 +79,7 @@ final class ControleurReglages {
             hote.title = o.titre
             let item = NSTabViewItem(viewController: hote)
             item.label = o.titre
-            item.image = NSImage(systemSymbolName: o.symbole, accessibilityDescription: o.titre)
+            item.image = o.image
             item.identifier = o.rawValue
             onglets.addTabViewItem(item)
         }

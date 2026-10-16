@@ -213,7 +213,7 @@ struct PastilleNoeud: View {
     }
 }
 
-extension NiveauQualite {
+extension BandeQualite {
     /// Le nom du niveau, lu par VoiceOver (la couleur d'un lien ne le dit pas seule).
     var nom: String {
         switch self {
@@ -248,7 +248,7 @@ struct BarreRepartition: View {
 
 extension Palette {
     /// La couleur d'un niveau de qualite, celle de la legende (`lienSonde`).
-    func couleur(_ n: NiveauQualite) -> Color {
+    func couleur(_ n: BandeQualite) -> Color {
         switch n {
         case .bonne: lienSonde(3)
         case .moyenne: lienSonde(2)

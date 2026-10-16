@@ -11,6 +11,10 @@ extension MoteurPieces {
     /// ou du glisser. Si ses etages, ses pieces, ses noeuds ou leurs noms changent, la disposition est
     /// recalculee hors du fil principal ; l'ancienne reste affichee pendant ce temps.
     func recevoir(_ e: EntreeScene) {
+        // Un protocole masque ne laisse ni fiche ni focus : ils se ferment tout de suite, meme si la scene attend la fin d'un
+        // mouvement (l'isolement d'une piece, lui, se ferme a la pose de la scene, `installer`).
+        if let choisi = selection, !e.montre(choisi) { selection = nil }
+        if let avant = sceneRecente, avant.montres != e.montres { protocolesBascules() }
         if occupe {
             attente = e
             return
@@ -121,6 +125,9 @@ extension MoteurPieces {
         let affichee = avant?.recouvertes(par: posesAffichees)
         let rayonsAvant = entree.map { Self.rayonsParCle($0.scene, geometrieVisee.rayons) }
         let ancienne = entree
+        // La bascule d'un protocole (montre ou masque) se joue en un seul mouvement ; un changement du reseau garde
+        // l'enchainement d'origine (`PlanTransition`).
+        let cause: PlanTransition.Cause = ancienne.map { $0.montres != e.montres } == true ? .bascule : .reseau
         entree = e
         // Un autre ordre des plateaux : le disque et le nom d'etage survoles, des indices, en designeraient
         // d'autres ; le prochain mouvement du pointeur les reprend.
@@ -138,13 +145,19 @@ extension MoteurPieces {
         let arrivee = PosesScene(scene: scene, cartes: cartes, positions: positions)
         if pret, let affichee, let avant,
            transition == nil || TransitionScene(de: avant, vers: arrivee, a: 0) != nil {
-            transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire)
+            transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire,
+                                         cause: cause)
             if let tr = transition {
                 posesAffichees = tr.poses(a: tr.debut)
                 apparencesParties = (ancienne?.apparences ?? [:]).merging(apparencesParties) { a, _ in a }
+                // Les noms de ceux qui partent : ceux d'avant (`textes` et `routeurs` sont encore ceux de la scene d'avant).
+                nomsPartis = textes.noeuds.merging(nomsPartis) { a, _ in a }
+                routeursPartis.formUnion(routeurs)
             } else {
                 posesAffichees = PosesScene()
                 apparencesParties = [:]
+                nomsPartis = [:]
+                routeursPartis = []
             }
         }
         // Les rayons changent sans les niveaux : la grille se redemande comme au redimensionnement, par la regle de la
@@ -159,7 +172,7 @@ extension MoteurPieces {
             politique.demander(PolitiqueGrille.redimensionnement, ensemble2D: ensemble, rayons: rayons(scene),
                                    zone: zoneVisible)
         }
-        let glisse = pret ? TransitionScene.duree : 0
+        let glisse = pret ? PlanTransition.pour(cause).glissement.duree : 0
         viser(geometriePour(scene), depuis: anciens, duree2D: niveauxChanges ? CameraScene.dureeCases : glisse,
               duree3D: niveauxChanges ? CameraScene.dureeNiveaux : glisse)
         // Les parts de l'isolement sont gardees par cle (triage A, n° 9) : un releve recu pendant un fondu ne remet pas
@@ -194,6 +207,8 @@ extension MoteurPieces {
         textes = Self.textes(e, focus: focus)
         routeurs = Set(scene.noeuds.filter(\.route).map(\.id))
         teintes = Dictionary(uniqueKeysWithValues: scene.pieces.indices.map { ($0, scene.pieces[$0].teinte) })
+        // Un noeud choisi dont le protocole est masque n'est plus choisi (sa fiche et son focus se ferment).
+        if let choisi = selection, !e.montre(choisi) { selection = nil }
         construireEtiquettes()
         majFil()
         majMiseEnAvant()
@@ -280,6 +295,12 @@ extension MoteurPieces {
         ajouter(.maison, mesure.maison(textes.maison))
         for (id, texte) in textes.ailleurs.sorted(by: { $0.key < $1.key }) {
             ajouter(.ailleurs(id), mesure.ailleurs(texte))
+        }
+        // Le nom d'un noeud qui s'efface, vu a l'image d'avant, reste jusqu'a la fin de son fondu, au meme endroit : il
+        // s'efface avec son noeud (il est ote de `etiquettes` quand celui-ci n'est plus dessine, `image`).
+        for (_, nom) in anciennes.sorted(by: { $0.key < $1.key }) {
+            guard case .noeud(let id) = nom.genre, scene.noeud(id) == nil, nom.vu, nomsPartis[id] != nil else { continue }
+            l.append(nom)
         }
         etiquettes = l
     }

@@ -25,7 +25,8 @@ final class SondeMaillageThread {
         case erreur(String)
     }
 
-    /// Liaison avec la sonde retenue : son port USB, ou le reseau Thread.
+    /// Le chemin en service avec la sonde retenue : son port USB, ou le reseau Thread. Le reglage de l'utilisateur
+    /// (Automatique, USB, Reseau Thread) est `ReglageLiaison` ; seul Automatique change de chemin de lui-meme.
     enum Liaison: String, Sendable {
         case usb
         case reseau
@@ -45,7 +46,8 @@ final class SondeMaillageThread {
     static let cleNom = "thread.sondeNom"
     /// Nom d'hote SRP de la sonde retenue (sans `.local`), donne par la carte (`bonjour`, `cle`).
     static let cleHote = "thread.sondeHote"
-    /// Liaison choisie dans les Reglages (USB si absente).
+    /// Reglage de liaison choisi dans les Reglages (`ReglageLiaison`) : absent, Automatique (nouvelle installation) ; un
+    /// choix existant (`usb`, `reseau`) est garde tel quel, jamais remplace par Automatique.
     static let cleLiaison = "thread.sondeLiaison"
     /// Toutes les cles de preferences de la sonde, prefixees `thread.` (identite de Maillage IoT).
     static let cles = [cleSerie, cleNom, cleHote, cleLiaison]
@@ -57,6 +59,10 @@ final class SondeMaillageThread {
     /// Nouvel essai d'une connexion automatique (USB) en echec : une sonde qui demarre en plus
     /// de 3 s (bonjour sans reponse) n'attend pas l'evenement USB suivant.
     static let delaiNouvelEssai: Duration = .seconds(5)
+    /// Automatique, en session reseau : la carte retenue doit rester branchee ce temps-la, sans interruption, avant que la sonde
+    /// ne revienne a l'USB. Un branchement qui clignote (cable, hub, enumeration) ne coupe donc pas la session, ni n'ouvre le
+    /// port a chaque evenement. Sans session reseau a proteger, le retour est immediat.
+    static let delaiRetourUSB: Duration = .seconds(5)
 
     private(set) var etat: Etat = .sansSonde
     /// Ports Espressif branches, tels que le dernier evenement USB les a listes (`ports` en retire ceux de l'autre module).
@@ -88,7 +94,17 @@ final class SondeMaillageThread {
     /// Couverture de l'ecoute au dernier maillage (firmware 1.1.0, spec de la sonde tout-en-un, section 2.4) : les
     /// routeurs que la sonde entend, sur ceux de la partition ; nil sans (firmware plus ancien, sans releve).
     private(set) var couverture: CouvertureEcoute?
+    /// Reglage de liaison (`thread.sondeLiaison`) : seul Automatique decide du chemin (`reevaluer`) ; USB et Reseau Thread le
+    /// fixent, comme avant.
+    private(set) var reglage: ReglageLiaison = .automatique
+    /// Le chemin en service, ou vise : le reseau pendant une session ou ses reprises, l'USB sinon (aussi au repos, sans rien
+    /// de connecte). Fixe par le reglage, ou, en Automatique, par `reevaluer`.
     private(set) var liaison: Liaison = .usb
+    /// Les hotes SRP que Bonjour montre avec une adresse (instantane de Thread, `annoncesChangees`), en majuscules : le signal
+    /// « annoncee ». Vide a l'arret de la sonde, comme l'instantane qu'il reflete.
+    private(set) var annonces: Set<String> = []
+    /// La sonde retenue est annoncee : son hote SRP est parmi `annonces`. Sans nom d'hote (jamais appris), jamais.
+    var annoncee: Bool { CheminLiaison.annoncee(hote: hote, parmi: annonces) }
     /// Nom d'hote SRP de la sonde retenue (sans `.local`) : l'acces reseau vise `<hote>.local`.
     private(set) var hote: String?
     /// Empreinte de la cle de ce Mac pour la sonde retenue (trousseau) ; nil sans cle.
@@ -140,6 +156,12 @@ final class SondeMaillageThread {
     @ObservationIgnored private let ouvrirReseau: @MainActor (String, Data) async throws -> any CanalSonde
     @ObservationIgnored private let delaisReprise: [Duration]
     @ObservationIgnored private let delaiNouvelEssai: Duration
+    @ObservationIgnored private let delaiRetourUSB: Duration
+    /// Retour a l'USB attendu (Automatique, session reseau en cours, carte branchee) : sa tache dort `delaiRetourUSB`.
+    @ObservationIgnored private var retourUSB: Task<Void, Never>?
+    /// Le premier evenement USB est arrive (`portsChanges`) : les cartes branchees sont connues. Avant, Automatique ne choisit
+    /// pas (une annonce Bonjour ne doit pas passer sur le reseau avant d'avoir regarde l'USB).
+    @ObservationIgnored private var portsConnus = false
     /// Echecs de la liaison reseau depuis la derniere connexion reussie.
     @ObservationIgnored private var essaisReprise = 0
     @ObservationIgnored private var reprise: Task<Void, Never>?
@@ -187,6 +209,7 @@ final class SondeMaillageThread {
              = { try await CanalReseauUDP.connecter(hote: $0, cle: $1) },
          delaisReprise: [Duration] = SondeMaillageThread.delaisReprise,
          delaiNouvelEssai: Duration = SondeMaillageThread.delaiNouvelEssai,
+         delaiRetourUSB: Duration = SondeMaillageThread.delaiRetourUSB,
          attenteReseau: Duration = SondeMaillageThread.attenteReseau, pasAttenteReseau: Duration = .seconds(1),
          horloge: @escaping () -> Date = { Date() }, fichierIdentites: URL? = nil,
          surveillerPorts: @escaping @MainActor () -> any SurveillantPorts = { PortsUSB() },
@@ -203,6 +226,7 @@ final class SondeMaillageThread {
         self.ouvrirReseau = ouvrirReseau
         self.delaisReprise = delaisReprise
         self.delaiNouvelEssai = delaiNouvelEssai
+        self.delaiRetourUSB = delaiRetourUSB
         self.attenteReseau = attenteReseau
         self.pasAttenteReseau = pasAttenteReseau
         self.horloge = horloge
@@ -216,7 +240,9 @@ final class SondeMaillageThread {
             identitesDuFichier = g
         }
         guard actif else { return }
-        liaison = preferences.string(forKey: Self.cleLiaison).flatMap(Liaison.init(rawValue:)) ?? .usb
+        // Un choix existant est relu tel quel ; sans preference (nouvelle installation), Automatique.
+        reglage = preferences.string(forKey: Self.cleLiaison).flatMap(ReglageLiaison.init(rawValue:)) ?? .automatique
+        liaison = reglage == .reseau ? .reseau : .usb
         hote = preferences.string(forKey: Self.cleHote)
         empreinteAcces = hote.flatMap(empreinte(pour:))
     }
@@ -273,14 +299,18 @@ final class SondeMaillageThread {
         p.demarrer()
         surveillantPorts = p
         portsChanges(listerPorts())
-        if liaison == .reseau { lancerConnexionReseau() }
+        // Reseau Thread choisi : la session part sans attendre l'annonce (comme avant). En Automatique, `portsChanges` a deja
+        // choisi le chemin.
+        if reglage == .reseau { lancerConnexionReseau() }
     }
 
     /// Arret reel (Thread eteint) : le suivi des ports s'arrete, la liaison (le port serie ou la session reseau) se ferme,
     /// la tournee, la boucle des tournees, les reprises de la liaison reseau et le nouvel essai planifie sont annules, et
-    /// l'activite de la session reseau est rendue. Plus rien ne se connecte (`portsChanges`, `choisir`, `choisirLiaison`
-    /// et `connecterReseau` gardent `actif`) tant que `demarrer()` n'a pas repris. La sonde retenue, son nom et sa cle
-    /// restent. Sans effet sur une sonde inerte (demo, tests).
+    /// l'activite de la session reseau est rendue. Plus rien ne se connecte (`portsChanges`, `choisir`, `choisirLiaison`,
+    /// `annoncesChangees`, `reevaluer` et `connecterReseau` gardent `actif`) tant que `demarrer()` n'a pas repris ; le retour a
+    /// l'USB attendu est annule, et l'annonce oubliee (l'instantane de Thread repart de zero, la sonde ne le sait pas avant son
+    /// premier releve) ; en Automatique le chemin est a refaire (`portsConnus`). La sonde retenue, son nom, sa cle et son
+    /// reglage restent. Sans effet sur une sonde inerte (demo, tests).
     func arreter() {
         guard vivante, actif else { return }
         actif = false
@@ -290,26 +320,37 @@ final class SondeMaillageThread {
         reprise = nil
         nouvelEssai?.cancel()
         nouvelEssai = nil
+        annulerRetourUSB()
         essaisReprise = 0
+        annonces = []
+        portsConnus = false
+        if reglage == .automatique { liaison = .usb }
         deconnecter(serie == nil ? .sansSonde : .absente)
     }
 
     /// Des taches de fond sont encore planifiees ou en cours : la boucle des tournees, une reprise de la liaison reseau, un
-    /// nouvel essai de connexion (lu par les tests de l'arret).
+    /// nouvel essai de connexion, un retour a l'USB attendu (lu par les tests de l'arret).
     var tachesPlanifiees: Int {
-        [boucle, reprise, nouvelEssai].filter { $0 != nil && $0?.isCancelled == false }.count
+        [boucle, reprise, nouvelEssai, retourUSB].filter { $0 != nil && $0?.isCancelled == false }.count
     }
 
     /// Choix d'un port dans les Reglages : retenu seulement s'il repond en sonde.
     /// Le port de la sonde deja connectee n'est pas rouvert.
     /// Une carte que Zigbee retient est refusee (`choixRefuse`), sans que rien ne soit ouvert (spec 3.4).
+    /// Reseau Thread choisi : pas de port (comme avant). Automatique : le choix prend la place d'une session reseau en cours.
     func choisir(_ port: PortUSB) {
-        guard actif, liaison == .usb, port.chemin != cheminConnecte else { return }
+        guard actif, reglage != .reseau, port.chemin != cheminConnecte else { return }
         if let autre = cartes.retenuePar(port.serie, hors: .thread) {
             choixRefuse = CartesRetenues.texteRefus(retenuePar: autre)
             return
         }
         choixRefuse = nil
+        annulerRetourUSB()
+        liaison = .usb
+        reprise?.cancel()
+        reprise = nil
+        essaisReprise = 0
+        dernierePerte = nil
         lancerConnexion(port, choisi: true)
     }
 
@@ -328,23 +369,137 @@ final class SondeMaillageThread {
         return choisi || (port.serie != nil && port.serie == serie)
     }
 
-    /// Liaison choisie dans les Reglages. Le reseau exige une cle de ce Mac pour la sonde
-    /// retenue : la liaison USB est fermee (le port libere), la session reseau ouverte. L'USB
-    /// ferme la session reseau et reprend la sonde retenue si elle est branchee.
-    func choisirLiaison(_ l: Liaison) {
-        guard actif, l != liaison, l == .usb || reseauDisponible else { return }
-        liaison = l
-        preferences.set(l.rawValue, forKey: Self.cleLiaison)
+    /// Reglage de liaison choisi dans les Reglages, garde dans les preferences. « Reseau Thread » exige une cle de ce Mac pour la
+    /// sonde retenue : la liaison USB est fermee (le port libere), la session reseau ouverte. « USB » ferme la session reseau et
+    /// reprend la sonde retenue si elle est branchee (une liaison USB en place n'est pas rouverte). « Automatique » garde ce qui
+    /// tient et change de chemin sans delai si l'autre est celui qu'il choisit (le choix est explicite : pas de stabilite a
+    /// attendre).
+    func choisirLiaison(_ r: ReglageLiaison) {
+        guard actif, r != reglage, r != .reseau || reseauDisponible else { return }
+        reglage = r
+        preferences.set(r.rawValue, forKey: Self.cleLiaison)
         reprise?.cancel()
+        reprise = nil
+        annulerRetourUSB()
         essaisReprise = 0
         dernierePerte = nil
-        switch l {
+        switch r {
         case .reseau:
+            // Une session reseau ouverte (Automatique) est gardee ; sinon elle part.
+            guard liaison != .reseau || sonde == nil else { return }
+            liaison = .reseau
             lancerConnexionReseau()
         case .usb:
-            deconnecter(serie == nil ? .sansSonde : .absente)
+            if liaison == .reseau {
+                liaison = .usb
+                deconnecter(serie == nil ? .sansSonde : .absente)
+            }
             portsChanges(portsVus)
+        case .automatique:
+            reevaluer(immediat: true)
         }
+    }
+
+    /// Automatique : applique le chemin choisi (`CheminLiaison.choisir`) apres un changement de ports, d'annonce ou de reglage.
+    /// Aucun effet pour USB et Reseau Thread, qui fixent le chemin (leurs regles sont celles de Thread 1.3.0). Ne touche pas
+    /// une connexion que l'utilisateur a choisie vers un autre port (`versUnAutrePort`), ni rien avant que les cartes branchees
+    /// soient connues (`portsConnus` : USB d'abord).
+    /// - L'USB est le chemin et la sonde est sur le reseau : retour a l'USB, apres `delaiRetourUSB` de branchement continu si
+    ///   une session reseau tient (`immediat` : sans delai), tout de suite sinon.
+    /// - Le reseau est le chemin et la sonde est sur l'USB (ou nulle part) : le reseau.
+    /// - Aucun chemin : une session reseau ouverte reste (elle prouve que la sonde est joignable, meme si Bonjour la perd de vue
+    ///   un instant) ; les essais d'une session qui n'aboutit pas s'arretent.
+    /// Idempotente : un chemin deja pris n'est pas relance (les annonces et evenements sans effet ne relancent rien).
+    private func reevaluer(immediat: Bool = false) {
+        guard actif, reglage == .automatique, portsConnus, !versUnAutrePort else { return }
+        let port = ports.first { $0.serie != nil && $0.serie == serie }
+        let voulu = CheminLiaison.choisir(.automatique, branchee: port != nil, cleConnue: reseauDisponible,
+                                          annoncee: annoncee)
+        if voulu != .usb { annulerRetourUSB() }
+        switch (voulu, liaison) {
+        case (.usb?, .reseau):
+            guard let port else { return }
+            if sonde == nil || immediat {
+                versUSB(port)
+            } else {
+                planifierRetourUSB()
+            }
+        case (.reseau?, .usb):
+            versReseau()
+        case (nil, .reseau):
+            guard sonde == nil else { return }
+            arreterReseau()
+        default:
+            break
+        }
+    }
+
+    /// Automatique : de la session reseau (ou de ses reprises) vers l'USB, la carte retenue ouverte comme au demarrage (la
+    /// session reseau se ferme, le port s'ouvre une fois).
+    private func versUSB(_ port: PortUSB) {
+        annulerRetourUSB()
+        liaison = .usb
+        reprise?.cancel()
+        reprise = nil
+        dernierePerte = nil
+        lancerConnexion(port, choisi: false)
+    }
+
+    /// Automatique : vers le reseau. Les echecs d'avant, sans connexion reussie depuis (`essaisReprise`), gardent l'espacement
+    /// de la reprise : une annonce qui clignote ou une carte qui se debranche ne relancent pas une session a chaque fois.
+    private func versReseau() {
+        annulerRetourUSB()
+        liaison = .reseau
+        dernierePerte = nil
+        reprise?.cancel()
+        reprise = nil
+        if essaisReprise == 0 {
+            lancerConnexionReseau()
+        } else {
+            deconnecter(.connexion)
+            serieEtat = serie
+            planifierReprise()
+        }
+    }
+
+    /// Automatique : plus de chemin (sonde plus annoncee, cle perdue) et aucune session ouverte : les essais s'arretent, la
+    /// sonde est « absente ». `essaisReprise` reste, pour l'espacement du retour.
+    private func arreterReseau() {
+        liaison = .usb
+        reprise?.cancel()
+        reprise = nil
+        dernierePerte = nil
+        deconnecter(serie == nil ? .sansSonde : .absente)
+    }
+
+    /// Retour a l'USB attendu : la carte doit rester branchee `delaiRetourUSB` ; `reevaluer` decide ensuite, d'apres l'etat de
+    /// ce moment-la (une carte repartie dans l'intervalle annule le retour, `annulerRetourUSB`).
+    private func planifierRetourUSB() {
+        guard retourUSB == nil else { return }
+        let delai = delaiRetourUSB
+        retourUSB = Task { [weak self] in
+            try? await Task.sleep(for: delai)
+            guard !Task.isCancelled, let self else { return }
+            self.retourUSB = nil
+            self.reevaluer(immediat: true)
+        }
+    }
+
+    private func annulerRetourUSB() {
+        retourUSB?.cancel()
+        retourUSB = nil
+    }
+
+    /// Les hotes que Bonjour montre avec une adresse (l'instantane de Thread, a chaque releve). La sonde est « annoncee » quand
+    /// son hote en fait partie. Seul un changement de cette annonce fait choisir le chemin de nouveau : un releve sans effet
+    /// ne relance rien. Rien eteint.
+    func annoncesChangees(_ hotes: Set<String>) {
+        guard actif else { return }
+        let avant = annoncee
+        let nouvelles = Set(hotes.map { $0.uppercased() })
+        if nouvelles != annonces { annonces = nouvelles }
+        guard annoncee != avant else { return }
+        reevaluer()
     }
 
     /// Oublie la sonde retenue (numero de serie, nom, nom d'hote, cle de ce Mac pour elle :
@@ -359,9 +514,13 @@ final class SondeMaillageThread {
         choixRefuse = nil
         retenirNom(nil)
         erreurAcces = nil
+        // Plus de sonde, plus de reglage : retour a Automatique, comme une nouvelle installation.
+        reglage = .automatique
         liaison = .usb
         preferences.removeObject(forKey: Self.cleLiaison)
         reprise?.cancel()
+        annulerRetourUSB()
+        essaisReprise = 0
         dernierePerte = nil
         etatSonde = nil
         derniereTournee = nil
@@ -415,11 +574,15 @@ final class SondeMaillageThread {
     }
 
     /// Ports branches : la sonde retenue revient, ou s'en va.
-    /// Par le reseau, la sonde n'est jamais ouverte en USB, meme branchee.
+    /// Avec « Reseau Thread » choisi, la sonde n'est jamais ouverte en USB, meme branchee. En Automatique, le chemin change
+    /// avec la carte : elle part, le reseau (si la cle est connue et la sonde annoncee) ; elle revient, l'USB.
     func portsChanges(_ liste: [PortUSB]) {
         portsVus = liste.filter(\.estEspressif)
+        portsConnus = true
         choixRefuse = nil
-        guard actif, liaison == .usb, let serie else { return }
+        guard actif, reglage != .reseau else { return }
+        if reglage == .automatique { reevaluer() }
+        guard liaison == .usb, let serie else { return }
         if let p = ports.first(where: { $0.serie == serie }) {
             // `lancerConnexion` passe tout de suite a `.connexion` : un second appel n'en lance pas d'autre.
             if sonde == nil && etat != .connexion { lancerConnexion(p, choisi: false) }
@@ -489,6 +652,8 @@ final class SondeMaillageThread {
             sonde = s
             cheminConnecte = port.chemin
             etat = .connectee(b)
+            // Une liaison etablie par l'USB : les echecs du reseau d'avant ne comptent plus.
+            essaisReprise = 0
             if choisi, let serieUSB = port.serie {
                 let autre = serieUSB != serie
                 preferences.set(serieUSB, forKey: Self.cleSerie)
@@ -565,6 +730,9 @@ final class SondeMaillageThread {
         dernierePerte = Perte(cause: cause, date: horloge())
         deconnecter(.erreur(cause))
         serieEtat = serie
+        // Automatique : la carte est peut-etre revenue, ou la sonde n'est plus annoncee ; sinon, la reprise.
+        reevaluer(immediat: true)
+        guard liaison == .reseau else { return }
         planifierReprise()
     }
 
@@ -598,8 +766,7 @@ final class SondeMaillageThread {
         var canal: (any CanalSonde)?
         do {
             guard let hote else { throw CleReseau.Erreur.sansNomDHote }
-            let t = trousseau
-            let cle = try await Self.horsActeurPrincipal { try t.lire(nom: hote) }
+            let cle = try await lireCle(hote)
             // Arretee (ou autre liaison choisie) pendant la lecture de la cle : aucune session n'est ouverte.
             guard n == essai else { return }
             let c = try await ouvrirReseau(hote, cle)
@@ -649,6 +816,29 @@ final class SondeMaillageThread {
             if let e = error as? ErreurReseau, !e.repriseAutomatique { return }
             planifierReprise()
         }
+    }
+
+    /// La lecture de la cle en vol, avec son numero : une seule a la fois (voir `lireCle`).
+    @ObservationIgnored private var lectureCle: (numero: Int, hote: String, tache: Task<Data, any Error>)?
+    @ObservationIgnored private var numeroLecture = 0
+
+    /// Lit la cle de l'hote, une seule lecture en vol : une seconde tentative (carte rebranchee puis retiree, annonce qui
+    /// tombe puis revient, pendant que macOS attend l'accord de l'utilisateur) rejoint la lecture en cours au lieu d'en lancer
+    /// une autre. Sinon la seconde echouerait en `absente` (la reprise est deja notee) et l'acces reseau serait indisponible
+    /// jusqu'au relancement, alors que l'accord donne a la premiere recopie la cle. Le resultat est le meme pour toutes ; la
+    /// liste du trousseau est relue a la fin, la recopie ayant change ce qu'elle montre.
+    private func lireCle(_ hote: String) async throws -> Data {
+        if let l = lectureCle, l.hote == hote { return try await l.tache.value }
+        let t = trousseau
+        let tache = Task { try await Self.horsActeurPrincipal { try t.lire(nom: hote) } }
+        numeroLecture += 1
+        let numero = numeroLecture
+        lectureCle = (numero, hote, tache)
+        defer {
+            if lectureCle?.numero == numero { lectureCle = nil }
+            if self.hote == hote { empreinteAcces = empreinte(pour: hote) }
+        }
+        return try await tache.value
     }
 
     /// Operation du trousseau hors de l'acteur principal : macOS peut d'abord demander

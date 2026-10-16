@@ -29,8 +29,8 @@ protocol ModeleProtocole: AnyObject {
     /// (`thread.actif`, `zigbee.actif`), vrai par defaut.
     var actif: Bool { get set }
 
-    /// En demo, ce modele rejoue la demo de son protocole ; faux : un modele muet (la demo n'a qu'un reseau a la fois, chacune
-    /// l'autre protocole eteint, la demo combinee est a l'etape 3b). Toujours vrai hors demo.
+    /// En demo, ce modele rejoue la demo de son protocole ; faux : un modele muet (`-demo-thread` et `-demo-zigbee`
+    /// font tourner un seul reseau, l'autre protocole eteint ; `-demo`, la combinee, les deux). Toujours vrai hors demo.
     var rejoueLaDemo: Bool { get }
 
     // MARK: Scene

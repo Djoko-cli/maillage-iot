@@ -334,6 +334,13 @@ Zigbee/
   - `pieces-routeurs.json` (des deux apps) devient `pieces-noeuds.json` ;
   - l'historique de plus de 90 jours est laissé de côté ;
   - les réglages repris sont rangés sous leurs nouvelles clés (2.3).
+  - **`thread.sondeLiaison` est recopiée telle quelle, jamais remplacée par une valeur par défaut** : une préférence
+    absente vaut Automatique (la sonde Thread la lit ainsi, et « Oublier » retire la clé) ; écrire `usb` ou un autre
+    défaut à l'import figerait un choix que l'utilisateur n'a pas fait ;
+  - **les clés de notification sont écrites par protocole** (`notification.<protocole>.<catégorie>`) : l'import les
+    pose lui-même, ou passe avant `Notifications.reprendreClesCommunes` (qui recopie une clé commune sous la clé du
+    protocole, sans jamais écraser une clé déjà écrite) ; sinon une catégorie coupée dans Thread 1.3.0 reviendrait au
+    défaut ;
 - **Atomicité** : l'import se fait dans un dossier d'attente, puis il est déplacé d'un coup. En cas d'échec, rien ne
   change.
 - **Idempotence** : réimporter le même export ne fait rien de plus. Son identifiant de manifeste est gardé dans
@@ -348,7 +355,8 @@ Zigbee/
   depuis l'app de transition (étape 2, `TrousseauRepris`), Thread depuis le banc de l'étape 3a (15/10,
   `TrousseauReprisThread`). La liste des clés montre la clé de l'ancienne app sans la lire (attributs seuls), pour que le
   choix de la liaison par le réseau apparaisse ; la clé est reprise à la connexion.
-- **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Le second
+- **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Un fichier
+  déjà présent dans Maillage IoT (choix faits avant l'import) n'est jamais sauté : l'import y fusionne ce qui manque. Le second
   ne fait qu'ajouter ce qui manque, et le résumé dit ce qui a été ignoré. Les clés préfixées n'entrent jamais en
   collision.
 - **Une ancienne app qui tourne encore** est signalée, et l'assistant propose de la quitter : une sonde USB ne peut
@@ -463,6 +471,17 @@ de l'eau et commitées avec le travail.
 | **5. Publication** | Maillage IoT 1.0.0, puis Thread 1.4.0 (sans `passeur.sh`) et Zigbee 1.2.0, puis les bandeaux des README, puis l'archivage avec l'accord de Djoko. | La 1.0.0 s'installe et se met à jour par Sparkle (répétition de mise à jour). Les anciennes apps annoncent et exportent. |
 
 L'export dans les anciennes apps (étape 4, côté anciens dépôts) peut avancer **en parallèle** des étapes 2 et 3.
+
+**Feuille de route** (une phase par étape ; les plans s'appellent `…-phase-N.md`, avec un suffixe de lettre pour les
+plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `SondeMaillage`, se fait après l'étape 3b
+(6.6) : elle devient le troisième plan de la phase 3, `phase-3c`.
+
+- [x] Phase 0 : préparation
+- [x] Phase 1 : cœur neutre et Thread à l'identique
+- [x] Phase 2 : Zigbee branché
+- [ ] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
+- [ ] Phase 4 : reprise
+- [ ] Phase 5 : publication
 
 ### 6.2 Les tests
 
@@ -579,8 +598,8 @@ Validés par Djoko le 15/10 (banc de l'étape 3a et questions du plan 3b) :
 - **Hexagone pointe en haut**, sommets sur le rayon du nœud (cercle circonscrit) ; ondes, pile, anneau pointillé et
   anneau de sélection restent ronds, au-delà du rayon.
 - **Interrupteurs de vue dans la capsule de gauche**, après le nom de la maison : « ● Thread ⬢ Zigbee ». Masquer un
-  protocole est **stable** : les pièces et les autres nœuds ne bougent pas ; la fiche ou le focus d'un nœud masqué se
-  ferment. Un protocole éteint dans les Réglages y est grisé.
+  protocole **recompose la vue** sans lui (choix de Djoko au banc de 3b, 16/10, à la place du masquage stable) : les
+  pièces et les nœuds se replacent ; la fiche ou le focus d'un nœud masqué se ferment. Un protocole éteint dans les Réglages y est grisé.
 - **En haut à gauche, le nom de la maison** (Maison) ; son menu liste les réseaux par protocole : Thread (réseaux,
   partitions, choix du réseau affiché), puis Zigbee (le pont).
 - **Onglets Thread et Zigbee** : logos redessinés en vectoriel monochrome, en images modèles (teinte du système) ;
@@ -633,6 +652,11 @@ Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
 - Vue de santé par pièce, tous protocoles confondus (option C du 13/10).
+- **Pièce proposée aux HomePod et à l'Apple TV** (demande de Djoko, banc de l'étape 3b, 16/10) : HomeKit ne les donne pas à
+  une app tierce, donc leur pièce n'est connue que par un choix manuel. Ils s'annoncent aussi par AirPlay (mDNS) sous le
+  nom qu'on leur donne dans Maison, souvent celui de la pièce : écouter ce service (ajout à `NSBonjourServices`), le
+  relier au routeur de bordure par son hôte (à vérifier sur le réseau réel), puis **proposer** la pièce à confirmer, sans
+  l'imposer (un nom sans pièce ou un rattachement erroné restent possibles).
 - **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
   naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
   dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.

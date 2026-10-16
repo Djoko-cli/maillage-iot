@@ -18,10 +18,10 @@ struct LegendePiecesZigbeeTests {
 
     /// Une scene inventee par signe : chacune ne contient que lui, et la legende n'a que son entree. Un noeud que le
     /// pont ne connait pas, routeur ou appareil, est « inconnu du pont » ; un appareil d'etat inconnu, gris lui aussi,
-    /// n'a pas d'entree. Une qualite de 0 (un LQI sous 50) est un lien faible : Zigbee le mesure (`NiveauQualite`).
+    /// n'a pas d'entree. Une qualite de 0 (un LQI sous 50) est un lien faible : Zigbee le mesure (`BandeQualite`).
     @Test func uneEntreeParSigne() {
         let cas: [(Lecture, Set<Entree>)] = [
-            (Lecture(couleurs: [idz("A000000000000001"): .routeur(principale: true)]), [.routeurZigbee]),
+            (Lecture(couleurs: [idz("A000000000000001"): .routeurZigbee]), [.routeurZigbee]),
             (Lecture(couleurs: [idz("A0000000000000FD"): .routeurInconnu], inconnus: [idz("A0000000000000FD")]), [.nonIdentifieZigbee]),
             (Lecture(couleurs: [idz("A0000000000000FC"): .appareil(.inconnu)], inconnus: [idz("A0000000000000FC")]), [.nonIdentifieZigbee]),
             (Lecture(chefs: [idz("A000000000000001")]), [.coordinateur]),
@@ -51,7 +51,7 @@ struct LegendePiecesZigbeeTests {
     /// Les groupes dans l'ordre de la grille (routeurs, appareils, liens radio, autres), leurs entrees
     /// dans l'ordre de la spec ; un groupe sans entree disparait, et une scene vide n'a pas de legende.
     @Test func groupesEtOrdre() {
-        let tout = Lecture(couleurs: [idz("a"): .routeur(principale: true), idz("c"): .appareil(.joignable), idz("d"): .appareil(.injoignable),
+        let tout = Lecture(couleurs: [idz("a"): .routeurZigbee, idz("c"): .appareil(.joignable), idz("d"): .appareil(.injoignable),
                                       idz("f"): .appareil(.disparu)],
                            sondes: [idz("c")], inconnus: [idz("g")], chefs: [idz("a")], endormis: [idz("c")], piles: [idz("c")],
                            liens: [Self.radio(3), Self.radio(2), Self.radio(1), Self.radio(nil),
@@ -160,8 +160,13 @@ struct LegendePiecesZigbeeTests {
         }
         let h = hauteur(LigneDuBas(moteur: MoteurPieces(liens: .chemins), entree: e, legendeForcee: false))
         #expect(h > 150, "la legende de la demo, ouverte : \(h)")
-        let rubriques = LegendePieces.rubriques(LegendePieces.Lecture(e, ailleurs: false, mode: .chemins))
-        #expect(h == hauteur(LegendePieces(rubriques: rubriques, repliee: .constant(false))), "la legende seule, sans la ligne de niveau")
+        let lecture = LegendePieces.Lecture(e, ailleurs: false, mode: .chemins)
+        let rubriques = LegendePieces.rubriques(lecture)
+        // Un seul protocole dans la scene : pas de ligne « Thread / Zigbee » ; avec les deux (la demo combinee), la rangee la
+        // porte (`DemoCombineeTests.margeDuBasDeuxProtocoles`).
+        let ligne = LegendePieces.montreLesProtocoles(lecture)
+        #expect(!ligne, "la demo d'un protocole seul : pas de ligne des protocoles")
+        #expect(h == hauteur(LegendePieces(rubriques: rubriques, ligneProtocoles: ligne, repliee: .constant(false))), "la legende seule, sans la ligne de niveau")
         #expect(FenetrePieces.margeBas(pile: h) == FenetrePieces.bord + ceil(h) + FenetrePieces.espacement)
         #expect(FenetrePieces.margeBas(pile: nil) == 30, "repliee, sans fiche")
         #expect(FenetrePieces.margeBas(pile: 2) == 30)
@@ -237,8 +242,10 @@ struct LegendePiecesZigbeeTests {
                                                               rayon: LegendePieces.rayonAppareil))
                 a.sonde = false
             }
+            #expect(a.contour == .hexagone, "\(n.id) : un noeud Zigbee est un hexagone dans la scene")
             let entree: Entree? = switch a.couleur {
-            case .routeur: .routeurZigbee
+            case .routeurZigbee: .routeurZigbee
+            case .routeur: nil
             case .routeurInconnu: .nonIdentifieZigbee
             case .appareil(.joignable): .joignable
             // Etats de Thread, que Zigbee ne donne jamais : comme injoignable (comme l'app).
@@ -248,8 +255,12 @@ struct LegendePiecesZigbeeTests {
             }
             guard let entree else { continue }
             vues.insert(entree)
-            // Le coordinateur a un plus grand halo (10) : la legende montre un routeur, au halo de 5.
-            let attendue = n.genre == .centre ? DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: a.couleur) : a
+            // Le coordinateur a un plus grand halo (10) : la legende montre un routeur, au halo de 5. Les entrees
+            // propres a Zigbee (routeur, inconnu du pont, injoignable) gardent l'hexagone et le violet ; les entrees
+            // communes (joignable, disparu, sonde) restent rondes : la ligne « Thread / Zigbee » dit le protocole.
+            var attendue = n.genre == .centre ? DessinNoeud.Apparence(forme: .sphere(halo: 5), couleur: a.couleur,
+                                                                       contour: .hexagone) : a
+            if [Entree.joignable, .disparu].contains(entree) { attendue.contour = .rond }
             #expect(n.genre != .centre || a.forme == .sphere(halo: 10))
             let routeur = n.genre != .appareil
             #expect(LegendePieces.signe(entree)
@@ -258,7 +269,14 @@ struct LegendePiecesZigbeeTests {
         }
         #expect(vues == [.routeurZigbee, .nonIdentifieZigbee, .joignable, .disparu, .sonde])
         #expect(LegendePieces.signe(.injoignable)
-                == .noeud(DessinNoeud.apparenceAppareil(.injoignable), rayon: LegendePieces.rayonAppareil))
+                == .noeud(DessinNoeud.apparenceAppareil(.injoignable, protocole: .zigbee), rayon: LegendePieces.rayonAppareil))
+        #expect(LegendePieces.signe(.injoignable) == .noeud(DessinNoeud.Apparence(forme: .pastille, couleur: .appareil(.injoignable),
+                                                                                    contour: .hexagone),
+                                                            rayon: LegendePieces.rayonAppareil))
+        #expect(LegendePieces.signe(.nonIdentifieZigbee) == .noeud(DessinNoeud.Apparence(forme: .sphere(halo: 5),
+                                                                                           couleur: .routeurInconnu,
+                                                                                           contour: .hexagone),
+                                                                   rayon: LegendePieces.rayonRouteur))
         // La couronne et la lune : celles des noms de la scene, seules (`couronneEtLuneSansPastille`).
         let chef = try #require(e.chefs.first)
         #expect(LegendePieces.signe(.coordinateur) == .glyphe("👑", routeur: true))
@@ -279,7 +297,8 @@ struct LegendePiecesZigbeeTests {
         #expect(String(reflecting: LegendePieces.Body.self).contains("SigneLegende"))
         let p = Palette(sombre: true)
         let cadre = CGRect(x: 20, y: 10, width: 14, height: 14)
-        let routeur = DessinNoeud.apparenceRouteur(inconnu: false)
+        let routeur = DessinNoeud.apparenceRouteur(inconnu: false, protocole: .zigbee)
+        #expect(LegendePieces.signe(.routeurZigbee) == .noeud(routeur, rayon: LegendePieces.rayonRouteur))
         // Les pixels d'un dessin, en RVBA de 8 bits (le tampon brut d'une image a des octets de remplissage).
         func image(_ dessin: @escaping (inout GraphicsContext) -> Void) throws -> [UInt8] {
             let rendu = ImageRenderer(content: Canvas { ctx, _ in dessin(&ctx) }.frame(width: 60, height: 34))
@@ -353,6 +372,30 @@ struct LegendePiecesZigbeeTests {
         for dy in [-10.0, -13.0, 10.0, 13.0] {
             #expect(try opacite(avec, dx: 0, dy: dy) == opacite(sans, dx: 0, dy: dy), "rien au-dessus ni au-dessous (\(dy))")
         }
+        // Sur l'hexagone de Zigbee (pointe en haut, sommets sur le rayon 7) : les memes ondes, ronds, a 3 et 6 points de
+        // son rayon circonscrit, pour un routeur (sphere facettee), un appareil (pastille) et un disparu (anneau) ; rien
+        // au-dessus ni au-dessous, ou sont les sommets. Les sommets lateraux (a +-30 degres) restent a 7 pt du centre :
+        // les ondes, a 10 et 13, ne les touchent pas (`SilhouettesTests.ornementsHorsDuHexagone`).
+        let hexagones = [DessinNoeud.apparenceRouteur(inconnu: false, protocole: .zigbee),
+                         DessinNoeud.apparenceAppareil(.joignable, protocole: .zigbee),
+                         DessinNoeud.apparenceAppareil(.disparu, protocole: .zigbee)]
+        for base in hexagones {
+            #expect(base.contour == .hexagone)
+            var ondes = base
+            ondes.sonde = true
+            for cote in [-1.0, 1.0] {
+                for ecart in [10.0, 13.0] {
+                    let plus = try opacite(ondes, dx: cote * ecart, dy: 0) - opacite(base, dx: cote * ecart, dy: 0)
+                    #expect(plus > 100, "\(base.forme) : une onde a \(ecart) pt du centre, de chaque cote (\(plus))")
+                }
+            }
+            for dy in [-10.0, -13.0, 10.0, 13.0] {
+                #expect(try abs(opacite(ondes, dx: 0, dy: dy) - opacite(base, dx: 0, dy: dy)) <= 2,
+                        "\(base.forme) : rien au-dessus ni au-dessous (\(dy))")
+            }
+        }
+        // La sonde de la legende reste ronde (entree commune) : ses ondes sont celles d'une pastille ronde.
+        #expect(DessinNoeud.apparenceSonde.contour == .rond)
     }
 
     /// Les noeuds de la legende ont la taille d'un noeud de la scene dans la vue d'ensemble (verification du 02/10),

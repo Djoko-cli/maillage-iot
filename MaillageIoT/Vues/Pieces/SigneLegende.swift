@@ -47,15 +47,20 @@ extension LegendePieces {
     static let opaciteLienEnfant = 0.28
 
     /// Le signe de chaque entree : un noeud de la meme apparence que dans la scene (`DessinNoeud.apparenceRouteur`,
-    /// `apparenceAppareil`) ; la couronne et la lune des noms de la scene (`LibellesNoeuds`), seules : sans la pastille
-    /// sombre de leur nom, « une ombre disgracieuse et inutile » dans la legende (reverification du 02/10) ; un lien de
-    /// la scene.
+    /// `apparenceAppareil`), hexagone et violet compris pour les entrees propres a Zigbee (routeur, inconnu du pont,
+    /// injoignable) ; les entrees communes (joignable, disparu, sonde...) restent rondes, la ligne des protocoles
+    /// (`signeProtocole`) disant que Zigbee est l'hexagone ; la couronne et la lune des noms de la scene
+    /// (`LibellesNoeuds`), seules : sans la pastille sombre de leur nom, « une ombre disgracieuse et inutile » dans la
+    /// legende (reverification du 02/10) ; un lien de la scene.
     static func signe(_ e: Entree) -> Signe {
         switch e {
-        case .routeur, .routeurZigbee: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: true), rayon: rayonRouteur)
+        case .routeur: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: true), rayon: rayonRouteur)
+        case .routeurZigbee:
+            .noeud(DessinNoeud.apparenceRouteur(inconnu: false, protocole: .zigbee), rayon: rayonRouteur)
         case .routeurSimple: .noeud(DessinNoeud.apparenceAppareil(.joignable, routeur: true), rayon: rayonAppareil)
-        case .nonIdentifie, .nonIdentifieZigbee:
-            .noeud(DessinNoeud.apparenceRouteur(inconnu: true, principale: true), rayon: rayonRouteur)
+        case .nonIdentifie: .noeud(DessinNoeud.apparenceRouteur(inconnu: true, principale: true), rayon: rayonRouteur)
+        case .nonIdentifieZigbee:
+            .noeud(DessinNoeud.apparenceRouteur(inconnu: true, protocole: .zigbee), rayon: rayonRouteur)
         case .autrePartition: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: false), rayon: rayonRouteur)
         case .chef, .coordinateur: .glyphe(LibellesNoeuds.couronne, routeur: true)
         case .joignable: .noeud(DessinNoeud.apparenceAppareil(.joignable), rayon: rayonAppareil)
@@ -63,7 +68,7 @@ extension LegendePieces {
         case .sonde: .noeud(DessinNoeud.apparenceSonde, rayon: rayonAppareil)
         case .partitionCoupee: .noeud(DessinNoeud.apparenceAppareil(.partitionCoupee), rayon: rayonAppareil)
         case .sansAdresse: .noeud(DessinNoeud.apparenceAppareil(.sansAdresse), rayon: rayonAppareil)
-        case .injoignable: .noeud(DessinNoeud.apparenceAppareil(.injoignable), rayon: rayonAppareil)
+        case .injoignable: .noeud(DessinNoeud.apparenceAppareil(.injoignable, protocole: .zigbee), rayon: rayonAppareil)
         case .disparu: .noeud(DessinNoeud.apparenceAppareil(.disparu), rayon: rayonAppareil)
         case .endormi: .glyphe(LibellesNoeuds.lune, routeur: false)
         case .pile: .pastille(exemplePile)
@@ -78,6 +83,23 @@ extension LegendePieces {
         case .rattachement, .parentDAvant: .lienEnfant(rattachement: true)
         case .ailleurs: .ailleurs(exempleAilleurs)
         case .candidats: .nom(exempleCandidats, routeur: true)
+        }
+    }
+
+    /// Le signe d'un protocole dans la ligne « Thread / Zigbee » : un routeur tel que la scene le dessine, le rond bleu de
+    /// Thread, l'hexagone violet de Zigbee.
+    static func signeProtocole(_ p: Protocole) -> Signe {
+        switch p {
+        case .thread: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, principale: true), rayon: rayonRouteur)
+        case .zigbee: .noeud(DessinNoeud.apparenceRouteur(inconnu: false, protocole: .zigbee), rayon: rayonRouteur)
+        }
+    }
+
+    /// Le nom d'un protocole, dans la ligne qui le montre.
+    static func nomProtocole(_ p: Protocole) -> String {
+        switch p {
+        case .thread: String(localized: "Thread")
+        case .zigbee: String(localized: "Zigbee")
         }
     }
 }

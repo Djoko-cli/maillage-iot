@@ -75,14 +75,7 @@ extension NomsDemo {
     ]
 
     /// Les appareils du pont, sans zones (un seul plateau), releves cinq minutes avant la fin de la demo.
-    public static let maisonPont: NomsZigbee = {
-        let accessoires = table.map { ieee, e in
-            AppareilPont(nom: e.0, piece: e.1, fabricant: e.2, modele: e.3, categorie: e.4, ieee: ieee,
-                         batterie: batteries[ieee])
-        }
-        return NomsZigbee(date: MaillageDemoZigbee.fin.addingTimeInterval(-5 * 60), domicile: domicile,
-                          accessoires: accessoires.sorted { $0.nom < $1.nom })
-    }()
+    public static let maisonPont: NomsZigbee = DemoZigbee.seule.maisonPont
 
     /// La meme maison sur quatre etages (`zones`) : pour les essais de la vue par pieces.
     public static var maisonEtagee: NomsZigbee {
@@ -96,31 +89,10 @@ extension NomsDemo {
     /// (`FusionNoms`) : la suspension et l'interrupteur de la cuisine ont un autre nom dans Maison (retrouves par la piece
     /// et le modele), la lampe de la salle de bain un nom a la casse pres (normalisation), et le capteur de fuite, d'une
     /// autre marque, n'est pas un candidat : il garde le nom de l'app Hue.
-    public static let releveMaison: NomsMaison = {
-        let autresNoms: [String: String] = [
-            Ieee.suspensionCuisine: "Suspension de l'îlot",
-            Ieee.interrupteurCuisine: "Variateur cuisine",
-            Ieee.lampeSalleDeBain: "Lampe Salle de Bain",
-        ]
-        var accessoires = table.filter { $0.key != Ieee.fuiteBuanderie }.map { ieee, e in
-            AccessoireMaison(nom: autresNoms[ieee] ?? e.0, piece: e.1, fabricant: "Signify Netherlands B.V.",
-                             modele: e.3, categorie: e.4, pont: ieee == Ieee.pont ? true : nil,
-                             batterie: batteries[ieee])
-        }
-        accessoires += [
-            AccessoireMaison(nom: "Fuite buanderie", piece: "Buanderie", fabricant: "Aqara", modele: "Water Leak Sensor",
-                             categorie: "Capteur", batterie: batteries[Ieee.fuiteBuanderie]),
-            AccessoireMaison(nom: "Thermostat", piece: "Salon", fabricant: "Fabricant inventé", modele: "T1",
-                             categorie: "Thermostat"),
-        ]
-        return NomsMaison(date: MaillageDemoZigbee.fin.addingTimeInterval(-2 * 3600), domicile: domicile,
-                          accessoires: accessoires.sorted { $0.nom < $1.nom }, zones: zones)
-    }()
+    public static let releveMaison: NomsMaison = DemoZigbee.seule.releveMaison
 
     /// Les noms de la demo : les appareils du pont nommes par Maison, sur les quatre etages de Maison (`FusionNoms`).
-    public static var maisonFusionnee: NomsZigbee {
-        FusionNoms.fusionner(pont: maisonPont, maison: releveMaison).noms ?? maisonPont
-    }
+    public static var maisonFusionnee: NomsZigbee { DemoZigbee.seule.maisonFusionnee }
 
     /// Places de la demo : aucune, la demo n'ecrivant rien. Avec `zones` (`etagee`, pour `maisonEtagee`) : le jardin au
     /// niveau du rez-de-chaussee, hors de la maison (`dehors` faux : dans la maison). Nommee `placesEtagees` : un
@@ -199,12 +171,15 @@ public enum MaillageDemoZigbee {
     }
 
     /// Le maillage a la fin de la demo.
-    public static var maillage: MaillageZigbee { maillage(date: fin, avant: false) }
+    public static var maillage: MaillageZigbee { maillage(date: fin, avant: false, fin: fin) }
 
     /// La tournee d'avant : la prise du salon y est encore, et le detecteur de l'abri est sous le ruban de la cuisine.
-    public static var maillageAvant: MaillageZigbee { maillage(date: debut, avant: true) }
+    public static var maillageAvant: MaillageZigbee { maillage(date: debut, avant: true, fin: fin) }
 
-    static func maillage(date: Date, avant: Bool) -> MaillageZigbee {
+    /// Le maillage de la tournee `date`, d'une demo qui finit a `fin` (`DemoZigbee.fin` : la tournee d'avant y est 15 minutes
+    /// plus tot).
+    static func maillage(date: Date, avant: Bool, fin: Date) -> MaillageZigbee {
+        let debut = fin.addingTimeInterval(-15 * 60)
         var noeuds = [NoeudZigbee(ieee: I.pont, court: 0x0000, type: .coordinateur)]
         noeuds += routeurs.map { NoeudZigbee(ieee: $0.0, court: $0.1, type: .routeur, muet: $0.0 == I.inconnu) }
         // Les appareils finaux a pile dorment au repos (`ecoute` faux) ; la sonde ecoute.
@@ -251,13 +226,16 @@ public enum MaillageDemoZigbee {
     /// le pont et le lampadaire du salon (`prochainDuBureau`), puis passe au lampadaire il y a 10 h ; le detecteur de
     /// l'abri passe du ruban de la cuisine a la prise de la terrasse il y a 6 h ; une heure sans releve (la sonde
     /// debranchee) il y a 16 h. Valeurs inventees.
-    public static var historique: [ReleveMaillageZigbee] {
+    public static var historique: [ReleveMaillageZigbee] { historique(fin: fin) }
+
+    /// Le meme historique, d'une demo qui finit a `fin`.
+    static func historique(fin: Date) -> [ReleveMaillageZigbee] {
         let n = 96
         return (0...n).compactMap { i -> ReleveMaillageZigbee? in
             // Une heure sans releve.
             guard !(30..<34).contains(i) else { return nil }
             let date = fin.addingTimeInterval(Double(i - n) * 15 * 60)
-            let r = ReleveMaillageZigbee(maillage(date: date, avant: i < n - 1))
+            let r = ReleveMaillageZigbee(maillage(date: date, avant: i < n - 1, fin: fin))
             func onde(_ lqi: Int?, _ cle: String) -> Int? {
                 guard let lqi else { return nil }
                 let graine = Double(cle.utf8.reduce(0) { ($0 &* 31 &+ Int($1)) % 1000 })
@@ -299,5 +277,91 @@ public enum MaillageDemoZigbee {
         if voisins.contains(ieee) { return court[ieee] ?? 0 }
         let relie = voisins.first { v in liens.contains { ($0.0 == v && $0.1 == ieee) || ($0.1 == v && $0.0 == ieee) } }
         return court[relie ?? I.plafonnierSalon] ?? 0
+    }
+}
+
+/// La demo de Zigbee, avec ce qui change d'une demo a l'autre : l'heure de sa fin (la reference de ses durees) et les noms
+/// qu'elle donne a ses appareils. Seule (`-demo-zigbee`), c'est la demo d'origine, a ses dates et a ses noms : c'est ce que
+/// rejouent `NomsDemo.maisonPont`, `NomsDemo.releveMaison`, `MaillageDemoZigbee.maillage` et les autres, et la reference de
+/// rejeu de Zigbee. Dans la demo combinee (`-demo`), elle est recalee sur l'horloge de celle de Thread (`fin`) et ses
+/// homonymes de Thread sont renommes (`renommes`) : la vue ne montre jamais deux noeuds du meme nom.
+public struct DemoZigbee: Equatable, Sendable {
+    /// La fin de la demo : la reference de ses durees, la date de son dernier maillage.
+    public var fin: Date
+    /// Nom d'origine -> nom de la demo, pour les appareils dont le nom est aussi celui d'un autre protocole.
+    public var renommes: [String: String]
+
+    public init(fin: Date = MaillageDemoZigbee.fin, renommes: [String: String] = [:]) {
+        self.fin = fin
+        self.renommes = renommes
+    }
+
+    /// La demo d'origine.
+    public static let seule = DemoZigbee()
+
+    /// La tournee d'avant, 15 minutes plus tot.
+    public var debut: Date { fin.addingTimeInterval(-15 * 60) }
+
+    /// Le nom d'un appareil dans cette demo.
+    func nom(_ nom: String) -> String { renommes[nom] ?? nom }
+
+    /// Les appareils du pont, sans zones (un seul plateau), releves cinq minutes avant la fin de la demo.
+    public var maisonPont: NomsZigbee {
+        let accessoires = NomsDemo.table.map { ieee, e in
+            AppareilPont(nom: nom(e.0), piece: e.1, fabricant: e.2, modele: e.3, categorie: e.4, ieee: ieee,
+                         batterie: NomsDemo.batteries[ieee])
+        }
+        return NomsZigbee(date: fin.addingTimeInterval(-5 * 60), domicile: NomsDemo.domicile,
+                          accessoires: accessoires.sorted { $0.nom < $1.nom })
+    }
+
+    /// Le releve de Maison de la demo (voir `NomsDemo.releveMaison`), releve deux heures avant la fin.
+    public var releveMaison: NomsMaison {
+        typealias I = NomsDemo.Ieee
+        let autresNoms: [String: String] = [
+            I.suspensionCuisine: "Suspension de l'îlot",
+            I.interrupteurCuisine: "Variateur cuisine",
+            I.lampeSalleDeBain: "Lampe Salle de Bain",
+        ]
+        var accessoires = NomsDemo.table.filter { $0.key != I.fuiteBuanderie }.map { ieee, e in
+            AccessoireMaison(nom: nom(autresNoms[ieee] ?? e.0), piece: e.1, fabricant: "Signify Netherlands B.V.",
+                             modele: e.3, categorie: e.4, pont: ieee == I.pont ? true : nil,
+                             batterie: NomsDemo.batteries[ieee])
+        }
+        accessoires += [
+            AccessoireMaison(nom: nom("Fuite buanderie"), piece: "Buanderie", fabricant: "Aqara", modele: "Water Leak Sensor",
+                             categorie: "Capteur", batterie: NomsDemo.batteries[I.fuiteBuanderie]),
+            AccessoireMaison(nom: nom("Thermostat"), piece: "Salon", fabricant: "Fabricant inventé", modele: "T1",
+                             categorie: "Thermostat"),
+        ]
+        return NomsMaison(date: fin.addingTimeInterval(-2 * 3600), domicile: NomsDemo.domicile,
+                          accessoires: accessoires.sorted { $0.nom < $1.nom }, zones: NomsDemo.zones)
+    }
+
+    /// Les noms de la demo : les appareils du pont nommes par Maison, sur les quatre etages de Maison (`FusionNoms`).
+    public var maisonFusionnee: NomsZigbee {
+        FusionNoms.fusionner(pont: maisonPont, maison: releveMaison).noms ?? maisonPont
+    }
+
+    /// Le maillage a la fin de la demo.
+    public var maillage: MaillageZigbee { MaillageDemoZigbee.maillage(date: fin, avant: false, fin: fin) }
+
+    /// La tournee d'avant.
+    public var maillageAvant: MaillageZigbee { MaillageDemoZigbee.maillage(date: debut, avant: true, fin: fin) }
+
+    /// L'historique invente de 24 h, jusqu'a la fin de la demo (captures de la fiche).
+    public var historique: [ReleveMaillageZigbee] { MaillageDemoZigbee.historique(fin: fin) }
+
+    /// Les noms de tous les appareils de cette demo, ceux du pont et ceux de Maison, sans renommage.
+    private var nomsDOrigine: Set<String> {
+        let nus = DemoZigbee(fin: fin)
+        return Set(nus.maisonPont.accessoires.map(\.nom)).union(nus.releveMaison.accessoires.map(\.nom))
+    }
+
+    /// Cette demo, ses appareils dont le nom est aussi dans `autres` (ceux d'un autre protocole) renommes : `suffixe` leur est
+    /// ajoute (« Lampe arcade (Hue) »). Les autres noms ne changent pas.
+    public func renommant(homonymesDe autres: some Collection<String>, suffixe: String) -> DemoZigbee {
+        let communs = nomsDOrigine.intersection(autres)
+        return DemoZigbee(fin: fin, renommes: Dictionary(uniqueKeysWithValues: communs.map { ($0, "\($0) \(suffixe)") }))
     }
 }

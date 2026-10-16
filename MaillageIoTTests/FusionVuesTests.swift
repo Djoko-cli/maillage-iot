@@ -65,7 +65,8 @@ struct FusionVuesTests {
             let autre = DessinNoeud.apparence(n, etat: .joignable, principale: false, verifie: true)
             #expect(sans == autre, "Zigbee : ni partition, ni verification")
             #expect(!sans.cercle && !sans.verifie)
-            if n.genre != .appareil { #expect(sans.couleur == .routeur(principale: true) || sans.couleur == .routeurInconnu) }
+            #expect(sans.contour == .hexagone, "Zigbee : l'hexagone")
+            if n.genre != .appareil { #expect(sans.couleur == .routeurZigbee || sans.couleur == .routeurInconnu) }
         }
         let thread = SurveillanceTests.demo().thread
         let g = thread.graphe
@@ -75,6 +76,8 @@ struct FusionVuesTests {
         let routeur = try #require(st.noeuds.first { $0.genre == .routeur })
         #expect(DessinNoeud.apparence(routeur, etat: nil, principale: false).couleur == .routeur(principale: false),
                 "Thread : la partition compte")
+        #expect(st.noeuds.allSatisfy { DessinNoeud.apparence($0, etat: .joignable, principale: true).contour == .rond },
+                "Thread : le rond")
     }
 
     /// La qualite d'un lien : le 0 de Zigbee (un LQI sous 50) est un lien faible, orange ; celui de Thread reste « pas de
@@ -86,6 +89,18 @@ struct FusionVuesTests {
         #expect(p.lienSonde(0) == p.lienSonde(nil) && p.lienSonde(0) != p.lienSonde(1), "Thread : 0 est inconnu")
         for q in [1, 2, 3, nil] as [Int?] { #expect(p.lienSonde(q) == p.lienSonde(q, protocole: .zigbee)) }
         #expect(Palette.qualiteAffichee(0, protocole: .zigbee) == 1 && Palette.qualiteAffichee(0, protocole: .thread) == 0)
+        // La bande lue par la scene et la legende : le 0 de Thread reste inconnu (gris), celui de Zigbee est faible ;
+        // la fiche lit le 0 « faible » pour les deux (`BandeQualite.init`) : l'ecart est voulu, il n'est que la.
+        #expect(Palette.bande(0, protocole: .thread) == .inconnue && BandeQualite(0) == .faible)
+        #expect(Palette.bande(0, protocole: .zigbee) == .faible)
+        for q in [1, 2, 3, nil] as [Int?] {
+            #expect(Palette.bande(q, protocole: .thread) == BandeQualite(q) && Palette.bande(q, protocole: .zigbee) == BandeQualite(q))
+        }
+        for protocole in [Protocole.thread, .zigbee] {
+            for q in [0, 1, 2, 3, nil] as [Int?] {
+                #expect(p.lienSonde(q, protocole: protocole) == p.couleur(Palette.bande(q, protocole: protocole)), "\(protocole) \(String(describing: q))")
+            }
+        }
     }
 
     /// La legende des deux protocoles : les entrees communes et celles de chacun, lues d'apres le protocole de chaque noeud
@@ -97,7 +112,7 @@ struct FusionVuesTests {
         }
         let t = idt("T1"), z = idz("Z1")
         // Les memes etats se lisent par protocole.
-        let etats = Lecture(couleurs: [t: .routeur(principale: true), z: .routeur(principale: true),
+        let etats = Lecture(couleurs: [t: .routeur(principale: true), z: .routeurZigbee,
                                        idt("T2"): .appareil(.sansAdresse), idz("Z2"): .appareil(.injoignable),
                                        idt("T3"): .appareil(.injoignable)],
                             inconnus: [idt("T4"), idz("Z4")], chefs: [t, z])
@@ -120,7 +135,7 @@ struct FusionVuesTests {
         let rattachement = ScenePieces.Lien(de: idt("T3"), vers: idt("T1"), genre: .rattachement)
         #expect(LegendePieces.entrees(Lecture(liens: [davant, parent, rattachement])) == [.parentDAvant, .versParent, .rattachement])
         // Les groupes gardent l'ordre de chaque legende : Zigbee seul, puis Thread seul.
-        let zigbee = Lecture(couleurs: [z: .routeur(principale: true)], chefs: [z],
+        let zigbee = Lecture(couleurs: [z: .routeurZigbee], chefs: [z],
                              liens: [chemin, davant, ScenePieces.Lien(de: z, vers: idz("Z9"), genre: .parent)], mode: .chemins)
         #expect(LegendePieces.rubriques(zigbee).map(\.entrees)
                 == [[Entree.routeurZigbee, .coordinateur], [.bonne], [.chemin, .versParent, .parentDAvant]])

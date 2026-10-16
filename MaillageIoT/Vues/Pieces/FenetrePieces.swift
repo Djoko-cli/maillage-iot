@@ -20,6 +20,8 @@ struct FenetrePieces: View {
     @AppStorage(FenetrePieces.cleGrille) private var etagesEnGrille = true
     /// Le repli de la legende, tel que Djoko l'a laisse (la preference de `LigneDuBas`) : la zone visible de la grille.
     @AppStorage(LegendePieces.cleRepliee) private var legendeRepliee = false
+    /// Les interrupteurs de vue « Thread » / « Zigbee » (`vue.thread`, `vue.zigbee`), gardes d'un lancement a l'autre.
+    private let vue = PreferencesVue()
     @State private var moteur: MoteurPieces
     @State private var piecesChoisies: PiecesChoisies
     @State private var aRenommer: NoeudChoisi?
@@ -81,9 +83,12 @@ struct FenetrePieces: View {
 
     /// Taille minimale de la fenetre (polissage B, section 3) : avec la fiche et ses courbes, la scene
     /// garde environ 230 pt de haut (88 pour 820 x 560, tri du sous-projet A, n° 11 ; 234 mesures, ligne de niveau
-    /// comprise, sur le jeu de l'historique). 820 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
-    /// invisible : la fenetre ne descend pas sous 820 x 732 pt.
-    static let tailleMinimale = CGSize(width: 820, height: 680)
+    /// comprise, sur le jeu de l'historique). 1000 x 680 pt sous la barre de titre cachee, de 52 pt avec la barre d'outils
+    /// invisible : la fenetre ne descend pas sous 1000 x 732 pt. La largeur est celle des deux capsules du haut des deux
+    /// protocoles en 3D, avec la bande entre elles (etape 3b, tache 5 : la capsule de gauche porte le nom de la maison, les
+    /// deux interrupteurs de vue, « Appareils IP », le journal et rafraichir, 465 pt avec « Maison (démo) », 488 pt au plus avec un nom coupe ; celle de droite,
+    /// 365 pt avec les liens de Zigbee et « Rotation lente » ; la largeur etait de 820 pt avant). `VueProtocolesTests` la tient.
+    static let tailleMinimale = CGSize(width: 1000, height: 680)
     /// Largeur par defaut de la fenetre (`MaillageIoTApp`, `.defaultSize`).
     static let largeurParDefaut: CGFloat = 1100
     /// Bord des elements poses sur la vue, et ecart entre eux (pt).
@@ -157,14 +162,17 @@ struct FenetrePieces: View {
 
     /// Hauteur de scene en dessous de laquelle la legende ouverte se replie d'elle-meme sous une fiche (pt) : les
     /// 230 pt environ que la spec de B garde a la scene dans la plus petite fenetre, avec la fiche et ses courbes
-    /// (section 3) ; la legende ne la fait pas descendre plus bas. Mesure sur la demo (reverification du 02/10, apres la
-    /// ligne de niveau montee sous le fil), dont la marge du haut est de 139 pt : dans la fenetre par defaut (1100 x 760),
-    /// la legende ouverte laisse 250 pt a la scene sous la fiche de l'Apple TV 4K, et reste ouverte, comme sous 20 des 31
-    /// fiches de la demo (235 pt au moins) ; sous les 11 autres (de 143 a 179 pt), elle n'en laisserait que 183 a 219 :
-    /// elle se replie, et la scene retrouve 380 a 416 pt. Dans la plus petite fenetre (820 x 732 pt, soit 680 pt sous la
-    /// barre de titre cachee), elle laisserait 184 pt sous la fiche de l'Apple TV 4K et 155 sous la plus haute : elle se
-    /// replie, comme sous 30 des 31 fiches, et la scene garde 381 et 352 pt ; sans fiche, elle en garde 344, la legende
-    /// ouverte (563, repliee).
+    /// (section 3) ; la legende ne la fait pas descendre plus bas. Une regle, pas une mesure : elle ne change pas quand la
+    /// legende grandit. Mesuree a nouveau le 15/10 (fiche en quatre colonnes, marge du haut de 139 pt) :
+    /// - Thread seul (legende de 240 pt) : dans la fenetre par defaut (1100 x 760), la scene garde de 136 a 234 pt sous les
+    ///   31 fiches (180 sous celle de l'Apple TV 4K) : elle se replie sous 30 ; a 1100 x 880, de 256 a 354 : elle reste ouverte.
+    /// - Zigbee seul (257 pt ; marge du haut de 109 pt) : de 165 a 238 pt sous les 23 fiches a 1100 x 760 (replie sous 21), de
+    ///   285 a 358 a 1100 x 880.
+    /// - La demo combinee (345 pt : les entrees des deux protocoles et la ligne « Thread / Zigbee », 21 pt) : de 31 a 129 pt a
+    ///   1100 x 760 (la legende seule y laisse 250 pt), de 151 a 249 a 1100 x 880 (replie sous 51 des 54 fiches), de 231 a
+    ///   329 a 1100 x 960 (`DemoCombineeLegendeTests.hauteAssez`) : elle y reste ouverte sous toutes.
+    /// Dans la plus petite fenetre (1000 x 680 sous la barre de titre cachee), elle se replie sous toutes les fiches de chaque
+    /// demo.
     static let sceneMinimale: CGFloat = 230
 
     /// La legende se replie d'elle-meme sous une fiche ouverte (verification du 02/10) si, ouverte au-dessus d'elle,
@@ -183,8 +191,11 @@ struct FenetrePieces: View {
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
             // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
+            // Le masquage recompose la vue : la scene est celle des protocoles montres et actifs (`EntreeScene.montres`).
+            let montres = InterrupteursVue.montres(preferes: vue.preferes, actifs: surveillance.protocolesActifs)
             let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
-                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix) : nil
+                ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix, montres: montres)
+                : nil
             let fiche = moteur.selection != nil
             // Sous une fiche, la legende se replie d'elle-meme si la place manque, sauf si Djoko l'a rouverte.
             let repliDePlace = fiche && !legendeRouverte && hauteurVue.map {
@@ -201,14 +212,19 @@ struct FenetrePieces: View {
                     if !moteur.pret {
                         ProgressView().controlSize(.small)
                     }
+                    // Tout est masque : la vue est vide, et le dit en une ligne.
+                    if entree.toutMasque, let texte = MessageMasque.texte(protocoles: entree.cachees) {
+                        VueToutMasque(texte: texte)
+                    }
                 } else {
                     EtatVide()
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
-                           ancien: surveillance.modeles.contains(where: \.maillageAncien),
+                           ancien: surveillance.modeles.contains { montres.contains($0.protocole) && $0.maillageAncien },
                            texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
-                           protocoles: entree?.protocoles ?? [], feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           protocoles: entree?.protocoles ?? [], montres: montres,
+                           feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
@@ -224,7 +240,8 @@ struct FenetrePieces: View {
                             if let h { legendeOuverteMesuree = h }
                         }
                         if let selection = moteur.selection {
-                            FicheNoeud(id: selection, entree: entree, instant: surveillance.maintenant(a: contexte.date),
+                            FicheNoeud(id: selection, entree: entree,
+                                       instant: surveillance.maintenant(de: selection.protocole, a: contexte.date),
                                        aRenommer: $aRenommer, choisir: { moteur.selection = $0 }) {
                                 moteur.selection = nil
                             }
@@ -427,20 +444,22 @@ struct MenuPieces: View {
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les protocoles montres (`EntreeScene.montres`) : les commandes de Zigbee n'y sont que s'il l'est ; tous par defaut.
+    var montres = Set(Protocole.allCases)
     /// Les liens montres, gardes d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleLiens) private var liensGardes = ModeLiens.chemins.rawValue
     /// Les voisins entendus a la selection, gardes d'un lancement a l'autre.
     @AppStorage(FenetrePieces.cleVoisins) private var voisinsGardes = true
 
-    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene (`ContenuHaut.liens`), seul ou avec
-    /// Thread.
-    static func montreLiens(scene: ScenePieces?) -> Bool {
-        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? [])).liens
+    /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene et que Zigbee est montre
+    /// (`ContenuHaut.liens`), seul ou avec Thread.
+    static func montreLiens(scene: ScenePieces?, montres: Set<Protocole>) -> Bool {
+        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? []), montres: montres).liens
     }
 
     var body: some View {
         HStack(spacing: 5) {
-            if Self.montreLiens(scene: moteur.scene) {
+            if Self.montreLiens(scene: moteur.scene, montres: montres) {
                 SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
                     moteur.liens = v
                     liensGardes = v.rawValue
@@ -551,15 +570,17 @@ struct LigneDuBas: View {
     var body: some View {
         // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
         let ailleurs = moteur.isolee != nil && !moteur.textes.ailleurs.isEmpty
-        let rubriques = entree.map {
-            LegendePieces.rubriques(LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens,
-                                                           voisins: moteur.voisins))
-        } ?? []
+        let lecture = entree.map {
+            LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens, voisins: moteur.voisins)
+        }
+        let rubriques = lecture.map(LegendePieces.rubriques) ?? []
+        // La ligne « Thread / Zigbee » : seulement quand la scene a des noeuds des deux protocoles.
+        let deuxProtocoles = lecture.map(LegendePieces.montreLesProtocoles) ?? false
         let estRepliee = legendeForcee ?? (repliee || repliDePlace)
         let ouverte = !rubriques.isEmpty && !estRepliee
         HStack(spacing: 0) {
             if !rubriques.isEmpty {
-                LegendePieces(rubriques: rubriques, repliee: Binding(get: { estRepliee }, set: { r in
+                LegendePieces(rubriques: rubriques, ligneProtocoles: deuxProtocoles, repliee: Binding(get: { estRepliee }, set: { r in
                     guard legendeForcee == nil else { return }
                     // Un clic : le recadrage qui suit prend la duree de la legende ; l'ouvrir leve son repli faute de
                     // place, sans rien ecrire de plus que le choix de Djoko.
@@ -568,10 +589,14 @@ struct LigneDuBas: View {
                     repliee = r
                 }))
                 .obstacle("legende", moteur)
+                .transition(Apparition.transitionLigneLegende)
             }
         }
         // La legende qui s'ouvre ou se replie glisse ; avec « Reduire les animations », elle prend sa place d'un coup.
         .animation(Apparition.animationDuConteneurLegende(reduire: reduire), value: estRepliee)
+        // Un protocole montre ou masque change le contenu de la legende : sa taille, le cadre en verre et ses lignes
+        // s'animent sur la meme courbe, en 0,45 s (`Apparition.animationDuContenuLegende`).
+        .animation(Apparition.animationDuContenuLegende(reduire: reduire), value: entree?.montres)
         .onGeometryChange(for: CGFloat?.self) { ouverte ? $0.size.height : nil } action: { surHauteurOuverte($0) }
     }
 }

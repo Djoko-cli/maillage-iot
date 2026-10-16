@@ -13,8 +13,8 @@ import Testing
 @MainActor
 @Suite("Scene reunie : Thread et Zigbee")
 struct EntreeSceneTests {
-    /// La demo de Thread, plus le maillage et les noms de la demo de Zigbee : une coque qui montre les deux reseaux (la demo
-    /// combinee est a l'etape 3b ; ici le modele de Zigbee recoit ses donnees comme le ferait sa sonde).
+    /// La demo de Thread, plus le maillage et les noms de la demo de Zigbee : une coque qui montre les deux reseaux (ici le
+    /// modele de Zigbee recoit ses donnees comme le ferait sa sonde ; la demo combinee, `-demo`, est celle de `DemoCombineeTests`).
     static func deuxReseaux() -> Surveillance {
         let s = SurveillanceTests.demo()
         s.zigbee.nomsPont = NomsDemo.maisonPont

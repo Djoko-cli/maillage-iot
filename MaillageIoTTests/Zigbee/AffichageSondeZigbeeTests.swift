@@ -132,7 +132,7 @@ struct AffichageSondeZigbeeTests {
     @Test func titreDuMenu() {
         let r = ResumeReseauZigbee(routeurs: 14, appareils: 8, injoignables: 1)
         #expect(MenuBarre.titreZigbee(resume: nil, alerte: true) == String(localized: "En attente du maillage de la sonde…"))
-        #expect(MenuBarre.titreZigbee(resume: r, alerte: true) == String(localized: "Alerte dans l'heure"))
+        #expect(MenuBarre.titreZigbee(resume: r, alerte: true) == String(localized: "Alerte Zigbee dans l'heure"))
         #expect(MenuBarre.titreZigbee(resume: r, alerte: false) == String(localized: "Réseau Zigbee normal"))
     }
 
