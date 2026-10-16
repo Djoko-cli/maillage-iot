@@ -39,10 +39,10 @@
 - Modify: `MaillageIoT/Thread/Sonde/SondeMaillageThread.swift` (fichier principal)
 - Create: `MaillageIoT/Thread/Sonde/SondeMaillageThread+USB.swift`, `+Reseau.swift`, `+Chemin.swift`, `+Tournees.swift`, `+Affichage.swift` (selon les coutures réelles)
 
-- [ ] **Step 1: Repères** — noter les nombres de `@Test` par cible et lancer les suites de la sonde Thread (vertes).
-- [ ] **Step 2: Découper** — déplacer chaque rôle dans son extension ; relâcher seulement les accès nécessaires ; `xcodegen generate -q`.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; comparaison outillée « déplacement pur » au rapport ; tailles des fichiers.
-- [ ] **Step 4: Commit** — « Sonde Thread : decoupe du pilote par role, sans changement de comportement ».
+- [x] **Step 1: Repères** — noter les nombres de `@Test` par cible et lancer les suites de la sonde Thread (vertes).
+- [x] **Step 2: Découper** — déplacer chaque rôle dans son extension ; relâcher seulement les accès nécessaires ; `xcodegen generate -q`.
+- [x] **Step 3: Vérifier** — porte de la tâche ; comparaison outillée « déplacement pur » au rapport ; tailles des fichiers.
+- [x] **Step 4: Commit** — « Sonde Thread : decoupe du pilote par role, sans changement de comportement ».
 
 ---
 
