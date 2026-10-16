@@ -114,6 +114,72 @@ struct VueProtocolesTests {
         #expect(r.transition == nil && r.dureeAnnoncee == nil)
     }
 
+    /// Banc de l'etape 3b (retouche 4) : a la bascule d'un protocole, la taille des plateaux (les disques des zones) glisse
+    /// comme leur place, et les noms des noeuds qui partent s'effacent avec leur noeud au lieu de disparaitre d'un coup
+    /// (ceux des noeuds qui reviennent apparaissent en fondu, a leur place finale). Avec « Reduire les animations »,
+    /// d'un coup, sans nom qui reste.
+    @Test func cerclesEtNomsALaBascule() throws {
+        let s = EntreeSceneTests.deuxReseaux()
+        let tout = Self.scene(s), sansZigbee = Self.scene(s, montres: [.thread])
+        let m = MoteurPiecesTests.moteur(tout)
+        try #require(m.pret && !m.reduire)
+        // Assez de zoom pour que les noms des appareils se lisent.
+        m.poserZoom(echelle: 1, vers: nil)
+        MoteurPiecesTests.dessiner(m)
+        let avant = m.geometrie.rayons
+        let apres = MoteurPiecesTests.moteur(sansZigbee).geometrie.rayons
+        try #require(avant.count == apres.count && avant != apres, "le masquage change la taille d'au moins un cercle")
+        let partis = m.etiquettes.compactMap { l -> IdNoeud? in
+            if case .noeud(let id) = l.genre, id.protocole == .zigbee, l.vu { id } else { nil }
+        }
+        try #require(!partis.isEmpty, "des noms de Zigbee sont affiches")
+        Self.poser(m, sansZigbee)
+        let tr = try #require(m.transition)
+        try #require(m.glissementPlateaux != nil)
+        #expect(zip(m.geometrie.rayons, avant).allSatisfy { abs($0 - $1) < 0.05 }, "au depart, les cercles gardent leur taille")
+        // Une image a `ecoule` secondes du debut : les cercles et les noms des partants.
+        func a(_ ecoule: Double) throws -> (rayons: [Double], noms: [IdNoeud: Double], vus: Set<IdNoeud>) {
+            m.reculerTransition(de: (m.transition?.debut ?? tr.debut) - (MoteurPieces.maintenant() - ecoule))
+            MoteurPiecesTests.dessiner(m)
+            let p = try #require(m.projetee)
+            let vus = Set(m.etiquettes.compactMap { l -> IdNoeud? in
+                if case .noeud(let id) = l.genre, id.protocole == .zigbee, l.vu { id } else { nil }
+            })
+            return (m.geometrie.rayons, p.opacitesNoms.filter { $0.key.protocole == .zigbee }, vus)
+        }
+        let t1 = try a(0.3), t2 = try a(0.6)
+        for i in avant.indices where avant[i] != apres[i] {
+            let (lo, hi) = (min(avant[i], apres[i]), max(avant[i], apres[i]))
+            for r in [t1.rayons[i], t2.rayons[i]] { #expect(r > lo && r < hi, "le cercle \(i) en route : \(r)") }
+            #expect((t2.rayons[i] - t1.rayons[i]) * (apres[i] - avant[i]) > 0, "dans le bon sens")
+        }
+        #expect(!t1.vus.isEmpty && !t2.vus.isEmpty, "les noms des partants sont encore la, en route")
+        try #require(!t1.vus.intersection(t2.vus).isEmpty)
+        for id in t1.vus.intersection(t2.vus) {
+            let (x, y) = (try #require(t1.noms[id]), try #require(t2.noms[id]))
+            #expect(x < 1 && y < x && y > 0, "le nom de \(id.texte) s'efface avec son noeud : \(x) puis \(y)")
+        }
+        m.reculerTransition(de: 1)
+        MoteurPiecesTests.dessiner(m)
+        #expect(m.transition == nil && m.geometrie.rayons == apres, "au bout, les cercles ont leur taille finale")
+        #expect(!m.etiquettes.contains { l in if case .noeud(let id) = l.genre { id.protocole == .zigbee } else { false } },
+                "plus aucun nom de Zigbee")
+        // Le retour de Zigbee : ses noms reviennent en fondu, les cercles retrouvent leur taille d'avant.
+        Self.poser(m, tout)
+        _ = try #require(m.transition)
+        m.reculerTransition(de: (m.transition?.debut ?? 0) - (MoteurPieces.maintenant() - 0.4))
+        MoteurPiecesTests.dessiner(m)
+        let p = try #require(m.projetee)
+        let revenus = p.opacitesNoms.filter { $0.key.protocole == .zigbee }
+        #expect(!revenus.isEmpty && revenus.values.allSatisfy { $0 > 0 && $0 < 1 }, "les noms qui reviennent se fondent")
+        // « Reduire les animations » : d'un coup, aucun nom qui reste.
+        let r = MoteurPiecesTests.moteur(tout)
+        r.reduire = true
+        Self.poser(r, sansZigbee)
+        #expect(r.transition == nil && r.glissementPlateaux == nil && r.geometrie.rayons == apres)
+        #expect(!r.etiquettes.contains { l in if case .noeud(let id) = l.genre { id.protocole == .zigbee } else { false } })
+    }
+
     /// Les liens, les noms et la pastille du protocole masque ne se dessinent pas ; ceux de l'autre ne changent pas.
     @Test func lesLiensDuProtocoleMasqueNeSeDessinentPas() throws {
         let s = EntreeSceneTests.deuxReseaux()

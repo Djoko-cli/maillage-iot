@@ -330,10 +330,15 @@ public struct GeometrieMaison: Hashable, Sendable {
 
     /// La geometrie en route de celle-ci, au depart, vers `b`, qui a les memes plateaux dans le meme ordre
     /// (polissage C, sections 1.3 et 3.5) : en 2D a l'avancement `k2` (les centres et la boite), en 3D a `k3`
-    /// (les centres, le pas, la sphere et le cadrage) ; les rayons et les colonnes sont ceux de `b`.
+    /// (les centres, le pas, la sphere et le cadrage) ; les colonnes sont celles de `b`. Les rayons des plateaux
+    /// glissent aussi (banc de l'etape 3b) : ils arrivent avec le plus lent des deux avancements, a la meme courbe.
     public func vers(_ b: GeometrieMaison, k2: Double, k3: Double) -> GeometrieMaison {
         func m(_ x: Double, _ y: Double, _ k: Double) -> Double { x + (y - x) * k }
         var g = b
+        if rayons.count == b.rayons.count {
+            let kr = min(k2, k3)
+            for i in g.rayons.indices { g.rayons[i] = m(rayons[i], b.rayons[i], kr) }
+        }
         for i in g.rayons.indices where i < centres2D.count {
             g.centres2D[i] = centres2D[i] + (b.centres2D[i] - centres2D[i]) * k2
             g.centres3D[i] = centres3D[i] + (b.centres3D[i] - centres3D[i]) * k3

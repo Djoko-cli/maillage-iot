@@ -150,9 +150,14 @@ extension MoteurPieces {
             if let tr = transition {
                 posesAffichees = tr.poses(a: tr.debut)
                 apparencesParties = (ancienne?.apparences ?? [:]).merging(apparencesParties) { a, _ in a }
+                // Les noms de ceux qui partent : ceux d'avant (`textes` et `routeurs` sont encore ceux de la scene d'avant).
+                nomsPartis = textes.noeuds.merging(nomsPartis) { a, _ in a }
+                routeursPartis.formUnion(routeurs)
             } else {
                 posesAffichees = PosesScene()
                 apparencesParties = [:]
+                nomsPartis = [:]
+                routeursPartis = []
             }
         }
         // Les rayons changent sans les niveaux : la grille se redemande comme au redimensionnement, par la regle de la
@@ -290,6 +295,12 @@ extension MoteurPieces {
         ajouter(.maison, mesure.maison(textes.maison))
         for (id, texte) in textes.ailleurs.sorted(by: { $0.key < $1.key }) {
             ajouter(.ailleurs(id), mesure.ailleurs(texte))
+        }
+        // Le nom d'un noeud qui s'efface, vu a l'image d'avant, reste jusqu'a la fin de son fondu, au meme endroit : il
+        // s'efface avec son noeud (il est ote de `etiquettes` quand celui-ci n'est plus dessine, `image`).
+        for (_, nom) in anciennes.sorted(by: { $0.key < $1.key }) {
+            guard case .noeud(let id) = nom.genre, scene.noeud(id) == nil, nom.vu, nomsPartis[id] != nil else { continue }
+            l.append(nom)
         }
         etiquettes = l
     }

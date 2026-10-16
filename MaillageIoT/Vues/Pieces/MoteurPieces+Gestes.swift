@@ -13,7 +13,8 @@ extension MoteurPieces {
     func noeudSous(_ p: CGPoint) -> IdNoeud? {
         if let n = projetee?.noeud(sous: p, marge: 8) { return n }
         for l in etiquettes where l.vu && l.rect.contains(p) {
-            if case .noeud(let id) = l.genre { return id }
+            // Un noeud qui s'efface ne se clique pas, ni son nom.
+            if case .noeud(let id) = l.genre, projetee?.fantomes.contains(id) != true { return id }
         }
         return nil
     }

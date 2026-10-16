@@ -266,6 +266,12 @@ public struct SceneProjetee: Sendable {
     /// Noeuds qui s'effacent pendant une transition (polissage D, section 1) : absents de la scene, ils ne se cliquent
     /// pas et n'ont pas de nom.
     public var fantomes: Set<IdNoeud> = []
+    /// La place a l'ecran de la pastille de chaque noeud qui s'efface (`fantomes`) : l'ancre de son nom, qui s'efface avec
+    /// lui. Hors de `ancresNoeuds`, qui ne dit que les noeuds de la scene.
+    public var ancresFantomes: [IdNoeud: CGRect] = [:]
+    /// L'opacite du nom d'un noeud en transition, qui suit celle de sa pastille (banc de l'etape 3b) : celui qui arrive
+    /// apparait, celui qui s'efface s'efface, avec leur noeud. Absent : 1, net. Vide sans transition.
+    public var opacitesNoms: [IdNoeud: Double] = [:]
     /// Mode focus : le facteur d'opacite des noeuds estompes (et de leurs noms, et de ceux qui s'effacent), par identifiant ;
     /// absent : 1.
     public var facteursNoeuds: [IdNoeud: Double] = [:]
@@ -442,13 +448,16 @@ public struct SceneProjetee: Sendable {
                                       * (apparitions[n.id] ?? 1),
                                   profondeur: proj.profondeur(p), focus: facteur(noeud: n.id)))
             ancresNoeuds[n.id] = CGRect(x: Double(e.x) - r, y: Double(e.y) - r, width: 2 * r, height: 2 * r)
+            if let a = apparitions[n.id], a < 1 { opacitesNoms[n.id] = a }
         }
         for id in fantomes.sorted() {
             guard let n = poses.noeuds[id], let p = mondes[id], let e = proj.ecran(p) else { continue }
-            disques.append(Disque(noeud: id, centre: e, rayon: rayonPastille(n.rayon, en: p),
-                                  opacite: min(1 - 0.8 * (pieceRestante(n).map { 1 - voiles[$0] } ?? es),
-                                               voileAncres(n.ancres)) * n.opacite,
-                                  profondeur: proj.profondeur(p), focus: facteur(noeud: id)))
+            let r = rayonPastille(n.rayon, en: p)
+            let opacite = min(1 - 0.8 * (pieceRestante(n).map { 1 - voiles[$0] } ?? es), voileAncres(n.ancres)) * n.opacite
+            disques.append(Disque(noeud: id, centre: e, rayon: r, opacite: opacite, profondeur: proj.profondeur(p),
+                                  focus: facteur(noeud: id)))
+            ancresFantomes[id] = CGRect(x: Double(e.x) - r, y: Double(e.y) - r, width: 2 * r, height: 2 * r)
+            opacitesNoms[id] = opacite
         }
         disques.sort { $0.profondeur > $1.profondeur }
 

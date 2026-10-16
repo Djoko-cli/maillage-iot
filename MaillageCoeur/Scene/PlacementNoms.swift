@@ -207,7 +207,8 @@ public enum PlacementNoms {
     /// qui l'etait, pendant le retour) ; `isolee` : une piece est visee ; `fk` : part propre a chaque piece de
     /// l'isolement ; `s` : isolement general (0 a 1) ; `t` : bascule (0 : 2D, 1 : 3D) ; `se` : isolement d'un
     /// etage ; `voiles` : le voile de chaque plateau (`SceneProjetee.voilesEtages`) ; `etageIsole` : l'etage vise ;
-    /// `survolNomEtage` : le nom d'etage sous le pointeur, souligne.
+    /// `survolNomEtage` : le nom d'etage sous le pointeur, souligne. `fantomes` : les noeuds qui s'effacent, absents de la
+    /// scene (`SceneProjetee.fantomes`) : leur nom, vu a l'image d'avant, reste voulu, jusqu'a la fin de leur fondu.
     ///
     /// Les noms des appareils suivent l'etat d'arrivee (triage A, n° 8) : une piece visee, les siens ; sinon, selon le
     /// zoom, ceux de la maison, ou de l'etage vise seulement. Celui de l'appareil survole ou choisi est toujours voulu.
@@ -215,14 +216,15 @@ public enum PlacementNoms {
     public static func regler(_ etiquettes: inout [Etiquette], scene: ScenePieces, niveau: NiveauZoom,
                               survol: IdNoeud?, selection: IdNoeud?, focus: Int?, isolee: Bool, fk: [Double],
                               s: Double, t: Double, se: Double = 0, voiles: [Double] = [], etageIsole: Int? = nil,
-                              survolNomEtage: Int? = nil) {
+                              survolNomEtage: Int? = nil, fantomes: Set<IdNoeud> = []) {
         let fo = 1 - CameraScene.rampe(s)
         func voile(_ e: Int) -> Double { e < voiles.count ? voiles[e] : 1 }
         for j in etiquettes.indices {
             switch etiquettes[j].genre {
             case .noeud(let id):
                 guard let n = scene.noeud(id) else {
-                    etiquettes[j].voulu = false
+                    etiquettes[j].voulu = fantomes.contains(id) && etiquettes[j].vu
+                    etiquettes[j].fort = false
                     continue
                 }
                 let part = n.piece < fk.count ? fk[n.piece] : 0

@@ -653,7 +653,7 @@ struct MoteurPiecesZigbeeTests {
         }
         for (k, et) in inverse.scene.etages.enumerated() {
             let l = try #require(autre.scene.etages.firstIndex { $0.id == et.id })
-            #expect(m.geometrie.rayons[k] == ref.geometrie.rayons[l], "\(et.id)")
+            #expect(m.geometrieVisee.rayons[k] == ref.geometrieVisee.rayons[l], "\(et.id)")
         }
     }
 

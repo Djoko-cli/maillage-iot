@@ -527,4 +527,63 @@ struct TransitionSceneTests {
         #expect(flou.focus == MiseEnAvant.opaciteEstompee && flou2.focus == MiseEnAvant.facteur(0.5))
         #expect(flou.opacite == disque.opacite, "le focus ne change pas l'opacite du fondu")
     }
+
+    /// Banc de l'etape 3b (retouche 4) : la taille d'un plateau se glisse comme sa place. Les rayons en route sont
+    /// strictement entre l'ancien et le nouveau, a la meme courbe que le reste (`k2` en 2D, `k3` en 3D : le plus lent des
+    /// deux, ils arrivent ensemble) ; au debut ceux du depart, a la fin ceux de l'arrivee, exactement.
+    @Test func rayonsDesPlateauxEnRoute() {
+        let depart = GeometrieMaison(rayons: [6, 12])
+        let arrivee = GeometrieMaison(rayons: [10, 8])
+        for k in [0.0, 0.0625, 0.5, 0.9375, 1.0] {
+            let v = depart.vers(arrivee, k2: k, k3: k)
+            #expect(v.rayons == [6 + 4 * k, 12 - 4 * k], "rayons a \(k)")
+            if k > 0 && k < 1 {
+                #expect(v.rayons[0] > 6 && v.rayons[0] < 10 && v.rayons[1] < 12 && v.rayons[1] > 8, "strictement entre")
+            }
+        }
+        // Deux avancements distincts : le rayon suit le plus lent, il ne saute pas avant que les deux soient finis.
+        #expect(depart.vers(arrivee, k2: 1, k3: 0.5).rayons == [8, 10])
+        #expect(depart.vers(arrivee, k2: 0.5, k3: 1).rayons == [8, 10])
+        #expect(depart.vers(arrivee, k2: 1, k3: 1).rayons == arrivee.rayons)
+    }
+
+    /// Le nom d'un noeud suit l'opacite de son noeud : celui qui part (absent de la scene, `fantomes`) a sa place
+    /// affichee (`ancresFantomes`, qui n'est pas celle d'un noeud pose) et une opacite de nom qui decroit avec celle de la
+    /// pastille ; celui qui arrive, de meme, croissante. Sans transition, rien.
+    @Test func nomsQuiPartentEtQuiArrivent() throws {
+        let (s, c, d, g) = try SceneProjeteeTests.scene()
+        let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count))
+        let o = CameraScene.canonique(g, aspect: 1.5, u: 0)
+        let arrivee = PosesScene(scene: s, cartes: c, positions: d.positions)
+        let parti = idt("E000000000000009"), venu = idt("HomePod")
+        var depart = arrivee
+        depart.noeuds[parti] = PosesScene.Noeud(ancres: [A(plateau: "zone:Étage", place: SIMD2(0, 0))], decalage: .zero,
+                                                rayon: 7)
+        depart.noeuds[venu] = nil
+        let tr = try #require(TransitionScene(de: depart, vers: arrivee, a: 0, cause: .bascule))
+        func projeter(_ poses: PosesScene) -> SceneProjetee {
+            SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e, orbite: o,
+                          cadre: SceneProjeteeTests.cadre, poses: poses)
+        }
+        let sans = projeter(PosesScene())
+        #expect(sans.opacitesNoms.isEmpty && sans.ancresFantomes.isEmpty)
+        var partant: [Double] = [], arrivant: [Double] = []
+        for temps in [0.0, 0.225, 0.45, 0.675, 0.9] {
+            let p = projeter(tr.poses(a: temps))
+            let disque = try #require(p.disques.first { $0.noeud == parti })
+            if temps < 0.9 {
+                let nom = try #require(p.opacitesNoms[parti], "le nom du partant \(temps)")
+                #expect(abs(nom - disque.opacite) < 1e-12, "le nom suit la pastille")
+                #expect(p.ancresFantomes[parti] != nil && p.ancresNoeuds[parti] == nil)
+                partant.append(nom)
+                arrivant.append(try #require(p.opacitesNoms[venu], "le nom de l'arrivant \(temps)"))
+            } else {
+                #expect(p.opacitesNoms[parti] == 0 && p.opacitesNoms[venu] == nil, "au bout : efface, et net")
+            }
+        }
+        #expect(partant.first == 1 && zip(partant, partant.dropFirst()).allSatisfy { $0 > $1 }, "le nom du partant decroit")
+        #expect(arrivant.first == 0 && zip(arrivant, arrivant.dropFirst()).allSatisfy { $0 < $1 }, "celui de l'arrivant croit")
+        let mi = projeter(tr.poses(a: 0.45))
+        #expect(abs((mi.opacitesNoms[parti] ?? -1) - 0.5) < 1e-9 && abs((mi.opacitesNoms[venu] ?? -1) - 0.5) < 1e-9)
+    }
 }
