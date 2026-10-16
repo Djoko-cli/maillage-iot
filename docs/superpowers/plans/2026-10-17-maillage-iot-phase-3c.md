@@ -15,7 +15,7 @@
 - **Aucun changement de comportement.** Le diff ne contient que des déplacements, des changements d'accès rendus nécessaires par le passage en extension, des `import` et des commentaires d'en-tête de fichier. Toute autre modification est un constat à remonter, pas à faire.
 - **Mêmes tests, aucune attente modifiée** : aucun fichier de test ne change, sauf si un test lit un membre par un chemin que la découpe déplace (le dire, ligne par ligne). Les nombres de `@Test` ne bougent pas.
 - **Les trois références de rejeu restent exactes** : `docs/rejeu/thread-demo.json`, `zigbee-demo.json`, `maillage-iot-demo.json`, jamais régénérées.
-- Rôles visés (adapter aux coutures réelles du fichier, et les nommer au rapport) : **USB** (liste des ports, carte retenue, ouverture gardée par `ouvrable`, liaison série), **Réseau** (session réseau, clé du trousseau, reprise de l'ancienne clé), **Chemin** (réglage et choix Automatique / USB / Réseau, bascules et hystérésis), **Tournées** (lancement, entretien, relances, budget), **Affichage** (textes et états montrés aux Réglages et au menu). Fichier principal : moins de 300 lignes ; aucun fichier de plus de 400 lignes.
+- Rôles visés (adapter aux coutures réelles du fichier, et les nommer au rapport) : **USB** (liste des ports, carte retenue, ouverture gardée par `ouvrable`, liaison série), **Réseau** (session réseau, clé du trousseau, reprise de l'ancienne clé), **Chemin** (réglage et choix Automatique / USB / Réseau, bascules et hystérésis), **Tournées** (lancement, entretien, relances, budget), **Affichage** (textes et états montrés aux Réglages et au menu), **Cycle de vie** (`demarrer`, `arreter`, `tachesPlanifiees` ; rôle ajouté par la tâche 1, repris par la tâche 2). Fichier principal : moins de 300 lignes ; aucun fichier de plus de 400 lignes.
 - Les gardes de sûreté ne se dispersent pas : `ouvrable` et tout appel à `ouvrirCanal` restent dans le fichier **USB** ; les générations (`essai`, `epoque`) et l'annulation des tâches restent dans le fichier principal ou le fichier qui les possède, jamais coupées en deux.
 - `project.yml` prend les fichiers par dossier : lancer `xcodegen generate -q` après la découpe.
 - Swift 6 strict, avertissements = erreurs ; aucun `nonisolated(unsafe)` ni `@unchecked Sendable` ajouté.
@@ -52,10 +52,10 @@
 - Modify: `MaillageIoT/Zigbee/Sonde/SondeMaillageZigbee.swift` (fichier principal)
 - Create: `MaillageIoT/Zigbee/Sonde/SondeMaillageZigbee+USB.swift`, `+Reseau.swift`, `+Chemin.swift`, `+Tournees.swift`, `+Affichage.swift` (selon les coutures réelles ; la machine d'états de la spec 3.4 reste lisible d'un seul fichier, `+Chemin` ou le principal)
 
-- [ ] **Step 1: Repères** — comme la tâche 1, pour la sonde Zigbee.
-- [ ] **Step 2: Découper** — même méthode, mêmes noms de rôles que Thread quand le rôle existe des deux côtés.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; comparaison outillée ; tailles des fichiers.
-- [ ] **Step 4: Commit** — « Sonde Zigbee : decoupe du pilote par role, sans changement de comportement ».
+- [x] **Step 1: Repères** — comme la tâche 1, pour la sonde Zigbee.
+- [x] **Step 2: Découper** — même méthode, mêmes noms de rôles que Thread quand le rôle existe des deux côtés.
+- [x] **Step 3: Vérifier** — porte de la tâche ; comparaison outillée ; tailles des fichiers.
+- [x] **Step 4: Commit** — « Sonde Zigbee : decoupe du pilote par role, sans changement de comportement ».
 
 ---
 
