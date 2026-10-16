@@ -589,10 +589,14 @@ struct LigneDuBas: View {
                     repliee = r
                 }))
                 .obstacle("legende", moteur)
+                .transition(Apparition.transitionLigneLegende)
             }
         }
         // La legende qui s'ouvre ou se replie glisse ; avec « Reduire les animations », elle prend sa place d'un coup.
         .animation(Apparition.animationDuConteneurLegende(reduire: reduire), value: estRepliee)
+        // Un protocole montre ou masque change le contenu de la legende : sa taille, le cadre en verre et ses lignes
+        // s'animent sur la meme courbe, en 0,45 s (`Apparition.animationDuContenuLegende`).
+        .animation(Apparition.animationDuContenuLegende(reduire: reduire), value: entree?.montres)
         .onGeometryChange(for: CGFloat?.self) { ouverte ? $0.size.height : nil } action: { surHauteurOuverte($0) }
     }
 }

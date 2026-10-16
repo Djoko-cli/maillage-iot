@@ -75,10 +75,14 @@ struct LegendePieces: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            if ligneProtocoles { self.ligneDesProtocoles }
+            if ligneProtocoles {
+                self.ligneDesProtocoles
+                    .transition(Apparition.transitionLigneLegende)
+            }
             GrilleLegende {
                 ForEach(rubriques, id: \.groupe) { r in
                     groupe(r)
+                        .transition(Apparition.transitionLigneLegende)
                 }
             }
         }
@@ -124,6 +128,7 @@ struct LegendePieces: View {
                 .padding(.bottom, 1)
             ForEach(r.entrees, id: \.self) { e in
                 ligne(e)
+                    .transition(Apparition.transitionLigneLegende)
             }
         }
         .padding(.bottom, 3)

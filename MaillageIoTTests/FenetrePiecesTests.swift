@@ -603,6 +603,8 @@ struct FenetrePiecesTests {
         #expect(Apparition.animationLegende(reduire: true) == .easeInOut(duration: 0.45))
         #expect(Apparition.animationDuConteneurLegende(reduire: false) == courbe)
         #expect(Apparition.animationDuConteneurLegende(reduire: true) == nil, "avec le reglage, rien ne se decale en glissant")
+        #expect(Apparition.animationDuContenuLegende(reduire: false) == courbe, "le contenu qui change au masquage : la meme courbe, la meme duree")
+        #expect(Apparition.animationDuContenuLegende(reduire: true) == nil, "avec le reglage, le contenu change d'un coup")
     }
 
     /// Un vrai clic sur l'etiquette de la legende (son en-tete, ouverte), dans la vraie fenetre, recadre la vue en

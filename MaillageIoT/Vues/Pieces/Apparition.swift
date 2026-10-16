@@ -68,6 +68,16 @@ enum Apparition: Equatable {
         reduire ? nil : animationLegende(reduire: false)
     }
 
+    /// Le contenu de la legende qui change quand on montre ou masque un protocole (la ligne des protocoles, les
+    /// entrees et les groupes qui entrent ou sortent) : la taille du panneau et ses lignes suivent sur la meme
+    /// animation que le repli ; avec « Reduire les animations », rien ne glisse, le contenu change d'un coup.
+    static func animationDuContenuLegende(reduire: Bool) -> Animation? {
+        reduire ? nil : animationLegende(reduire: false)
+    }
+
+    /// Une ligne ou un groupe de la legende qui entre ou sort quand un protocole est montre ou masque : un fondu.
+    static var transitionLigneLegende: AnyTransition { .opacity }
+
     /// La courbe de la maquette, `cubic-bezier(.2, .8, .2, 1)` : l'avancement en fonction du temps, de 0
     /// a 1. Le moteur y fait glisser les marges de la vue avec la fiche, les bandeaux et la legende.
     static func courbe(_ temps: Double) -> Double {
