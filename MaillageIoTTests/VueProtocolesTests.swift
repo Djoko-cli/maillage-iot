@@ -78,6 +78,42 @@ struct VueProtocolesTests {
         }
     }
 
+    /// Montrer ou masquer un protocole se joue en un seul mouvement : la transition du moteur suit le plan de la bascule
+    /// (`PlanTransition.pour(.bascule)` : fondus et glissement ensemble, sur 0,9 s), et le recadrage des marges qui
+    /// accompagne la legende en prend la duree, pour un instant seulement. Avec « Reduire les animations », ni
+    /// transition ni annonce.
+    @Test func basculeDUnProtocoleEnUnSeulMouvement() throws {
+        let s = EntreeSceneTests.deuxReseaux()
+        let tout = Self.scene(s), sansZigbee = Self.scene(s, montres: [.thread])
+        let m = MoteurPiecesTests.moteur(tout)
+        try #require(m.pret && !m.reduire)
+        Self.poser(m, sansZigbee)
+        let masque = try #require(m.transition, "le masquage glisse")
+        #expect(masque.plan == PlanTransition.pour(.bascule) && masque.dureeTotale == 0.9)
+        #expect(masque.plan.fondu == masque.plan.glissement, "les noeuds de Zigbee se fondent pendant tout le deplacement")
+        #expect(m.dureeAnnoncee == 0.9, "le recadrage des marges prend la meme duree")
+        let jusqua = try #require(m.dureeAnnonceeJusqua)
+        #expect(jusqua > MoteurPieces.maintenant() && jusqua <= MoteurPieces.maintenant() + MoteurPieces.delaiDeLAnnonceDeBascule)
+        // Le retour de Zigbee : le meme mouvement, ses noeuds se fondent a leur place finale, pendant le deplacement.
+        m.avancer(MoteurPieces.maintenant() + 5)
+        try #require(m.transition == nil && m.posesAffichees == PosesScene())
+        Self.poser(m, tout)
+        let retour = try #require(m.transition)
+        #expect(retour.plan == PlanTransition.pour(.bascule))
+        let revenus = retour.arrivee.noeuds.filter { retour.depart.noeuds[$0.key] == nil }
+        try #require(!revenus.isEmpty)
+        let mi = retour.poses(a: retour.debut + 0.45)
+        for (id, arrivee) in revenus {
+            let pose = try #require(mi.noeuds[id])
+            #expect(pose.ancres == arrivee.ancres && abs(pose.opacite - 0.5) < 1e-9, "a mi-chemin, a sa place, a moitie fondu")
+        }
+        // « Reduire les animations » : rien ne glisse ni ne s'annonce.
+        let r = MoteurPiecesTests.moteur(tout)
+        r.reduire = true
+        Self.poser(r, sansZigbee)
+        #expect(r.transition == nil && r.dureeAnnoncee == nil)
+    }
+
     /// Les liens, les noms et la pastille du protocole masque ne se dessinent pas ; ceux de l'autre ne changent pas.
     @Test func lesLiensDuProtocoleMasqueNeSeDessinentPas() throws {
         let s = EntreeSceneTests.deuxReseaux()

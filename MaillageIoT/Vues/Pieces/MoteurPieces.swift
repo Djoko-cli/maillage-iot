@@ -211,6 +211,8 @@ final class MoteurPieces {
     /// Duree du prochain glissement des marges : celle de la legende, qui vient de s'ouvrir ou de se replier
     /// (`legendeBasculee`) ; nil, celle de la fiche et des bandeaux.
     @ObservationIgnored var dureeAnnoncee: Double?
+    /// L'instant jusqu'auquel `dureeAnnoncee` vaut, pour une annonce qui peut rester sans effet (bascule d'un protocole) ; nil, sans limite.
+    @ObservationIgnored var dureeAnnonceeJusqua: Double?
     /// Opacite de la scene pendant le fondu des marges (« Reduire les animations ») ; 1 sinon.
     @ObservationIgnored var opaciteMarges = 1.0
     @ObservationIgnored var cadre = CGRect(x: 0, y: 0, width: 1, height: 1)

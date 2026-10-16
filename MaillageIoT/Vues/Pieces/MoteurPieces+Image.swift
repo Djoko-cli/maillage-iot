@@ -84,6 +84,9 @@ extension MoteurPieces {
         let visees = glissement?.arrivee ?? actuelles
         if marges.haut != visees.haut || marges.bas != visees.bas {
             if pret, !fige, margesCadre != nil {
+                // Une duree annoncee par une bascule de protocole ne vaut que peu de temps : si le cadre ne bouge
+                // pas, elle ne doit pas servir a un recadrage venu bien apres.
+                if let jusqua = dureeAnnonceeJusqua, now > jusqua { dureeAnnoncee = nil }
                 glissement = GlissementMarges(depart: actuelles, arrivee: marges, debut: now,
                                               duree: dureeAnnoncee ?? Apparition.duree, fondu: reduire)
                 // Le glissement demande des images : l'horloge repart, hors du rendu.
@@ -92,6 +95,7 @@ extension MoteurPieces {
                 glissement = nil
             }
             dureeAnnoncee = nil
+            dureeAnnonceeJusqua = nil
         }
         guard let g = glissement else {
             margesCadre = marges
@@ -126,7 +130,21 @@ extension MoteurPieces {
     /// marges) prend sa duree, 0,45 s (`Apparition.dureeLegende`), au lieu des 0,3 s de la fiche et des bandeaux.
     func legendeBasculee() {
         dureeAnnoncee = Apparition.dureeLegende
+        dureeAnnonceeJusqua = nil
     }
+
+    /// Un protocole est montre ou masque : la legende change de taille avec le glissement des pieces
+    /// (`Apparition.animationDuContenuLegende`), et le recadrage qui l'accompagne prend la meme duree, en un seul
+    /// mouvement. L'annonce ne vaut qu'un instant : le cadre peut ne pas bouger. Avec « Reduire les animations », rien
+    /// ne glisse : le recadrage garde sa duree habituelle.
+    func protocolesBascules() {
+        guard !reduire else { return }
+        dureeAnnoncee = PlanTransition.pour(.bascule).glissement.duree
+        dureeAnnonceeJusqua = Self.maintenant() + Self.delaiDeLAnnonceDeBascule
+    }
+
+    /// Le temps qu'une bascule de protocole a pour recadrer la vue sur la duree annoncee.
+    static let delaiDeLAnnonceDeBascule = 1.5
 
     private func ligne(_ niveau: NiveauZoom, ancres: [CGRect?]) -> LigneNiveau {
         if estIsolee, let nom = isolee { return .isolee(nom) }

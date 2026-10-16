@@ -87,6 +87,47 @@ struct TransitionSceneTests {
         }
     }
 
+    /// Le plan des phases selon la cause du changement : pour un changement du reseau, le plan d'avant (le glissement de
+    /// 0,9 s et les fondus de 0,3 s, tous deux des l'instant 0, les fondus en ligne droite) ; pour la bascule d'un
+    /// protocole, un seul mouvement : toutes les phases commencent a 0, de la duree du glissement, sur sa courbe.
+    @Test func planDesPhases() {
+        let reseau = PlanTransition.pour(.reseau)
+        #expect(reseau.glissement == PlanTransition.Phase(debut: 0, duree: 0.9, courbe: .rampe))
+        #expect(reseau.fondu == PlanTransition.Phase(debut: 0, duree: 0.3, courbe: .lineaire))
+        #expect(reseau.glissement.duree == TransitionScene.duree && reseau.fondu.duree == TransitionScene.dureeFondu)
+        let bascule = PlanTransition.pour(.bascule)
+        #expect(bascule.glissement == PlanTransition.Phase(debut: 0, duree: 0.9, courbe: .rampe))
+        #expect(bascule.fondu == bascule.glissement, "meme debut, meme duree, meme courbe")
+        #expect([bascule.glissement, bascule.fondu].allSatisfy { $0.debut == 0 })
+        #expect(abs(bascule.fondu.avancement(a: 0.45) - 0.5) < 1e-12 && bascule.fondu.avancement(a: 0.9) == 1)
+        #expect(abs(reseau.fondu.avancement(a: 0.15) - 0.5) < 1e-12 && reseau.fondu.avancement(a: 5) == 1)
+    }
+
+    /// La bascule d'un protocole en un seul mouvement : ce qui arrive ou part se fond pendant tout le glissement, sur
+    /// sa courbe (ni une apparition en 0,3 s, ni apres coup) et la transition dure 0,9 s ; pour un changement du reseau,
+    /// les fondus restent de 0,3 s. Les pieces et les noeuds qui restent glissent pareil dans les deux cas.
+    @Test func basculeEnUnSeulMouvement() throws {
+        var d = PosesScene(), a = PosesScene()
+        d.pieces["p"] = Self.piece(x: 0)
+        a.pieces["p"] = Self.piece(x: 10)
+        d.noeuds[idt("part")] = Self.noeud("a", x: 1)
+        a.noeuds[idt("arrive")] = Self.noeud("b", x: 2)
+        let bascule = try #require(TransitionScene(de: d, vers: a, a: 0, cause: .bascule))
+        let reseau = try #require(TransitionScene(de: d, vers: a, a: 0, cause: .reseau))
+        #expect(TransitionScene(de: d, vers: a, a: 0) == reseau, "sans cause : un changement du reseau")
+        #expect(bascule.dureeTotale == 0.9 && reseau.dureeTotale == 0.9)
+        for (instant, e) in [(0.0, 0.0), (0.225, 0.0625), (0.3, 4.0 / 27), (0.45, 0.5), (0.675, 0.9375), (0.9, 1.0)] {
+            let p = bascule.poses(a: instant)
+            #expect(abs((p.noeuds[idt("arrive")]?.opacite ?? -1) - e) < 1e-9, "a \(instant) s, ce qui arrive")
+            #expect(abs((p.noeuds[idt("part")]?.opacite ?? -1) - (1 - e)) < 1e-9, "a \(instant) s, ce qui part")
+            #expect(abs((Self.x(p.pieces["p"]) ?? -1) - 10 * e) < 1e-9, "a \(instant) s, la piece glisse sur la meme courbe")
+        }
+        #expect(!bascule.finie(a: 0.89) && bascule.finie(a: 0.9))
+        #expect(reseau.poses(a: 0.3).noeuds[idt("arrive")]?.opacite == 1, "un changement du reseau : fondu de 0,3 s")
+        #expect(reseau.poses(a: 0.3).noeuds[idt("part")]?.opacite == 0)
+        #expect(Self.x(reseau.poses(a: 0.45).pieces["p"]) == Self.x(bascule.poses(a: 0.45).pieces["p"]))
+    }
+
     /// Rien ne change : pas de transition ; un lien deja la, ou la qualite seule change, non plus. « Reduire les
     /// animations » : jamais de transition, tout est immediat. La transition ne garde que ce qui change.
     @Test func ceQuiChange() throws {

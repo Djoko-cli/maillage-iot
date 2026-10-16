@@ -603,7 +603,10 @@ struct FenetrePiecesTests {
         #expect(Apparition.animationLegende(reduire: true) == .easeInOut(duration: 0.45))
         #expect(Apparition.animationDuConteneurLegende(reduire: false) == courbe)
         #expect(Apparition.animationDuConteneurLegende(reduire: true) == nil, "avec le reglage, rien ne se decale en glissant")
-        #expect(Apparition.animationDuContenuLegende(reduire: false) == courbe, "le contenu qui change au masquage : la meme courbe, la meme duree")
+        let bascule = PlanTransition.pour(.bascule).glissement
+        #expect(Apparition.animationDuContenuLegende(reduire: false)
+                    == .timingCurve(0.645, 0.045, 0.355, 1, duration: bascule.duree) && bascule.duree == 0.9,
+                "le contenu qui change au masquage : la duree du mouvement unique de la bascule d'un protocole")
         #expect(Apparition.animationDuContenuLegende(reduire: true) == nil, "avec le reglage, le contenu change d'un coup")
     }
 

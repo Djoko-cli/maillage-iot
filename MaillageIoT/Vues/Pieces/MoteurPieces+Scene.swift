@@ -14,6 +14,7 @@ extension MoteurPieces {
         // Un protocole masque ne laisse ni fiche ni focus : ils se ferment tout de suite, meme si la scene attend la fin d'un
         // mouvement (l'isolement d'une piece, lui, se ferme a la pose de la scene, `installer`).
         if let choisi = selection, !e.montre(choisi) { selection = nil }
+        if let avant = sceneRecente, avant.montres != e.montres { protocolesBascules() }
         if occupe {
             attente = e
             return
@@ -124,6 +125,9 @@ extension MoteurPieces {
         let affichee = avant?.recouvertes(par: posesAffichees)
         let rayonsAvant = entree.map { Self.rayonsParCle($0.scene, geometrieVisee.rayons) }
         let ancienne = entree
+        // La bascule d'un protocole (montre ou masque) se joue en un seul mouvement ; un changement du reseau garde
+        // l'enchainement d'origine (`PlanTransition`).
+        let cause: PlanTransition.Cause = ancienne.map { $0.montres != e.montres } == true ? .bascule : .reseau
         entree = e
         // Un autre ordre des plateaux : le disque et le nom d'etage survoles, des indices, en designeraient
         // d'autres ; le prochain mouvement du pointeur les reprend.
@@ -141,7 +145,8 @@ extension MoteurPieces {
         let arrivee = PosesScene(scene: scene, cartes: cartes, positions: positions)
         if pret, let affichee, let avant,
            transition == nil || TransitionScene(de: avant, vers: arrivee, a: 0) != nil {
-            transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire)
+            transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire,
+                                         cause: cause)
             if let tr = transition {
                 posesAffichees = tr.poses(a: tr.debut)
                 apparencesParties = (ancienne?.apparences ?? [:]).merging(apparencesParties) { a, _ in a }
@@ -162,7 +167,7 @@ extension MoteurPieces {
             politique.demander(PolitiqueGrille.redimensionnement, ensemble2D: ensemble, rayons: rayons(scene),
                                    zone: zoneVisible)
         }
-        let glisse = pret ? TransitionScene.duree : 0
+        let glisse = pret ? PlanTransition.pour(cause).glissement.duree : 0
         viser(geometriePour(scene), depuis: anciens, duree2D: niveauxChanges ? CameraScene.dureeCases : glisse,
               duree3D: niveauxChanges ? CameraScene.dureeNiveaux : glisse)
         // Les parts de l'isolement sont gardees par cle (triage A, n° 9) : un releve recu pendant un fondu ne remet pas
