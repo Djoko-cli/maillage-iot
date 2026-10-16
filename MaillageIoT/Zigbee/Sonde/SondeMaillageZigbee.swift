@@ -3,12 +3,15 @@ import MaillageCoeur
 import Observation
 import ProtocoleZigbee
 
-// Sonde Zigbee, plan des fichiers (la machine d'etats de la spec 3.4 se lit en suivant ces roles) :
-//  - principal : etats, constantes, proprietes, `init`, `deconnecter` (possede `essai`, `fermetures`, `boucle`) ;
-//  - +Chemin   : Automatique (USB d'abord), USB, Reseau ; bascules (`portsChanges`, `annoncesChangees`, `reevaluer`) ;
-//  - +USB      : ports, `ouvrable`, `connecter`, nouveaux essais 5 a 60 s ; seul fichier qui appelle `ouvrirCanal` ;
-//  - +Reseau   : session reseau, injoignable (retentee), cle du trousseau, mise en service ;
-//  - +Tournees : boucle, `occupee` (retentee 30 s), entretien 180 s, budget de pages, Rafraichir ;
+// Sonde Zigbee, plan des fichiers et index de la machine d'etats (spec 3.4) : regle -> fichier, fonction.
+//  - principal : etats, constantes, `init`, `deconnecter` (`essai` ; annule `boucle`, `entretien`, `reessaiReseau`, `nouvelEssai`) ;
+//  - +Chemin   : Automatique, USB d'abord (`reevaluer`, `portsChanges`, `annoncesChangees`) ;
+//  - +USB      : `ouvrable`, `connecter`, seul `ouvrirCanal` ; `liaisonFermee` ; nouvel essai 5 a 60 s (`planifierNouvelEssai`) ;
+//  - +Reseau   : `injoignable` retentee (`connecterReseau`, `planifierReessaiReseau`) ; liaison muette fermee apres 6 s
+//                (`delaiCommandeReseau`) ou 128 s (`delaiTable`) ; pas de mise en service en tournee (`miseEnServicePossible`) ;
+//                constante d'entretien 180 s (`periodeEntretien`) ;
+//  - +Tournees : tournee 30 s apres `occupee` (`planifierSuite`) ; tournee retenue pendant une mise en service
+//                (`planifierTournee`) ; entretien (`entretenir`) ; budget de pages (`attendreBudget`) ;
 //  - +Affichage, +Cycle : textes montres, demarrage et arret reel.
 
 /// La sonde vue par l'app : port retenu (par son numero de serie USB), connexion, verification (`bonjour` doit dire
