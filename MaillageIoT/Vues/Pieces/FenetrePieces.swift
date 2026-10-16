@@ -191,7 +191,7 @@ struct FenetrePieces: View {
         // scene est construite une fois par rendu : la legende, la fiche et son menu la lisent.
         TimelineView(Self.horloge) { contexte in
             // Les reseaux de tous les protocoles qui en ont un : la scene est leur union (`EntreeScene`).
-            // Le masquage n'agit qu'au dessin : la scene est celle des protocoles actifs, montres ou non (`EntreeScene.montres`).
+            // Le masquage recompose la vue : la scene est celle des protocoles montres et actifs (`EntreeScene.montres`).
             let montres = InterrupteursVue.montres(preferes: vue.preferes, actifs: surveillance.protocolesActifs)
             let entree = surveillance.thread.reseau != nil || surveillance.zigbee.aUnReseau
                 ? EntreeScene(surveillance: surveillance, places: moteur.places, choix: piecesChoisies.choix, montres: montres)
@@ -212,8 +212,8 @@ struct FenetrePieces: View {
                     if !moteur.pret {
                         ProgressView().controlSize(.small)
                     }
-                    // Tout est masque : la vue le dit, en une ligne (les pieces restent a leur place).
-                    if entree.toutMasque, let texte = MessageMasque.texte(protocoles: entree.protocoles) {
+                    // Tout est masque : la vue est vide, et le dit en une ligne.
+                    if entree.toutMasque, let texte = MessageMasque.texte(protocoles: entree.cachees) {
                         VueToutMasque(texte: texte)
                     }
                 } else {

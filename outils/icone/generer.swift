@@ -14,7 +14,8 @@
 //     vectoriels et monochromes (PDF), declares « images modeles » pour que la barre d'outils des Reglages les teinte
 //     comme les symboles SF voisins.
 // Ni texte ni donnee reelle : des formes et des couleurs. Thread et Zigbee sont des marques de leurs titulaires (Thread
-// Group, Connectivity Standards Alliance) ; les glyphes ne sont que des redessins simplifies, pour reconnaitre.
+// Group, Connectivity Standards Alliance) ; les glyphes ne sont que des redessins, pour reconnaitre : simplifie pour
+// Thread, fidele a la marque graphique pour Zigbee (sans le mot).
 //
 // Les noeuds ronds sont ceux de Thread (bleu, comme les routeurs de la scene), les noeuds hexagonaux, pointe en haut,
 // ceux de Zigbee (violet 0,70 / 0,45 / 0,98, comme les routeurs Zigbee de la scene) ; les appareils terminaux sont
@@ -58,6 +59,9 @@ struct Composition {
     /// Largeur du trait des liens pleins, dans le repere de 1024.
     var largeurLien: Double
     var anneauDuCentre: Bool
+    /// Translation de toute la constellation (pas du fond), dans le repere de 1024 : elle centre sur le cadre la boite des
+    /// noeuds (rayons et la moitie de leur halo compris). Les positions ci-dessous restent celles de la maquette.
+    var decalage = CGPoint.zero
 }
 
 /// La composition complete (128 pixels et plus) : un chef rond au centre, des routeurs ronds (Thread) et hexagonaux
@@ -88,7 +92,11 @@ let complete: Composition = {
         Lien(de: 11, a: 3, pointille: true), Lien(de: 12, a: 4, pointille: true),
         Lien(de: 14, a: 4, pointille: true), Lien(de: 13, a: 5, pointille: true), Lien(de: 14, a: 5, pointille: true),
     ]
-    return Composition(noeuds: n, liens: l, largeurLien: 8, anneauDuCentre: true)
+    // Boite des noeuds, rayons et demi-halos compris : x 132 a 944, y 160 a 962 ; son centre est a (538, 561) : la
+    // constellation penchait en bas a droite. Translation de (-26, -49) pour la centrer, plus un souffle de (-2, -1) pour
+    // l'equilibre optique (les gros hexagones violets du bas pesent plus que les petits noeuds du haut).
+    return Composition(noeuds: n, liens: l, largeurLien: 8, anneauDuCentre: true,
+                       decalage: CGPoint(x: -28, y: -50))
 }()
 
 /// La composition simplifiee (64 pixels et moins) : cinq noeuds gros, deux ronds, deux hexagonaux et le chef.
@@ -163,6 +171,9 @@ func dessinerIcone(taille: Int) -> CGImage {
     ctx.drawRadialGradient(fond, startCenter: CGPoint(x: 330, y: 290), startRadius: 0,
                            endCenter: CGPoint(x: 330, y: 290), endRadius: 1000,
                            options: [.drawsAfterEndLocation])
+
+    // La constellation est decalee en bloc (liens, anneau, noeuds) ; le fond reste en place.
+    ctx.translateBy(x: c.decalage.x, y: c.decalage.y)
 
     // Liens : pleins (blanc doux, violet quand ils touchent un noeud hexagonal), puis pointilles.
     ctx.setLineCap(.round)
@@ -283,21 +294,46 @@ func glypheThread(_ ctx: CGContext) {
     ctx.strokePath()
 }
 
-/// Glyphe de Zigbee : un anneau et, dedans, un Z (deux barres et leur diagonale), en traits de 0,09.
+/// Glyphe de Zigbee : la marque graphique de Zigbee redessinee d'apres l'original (Connectivity Standards Alliance), sans le
+/// mot « zigbee » (trop petit dans un onglet) : un disque plein dans lequel un « Z » est decoupe en negatif (transparent : la
+/// teinte vient du systeme). Le Z est d'un seul trait : une barre du haut fine, qui part du bord gauche du disque, un coin
+/// arrondi en haut a droite, une large diagonale, un coin arrondi en bas a gauche, et une barre du bas fine, qui sort par le
+/// bord droit. Les coordonnees sont celles du dessin d'origine, sur un disque de 910 de diametre, y vers le bas.
 func glypheZigbee(_ ctx: CGContext) {
     let echelle = 25.0 / 32
     ctx.translateBy(x: (1 - echelle) / 2, y: (1 - echelle) / 2)
     ctx.scaleBy(x: echelle, y: echelle)
-    ctx.setLineWidth(0.075)
-    ctx.setLineCap(.round)
-    ctx.setLineJoin(.round)
-    ctx.strokeEllipse(in: CGRect(x: 0.0425, y: 0.0425, width: 0.915, height: 0.915))
-    ctx.setLineWidth(0.088)
-    ctx.move(to: CGPoint(x: 0.31, y: 0.67))
-    ctx.addLine(to: CGPoint(x: 0.69, y: 0.67))
-    ctx.addLine(to: CGPoint(x: 0.31, y: 0.33))
-    ctx.addLine(to: CGPoint(x: 0.69, y: 0.33))
-    ctx.strokePath()
+    func pt(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x / 910, y: 1 - y / 910) }
+    // Les quatre bouts du Z sont sur le cercle : le point du dessin est ramene sur lui (angle en y vers le haut).
+    func angle(_ x: Double, _ y: Double) -> Double { atan2(pt(x, y).y - 0.5, pt(x, y).x - 0.5) }
+    func surLeCercle(_ x: Double, _ y: Double) -> CGPoint {
+        CGPoint(x: 0.5 + 0.5 * cos(angle(x, y)), y: 0.5 + 0.5 * sin(angle(x, y)))
+    }
+    let disque = CGMutablePath()
+    disque.addEllipse(in: CGRect(x: 0, y: 0, width: 1, height: 1))
+    let z = CGMutablePath()
+    // Bord haut de la barre du haut, puis le coin arrondi en haut a droite.
+    z.move(to: surLeCercle(128, 138))
+    z.addCurve(to: pt(655, 128), control1: pt(300, 122), control2: pt(500, 115))
+    z.addCurve(to: pt(765, 250), control1: pt(725, 132), control2: pt(770, 190))
+    // Bord droit de la diagonale, puis le bord haut de la barre du bas jusqu'au cercle.
+    z.addLine(to: pt(315, 722))
+    z.addCurve(to: surLeCercle(838, 700), control1: pt(480, 727), control2: pt(680, 722))
+    // Le bout de la barre du bas suit le cercle, puis son bord bas, et le coin arrondi en bas a gauche.
+    z.addArc(center: CGPoint(x: 0.5, y: 0.5), radius: 0.5, startAngle: angle(838, 700), endAngle: angle(798, 750),
+             clockwise: true)
+    z.addCurve(to: pt(290, 765), control1: pt(650, 765), control2: pt(450, 780))
+    z.addCurve(to: pt(140, 635), control1: pt(200, 755), control2: pt(138, 700))
+    // Bord gauche de la diagonale, puis le bord bas de la barre du haut jusqu'au cercle, et le bout de cette barre.
+    z.addLine(to: pt(595, 168))
+    z.addCurve(to: surLeCercle(82, 188), control1: pt(450, 160), control2: pt(250, 165))
+    z.addArc(center: CGPoint(x: 0.5, y: 0.5), radius: 0.5, startAngle: angle(82, 188), endAngle: angle(128, 138),
+             clockwise: true)
+    z.closeSubpath()
+    // Le Z est decoupe dans le disque (regle pair-impair).
+    ctx.addPath(disque)
+    ctx.addPath(z)
+    ctx.fillPath(using: .evenOdd)
 }
 
 func ecrireImageModele(_ nom: String, dans catalogue: URL, dessin: (CGContext) -> Void) throws {

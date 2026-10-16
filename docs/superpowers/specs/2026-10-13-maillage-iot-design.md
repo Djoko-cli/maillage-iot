@@ -355,7 +355,8 @@ Zigbee/
   depuis l'app de transition (étape 2, `TrousseauRepris`), Thread depuis le banc de l'étape 3a (15/10,
   `TrousseauReprisThread`). La liste des clés montre la clé de l'ancienne app sans la lire (attributs seuls), pour que le
   choix de la liaison par le réseau apparaisse ; la clé est reprise à la connexion.
-- **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Le second
+- **Fichiers communs** (surnoms, positions des pièces, pièces des nœuds) : **le premier import l'emporte**. Un fichier
+  déjà présent dans Maillage IoT (choix faits avant l'import) n'est jamais sauté : l'import y fusionne ce qui manque. Le second
   ne fait qu'ajouter ce qui manque, et le résumé dit ce qui a été ignoré. Les clés préfixées n'entrent jamais en
   collision.
 - **Une ancienne app qui tourne encore** est signalée, et l'assistant propose de la quitter : une sonde USB ne peut
@@ -597,8 +598,8 @@ Validés par Djoko le 15/10 (banc de l'étape 3a et questions du plan 3b) :
 - **Hexagone pointe en haut**, sommets sur le rayon du nœud (cercle circonscrit) ; ondes, pile, anneau pointillé et
   anneau de sélection restent ronds, au-delà du rayon.
 - **Interrupteurs de vue dans la capsule de gauche**, après le nom de la maison : « ● Thread ⬢ Zigbee ». Masquer un
-  protocole est **stable** : les pièces et les autres nœuds ne bougent pas ; la fiche ou le focus d'un nœud masqué se
-  ferment. Un protocole éteint dans les Réglages y est grisé.
+  protocole **recompose la vue** sans lui (choix de Djoko au banc de 3b, 16/10, à la place du masquage stable) : les
+  pièces et les nœuds se replacent ; la fiche ou le focus d'un nœud masqué se ferment. Un protocole éteint dans les Réglages y est grisé.
 - **En haut à gauche, le nom de la maison** (Maison) ; son menu liste les réseaux par protocole : Thread (réseaux,
   partitions, choix du réseau affiché), puis Zigbee (le pont).
 - **Onglets Thread et Zigbee** : logos redessinés en vectoriel monochrome, en images modèles (teinte du système) ;
@@ -651,6 +652,11 @@ Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
 - Vue de santé par pièce, tous protocoles confondus (option C du 13/10).
+- **Pièce proposée aux HomePod et à l'Apple TV** (demande de Djoko, banc de l'étape 3b, 16/10) : HomeKit ne les donne pas à
+  une app tierce, donc leur pièce n'est connue que par un choix manuel. Ils s'annoncent aussi par AirPlay (mDNS) sous le
+  nom qu'on leur donne dans Maison, souvent celui de la pièce : écouter ce service (ajout à `NSBonjourServices`), le
+  relier au routeur de bordure par son hôte (à vérifier sur le réseau réel), puis **proposer** la pièce à confirmer, sans
+  l'imposer (un nom sans pièce ou un rattachement erroné restent possibles).
 - **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
   naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
   dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.

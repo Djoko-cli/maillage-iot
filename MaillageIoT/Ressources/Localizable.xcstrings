@@ -7889,18 +7889,18 @@
         }
       }
     },
-    "coordinateur (le pont)" : {
+    "coordinateur Zigbee (le pont)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "coordinator (the bridge)"
+            "value" : "Zigbee coordinator (the bridge)"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "coordinateur (le pont)"
+            "value" : "coordinateur Zigbee (le pont)"
           }
         }
       }

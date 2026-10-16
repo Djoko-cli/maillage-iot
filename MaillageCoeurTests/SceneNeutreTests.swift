@@ -44,52 +44,6 @@ struct SceneNeutreTests {
         #expect(c != seul, "la largeur du noeud Zigbee compte, distincte de celle du noeud Thread")
     }
 
-    /// Le masquage d'un protocole (interrupteurs de vue, etape 3b) n'agit qu'au dessin : la disposition et les poses sont
-    /// celles de la scene entiere, la projection ne dessine ni les pastilles, ni les liens, ni les fils « ailleurs » du
-    /// protocole masque, et ne touche ni aux pieces ni aux noeuds des autres protocoles.
-    @Test func masquageAuDessinSeulement() throws {
-        let t = idt("0000000000000001"), t2 = idt("0000000000000002"), z = idt("0000000000000001", .zigbee)
-        let z2 = idt("0000000000000002", .zigbee)
-        let s = Self.scene([Self.noeud(t, genre: .routeur, routeur: true), Self.noeud(t2),
-                            Self.noeud(z, genre: .routeur, partition: "zigbee", routeur: true),
-                            Self.noeud(z2, partition: "zigbee")],
-                           liens: [.init(de: t2, vers: t, genre: .parent), .init(de: z2, vers: z, genre: .parent),
-                                   .init(de: z, vers: z2, genre: .radio, qualite: 2)],
-                           libelles: [t: "A", t2: "B", z: "C", z2: "D"], pieces: [t: "Cuisine", t2: "Salon", z: "Cuisine", z2: "Salon"])
-        let c = CartesPieces.cartes(s, largeurs: [:])
-        let d = DispositionPieces(scene: s, cartes: c)
-        let g = GeometrieMaison(rayons: d.rayons)
-        func projeter(_ masques: Set<Protocole>, focus: Int? = nil) -> SceneProjetee {
-            let e = EtatAnime(t: 0, s: focus == nil ? 0 : 1, fk: s.pieces.indices.map { $0 == focus ? 1 : 0 }, focus: focus,
-                              masques: masques)
-            return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
-                                 orbite: CameraScene.canonique(g, aspect: 1.5, u: 0),
-                                 cadre: CGRect(x: 0, y: 0, width: 1200, height: 800))
-        }
-        let tout = projeter([]), sansZigbee = projeter([.zigbee]), sansThread = projeter([.thread])
-        #expect(tout.disques.count == 4 && Set(tout.disques.map(\.noeud)) == [t, t2, z, z2])
-        #expect(Set(sansZigbee.disques.map(\.noeud)) == [t, t2] && Set(sansThread.disques.map(\.noeud)) == [z, z2])
-        let liens = { (p: SceneProjetee) in Set((p.liensEnfants + p.liensRouteurs).map(\.protocole)) }
-        #expect(liens(tout) == [.thread, .zigbee] && liens(sansZigbee) == [.thread] && liens(sansThread) == [.zigbee])
-        // Les pieces et la place de ce qui reste ne bougent pas : memes blocs, memes ancres, memes pastilles.
-        #expect(sansZigbee.blocs.count == tout.blocs.count && sansZigbee.ancresPieces == tout.ancresPieces)
-        #expect(sansZigbee.plateaux.count == tout.plateaux.count && sansZigbee.ancresEtages == tout.ancresEtages)
-        #expect(sansZigbee.centresNoeuds == tout.centresNoeuds, "les places sont celles de la scene entiere")
-        for id in [t, t2] {
-            #expect(sansZigbee.disques.first { $0.noeud == id }?.centre == tout.disques.first { $0.noeud == id }?.centre)
-        }
-        #expect(sansThread.disques.first { $0.noeud == z }?.centre == tout.disques.first { $0.noeud == z }?.centre)
-        // Un fil « ailleurs » du protocole masque (la piece isolee) n'est pas dessine.
-        let salon = try #require(s.pieces.firstIndex { $0.nom == .maison("Salon") })
-        let ailleursTout = projeter([], focus: salon)
-        let ailleursSans = projeter([.zigbee], focus: salon)
-        #expect(ailleursTout.ailleurs.contains { $0.enfant.protocole == .zigbee })
-        #expect(ailleursSans.ailleurs.allSatisfy { $0.enfant.protocole == .thread })
-        #expect(ailleursTout.fils.count == 2 && ailleursSans.fils.count == 1)
-        // La disposition est faite sur la scene, avant tout dessin : elle ne lit pas le masque (aucun parametre).
-        #expect(DispositionPieces(scene: s, cartes: c) == d)
-    }
-
     /// La teinte d'une carte de routeur vient de la cle du routeur : elle ne change pas si seul son protocole change.
     @Test func teinteNeutre() throws {
         for cle in ["Salon", "E1000000000000A1", "instance:Palier", "~4F2A", "rloc:0400"] {

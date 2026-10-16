@@ -82,6 +82,28 @@ struct LogosEtIconeTests {
         #expect(orange == 0, "\(orange) points oranges dans le coin du badge")
     }
 
+    /// La constellation est centree dans le cadre (banc du 16/10 : elle penchait en bas a droite) : la boite des pixels clairs
+    /// (corps et reflets des noeuds ; le fond et les halos restent plus sombres) a son centre pres du centre du calque.
+    @Test func laConstellationEstCentree() throws {
+        let url = Self.racine.appendingPathComponent("MaillageIoT/Ressources/AppIcon.icon/Assets/constellation.png")
+        let image = try #require(NSImage(contentsOf: url))
+        let cote = 1024
+        let p = Self.pixels(image, cote: cote)
+        var (x0, x1, y0, y1) = (cote, 0, cote, 0)
+        for y in 0..<cote {
+            for x in 0..<cote {
+                let i = (y * cote + x) * 4
+                let luma = (0.2126 * Double(p[i]) + 0.7152 * Double(p[i + 1]) + 0.0722 * Double(p[i + 2])) / 255
+                if luma > 0.62 {
+                    x0 = min(x0, x); x1 = max(x1, x); y0 = min(y0, y); y1 = max(y1, y)
+                }
+            }
+        }
+        try #require(x1 > x0 && y1 > y0, "des noeuds clairs")
+        let (cx, cy) = (Double(x0 + x1) / 2, Double(y0 + y1) / 2)
+        #expect(abs(cx - 512) <= 16 && abs(cy - 512) <= 16, "boite des noeuds x \(x0)-\(x1), y \(y0)-\(y1) : centre (\(cx), \(cy))")
+    }
+
     /// Les apercus de l'icone existent a chaque taille (16 a 1024 pixels), tous carres. Ils ne servent pas a la compilation :
     /// seul le calque 1024 d'AppIcon.icon est embarque (voir l'en-tete de outils/icone/generer.swift).
     @Test(arguments: [16, 32, 64, 128, 256, 512, 1024])

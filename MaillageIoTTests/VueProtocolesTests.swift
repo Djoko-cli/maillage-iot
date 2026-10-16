@@ -8,12 +8,12 @@ import SwiftUI
 import Testing
 @testable import MaillageIoT
 
-/// Etape 3b, tache 5 : la barre du haut dit la maison et porte les interrupteurs de vue « Thread » / « Zigbee ». Masquer un
-/// protocole n'agit qu'au dessin : la scene calculee, sa disposition et la place de chaque noeud restent ceux des protocoles
-/// actifs (les deux rejeux exacts ne le voient pas), et rien du protocole masque ne reste (fiche, focus, isolement, ligne de
-/// tournee, commandes).
+/// Etape 3b, tache 5 puis banc du 16/10 : la barre du haut dit la maison et porte les interrupteurs de vue « Thread » /
+/// « Zigbee ». Masquer un protocole recompose la vue sans lui : la scene, sa disposition et ses pieces sont calculees sur les
+/// protocoles montres et actifs (les rejeux montrent tout, ils ne le voient pas), et rien du protocole masque ne reste (fiche,
+/// focus, isolement, ligne de tournee, commandes, legende).
 @MainActor
-@Suite("Interrupteurs de vue et masquage stable")
+@Suite("Interrupteurs de vue et masquage recalcule")
 struct VueProtocolesTests {
     static let tous: Set<Protocole> = [.thread, .zigbee]
 
@@ -22,38 +22,59 @@ struct VueProtocolesTests {
         EntreeScene(surveillance: s, places: PlacesGardees(), montres: montres)
     }
 
-    // MARK: Masquage stable
+    // MARK: Masquage recalcule
 
-    /// Masquer un protocole ne bouge rien : la scene, sa cle de disposition, les positions des pieces, celles des noeuds
-    /// visibles et les ancres des pieces sont identiques, protocole montre ou masque ; seuls les disques du protocole masque
-    /// disparaissent. Le moteur ne recalcule pas la disposition (meme cle), et la remise du protocole les rend a leur place.
-    @Test func masquageStable() throws {
+    /// Poser une scene sur le moteur tout de suite (la disposition se calcule sur le fil principal), comme `recevoir`.
+    static func poser(_ m: MoteurPieces, _ e: EntreeScene) {
+        m.recevoir(e)
+        m.installerMaintenant(e)
+        MoteurPiecesTests.dessiner(m)
+    }
+
+    /// Masquer un protocole recompose la vue sans lui : la scene est celle du protocole montre seul (noeuds, liens, pieces,
+    /// disposition), les pieces que ce protocole etait seul a remplir disparaissent, et la remise du protocole rend la vue
+    /// d'avant, a l'identique.
+    @Test func masquageRecalcule() throws {
         let s = EntreeSceneTests.deuxReseaux()
         let tout = Self.scene(s), sansZigbee = Self.scene(s, montres: [.thread]), sansThread = Self.scene(s, montres: [.zigbee])
-        #expect(tout.scene == sansZigbee.scene && tout.scene == sansThread.scene, "la scene calculee ne lit pas le masque")
-        #expect(tout.cleDisposition == sansZigbee.cleDisposition && tout.cleDisposition == sansThread.cleDisposition)
-        #expect(tout.graphe == sansZigbee.graphe && tout.libelles == sansZigbee.libelles)
-        #expect(tout != sansZigbee, "mais la vue, elle, change : le moteur doit recevoir la scene")
+        // Les references : Thread seul et Zigbee seul (l'autre protocole eteint), sans aucun masque.
+        let seulThread = EntreeSceneTests.deuxReseaux()
+        seulThread.zigbee.actif = false
+        let seulZigbee = EntreeSceneTests.deuxReseaux()
+        seulZigbee.thread.actif = false
+        let thread = Self.scene(seulThread), zigbee = Self.scene(seulZigbee)
+        #expect(sansZigbee.scene == thread.scene && sansZigbee.cleDisposition == thread.cleDisposition,
+                "Zigbee masque : la scene de Thread seul, noeuds et pieces")
+        #expect(sansThread.scene == zigbee.scene && sansThread.cleDisposition == zigbee.cleDisposition)
+        #expect(sansZigbee.graphe == thread.graphe && sansZigbee.libelles == thread.libelles)
+        #expect(sansZigbee.domicile == thread.domicile && sansThread.domicile == zigbee.domicile)
+        #expect(sansZigbee.scene.noeuds.allSatisfy { $0.id.protocole == .thread } && !sansZigbee.scene.noeuds.isEmpty)
+        #expect(sansZigbee.scene != tout.scene && sansThread.scene != tout.scene && tout != sansZigbee)
+        // Les pieces se tirent des noeuds montres : aucune piece vide du protocole masque ne reste (dans la demo, chaque piece
+        // a des noeuds des deux protocoles : elles restent toutes, avec les seuls noeuds montres).
+        #expect(sansZigbee.scene.pieces.allSatisfy { p in p.noeuds.allSatisfy { $0.protocole == .thread } })
+        #expect(sansThread.scene.pieces.allSatisfy { p in p.noeuds.allSatisfy { $0.protocole == .zigbee } })
+        #expect(tout.scene.noeuds.count == sansZigbee.scene.noeuds.count + sansThread.scene.noeuds.count)
+        // Le moteur : la disposition est recalculee et posee ; les disques sont ceux de la scene de Thread seul, a la place qu'elle
+        // leur donne, et les noms n'en disent pas d'autre.
         let m = MoteurPiecesTests.moteur(tout)
+        m.reduire = true  // sans glissement : la vue prend sa place tout de suite
         let avant = Releve(m)
         try #require(!avant.disques.isEmpty)
         #expect(Set(avant.disques.map(\.protocole)) == Self.tous)
-        for (masque, reste) in [(Protocole.zigbee, Protocole.thread), (.thread, .zigbee)] {
-            m.recevoir(masque == .zigbee ? sansZigbee : sansThread)
-            MoteurPiecesTests.dessiner(m)
+        for (masque, reste, seule, montre) in [(Protocole.zigbee, Protocole.thread, thread, sansZigbee),
+                                               (.thread, .zigbee, zigbee, sansThread)] {
+            Self.poser(m, montre)
             let apres = Releve(m)
-            #expect(m.enCalcul == nil && m.cleCalculee == tout.cleDisposition, "aucune disposition recalculee")
-            #expect(apres.positions == avant.positions && apres.rayons == avant.rayons, "les pieces ne bougent pas")
-            #expect(apres.ancresPieces == avant.ancresPieces && apres.blocs == avant.blocs)
-            #expect(apres.disques.allSatisfy { $0.protocole == reste }, "seul le protocole montre est dessine")
-            #expect(Set(apres.disques) == Set(avant.disques.filter { $0.protocole == reste }),
-                    "les noeuds visibles sont a la meme place")
-            #expect(m.entree?.masques == [masque])
+            let reference = Releve(MoteurPiecesTests.moteur(seule))
+            #expect(m.cleCalculee == montre.cleDisposition, "la disposition est recalculee pour la vue sans \(masque)")
+            #expect(apres.disques.allSatisfy { $0.protocole == reste } && !apres.disques.isEmpty, "seul le protocole montre est dessine")
+            #expect(apres == reference, "la meme vue que \(reste) seul")
+            #expect(apres.disques.count < avant.disques.count, "les noeuds du protocole masque ont disparu")
             let etiquettes = m.etiquettes.compactMap { l -> IdNoeud? in if case .noeud(let id) = l.genre { id } else { nil } }
             #expect(!etiquettes.isEmpty && etiquettes.allSatisfy { $0.protocole == reste }, "aucun nom du protocole masque")
-            m.recevoir(tout)
-            MoteurPiecesTests.dessiner(m)
-            #expect(Releve(m) == avant, "le protocole remis revient a sa place, sans bouger")
+            Self.poser(m, tout)
+            #expect(Releve(m) == avant, "le protocole remis revient a sa place, comme avant")
         }
     }
 
@@ -116,30 +137,30 @@ struct VueProtocolesTests {
         // Un noeud de Zigbee choisi : Zigbee masque, fiche et focus se ferment.
         m.selection = zigbee
         #expect(m.miseEnAvant != nil)
-        m.recevoir(sansZigbee)
+        Self.poser(m, sansZigbee)
         #expect(m.selection == nil && m.miseEnAvant == nil, "la fiche et le focus d'un noeud masque se ferment")
         // Un noeud de Thread reste choisi quand Zigbee est masque.
-        m.recevoir(tout)
+        Self.poser(m, tout)
         m.selection = thread
-        m.recevoir(sansZigbee)
+        Self.poser(m, sansZigbee)
         #expect(m.selection == thread && m.miseEnAvant != nil, "l'autre protocole garde sa fiche")
         // L'inverse : Thread masque.
-        m.recevoir(sansThread)
+        Self.poser(m, sansThread)
         #expect(m.selection == nil && m.miseEnAvant == nil)
         // Une piece isolee dont tous les noeuds sont masques est quittee ; une piece qui garde des noeuds visibles reste isolee.
-        m.recevoir(tout)
+        Self.poser(m, tout)
         let rien = Self.scene(s, montres: [])
         m.poserIsolement(try #require(tout.scene.pieces.firstIndex { !$0.noeuds.isEmpty }))
         #expect(m.estIsolee)
-        m.recevoir(rien)
+        Self.poser(m, rien)
         #expect(!m.estIsolee && m.isolement == .maison, "la piece vide de noeuds visibles est quittee")
-        m.recevoir(tout)
+        Self.poser(m, tout)
         let mixte = try #require(tout.scene.pieces.firstIndex { p in Set(p.noeuds.map(\.protocole)) == Self.tous },
                                  "une piece des deux protocoles")
         m.poserIsolement(mixte)
-        m.recevoir(sansZigbee)
+        Self.poser(m, sansZigbee)
         #expect(m.estIsolee, "une piece qui garde des noeuds visibles reste isolee")
-        m.recevoir(sansThread)
+        Self.poser(m, sansThread)
         #expect(m.estIsolee, "de meme, Thread masque")
     }
 
@@ -174,11 +195,11 @@ struct VueProtocolesTests {
         #expect(InterrupteursVue.montres(preferes: preferes, actifs: s.protocolesActifs) == [.thread])
         // La scene : un protocole eteint n'est pas de la scene, quel que soit le parametre des montres.
         let e = Self.scene(s)
-        #expect(e.protocoles == [.thread] && e.montres == [.thread] && e.masques == [.zigbee])
+        #expect(e.protocoles == [.thread] && e.montres == [.thread] && e.cachees.isEmpty, "eteint n'est pas cache par la vue")
         s.zigbee.actif = true
         s.thread.actif = false
         let z = Self.scene(s)
-        #expect(z.protocoles == [.zigbee] && z.montres == [.zigbee] && z.masques == [.thread])
+        #expect(z.protocoles == [.zigbee] && z.montres == [.zigbee] && z.cachees.isEmpty)
         #expect(InterrupteursVue.etat(.thread, preferes: preferes, actifs: s.protocolesActifs).grise)
     }
 
@@ -294,31 +315,44 @@ struct VueProtocolesTests {
         let s = EntreeSceneTests.deuxReseaux()
         let rien = Self.scene(s, montres: []), thread = Self.scene(s, montres: [.thread])
         #expect(rien.toutMasque && !thread.toutMasque)
+        #expect(rien.scene.noeuds.isEmpty && rien.cachees == Self.tous && thread.cachees == [.zigbee])
         #expect(rien.visibles.isEmpty && thread.visibles == [.thread])
-        #expect(MessageMasque.texte(protocoles: rien.protocoles) == String(localized: "Thread et Zigbee sont masqués"))
+        #expect(MessageMasque.texte(protocoles: rien.cachees) == String(localized: "Thread et Zigbee sont masqués"))
         #expect(MessageMasque.texte(protocoles: [.thread]) == String(localized: "Thread est masqué"))
         #expect(MessageMasque.texte(protocoles: [.zigbee]) == String(localized: "Zigbee est masqué"))
         #expect(MessageMasque.texte(protocoles: []) == nil)
-        // Zigbee eteint, Thread masque : la scene n'a que Thread, et c'est lui que le message nomme.
+        // Zigbee eteint, Thread masque : seul Thread est cache par la vue, et c'est lui que le message nomme.
         s.zigbee.actif = false
         let seul = Self.scene(s, montres: [])
-        #expect(seul.toutMasque && MessageMasque.texte(protocoles: seul.protocoles) == String(localized: "Thread est masqué"))
+        #expect(seul.toutMasque && MessageMasque.texte(protocoles: seul.cachees) == String(localized: "Thread est masqué"))
         // Sans noeud (aucun reseau) : pas de scene a masquer.
         let vide = EntreeScene(surveillance: Surveillance(mode: .direct, dossier: nil), reseau: nil, places: PlacesGardees(),
                                montres: [])
         #expect(!vide.toutMasque)
     }
 
-    /// La legende decrit la scene calculee, pas le dessin : masquer un protocole ne change pas sa hauteur, donc pas la marge du
-    /// bas ni le cadrage de la vue (le masquage est stable).
-    @Test func laLegendeNeBougePasAuMasquage() {
+    /// La legende suit les protocoles montres : sans Zigbee, ni la ligne « Thread · Zigbee » ni les entrees propres a Zigbee ;
+    /// la legende de la vue sans un protocole est celle de l'autre seul.
+    @Test func laLegendeSuitLesProtocolesMontres() {
         let s = EntreeSceneTests.deuxReseaux()
         func lecture(_ montres: Set<Protocole>) -> LegendePieces.Lecture {
             LegendePieces.Lecture(Self.scene(s, montres: montres), ailleurs: false)
         }
         let entrees = { (m: Set<Protocole>) in LegendePieces.rubriques(lecture(m)).map { [$0.groupe.titre] + $0.entrees.map { "\($0)" } } }
-        #expect(entrees([.thread]) == entrees(Self.tous) && entrees([]) == entrees(Self.tous))
-        #expect(LegendePieces.montreLesProtocoles(lecture([.thread])))
+        let seul = EntreeSceneTests.deuxReseaux()
+        seul.zigbee.actif = false
+        #expect(entrees([.thread]) == LegendePieces.rubriques(LegendePieces.Lecture(Self.scene(seul), ailleurs: false))
+            .map { [$0.groupe.titre] + $0.entrees.map { "\($0)" } })
+        #expect(entrees([.thread]) != entrees(Self.tous) && entrees([]).isEmpty)
+        let zigbee = LegendePieces.entrees(lecture(Self.tous)).subtracting(LegendePieces.entrees(lecture([.thread])))
+        #expect(LegendePieces.Entree.coordinateur.texte == String(localized: "coordinateur Zigbee (le pont)"))
+        #expect(LegendePieces.Entree.coordinateur.texte.contains("Zigbee"), "le coordinateur dit son protocole")
+        #expect(zigbee.contains(.coordinateur), "l'entree du coordinateur de Zigbee est la avec Zigbee")
+        #expect(!LegendePieces.entrees(lecture([.thread])).contains(.coordinateur))
+        #expect(!LegendePieces.entrees(lecture([.zigbee])).contains(.chef))
+        #expect(LegendePieces.montreLesProtocoles(lecture(Self.tous)))
+        #expect(!LegendePieces.montreLesProtocoles(lecture([.thread])) && !LegendePieces.montreLesProtocoles(lecture([.zigbee])),
+                "la ligne « Thread · Zigbee » disparait avec un protocole masque")
     }
 
     /// Les deux capsules du haut tiennent dans la plus petite fenetre (`FenetrePieces.tailleMinimale`) avec les deux protocoles,

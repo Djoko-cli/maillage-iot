@@ -182,7 +182,7 @@ extension LegendePieces {
             case .routeurSimple, .routeurZigbee: String(localized: "routeur")
             case .nonIdentifie: String(localized: "non identifié")
             case .nonIdentifieZigbee: String(localized: "inconnu du pont")
-            case .coordinateur: String(localized: "coordinateur (le pont)")
+            case .coordinateur: String(localized: "coordinateur Zigbee (le pont)")
             case .autrePartition: String(localized: "routeur de bordure d'une autre partition")
             case .chef: String(localized: "chef du réseau Thread, élu automatiquement")
             case .joignable: String(localized: "joignable")
