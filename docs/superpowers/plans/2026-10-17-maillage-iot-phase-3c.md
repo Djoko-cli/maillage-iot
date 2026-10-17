@@ -61,13 +61,13 @@
 
 ### Task 3: Relecture finale et feuille de route
 
-- [ ] **Step 1: Relecture finale** — par Opus, sur toute la branche (déplacement pur, gardes réunies, accès).
-- [ ] **Step 2: Feuille de route** — après le banc : cocher « Phase 3 » dans la §6.1 de la spec.
+- [x] **Step 1: Relecture finale** — par Opus, sur toute la branche (déplacement pur, gardes réunies, accès).
+- [x] **Step 2: Feuille de route** — après le banc : cocher « Phase 3 » dans la §6.1 de la spec.
 
 ---
 
 ### Task 4: Banc avec Djoko
 
-- [ ] **Step 1: Préparer** — compiler `MaillageIoT` (Debug) et relancer l'app.
-- [ ] **Step 2: Vérifier** — les deux sondes en USB, puis la sonde Thread en Automatique (débrancher, rebrancher) et la sonde Zigbee en Wi-Fi : tout se comporte comme avant la découpe.
-- [ ] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
+- [x] **Step 1: Préparer** — compiler `MaillageIoT` (Debug) et relancer l'app.
+- [x] **Step 2: Vérifier** — les deux sondes en USB, puis la sonde Thread en Automatique (débrancher, rebrancher) et la sonde Zigbee en Wi-Fi : tout se comporte comme avant la découpe.
+- [x] **Step 3: Verdict** — noté au registre ; plan coché ; fusion dans `main` et push avec l'accord de Djoko.
