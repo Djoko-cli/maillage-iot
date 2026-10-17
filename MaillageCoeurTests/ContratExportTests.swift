@@ -868,6 +868,37 @@ struct ContratExportTests {
         #expect(throws: C.Erreur.tailleFausse("surnoms.json")) { try C.verifierDossier(e.dossier) }
     }
 
+    /// `reglages.json` est dans le manifeste comme les autres : un octet change, meme taille, est refuse par l'empreinte.
+    @Test func dossierReglagesEmpreinteFausse() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let url = e.dossier.appendingPathComponent("reglages.json")
+        let original = Self.texte(try Data(contentsOf: url))
+        // Une seule lettre de la cle change : meme taille, JSON toujours lisible. Seule l'empreinte voit le changement.
+        let altere = original.replacingOccurrences(of: "vuePieces3D", with: "vuePieces3E")
+        #expect(altere != original && altere.utf8.count == original.utf8.count)
+        try Data(altere.utf8).write(to: url)
+        #expect(throws: C.Erreur.empreinteFausse("reglages.json")) { try C.verifierDossier(e.dossier) }
+    }
+
+    /// `reglages.json` grandit ou retrecit d'un octet : refuse par la taille, avant l'empreinte.
+    @Test func dossierReglagesTailleFausse() throws {
+        // Un octet de plus (espace en fin, JSON toujours valide).
+        let plus = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: plus.dossier) }
+        let urlPlus = plus.dossier.appendingPathComponent("reglages.json")
+        let octetsPlus = try Data(contentsOf: urlPlus) + Data(" ".utf8)
+        try octetsPlus.write(to: urlPlus)
+        #expect(throws: C.Erreur.tailleFausse("reglages.json")) { try C.verifierDossier(plus.dossier) }
+        // Un octet de moins.
+        let moins = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: moins.dossier) }
+        let urlMoins = moins.dossier.appendingPathComponent("reglages.json")
+        let octetsMoins = Data(try Data(contentsOf: urlMoins).dropLast())
+        try octetsMoins.write(to: urlMoins)
+        #expect(throws: C.Erreur.tailleFausse("reglages.json")) { try C.verifierDossier(moins.dossier) }
+    }
+
     @Test func dossierReglagesIncoherents() throws {
         // Reglages d'une autre app que le manifeste (empreinte juste : le fichier est bien celui annonce).
         let e = try Self.exportValide(app: .maillageThread)
