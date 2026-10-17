@@ -89,7 +89,7 @@ EOF
     continue
   fi
   # Le dossier source doit etre celui d'un commit (sinon ORIGINE.md mentirait).
-  if [ -n "$(git -C "$depot" status --porcelain -- docs/export-exemple 2>/dev/null)" ]; then
+  if [ -n "$(GIT_OPTIONAL_LOCKS=0 git -C "$depot" status --porcelain -- docs/export-exemple 2>/dev/null)" ]; then
     echo "defaut : $nom : docs/export-exemple porte des modifications non commitees"
     DEFAUTS=$((DEFAUTS + 1))
     continue
