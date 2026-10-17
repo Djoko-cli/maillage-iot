@@ -547,17 +547,38 @@ struct ContratExportTests {
             C.FichierNonRepris(chemin: "Journal/.DS_Store", raison: .exclu),
             C.FichierNonRepris(chemin: "Sparkle.xml", raison: .horsContrat),
             C.FichierNonRepris(chemin: "Thread/x.json", raison: .horsContrat),
-            C.FichierNonRepris(chemin: "manifeste.json", raison: .horsContrat),
             C.FichierNonRepris(chemin: "noms.illisible-1.json", raison: .exclu),
-            C.FichierNonRepris(chemin: "reglages.json", raison: .horsContrat),
         ])
         let zigbee = try C.classerFichiers(vus: vus, de: .maillageZigbee)
         #expect(zigbee.aCopier == ["Journal/journal-2026-10.jsonl", "maillage-2026-10.jsonl", "surnoms.json"])
         #expect(zigbee.nonRepris.contains(C.FichierNonRepris(chemin: "noms.json", raison: .horsContrat)))
         #expect(zigbee.nonRepris.contains(C.FichierNonRepris(chemin: "associations.json", raison: .horsContrat)))
-        #expect(zigbee.aCopier.count + zigbee.nonRepris.count == vus.count, "rien n'est perdu en silence")
-        #expect(thread.aCopier.count + thread.nonRepris.count == vus.count)
+        // rien n'est perdu en silence, sauf les deux noms reserves de la racine, que l'export ecrit lui-meme
+        #expect(zigbee.aCopier.count + zigbee.nonRepris.count == vus.count - 2)
+        #expect(thread.aCopier.count + thread.nonRepris.count == vus.count - 2)
         #expect(throws: C.Erreur.cheminInvalide("../x")) { try C.classerFichiers(vus: ["../x"], de: .maillageThread) }
+    }
+
+    /// `manifeste.json` et `reglages.json` a la racine du dossier de l'app (a la casse pres) sont ecrits par l'export
+    /// lui-meme : le classement les ecarte, ni copies ni cites. Dans un sous-dossier ils ne genent pas : hors contrat.
+    @Test func nomsReservesDeLaRacineEcartes() throws {
+        for app in C.AppSource.allCases {
+            let vus = ["manifeste.json", "reglages.json", "Manifeste.JSON", "REGLAGES.json", "Journal/manifeste.json",
+                       "surnoms.json", "Sparkle.xml"]
+            let classes = try C.classerFichiers(vus: vus, de: app)
+            #expect(classes.aCopier == ["surnoms.json"])
+            #expect(classes.nonRepris == [
+                C.FichierNonRepris(chemin: "Journal/manifeste.json", raison: .horsContrat),
+                C.FichierNonRepris(chemin: "Sparkle.xml", raison: .horsContrat),
+            ])
+            let seuls = try C.classerFichiers(vus: ["manifeste.json", "reglages.json"], de: app)
+            #expect(seuls.aCopier.isEmpty && seuls.nonRepris.isEmpty)
+            // l'ecriture du manifeste a partir du classement reussit, sans filtre supplementaire
+            let fichiers = classes.aCopier.map { C.Fichier(chemin: $0, taille: 1, sha256: Self.sha) }
+                + [C.Fichier(chemin: C.nomReglages, taille: 1, sha256: Self.sha)]
+            let m = Self.manifeste(app: app, fichiers: fichiers, nonRepris: classes.nonRepris)
+            #expect(try C.lireManifeste(C.ecrire(m)) == m)
+        }
     }
 
     // MARK: Ce qui n'est pas repris : reglages

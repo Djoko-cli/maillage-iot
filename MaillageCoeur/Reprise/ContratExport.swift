@@ -608,16 +608,20 @@ public enum ContratExport {
 
     /// Partage les fichiers vus dans `Application Support/<app>/` (chemins relatifs, avec des `/`) entre ceux que
     /// l'export copie (`fichiersConnus`, hors `estExcluDeLExport`) et ceux qu'il cite dans `fichiersNonRepris` (`exclu`
-    /// ou `horsContrat`, y compris `manifeste.json` et `reglages.json` : ces noms sont reserves a l'export). Les deux
-    /// listes sont triees par chemin ; rien n'est perdu : `aCopier.count + nonRepris.count == vus.count`. Un chemin
-    /// invalide (`verifierChemin`) fait echouer le classement.
+    /// ou `horsContrat`). Exception : `manifeste.json` et `reglages.json` a la RACINE du dossier de l'app (a la casse
+    /// pres : ce sont eux qui entreraient en collision avec ceux de l'export) sont ecartes, ni copies ni cites ; plus
+    /// bas (`Journal/manifeste.json`) ils sont un fichier comme un autre. Les deux listes sont triees par chemin ;
+    /// rien n'est perdu : `aCopier.count + nonRepris.count == vus.count` moins ces deux noms. Un chemin invalide
+    /// (`verifierChemin`) fait echouer le classement.
     public static func classerFichiers(vus: [String], de app: AppSource) throws
         -> (aCopier: [String], nonRepris: [FichierNonRepris]) {
         var aCopier: [String] = []
         var nonRepris: [FichierNonRepris] = []
         for chemin in vus {
             try verifierChemin(chemin)
-            if estExcluDeLExport(chemin) {
+            if [nomManifeste, nomReglages].contains(cle(chemin)) {
+                continue
+            } else if estExcluDeLExport(chemin) {
                 nonRepris.append(FichierNonRepris(chemin: chemin, raison: .exclu))
             } else if estConnu(chemin, de: app) {
                 aCopier.append(chemin)
