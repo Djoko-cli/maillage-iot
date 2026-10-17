@@ -111,10 +111,10 @@ D'après `inventaire-phase-4.md` (Thread) ; spec 4.3, 6.8.
 - Create: `MaillageIoT/Reprise/ApplicationImport.swift` (fusion avec les fichiers présents selon les règles, écriture dans un dossier d'attente, remplacement d'un coup, `imports.json`, réglages écrits seulement après le remplacement réussi).
 - Test: `MaillageIoTTests/Reprise/ApplicationImportTests.swift`.
 
-- [ ] **Step 1: RED** — import de Thread puis de Zigbee : état final attendu ; ordre inverse : même état (clés préfixées sans collision) ; réimport du même export : rien ne change ; un choix déjà fait dans Maillage IoT (surnom, pièce, réglage) n'est jamais écrasé ; échec forcé à chaque fichier : le dossier de l'app reste identique (tout ou rien) ; un format inconnu déjà présent n'est jamais écrasé (`FichiersGardes`).
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reprise : application de l'import en un seul coup, idempotente ».
+- [x] **Step 1: RED** — import de Thread puis de Zigbee : état final attendu ; ordre inverse : même état (clés préfixées sans collision) ; réimport du même export : rien ne change ; un choix déjà fait dans Maillage IoT (surnom, pièce, réglage) n'est jamais écrasé ; échec forcé à chaque fichier : le dossier de l'app reste identique (tout ou rien) ; un format inconnu déjà présent n'est jamais écrasé (`FichiersGardes`).
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reprise : application de l'import en un seul coup, idempotente ».
 
 ---
 
