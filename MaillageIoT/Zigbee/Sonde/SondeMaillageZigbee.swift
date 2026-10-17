@@ -3,6 +3,17 @@ import MaillageCoeur
 import Observation
 import ProtocoleZigbee
 
+// Sonde Zigbee, plan des fichiers et index de la machine d'etats (spec 3.4) : regle -> fichier, fonction.
+//  - principal : etats, constantes, `init`, `deconnecter` (`essai` ; annule `boucle`, `entretien`, `reessaiReseau`, `nouvelEssai`) ;
+//  - +Chemin   : Automatique, USB d'abord (`reevaluer`, `portsChanges`, `annoncesChangees`) ;
+//  - +USB      : `ouvrable`, `connecter`, seul `ouvrirCanal` ; `liaisonFermee` ; nouvel essai 5 a 60 s (`planifierNouvelEssai`) ;
+//  - +Reseau   : `injoignable` retentee (`connecterReseau`, `planifierReessaiReseau`) ; liaison muette fermee apres 6 s
+//                (`delaiCommandeReseau`) ou 128 s (`delaiTable`) ; pas de mise en service en tournee (`miseEnServicePossible`) ;
+//                constante d'entretien 180 s (`periodeEntretien`) ;
+//  - +Tournees : tournee 30 s apres `occupee` (`planifierSuite`) ; tournee retenue pendant une mise en service
+//                (`planifierTournee`) ; entretien (`entretenir`) ; budget de pages (`attendreBudget`) ;
+//  - +Affichage, +Cycle : textes montres, demarrage et arret reel.
+
 /// La sonde vue par l'app : port retenu (par son numero de serie USB), connexion, verification (`bonjour` doit dire
 /// `"produit":"sonde-zigbee"`), reprise quand elle est rebranchee, et la boucle des tournees (spec de l'app,
 /// section 6) : la premiere ~10 s apres la connexion, puis toutes les 15 minutes, et au bouton Rafraichir. Chaque
@@ -54,75 +65,54 @@ final class SondeMaillageZigbee {
     static let cleJournalPages = "zigbee.sondeJournalPages"
     /// Pages de la derniere lecture complete des tables de voisins (estime la suivante apres un relancement).
     static let clePagesTables = "zigbee.sondePagesTables"
-    /// Nouvel essai d'une connexion automatique en echec, repete tant que le port de la sonde retenue est liste : une
-    /// sonde qui demarre lentement (bonjour sans reponse) n'attend pas l'evenement USB suivant.
-    /// Le premier delai ; il double a chaque echec de suite (`delaiNouvelEssai(rang:base:plafond:)`) jusqu'a
-    /// `plafondNouvelEssai`, et repart de la a chaque evenement USB ou connexion reussie.
-    static let delaiNouvelEssai: Duration = .seconds(5)
-    /// Plafond de l'espacement progressif des nouveaux essais USB.
-    static let plafondNouvelEssai: Duration = .seconds(60)
     /// Une tournee refusee parce que la sonde n'a pas encore sa pile Zigbee (`occupee`, attente du Wi-Fi au demarrage)
     /// est retentee bientot, au lieu d'attendre le rythme de 15 minutes.
     static let delaiReessaiOccupee: Duration = .seconds(30)
-    /// Nouvel essai de la connexion par le reseau, tant que le reseau reste le chemin choisi.
-    static let delaiReessaiReseau: Duration = .seconds(60)
-    /// Attente de `bonjour`, `etat` et `voisins` par le reseau : celle de l'USB, plus 3 s (spec sonde Wi-Fi, 4.1).
-    static let delaiCommandeReseau: Duration = Sonde.delaiCommandeUSB + .seconds(3)
-    /// Resolution Bonjour, connexion TCP et poignee de main H1 : le canal reseau se ferme s'il n'a pas de session
-    /// apres ce delai (decision de la tache 13).
-    static let delaiPoigneeDeMain: Duration = .seconds(15)
-    /// Relecture d'`etat` hors tournee : la session H1 de la sonde est oubliee apres 10 min sans message, et la carte
-    /// ferme une connexion muette depuis 300 s (`Portail::kMuetteMs`) : 180 s laissent 2 minutes de marge aux minuteries
-    /// d'une app en arriere-plan (App Nap).
-    static let periodeEntretien: Duration = .seconds(180)
     /// Premiere tournee apres la connexion : le temps que la sonde se rattache si elle vient de demarrer.
     static let delaiPremiereTournee: Duration = .seconds(10)
     /// Une tournee toutes les 15 minutes (spec de l'app, section 6).
     static let periodeTournees: Duration = .seconds(15 * 60)
 
-    private(set) var etat: Etat = .sansSonde
+    var etat: Etat = .sansSonde
     /// Ports Espressif branches, tels que le dernier evenement USB les a listes (`ports` en retire ceux de l'autre module).
-    private var portsVus: [PortUSB] = []
-    /// Ports Espressif que cette sonde propose et peut ouvrir : les C6 branches, sauf ceux que Thread retient (spec 3.4).
-    /// Un autre C6 (le pont Halo) y figure : il n'est ouvert que si on le choisit.
-    var ports: [PortUSB] { cartes.choix(portsVus, pour: .zigbee) }
+    var portsVus: [PortUSB] = []
     /// Numero de serie USB de la sonde retenue ; seule `retenirSerie` l'ecrit, car elle le publie aux cartes retenues.
-    private(set) var serie: String?
+    var serie: String?
     /// Le choix d'un port refuse parce que la carte est la sonde de l'autre module ; nil sinon. Efface par un autre choix,
     /// un evenement USB ou « Oublier la sonde ».
-    private(set) var choixRefuse: String?
+    var choixRefuse: String?
     /// Nom de la sonde (« SONDE-Z1 »), mis a jour a chaque `bonjour` ; nil sans sonde retenue.
-    private(set) var nom: String?
+    var nom: String?
     /// Numero de serie USB du port que l'etat concerne (connexion, connexion etablie, refus, erreur) ; nil sans sonde
     /// ou la sonde retenue absente.
-    private(set) var serieEtat: String?
+    var serieEtat: String?
     /// Dernier `etat` de la sonde, lu a la connexion et a chaque tournee.
-    private(set) var etatSonde: EtatSondeZigbee?
+    var etatSonde: EtatSondeZigbee?
     /// Reception du dernier maillage (fin de sa tournee).
-    private(set) var derniereTournee: Date?
-    private(set) var tourneeEnCours = false
+    var derniereTournee: Date?
+    var tourneeEnCours = false
     /// Avancement de la tournee en cours ; nil hors tournee.
-    private(set) var avancement: AvancementTourneeZigbee?
+    var avancement: AvancementTourneeZigbee?
     /// Debut de la tournee en cours ; nil hors tournee.
-    private(set) var debutTournee: Date?
+    var debutTournee: Date?
     /// Bilan et duree de la derniere tournee faite (Reglages › Sonde) ; nil avant la premiere.
-    private(set) var bilan: BilanTournee?
+    var bilan: BilanTournee?
     /// Heure de la passe complementaire programmee ; nil sans passe programmee (une seule a la fois).
-    private(set) var passeComplementaire: Date?
+    var passeComplementaire: Date?
     /// Par ou passe la sonde connectee ; nil sans sonde connectee.
-    private(set) var acces: Acces?
+    var acces: Acces?
     /// Adresse longue de la sonde retenue (compte de sa cle dans le trousseau) ; nil avant sa premiere connexion USB.
-    private(set) var ieee: String?
+    var ieee: String?
     /// Nom du Wi-Fi de la derniere mise en service reussie (`cleNomWifi`).
-    private(set) var nomWifi: String?
+    var nomWifi: String?
     /// La sonde retenue est annoncee par Bonjour sur le reseau local.
-    private(set) var annoncee = false
+    var annoncee = false
     /// macOS refuse `_maillage-zigbee._tcp` a l'app : type absent de la liste NSBonjourServices qu'il connait (NoAuth). La sonde
     /// reste joignable par l'USB.
-    private(set) var bonjourNonDeclare = false
+    var bonjourNonDeclare = false
     /// Le nom de son instance Bonjour, celui que vise la connexion par le reseau : le nom de la sonde, ou ce nom renomme
     /// apres un conflit (`CheminSonde.instance`).
-    @ObservationIgnored private var instanceAnnoncee: String?
+    @ObservationIgnored var instanceAnnoncee: String?
     var reglageChemin: ReglageChemin = .automatique {
         didSet {
             guard reglageChemin != oldValue else { return }
@@ -134,29 +124,13 @@ final class SondeMaillageZigbee {
     /// Empreinte (`H1.kid`, 8 hexa) de la cle de l'acces par le reseau rangee dans le trousseau pour la sonde retenue ;
     /// nil sans cle. Etat observable, relu du trousseau par `relireCleReseau` chaque fois que la cle ou l'adresse
     /// longue peut changer.
-    private(set) var empreinteAcces: String?
-    /// Une cle de l'acces par le reseau est dans le trousseau pour la sonde retenue.
-    var cleReseauConnue: Bool { empreinteAcces != nil }
-    /// La mise en service par l'USB est possible : la sonde retenue y est connectee, en firmware 1.1.0 ou plus, hors
-    /// tournee, son adresse longue connue.
-    var miseEnServicePossible: Bool {
-        guard acces == .usb, !tourneeEnCours, ieee != nil, case .connectee(let b) = etat else { return false }
-        return b.accepteReseau && serieEtat == serie
-    }
-
-    /// Une tournee qui attend que le budget de pages de la sonde le permette.
-    struct TourneeDifferee: Equatable {
-        /// L'instant ou elle partira.
-        var instant: Date
-        /// Elle lira les tables de voisins : une tournee complete.
-        var complete: Bool
-    }
+    var empreinteAcces: String?
 
     /// La tournee differee faute de budget de pages (la sonde a deja beaucoup servi) ; nil sans attente de ce genre.
-    private(set) var tourneeDifferee: TourneeDifferee?
-    private(set) var dureeTournee: TimeInterval?
+    var tourneeDifferee: TourneeDifferee?
+    var dureeTournee: TimeInterval?
     /// Derniere erreur de la sonde connectee (la liaison reste ouverte), ou pourquoi la tournee n'a pas eu lieu.
-    private(set) var erreurTournee: String?
+    var erreurTournee: String?
     /// Appele a chaque nouveau maillage, avec l'heure de sa reception (fin de la tournee).
     @ObservationIgnored var surMaillage: ((MaillageZigbee, Date) -> Void)?
     /// Appele au debut (vrai) et a la fin (faux) de chaque tournee.
@@ -164,76 +138,76 @@ final class SondeMaillageZigbee {
     /// Appele quand la sonde est oubliee : son maillage part du graphe.
     @ObservationIgnored var surOubli: (() -> Void)?
 
-    @ObservationIgnored private let preferences: UserDefaults
+    @ObservationIgnored let preferences: UserDefaults
     /// Faux (demo, tests) : la sonde ne touche ni port, ni preferences, ni trousseau (lu par `DemarrageTests`). Faux aussi
     /// entre `arreter()` (Zigbee eteint) et `demarrer()` : aucun port n'est suivi, ouvert ni rouvert (les entrees
     /// publiques gardent `actif`).
-    private(set) var actif: Bool
+    var actif: Bool
     /// Construite pour agir (`actif` vrai au depart) : seule une telle sonde s'arrete et repart ; celle de la demo et des
     /// tests reste inerte, quoi qu'on lui demande.
-    @ObservationIgnored private let vivante: Bool
+    @ObservationIgnored let vivante: Bool
     /// Ou les ports sont suivis, comment on les liste, et l'ecoute Bonjour des sondes du reseau (factices dans les tests :
     /// aucun IOKit, aucun reseau).
-    @ObservationIgnored private let surveillerPorts: @MainActor () -> any SurveillantPorts
+    @ObservationIgnored let surveillerPorts: @MainActor () -> any SurveillantPorts
     /// Les cartes retenues par chaque module : la serie de cette sonde y est publiee, celle de Thread en est retiree des choix.
-    @ObservationIgnored private let cartes: CartesRetenues
-    @ObservationIgnored private let listerPorts: @Sendable () -> [PortUSB]
-    @ObservationIgnored private let fabriqueBonjour: @MainActor (String) -> any EcouteBonjour
-    @ObservationIgnored private let ouvrirCanal: (String) -> any CanalSonde
+    @ObservationIgnored let cartes: CartesRetenues
+    @ObservationIgnored let listerPorts: @Sendable () -> [PortUSB]
+    @ObservationIgnored let fabriqueBonjour: @MainActor (String) -> any EcouteBonjour
+    @ObservationIgnored let ouvrirCanal: (String) -> any CanalSonde
     @ObservationIgnored let trousseau: any TrousseauClesZigbee
-    @ObservationIgnored private let ouvrirReseau: (String, Data) -> any CanalSonde
-    @ObservationIgnored private let delaiReessaiReseau: Duration
+    @ObservationIgnored let ouvrirReseau: (String, Data) -> any CanalSonde
+    @ObservationIgnored let delaiReessaiReseau: Duration
     /// Attente d'une commande sans id par le reseau (`delaiCommandeReseau`).
-    @ObservationIgnored private let delaiCommandeReseau: Duration
-    @ObservationIgnored private let periodeEntretien: Duration
+    @ObservationIgnored let delaiCommandeReseau: Duration
+    @ObservationIgnored let periodeEntretien: Duration
     /// Nouvel essai planifie d'une connexion par le reseau en echec.
-    @ObservationIgnored private var reessaiReseau: Task<Void, Never>?
+    @ObservationIgnored var reessaiReseau: Task<Void, Never>?
     /// Relecture periodique d'`etat` de la sonde connectee par le reseau.
-    @ObservationIgnored private var entretien: Task<Void, Never>?
-    @ObservationIgnored private var navigateur: (any EcouteBonjour)?
-    @ObservationIgnored private let delaiNouvelEssai: Duration
-    @ObservationIgnored private let plafondNouvelEssai: Duration
-    @ObservationIgnored private let delaiReessaiOccupee: Duration
+    @ObservationIgnored var entretien: Task<Void, Never>?
+    @ObservationIgnored var navigateur: (any EcouteBonjour)?
+    @ObservationIgnored let delaiNouvelEssai: Duration
+    @ObservationIgnored let plafondNouvelEssai: Duration
+    @ObservationIgnored let delaiReessaiOccupee: Duration
     /// Nombre d'echecs de suite des nouveaux essais USB (espacement progressif) ; remis a zero par un evenement USB
     /// (`lancerConnexion`) et par une connexion reussie.
-    @ObservationIgnored private var rangNouvelEssai = 0
+    @ObservationIgnored var rangNouvelEssai = 0
     /// Nouvel essai planifie d'une connexion automatique en echec.
-    @ObservationIgnored private var nouvelEssai: Task<Void, Never>?
+    @ObservationIgnored var nouvelEssai: Task<Void, Never>?
     /// Heure des releves (injectee par les tests).
-    @ObservationIgnored private let horloge: @Sendable () -> Date
+    @ObservationIgnored let horloge: @Sendable () -> Date
     /// Pauses de la tournee (attente du retour de la sonde dans le reseau), injectees par les tests.
-    @ObservationIgnored private let attendre: @Sendable (Duration) async throws -> Void
+    @ObservationIgnored let attendre: @Sendable (Duration) async throws -> Void
     /// Attente avant la prochaine tournee ou passe (injectee par les tests, avec `horloge`).
-    @ObservationIgnored private let dormir: @Sendable (Duration) async throws -> Void
-    @ObservationIgnored private let delaiPremiereTournee: Duration
-    @ObservationIgnored private let periodeTournees: Duration
+    @ObservationIgnored let dormir: @Sendable (Duration) async throws -> Void
+    @ObservationIgnored let delaiPremiereTournee: Duration
+    @ObservationIgnored let periodeTournees: Duration
     /// Echeance d'une table ou des routes (125 s ; les tests la raccourcissent).
-    @ObservationIgnored private let delaiTable: Duration
+    @ObservationIgnored let delaiTable: Duration
     /// Ce que la tournee retient d'une fois sur l'autre (routeurs muets, tables, routes lues, budget de pages) ; remise a
     /// zero avec une autre sonde.
-    @ObservationIgnored private var memoire = MemoireTourneeZigbee()
+    @ObservationIgnored var memoire = MemoireTourneeZigbee()
     /// La prochaine tournee (attente comprise), et la tournee en cours.
-    @ObservationIgnored private var boucle: Task<Void, Never>?
+    @ObservationIgnored var boucle: Task<Void, Never>?
     /// Une mise en service est en cours (`autoriserReseau`) : aucune tournee ne part, le `wifi` ferait redemarrer la
     /// sonde en pleine tournee (constat 13 de la relecture finale).
-    @ObservationIgnored private var miseEnServiceEnCours = false
+    @ObservationIgnored var miseEnServiceEnCours = false
     /// Une tournee est arrivee a son heure pendant la mise en service : elle part a la fin de celle-ci.
-    @ObservationIgnored private var tourneeRetenue = false
-    @ObservationIgnored private var sonde: Sonde?
+    @ObservationIgnored var tourneeRetenue = false
+    @ObservationIgnored var sonde: Sonde?
     /// Chemin du port de `sonde` (nil sans sonde connectee).
-    @ObservationIgnored private var cheminConnecte: String?
+    @ObservationIgnored var cheminConnecte: String?
     /// Liaison d'une connexion en cours, avant sa verification : `deconnecter` la ferme aussi.
-    @ObservationIgnored private var enConnexion: Sonde?
+    @ObservationIgnored var enConnexion: Sonde?
     /// La connexion en cours (`.connexion`) passe par le reseau : une sonde branchee en USB l'interrompt (`portsChanges`).
     /// Remis a faux par `deconnecter`.
-    @ObservationIgnored private var tentativeReseau = false
+    @ObservationIgnored var tentativeReseau = false
     /// Numero d'essai, incremente par `deconnecter` : une connexion dont le numero a change est perimee et ne touche
     /// plus a rien.
-    @ObservationIgnored private var essai = 0
+    @ObservationIgnored private(set) var essai = 0
     /// Fermetures lancees par `deconnecter`, chainees : une connexion attend qu'elles soient finies (ports vraiment
     /// fermes) avant d'ouvrir un port.
-    @ObservationIgnored private var fermetures: Task<Void, Never>?
-    @ObservationIgnored private var surveillantPorts: (any SurveillantPorts)?
+    @ObservationIgnored private(set) var fermetures: Task<Void, Never>?
+    @ObservationIgnored var surveillantPorts: (any SurveillantPorts)?
 
     /// `actif` faux (mode demo, tests) : ni port, ni preferences lues. `trousseau` sans valeur par defaut : seule l'app
     /// passe le trousseau du systeme, les tests un `TrousseauMemoireZigbee` (un oubli ne compile pas : spec sonde Wi-Fi, 4.3).
@@ -294,750 +268,9 @@ final class SondeMaillageZigbee {
         relireCleReseau()
     }
 
-    /// La memoire d'une tournee qui commence : vide, sauf le journal des pages envoyees dans les 10 dernieres minutes
-    /// (et les pages des dernieres tables), relu des preferences. Ni preferences lues ni ecrites par une sonde inerte
-    /// (`vivante` faux : demo, tests).
-    private func nouvelleMemoire() -> MemoireTourneeZigbee {
-        guard vivante else { return MemoireTourneeZigbee() }
-        var m = MemoireTourneeZigbee()
-        if let valeurs = preferences.object(forKey: Self.cleJournalPages) as? [Double] {
-            m.budget = BudgetPages(enregistre: valeurs, a: horloge())
-        }
-        if let pages = preferences.object(forKey: Self.clePagesTables) as? Int, pages > 0 { m.pagesTables = pages }
-        return m
-    }
-
-    /// Une requete de plus est revenue : le budget a jour va dans la memoire et dans les preferences, tout de suite (une
-    /// app quittee en pleine tournee n'oublie pas ses pages).
-    private func garderBudget(_ b: BudgetPages) {
-        memoire.budget = b
-        guard vivante else { return }
-        preferences.set(b.enregistrable(a: horloge()), forKey: Self.cleJournalPages)
-    }
-
-    /// Nom de la sonde retenue pour l'etat qui la concerne : absente, ou connexion, connexion etablie, refus ou erreur
-    /// de son port ; nil pour un autre port choisi, ou sans sonde.
-    var nomEtat: String? {
-        switch etat {
-        case .sansSonde: nil
-        case .absente, .injoignable: nom
-        case .connexion, .connectee, .refusee, .erreur: serie != nil && serieEtat == serie ? nom : nil
-        }
-    }
-
-    /// `rafraichir` lancerait une tournee : sonde connectee, pas de tournee en cours.
-    var tourneeAuRafraichir: Bool {
-        if case .connectee = etat { !tourneeEnCours } else { false }
-    }
-
-    /// Nom montre pour la sonde : le sien, sinon « Sonde ».
-    static func nomAffiche(_ nom: String?) -> String {
-        nom ?? String(localized: "Sonde")
-    }
-
-    /// Suit les ports ; reprend la sonde retenue des qu'elle est branchee. Apres `arreter()`, repart : l'ecoute des ports et
-    /// l'ecoute Bonjour reprennent, et la sonde retenue (et elle seule : jamais un port inconnu) est rouverte si elle est
-    /// branchee, ou rejointe par le reseau si elle y est annoncee.
-    func demarrer() {
-        guard vivante else { return }
-        actif = true
-        guard surveillantPorts == nil else { return }
-        let p = surveillerPorts()
-        p.changement = { [weak self] l in self?.portsChanges(l) }
-        p.demarrer()
-        surveillantPorts = p
-        portsChanges(listerPorts())
-        let n = fabriqueBonjour(TransportTCP.typeBonjour)
-        n.surChangement = { [weak self, weak n] in
-            guard let self, let n else { return }
-            self.bonjourNonDeclare = n.etat == .nonDeclare
-            self.annoncesChangees(Set(n.instances.keys))
-        }
-        n.demarrer()
-        navigateur = n
-    }
-
-    /// Arret reel (Zigbee eteint) : le suivi des ports et l'ecoute Bonjour s'arretent, la liaison (le port serie ou la
-    /// session reseau) se ferme, la tournee et la boucle des tournees, la relecture d'`etat` (entretien), les reprises de la
-    /// liaison reseau et le nouvel essai USB planifie sont annules. Plus rien ne se connecte (`portsChanges`, `choisir`,
-    /// `reevaluer` et `connecterReseau` gardent `actif`) tant que `demarrer()` n'a pas repris. La sonde retenue, son nom et
-    /// sa cle restent. Sans effet sur une sonde inerte (demo, tests).
-    func arreter() {
-        guard vivante, actif else { return }
-        actif = false
-        surveillantPorts?.arreter()
-        surveillantPorts = nil
-        navigateur?.surChangement = nil
-        navigateur?.arreter()
-        navigateur = nil
-        bonjourNonDeclare = false
-        annoncee = false
-        instanceAnnoncee = nil
-        nouvelEssai?.cancel()
-        nouvelEssai = nil
-        rangNouvelEssai = 0
-        tourneeRetenue = false
-        // Ferme la liaison, annule la boucle, l'entretien et la reprise du reseau (`deconnecter`).
-        deconnecter(serie == nil ? .sansSonde : .absente)
-    }
-
-    /// Des taches de fond sont encore planifiees ou en cours : la boucle des tournees, l'entretien, les reprises de la
-    /// liaison reseau, le nouvel essai USB (lu par les tests de l'arret).
-    var tachesPlanifiees: Int {
-        [boucle, entretien, reessaiReseau, nouvelEssai].filter { $0 != nil && $0?.isCancelled == false }.count
-    }
-
-    /// Choix d'un port dans les Reglages : retenu seulement s'il repond en sonde. Le port de la sonde deja connectee
-    /// n'est pas rouvert.
-    /// Une carte que Thread retient est refusee (`choixRefuse`), sans que rien ne soit ouvert (spec 3.4).
-    func choisir(_ port: PortUSB) {
-        guard actif, port.chemin != cheminConnecte else { return }
-        if let autre = cartes.retenuePar(port.serie, hors: .zigbee) {
-            choixRefuse = CartesRetenues.texteRefus(retenuePar: autre)
-            return
-        }
-        choixRefuse = nil
-        lancerConnexion(port, choisi: true)
-    }
-
-    /// Retient (ou rend, avec nil) le numero de serie de la sonde, et le publie aux cartes retenues : Thread ne propose
-    /// plus cette carte et ne l'ouvre plus.
-    private func retenirSerie(_ s: String?) {
-        serie = s
-        cartes.retenir(s, par: .zigbee)
-    }
-
-    /// Ce port peut etre ouvert : aucun autre module ne retient sa carte, et ou bien l'utilisateur l'a choisi, ou bien c'est
-    /// la carte retenue par cette sonde (un C6 inconnu n'est jamais ouvert de lui-meme, meme en Automatique : ouvrir un
-    /// port fait basculer DTR/RTS et peut redemarrer la carte).
-    private func ouvrable(_ port: PortUSB, choisi: Bool) -> Bool {
-        guard !cartes.retenueParUnAutre(port.serie, que: .zigbee) else { return false }
-        return choisi || (port.serie != nil && port.serie == serie)
-    }
-
-    /// Oublie la sonde retenue (numero de serie, nom), son releve et son maillage dans le graphe (`surOubli`), et ferme
-    /// la liaison.
-    func oublier() async {
-        if let ieee { try? trousseau.oublier(identifiant: ieee) }
-        preferences.removeObject(forKey: Self.cleIeee)
-        ieee = nil
-        relireCleReseau()
-        preferences.removeObject(forKey: Self.cleNomWifi)
-        nomWifi = nil
-        annoncee = false
-        instanceAnnoncee = nil
-        preferences.removeObject(forKey: Self.cleSerie)
-        retenirSerie(nil)
-        choixRefuse = nil
-        retenirNom(nil)
-        oublierReleve()
-        surOubli?()
-        deconnecter(.sansSonde)
-    }
-
-    /// Ce qu'a fait la mise en service de l'acces par le reseau (`autoriserReseau`).
-    enum MiseEnService: Equatable {
-        /// La cle, puis le Wi-Fi : la sonde redemarre et rejoint le Wi-Fi.
-        case cleEtWifi
-        /// La cle seulement : la sonde garde son Wi-Fi (mot de passe laisse vide).
-        case cleSeule
-        /// Le message a montrer.
-        case echec(String)
-
-        var erreur: String? {
-            if case .echec(let m) = self { m } else { nil }
-        }
-    }
-
-    /// La sonde connectee a deja un Wi-Fi configure (`etat.reseau`, ou `bonjour.reseau`).
-    var wifiConfigure: Bool {
-        if etatSonde?.reseau != nil { return true }
-        if case .connectee(let b) = etat, b.reseau == true { return true }
-        return false
-    }
-
-    /// La mise en service envoie aussi le Wi-Fi : un mot de passe est saisi, ou la sonde n'a encore aucun Wi-Fi (un
-    /// mot de passe vide est alors un reseau ouvert). Mot de passe vide et Wi-Fi deja configure : la sonde garde le sien
-    /// et seule la cle change (constat 1 de la relecture finale : `wifi <nom> -` effacait son mot de passe).
-    static func envoiWifi(wifiConfigure: Bool, motDePasse: String) -> Bool {
-        !motDePasse.isEmpty || !wifiConfigure
-    }
-
-    /// Mise en service de l'acces par le reseau (spec sonde Wi-Fi, 4.3), la cle d'abord (le Wi-Fi fait redemarrer la
-    /// sonde) : alea de l'app, cle derivee par la carte, empreinte verifiee, cle rangee dans le trousseau ; puis le
-    /// Wi-Fi, sauf si la sonde garde le sien (`envoiWifi`).
-    func autoriserReseau(nomWifi: String, motDePasse: String) async -> MiseEnService {
-        guard miseEnServicePossible, !miseEnServiceEnCours, let s = sonde, let ieee else {
-            return .echec(String(localized: "Branchez la sonde 1.1.0 en USB, hors tournée."))
-        }
-        miseEnServiceEnCours = true
-        let resultat = await mettreEnService(s, ieee: ieee, nomWifi: nomWifi, motDePasse: motDePasse)
-        // Apres `.cleEtWifi`, la sonde redemarre : la tournee retenue ne part pas sur une liaison qui va se fermer, la
-        // reconnexion planifie la premiere (N2 de la re-relecture finale).
-        finirMiseEnService(s, relancer: resultat != .cleEtWifi)
-        return resultat
-    }
-
-    private func mettreEnService(_ s: Sonde, ieee: String, nomWifi: String, motDePasse: String) async -> MiseEnService {
-        let wifi = Self.envoiWifi(wifiConfigure: wifiConfigure, motDePasse: motDePasse)
-        let nom = Data(nomWifi.utf8), mdp = Data(motDePasse.utf8)
-        guard !wifi || (1...32).contains(nom.count), mdp.isEmpty || (8...63).contains(mdp.count) else {
-            return .echec(String(localized: "Nom du Wi-Fi de 1 à 32 octets, mot de passe vide ou de 8 à 63 caractères."))
-        }
-        do {
-            let c = try await s.nouvelleCle(alea: H1.aleatoire(32))
-            guard let hexa = c.cle, let cle = H1.octets(hexa: hexa), cle.count == 32, H1.kid(cle: cle) == c.empreinte else {
-                return .echec(String(localized: "La sonde a rendu une clé invalide : rien n'a été enregistré."))
-            }
-            try trousseau.ranger(identifiant: ieee, cle: hexa)
-            relireCleReseau()
-        } catch {
-            return .echec(error.localizedDescription)
-        }
-        guard wifi else { return .cleSeule }
-        // La cle est rangee des deux cotes : si le Wi-Fi echoue, recommencer remplace simplement la cle.
-        let sansConfirmation = String(localized: "Clé créée, mais la sonde n'a pas confirmé le Wi-Fi : recommencez.")
-        do {
-            let w = try await s.configurerWifi(nom: nom, motDePasse: mdp)
-            guard w.configure else { return .echec(sansConfirmation) }
-            self.nomWifi = nomWifi
-            preferences.set(nomWifi, forKey: Self.cleNomWifi)
-            return .cleEtWifi
-        } catch {
-            return .echec(sansConfirmation)
-        }
-    }
-
-    /// Fin d'une mise en service : la tournee arrivee a son heure entre-temps part, si la sonde est toujours celle-la
-    /// et si `relancer` (apres un `wifi`, la sonde redemarre : la fermeture de la liaison n'est pas encore vue, et sa
-    /// reconnexion planifie de toute facon la premiere tournee).
-    private func finirMiseEnService(_ s: Sonde, relancer: Bool) {
-        miseEnServiceEnCours = false
-        guard tourneeRetenue else { return }
-        tourneeRetenue = false
-        if relancer, sonde === s { planifierTournee(dans: .zero) }
-    }
-
-    /// Nom donne par le dernier `bonjour` : retenu a cote du numero de serie, efface si le firmware n'en donne pas.
-    private func retenirNom(_ n: String?) {
-        if let n {
-            preferences.set(n, forKey: Self.cleNom)
-        } else {
-            preferences.removeObject(forKey: Self.cleNom)
-        }
-        nom = n
-    }
-
-    /// Le releve de la sonde (etat, derniere tournee, bilan, memoire des muets) : il est a une autre sonde, ou a
-    /// aucune.
-    private func oublierReleve() {
-        etatSonde = nil
-        derniereTournee = nil
-        erreurTournee = nil
-        bilan = nil
-        dureeTournee = nil
-        passeComplementaire = nil
-        tourneeDifferee = nil
-        // Le journal des pages reste : c'est la sonde physique qui plafonne, pas le reseau lu.
-        if vivante { preferences.removeObject(forKey: Self.clePagesTables) }
-        memoire = nouvelleMemoire()
-    }
-
-    /// Bouton Rafraichir : une tournee tout de suite (sonde connectee, pas de tournee en cours), qui s'y substitue la
-    /// passe complementaire programmee (elle lit d'abord les routes reportees) ; la suivante 15 min apres sa fin, ou une
-    /// nouvelle passe complementaire si elle a encore reporte des routes.
-    func rafraichir() {
-        guard tourneeAuRafraichir, sonde != nil else { return }
-        planifierTournee(dans: .zero)
-    }
-
-    // MARK: - Tournee
-
-    /// Planifie la prochaine tournee de la sonde connectee dans `delai` (la boucle : chaque tournee planifie la
-    /// suivante), ou, avec `passeA`, la passe complementaire a cette heure (`delai` en est l'attente). Un seul plan a la
-    /// fois : le nouveau remplace l'ancien, passe programmee comprise. Un `deconnecter` l'annule, tournee en cours
-    /// comprise.
-    private func planifierTournee(dans delai: Duration, passeA: Date? = nil) {
-        boucle?.cancel()
-        passeComplementaire = nil
-        tourneeDifferee = nil
-        guard let s = sonde else { return }
-        let n = essai
-        let complementaire = passeA != nil
-        passeComplementaire = passeA
-        boucle = Task { [weak self] in
-            if delai > .zero { try? await self?.dormir(delai) }
-            guard !Task.isCancelled, let self, n == self.essai, self.sonde === s else { return }
-            self.passeComplementaire = nil
-            // Une passe complementaire a son propre instant ; toute autre tournee attend que le budget le permette.
-            if !complementaire, !(await self.attendreBudget(s, essai: n)) { return }
-            // Pendant une mise en service, la tournee attend qu'elle finisse (`finirMiseEnService`).
-            guard !self.miseEnServiceEnCours else {
-                self.tourneeRetenue = true
-                return
-            }
-            let suite = await self.tourner(s, complementaire: complementaire)
-            guard !Task.isCancelled, n == self.essai, self.sonde === s else { return }
-            self.planifierSuite(suite)
-        }
-    }
-
-    /// Attend, si besoin, que le budget de pages couvre les tables de voisins (quand elles sont dues) et les routes du pont
-    /// de la tournee qui va partir (`MemoireTourneeZigbee.instantProchaineTournee`), en le montrant (`tourneeDifferee`).
-    /// L'instant est recalcule apres chaque attente. Rend faux si le plan a ete annule ou remplace entre-temps.
-    private func attendreBudget(_ s: Sonde, essai n: Int) async -> Bool {
-        while let instant = memoire.instantProchaineTournee(a: horloge()) {
-            let maintenant = horloge()
-            tourneeDifferee = TourneeDifferee(instant: instant, complete: memoire.tablesDues)
-            try? await dormir(.seconds(max(0, instant.timeIntervalSince(maintenant))))
-            guard !Task.isCancelled, n == essai, sonde === s else { return false }
-        }
-        tourneeDifferee = nil
-        return true
-    }
-
-    /// Ce qui suit une tournee.
-    private enum SuiteTournee {
-        /// La tournee n'a pas eu lieu, ou une passe complementaire n'a lu aucune route (rien ne dit qu'une autre y
-        /// arriverait : pas d'emballement) : le rythme normal.
-        case rythme
-        /// Une passe complementaire peut suivre : la tournee a eu lieu, et, pour une passe, elle a lu des routes.
-        case passe
-        /// La sonde a refuse (`occupee` : pile Zigbee pas encore lancee) : une autre tournee bientot.
-        case bientot
-    }
-
-    /// Ce qui suit une tournee finie : la passe complementaire si elle a reporte des routes (des que le budget le permet,
-    /// au moins 30 s apres), une nouvelle tournee dans `delaiReessaiOccupee` si la sonde etait occupee, sinon la tournee
-    /// suivante 15 minutes apres sa fin.
-    private func planifierSuite(_ suite: SuiteTournee) {
-        let fin = horloge()
-        if suite == .bientot {
-            planifierTournee(dans: delaiReessaiOccupee)
-            return
-        }
-        guard suite == .passe, let instant = memoire.instantPasseComplementaire(apres: fin) else {
-            planifierTournee(dans: periodeTournees)
-            return
-        }
-        planifierTournee(dans: .seconds(max(0, instant.timeIntervalSince(fin))), passeA: instant)
-    }
-
-    /// Une tournee de la sonde `s` : son avancement, puis son maillage (s'il y en a un) a la surveillance, son bilan et
-    /// l'etat lu de la sonde. Perimee (sonde deconnectee entre-temps), elle ne touche plus a rien.
-    private func tourner(_ s: Sonde, complementaire: Bool) async -> SuiteTournee {
-        debuterTournee()
-        guard tourneeEnCours else { return .rythme }
-        let debut = horloge()
-        do {
-            let r = try await TourneeZigbee.executer(s, memoire: memoire, complementaire: complementaire, horloge: horloge,
-                                               attendre: attendre, avancement: { [weak self] a in self?.avancer(a) },
-                                               surBudget: { [weak self] b in self?.garderBudget(b) })
-            guard s === sonde else { return .rythme }
-            guard !Task.isCancelled else {
-                finirTournee(nil)
-                return .rythme
-            }
-            memoire = r.memoire
-            if vivante {
-                if let pages = r.memoire.pagesTables {
-                    preferences.set(pages, forKey: Self.clePagesTables)
-                }
-                preferences.set(r.memoire.budget.enregistrable(a: horloge()), forKey: Self.cleJournalPages)
-            }
-            etatSonde = r.etat
-            bilan = r.bilan
-            dureeTournee = horloge().timeIntervalSince(debut)
-            erreurTournee = Self.texteEmpechement(r.empechement) ?? r.bilan.lacune.map(Self.texteLacune)
-            finirTournee(r.maillage)
-            return r.empechement == nil && (!complementaire || r.bilan.routesRouteursDemandees > 0) ? .passe : .rythme
-        } catch {
-            guard s === sonde else { return .rythme }
-            if !(error is CancellationError) { erreurTournee = Self.texteErreur(error) }
-            finirTournee(nil)
-            return Self.sondeOccupee(error) ? .bientot : .rythme
-        }
-    }
-
-    /// La sonde a refuse parce que sa pile Zigbee n'est pas (encore) lancee : elle attend son Wi-Fi au demarrage.
-    private static func sondeOccupee(_ erreur: Error) -> Bool {
-        if case Sonde.Erreur.occupee? = erreur as? Sonde.Erreur { return true }
-        return false
-    }
-
-    /// Le message d'une erreur de la sonde connectee ; un refus `occupee` (etat transitoire, retente bientot) reste neutre.
-    private static func texteErreur(_ erreur: Error) -> String {
-        sondeOccupee(erreur)
-            ? String(localized: "La sonde n'est pas encore prête : nouvel essai dans un instant.")
-            : erreur.localizedDescription
-    }
-
-    /// Pourquoi une tournee n'a pas eu lieu ; nil si elle a eu lieu.
-    static func texteEmpechement(_ e: EmpechementTournee?) -> String? {
-        switch e {
-        case .horsReseau?: String(localized: "La sonde n'est pas dans le réseau : pas de tournée.")
-        case .suspendue?: String(localized: "La sonde est suspendue : pas de tournée.")
-        case nil: nil
-        }
-    }
-
-    /// Tournee incomplete, d'apres la derniere raison de la sonde.
-    static func texteLacune(_ raison: String) -> String {
-        switch raison {
-        case "non_membre": String(localized: "Tournée incomplète : la sonde a quitté le réseau.")
-        case "cadence": String(localized: "Tournée incomplète : la sonde a atteint sa limite de requêtes.")
-        case "sans_reponse": String(localized: "Tournée incomplète : la sonde n'a pas répondu.")
-        case TourneeZigbee.lacuneSansTables: String(localized: "Tournée incomplète : tables de voisins pas encore lues.")
-        default: String(localized: "Tournée incomplète : \(raison).")
-        }
-    }
-
-    /// Debut d'une tournee : son heure, et `surTournee`. Sans sonde connectee, ou pendant une tournee, rien.
-    func debuterTournee() {
-        guard case .connectee = etat, !tourneeEnCours else { return }
-        tourneeEnCours = true
-        debutTournee = horloge()
-        surTournee?(true)
-    }
-
-    /// Avancement de la tournee en cours ; rien hors tournee.
-    func avancer(_ a: AvancementTourneeZigbee) {
-        guard tourneeEnCours else { return }
-        avancement = a
-    }
-
-    /// Fin de la tournee en cours : son maillage, s'il y en a un, part a la surveillance avec l'heure de sa reception ;
-    /// l'avancement et l'heure du debut sont remis a nil, puis `surTournee`. Hors tournee, rien.
-    func finirTournee(_ m: MaillageZigbee?) {
-        guard tourneeEnCours else { return }
-        if let m {
-            let recu = horloge()
-            derniereTournee = recu
-            surMaillage?(m, recu)
-        }
-        avancement = nil
-        debutTournee = nil
-        tourneeEnCours = false
-        surTournee?(false)
-    }
-
-    /// Ports branches : la sonde retenue revient, ou s'en va.
-    func portsChanges(_ liste: [PortUSB]) {
-        portsVus = liste.filter(\.estEspressif)
-        choixRefuse = nil
-        guard actif, let serie else { return }
-        if reglageChemin != .reseau, let p = ports.first(where: { $0.serie == serie }) {
-            // `lancerConnexion` passe tout de suite a `.connexion` : un second appel n'en lance pas d'autre. Une
-            // tentative par le reseau, elle, cede a l'USB (constat 6 de la relecture finale).
-            if (sonde == nil || acces == .reseau) && (etat != .connexion || tentativeReseau) {
-                lancerConnexion(p, choisi: false)
-            }
-        } else if acces != .reseau && !versUnAutrePort {
-            if sonde != nil || etat != .absente { deconnecter(.absente) }
-            reevaluer()
-        }
-    }
-
-    /// Les instances `_maillage-zigbee._tcp` vues sur le reseau local (navigateur Bonjour ; les tests l'appellent).
-    func annoncesChangees(_ noms: Set<String>) {
-        guard actif else { return }
-        instanceAnnoncee = nom.flatMap { CheminSonde.instance(de: $0, parmi: noms) }
-        let vue = instanceAnnoncee != nil
-        guard vue != annoncee || (vue && acces == nil && etat != .connexion) else { return }
-        annoncee = vue
-        reevaluer()
-    }
-
-    /// La cle de l'acces par le reseau de la sonde retenue, depuis le trousseau ; nil sans sonde, sans adresse longue
-    /// ou sans cle.
-    private func cleReseau() -> Data? {
-        guard let ieee, let hexa = try? trousseau.lire(identifiant: ieee) else { return nil }
-        return H1.octets(hexa: hexa)
-    }
-
-    /// Releve `empreinteAcces` (donc `cleReseauConnue`) dans le trousseau.
-    private func relireCleReseau() {
-        empreinteAcces = cleReseau().map { H1.kid(cle: $0) }
-    }
-
-    /// Applique le chemin choisi (spec sonde Wi-Fi, 4.2) apres un changement de ports, d'annonces ou de reglage.
-    private func reevaluer() {
-        guard actif, serie != nil else { return }
-        let port = ports.first { $0.serie == serie }
-        switch CheminSonde.choisir(reglageChemin, branchee: port != nil, cleConnue: cleReseauConnue, annoncee: annoncee) {
-        case .usb?:
-            guard let port, acces != .usb, etat != .connexion else { return }
-            lancerConnexion(port, choisi: false)
-        case .reseau?:
-            guard acces != .reseau, etat != .connexion else { return }
-            deconnecter(.connexion)
-            tentativeReseau = true
-            serieEtat = serie
-            let n = essai
-            Task {
-                guard n == essai else { return }
-                await connecterReseau()
-            }
-        case nil:
-            if (sonde != nil || etat == .connexion || etat == .injoignable) && !versUnAutrePort { deconnecter(.absente) }
-        }
-    }
-
-    /// Connexion par le reseau a la sonde retenue (spec sonde Wi-Fi, 4.1 et 4.2) : `bonjour` doit dire la sonde Zigbee et
-    /// son adresse longue celle retenue.
-    func connecterReseau() async {
-        guard actif else { return }
-        guard let nom, let cle = cleReseau() else {
-            // `reevaluer` a deja mis l'etat a `.connexion` : sans nom ni cle lisible (trousseau en echec, cle effacee
-            // entre-temps), l'app ne doit pas y rester bloquee. La cle est relue, puis nouvel essai.
-            relireCleReseau()
-            guard etat == .connexion, tentativeReseau else { return }
-            etat = .injoignable
-            planifierReessaiReseau()
-            return
-        }
-        deconnecter(.connexion)
-        tentativeReseau = true
-        // La connexion concerne la sonde retenue (sans port) : `versUnAutrePort` reste faux, `nomEtat` donne son nom.
-        serieEtat = serie
-        let n = essai
-        await fermetures?.value
-        guard n == essai else { return }
-        // Une requete sans reponse ferme la liaison (la carte a pu oublier la session sans couper la connexion) :
-        // `liaisonFermee`, puis `reevaluer`, la rouvrent.
-        let s = Sonde(canal: ouvrirReseau(instanceAnnoncee ?? nom, cle), delaiCommande: delaiCommandeReseau,
-                      delaiTable: delaiTable + .seconds(3), fermerSansReponse: true)
-        enConnexion = s
-        do {
-            try await s.demarrer { [weak self] in
-                Task { @MainActor in self?.liaisonFermee(s) }
-            }
-            // Le premier `bonjour` part avant la poignee de main (le canal le garde jusqu'a la session) : il attend
-            // son delai en plus de celui de la poignee de main, sans quoi ces 15 s ne serviraient pas (constat 8).
-            let b = try await s.bonjour(delai: Self.delaiPoigneeDeMain + delaiCommandeReseau)
-            guard n == essai else {
-                await s.fermer()
-                return
-            }
-            guard b.estSonde, b.ieee == ieee else {
-                await s.fermer()
-                guard n == essai else { return }
-                enConnexion = nil
-                etat = .refusee(String(localized: "la sonde du réseau n'est pas la sonde retenue"))
-                return
-            }
-            enConnexion = nil
-            sonde = s
-            acces = .reseau
-            etat = .connectee(b)
-            retenirNom(b.nom)
-            // L'USB a pu devenir le chemin choisi pendant la tentative (sonde branchee, reglage change) : il l'emporte.
-            // Si le chemin reste le reseau, rien n'est relance.
-            reevaluer()
-            guard n == essai, s === sonde else { return }
-            await lireEtat(s)
-            guard n == essai, s === sonde else { return }
-            planifierTournee(dans: delaiPremiereTournee)
-            entretenir(s)
-        } catch {
-            await s.fermer()
-            guard n == essai else { return }
-            enConnexion = nil
-            etat = .injoignable
-            planifierReessaiReseau()
-        }
-    }
-
-    /// Relit `etat` toutes les `periodeEntretien` hors tournee : la session H1 de la sonde reste vivante entre deux
-    /// tournees (elle est oubliee apres 10 min sans message).
-    private func entretenir(_ s: Sonde) {
-        entretien?.cancel()
-        let periode = periodeEntretien
-        entretien = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: periode)
-                guard let self, !Task.isCancelled, s === self.sonde else { return }
-                if !self.tourneeEnCours { await self.lireEtat(s) }
-            }
-        }
-    }
-
-    private func planifierReessaiReseau() {
-        reessaiReseau?.cancel()
-        let n = essai
-        let delai = delaiReessaiReseau
-        reessaiReseau = Task { [weak self] in
-            try? await Task.sleep(for: delai)
-            guard !Task.isCancelled, let self, n == self.essai, self.etat == .injoignable else { return }
-            self.etat = .absente
-            self.reevaluer()
-        }
-    }
-
-    /// Une connexion, en cours ou etablie, vise un autre port que celui de la sonde retenue (un choix des Reglages) :
-    /// l'absence de la sonde retenue ne l'annule pas.
-    private var versUnAutrePort: Bool {
-        (etat == .connexion || sonde != nil) && serieEtat != serie
-    }
-
-    /// Connexion au port : ferme la liaison en place et attend qu'elle le soit vraiment, ouvre le port, le garde s'il
-    /// repond en sonde Zigbee. Perimee par un `deconnecter` pendant une attente, elle ferme sa liaison (en l'attendant)
-    /// et sort sans toucher a l'etat, a la sonde, ni au numero de serie retenu. Automatique (`choisi` faux) et en echec,
-    /// elle est refaite, de plus en plus espacee, tant que le port reste liste (`planifierNouvelEssai`).
-    func connecter(_ port: PortUSB, choisi: Bool) async {
-        guard ouvrable(port, choisi: choisi) else {
-            refuserConnexionEnCours(port)
-            return
-        }
-        deconnecter(.connexion, port: port)
-        let n = essai
-        // Tant que l'ancienne liaison tient le port, TIOCEXCL refuse de le rouvrir.
-        await fermetures?.value
-        guard n == essai else { return }
-        // L'autre module a pu retenir la carte pendant l'attente : rien n'est ouvert, la sonde ne reste pas en « connexion ».
-        guard ouvrable(port, choisi: choisi) else {
-            refuserConnexionEnCours(port)
-            return
-        }
-        let s = Sonde(canal: ouvrirCanal(port.chemin), delaiTable: delaiTable)
-        enConnexion = s
-        do {
-            try await s.demarrer { [weak self] in
-                Task { @MainActor in self?.liaisonFermee(s) }
-            }
-            guard n == essai else {
-                await s.fermer()
-                return
-            }
-            let b = try await s.bonjour()
-            guard n == essai else {
-                await s.fermer()
-                return
-            }
-            guard b.estSonde else {
-                await s.fermer()
-                guard n == essai else { return }
-                enConnexion = nil
-                etat = .refusee(String(localized: "\(port.libelle) n'est pas une sonde Zigbee (« \(b.produit) »)"))
-                return
-            }
-            // Thread a retenu cette carte pendant la connexion (deux choix en meme temps) : elle n'est pas a nous.
-            if let autre = cartes.retenuePar(port.serie, hors: .zigbee) {
-                await s.fermer()
-                guard n == essai else { return }
-                enConnexion = nil
-                etat = .refusee(CartesRetenues.texteRefus(retenuePar: autre))
-                return
-            }
-            enConnexion = nil
-            sonde = s
-            cheminConnecte = port.chemin
-            acces = .usb
-            etat = .connectee(b)
-            rangNouvelEssai = 0
-            if choisi, let serieUSB = port.serie {
-                // Le releve etait celui d'une autre sonde.
-                if serieUSB != serie { oublierReleve() }
-                preferences.set(serieUSB, forKey: Self.cleSerie)
-                retenirSerie(serieUSB)
-            }
-            // Le nom va avec la sonde retenue (un port sans numero de serie ne l'est pas).
-            let retenue = port.serie != nil && port.serie == serie
-            retenirNom(retenue ? b.nom : nil)
-            if retenue, let i = b.ieee {
-                preferences.set(i, forKey: Self.cleIeee)
-                ieee = i
-                relireCleReseau()
-            }
-            await lireEtat(s)
-            guard n == essai, s === sonde else { return }
-            planifierTournee(dans: delaiPremiereTournee)
-        } catch {
-            await s.fermer()
-            guard n == essai else { return }
-            enConnexion = nil
-            etat = choisi ? .refusee(error.localizedDescription) : .erreur(error.localizedDescription)
-            if !choisi { planifierNouvelEssai(port) }
-        }
-    }
-
-    /// `etat` de la sonde connectee ; rien n'est retenu si la liaison n'est plus la sienne. Une liaison fermee est
-    /// laissee a `liaisonFermee`.
-    private func lireEtat(_ s: Sonde) async {
-        do {
-            let e = try await s.etat()
-            guard s === sonde else { return }
-            etatSonde = e
-            erreurTournee = nil
-        } catch Sonde.Erreur.fermee {
-            // La liaison est fermee : `liaisonFermee` s'en occupe.
-        } catch {
-            guard s === sonde else { return }
-            erreurTournee = Self.texteErreur(error)
-        }
-    }
-
-    /// `connecter` refuse ce port (l'autre module retient sa carte) alors que `lancerConnexion` a deja passe la sonde en
-    /// `.connexion` pour lui : elle passe en `.refusee` au lieu de rester bloquee (`portsChanges` ne relance pas une sonde en
-    /// connexion). Sans effet si la sonde n'attend pas ce port (appel direct, autre connexion en cours).
-    private func refuserConnexionEnCours(_ port: PortUSB) {
-        guard case .connexion = etat, enConnexion == nil, sonde == nil, serieEtat == port.serie,
-              let autre = cartes.retenuePar(port.serie, hors: .zigbee) else { return }
-        etat = .refusee(CartesRetenues.texteRefus(retenuePar: autre))
-    }
-
-    /// Connexion lancee sans l'attendre (Reglages, ports) : la liaison en place est fermee et `etat` passe a
-    /// `.connexion` tout de suite ; un `deconnecter` d'ici au depart de la tache (oublier, autre choix, port retire)
-    /// l'annule.
-    private func lancerConnexion(_ port: PortUSB, choisi: Bool) {
-        guard ouvrable(port, choisi: choisi) else { return }
-        // Un evenement USB (ou un choix) : l'espacement des nouveaux essais repart du premier delai.
-        rangNouvelEssai = 0
-        deconnecter(.connexion, port: port)
-        let n = essai
-        Task {
-            guard n == essai else { return }
-            await connecter(port, choisi: choisi)
-        }
-    }
-
-    /// Nouvel essai d'une connexion automatique en echec, apres un delai progressif (`delaiNouvelEssai(rang:base:plafond:)`, 5 s
-    /// puis 10, 20... au plus 60 s ; un evenement USB ou une connexion reussie le remet a 5 s), si rien n'a change depuis (aucun
-    /// `deconnecter` : ni evenement USB, ni choix, ni oubli) et que le port est toujours liste. En echec a son tour, il
-    /// en planifie un autre : une sonde qui ne lit l'USB qu'apres une longue attente (Wi-Fi absent ou refuse) finit par
-    /// repondre, sans debrancher (constat 2 de la relecture finale).
-    private func planifierNouvelEssai(_ port: PortUSB) {
-        let n = essai
-        let delai = Self.delaiNouvelEssai(rang: rangNouvelEssai, base: delaiNouvelEssai, plafond: plafondNouvelEssai)
-        rangNouvelEssai += 1
-        let dormir = self.dormir
-        nouvelEssai?.cancel()
-        nouvelEssai = Task { [weak self] in
-            try? await dormir(delai)
-            guard !Task.isCancelled, let self, n == self.essai,
-                  self.ports.contains(where: { $0.chemin == port.chemin }) else { return }
-            await self.connecter(port, choisi: false)
-        }
-    }
-
-    /// L'espacement des nouveaux essais USB : `base`, puis le double a chaque echec de suite, au plus `plafond` (par
-    /// exemple 5, 10, 20, 40, 60, 60 s) : une carte qui ne repond jamais n'est plus rouverte toutes les 5 s.
-    static func delaiNouvelEssai(rang: Int, base: Duration, plafond: Duration) -> Duration {
-        min(plafond, base * (1 << min(max(rang, 0), 16)))
-    }
-
-    private func liaisonFermee(_ s: Sonde) {
-        guard sonde === s else { return }
-        let etaitReseau = acces == .reseau
-        deconnecter(.absente)
-        // Une sonde du reseau coupee est retentee si elle reste annoncee ; une liaison USB fermee attend, comme avant,
-        // l'evenement USB suivant.
-        if etaitReseau { reevaluer() }
-    }
-
     /// Ferme sans attendre la liaison connectee et celle d'une connexion en cours, qui devient perimee ; `connecter`
     /// attend ces fermetures. `port` : celui que le nouvel etat concerne (connexion).
-    private func deconnecter(_ nouveau: Etat, port: PortUSB? = nil) {
+    func deconnecter(_ nouveau: Etat, port: PortUSB? = nil) {
         essai += 1
         boucle?.cancel()
         boucle = nil

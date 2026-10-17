@@ -6,8 +6,11 @@
 # Chaque cible donnee doit lancer au moins un test, sinon echec : un nom faux ne lance rien, et
 # xcodebuild repond pourtant TEST SUCCEEDED. Un test de Swift Testing se nomme avec ses
 # parentheses (ProtocoleThreadTests/GrapheReseauTests/stable()).
+# Avant de compiler, lance la garde des deux sondes (outils/verifier-sondes.sh) : etat de sonde ecrit hors de son pilote, port
+# ouvert hors du fichier +USB ; un defaut arrete la porte (code 1) avant toute compilation.
 set -u
 cd "$(dirname "$0")/.."
+bash outils/verifier-sondes.sh || exit 1
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot}
 JOURNAL=${TMPDIR:-/tmp}/maillage-iot-tests.log
 xcodegen generate --quiet || exit 1
