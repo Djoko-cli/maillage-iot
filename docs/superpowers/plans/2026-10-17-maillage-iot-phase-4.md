@@ -85,10 +85,10 @@ D'après `inventaire-phase-4.md` (Thread) ; spec 4.3, 6.8.
 - Create: `MaillageIoT/Reprise/ConversionThread.swift` (export validé → dossier d'attente + réglages à écrire).
 - Test: `MaillageIoTTests/Reprise/ConversionThreadTests.swift`.
 
-- [ ] **Step 1: RED** — un test par fichier et par réglage de l'inventaire : `surnoms.json` v1 préfixé `thread:` ; `pieces-routeurs.json` → `pieces-noeuds.json` v2 préfixé ; `positions-pieces.json` fusionné en profondeur ; `associations.json`, `identites-routeurs.json`, `dernieres-adresses.json`, `dernier-maillage.json`, historiques mensuels → `Thread/` sans changement de clé ; historique de plus de 90 jours écarté ; journal ajouté tel quel (lignes sans `protocole` = Thread) ; `noms.json` → `releve-maison.json` sans préfixe, gardé seulement si aucun relevé n'est présent ou s'il est plus récent ; réglages : `sonde*` → `thread.*`, `sondeLiaison` tel quel, notifications par protocole, Sparkle et fenêtres non repris (cités au résumé).
-- [ ] **Step 2: GREEN** — implémenter, en réutilisant les lecteurs d'anciens formats déjà présents (inventaire §5).
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reprise : conversion des donnees de Thread 1.3.0 ».
+- [x] **Step 1: RED** — un test par fichier et par réglage de l'inventaire : `surnoms.json` v1 préfixé `thread:` ; `pieces-routeurs.json` → `pieces-noeuds.json` v2 préfixé ; `positions-pieces.json` fusionné en profondeur ; `associations.json`, `identites-routeurs.json`, `dernieres-adresses.json`, `dernier-maillage.json`, historiques mensuels → `Thread/` sans changement de clé ; historique de plus de 90 jours écarté ; journal ajouté tel quel (lignes sans `protocole` = Thread) ; `noms.json` → `releve-maison.json` sans préfixe, gardé seulement si aucun relevé n'est présent ou s'il est plus récent ; réglages : `sonde*` → `thread.*`, `sondeLiaison` tel quel, notifications par protocole, Sparkle et fenêtres non repris (cités au résumé).
+- [x] **Step 2: GREEN** — implémenter, en réutilisant les lecteurs d'anciens formats déjà présents (inventaire §5).
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reprise : conversion des donnees de Thread 1.3.0 ».
 
 ---
 
