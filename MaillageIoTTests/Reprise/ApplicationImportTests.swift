@@ -23,7 +23,7 @@ struct ApplicationImportTests {
     // MARK: Outils
 
     /// Des preferences d'essai : une suite nommee, effacee a la fin du test.
-    final class ReglagesEssai {
+    final class ReglagesEssai: Sendable {
         let nom = "fr.djoko.maillage.iot.essai-\(UUID().uuidString)"
         var preferences: PreferencesUserDefaults { PreferencesUserDefaults(suite: nom, domaine: nom) }
 
@@ -133,10 +133,17 @@ struct ApplicationImportTests {
         let base: PreferencesUserDefaults
         var mode: Mode = .normales
         var avantEcriture: (@Sendable () -> Void)?
+        /// Vrai quand l'app est "arretee" : plus rien ne s'ecrit, reglages compris (ni ecriture ni retrait).
+        var arret: OSAllocatedUnfairLock<Bool>?
+
+        private var arretee: Bool { arret?.withLock { $0 } ?? false }
 
         func clesPresentes() -> Set<String> { base.clesPresentes() }
 
+        func valeurs(pour cles: [String]) -> [String: ContratExport.Valeur] { base.valeurs(pour: cles) }
+
         func ecrire(_ valeurs: [String: ContratExport.Valeur]) throws {
+            guard !arretee else { return }
             avantEcriture?()
             switch mode {
             case .normales: try base.ecrire(valeurs)
@@ -148,7 +155,17 @@ struct ApplicationImportTests {
             }
         }
 
-        func retirer(_ cles: [String]) { base.retirer(cles) }
+        func retirer(_ cles: [String]) { if !arretee { base.retirer(cles) } }
+    }
+
+    /// Lance l'import et l'arrete net a l'operation `n` (comme un arret de l'app) : plus rien ne s'ecrit apres, ni fichier,
+    /// ni reglage, et le retour en arriere de l'import ne tourne pas.
+    static func importArreteA(_ n: Int, _ app: App, _ d: D, _ r: ReglagesEssai) async {
+        let arret = OSAllocatedUnfairLock(initialState: false)
+        let ops = OperationsEssai(racine: d.racine, mode: .depuis(n)) { k, _ in if k >= n { arret.withLock { $0 = true } } }
+        var preferences = PreferencesEssai(base: r.preferences)
+        preferences.arret = arret
+        do { _ = try await appli(d, r, operations: ops, preferences: preferences).reprendre(export: exemple(app)) } catch {}
     }
 
     static func exemple(_ app: App) throws -> URL { try ExportsExempleTests.dossier(app) }
@@ -667,10 +684,15 @@ struct ApplicationImportTests {
         #expect(p.plan.fichier("Zigbee/noms-pont.json") != nil)
         let existant = Data(#"{"version":1,"inconnu":true}"#.utf8)
         try d.ecrire("Zigbee/noms-pont.json", existant)
-        _ = try await a.appliquer(p)
-        // Le fichier apparu n'est pas ecrase a l'aveugle : le plan refait l'a lu (inconnu : intact) ou fusionne.
+        let resultat = try await a.appliquer(p)
+        // Le fichier apparu n'est pas ecrase a l'aveugle : le plan refait l'a lu et l'a laisse intact.
         let apres = try Self.octets(d, "Zigbee/noms-pont.json")
-        #expect(apres == existant || (try? JSONSerialization.jsonObject(with: apres)) != nil)
+        #expect(apres == existant, "le fichier apparu (sans date de releve, donc illisible pour la fusion) est intact, `inconnu` compris")
+        #expect(String(decoding: apres, as: UTF8.self).contains(#""inconnu":true"#))
+        #expect(resultat.planRecalcule)
+        #expect(resultat.nonPris.contains { $0.nature == .fichier("noms-pont.json") && $0.raison == .fichierExistantNonLisible },
+                "il est cite parmi ce qui n'est pas repris")
+        #expect(!resultat.fichiersEcrits.contains("Zigbee/noms-pont.json"))
     }
 
     @Test func unFichierModifiePendantLApplicationFaitToutDefaireEtRefaireLePlan() async throws {
@@ -726,6 +748,236 @@ struct ApplicationImportTests {
         try copie.remplacer("surnoms.json", par: Data("{}".utf8))
         await #expect(throws: ErreurApplication.exportModifie) { try await a.appliquer(p) }
         #expect(try Self.arbre(d).isEmpty && r.domaine().count == 0)
+    }
+
+    // MARK: Le retour en arriere ne defait que ce que l'import a ecrit
+
+    /// Ce que l'app fait entre un arret et le lancement suivant : un surnom, une ligne de journal, un fichier cree par
+    /// l'import qui grandit, un reglage. Rend les octets ecrits, pour verifier qu'ils sont toujours la.
+    struct TravailDeLApp {
+        let surnoms: Data
+        let ligneDeJournal: Data
+        let associations: Data
+        static let hote = "MON-HOTE"
+    }
+
+    private static func travaillerCommeLApp(_ app: App, _ d: D, _ r: ReglagesEssai) throws -> TravailDeLApp {
+        let prefixe = app.rawValue
+        var o = try objet(d, "surnoms.json")
+        var surnoms = try #require(o["surnoms"] as? [String: String])
+        surnoms["\(prefixe):rloc:0800"] = "Mon routeur"
+        o["surnoms"] = surnoms
+        let surnomsOctets = try JSONSerialization.data(withJSONObject: o, options: [.sortedKeys])
+        try d.ecrire("surnoms.json", surnomsOctets)
+        let journal = try octets(d, "Journal/journal-2026-10.jsonl") + Data("{\"ligne\":\"de Djoko\"}\n".utf8)
+        try d.ecrire("Journal/journal-2026-10.jsonl", journal)
+        let associations = try octets(d, "Thread/associations.json") + Data("\n".utf8)
+        try d.ecrire("Thread/associations.json", associations)
+        r.poser("thread.sondeHote", TravailDeLApp.hote)
+        return TravailDeLApp(surnoms: surnomsOctets, ligneDeJournal: journal, associations: associations)
+    }
+
+    private static func verifierTravailConserve(_ t: TravailDeLApp, _ d: D, _ r: ReglagesEssai, _ contexte: String) throws {
+        #expect(try octets(d, "surnoms.json") == t.surnoms, "\(contexte) : le surnom donne par l'app est perdu")
+        #expect(try octets(d, "Journal/journal-2026-10.jsonl") == t.ligneDeJournal, "\(contexte) : la ligne de journal est perdue")
+        #expect(try octets(d, "Thread/associations.json") == t.associations, "\(contexte) : le fichier cree puis modifie est perdu")
+        #expect(r.objet("thread.sondeHote") as? String == TravailDeLApp.hote, "\(contexte) : le reglage de l'app est perdu")
+    }
+
+    /// Une application interrompue juste avant la validation : tous les fichiers du plan et tous les reglages sont en place.
+    private static func interrompueAvantLaValidation(avecExistant: Bool) async throws -> (D, ReglagesEssai, avant: [String: String], prefsAvant: NSDictionary) {
+        let m = try await modele(.maillageThread, avecExistant: avecExistant)
+        let (d, r) = try await depart(.maillageThread, avecExistant: avecExistant)
+        let (avant, prefsAvant) = (try arbre(d), r.domaine())
+        await importArreteA(m.validation, .maillageThread, d, r)
+        #expect(r.objet("thread.sondeHote") != nil, "les reglages sont ecrits")
+        return (d, r, avant, prefsAvant)
+    }
+
+    @Test(arguments: [false, true])
+    func cePuEcritL_AppApresUnArretNEstJamaisPerdu(avecExistant: Bool) async throws {
+        let (d, r, avant, _) = try await Self.interrompueAvantLaValidation(avecExistant: avecExistant)
+        let t = try Self.travaillerCommeLApp(.maillageThread, d, r)
+        let issue = try await Self.appli(d, r).recuperer()
+        try Self.verifierTravailConserve(t, d, r, "apres la reprise")
+        // Ce que l'app a ecrit est cite, et l'original qu'elle a recouvert est garde a part.
+        guard case .annuleeSauf(let laisses) = issue else { throw Echec("retour en arriere complet alors que l'app avait ecrit : \(issue)") }
+        #expect(Set(laisses.fichiers) == ["surnoms.json", "Journal/journal-2026-10.jsonl", "Thread/associations.json"])
+        #expect(laisses.reglages == ["thread.sondeHote"])
+        if avecExistant {
+            let conserve = d.url("\(ApplicationImport.nomConserve)/\(G.identifiant(.maillageThread).uuidString)/surnoms.json")
+            #expect(try C.sha256(Data(contentsOf: conserve)) == avant["surnoms.json"], "l'original est garde")
+        }
+        #expect(try Self.arbre(d)["imports.json"] == avant["imports.json"], "imports.json est revenu a l'etat d'avant")
+        #expect(try Self.arbre(d).keys.contains { $0.hasPrefix(ApplicationImport.nomTravail) } == false, "le dossier de travail est parti")
+    }
+
+    @Test(arguments: [false, true])
+    func uneDoubleInterruptionLaisseUnEtatCoherent(avecExistant: Bool) async throws {
+        // Combien d'operations compte une reprise complete ?
+        let compte: Int
+        do {
+            let (d, r, _, _) = try await Self.interrompueAvantLaValidation(avecExistant: avecExistant)
+            _ = try Self.travaillerCommeLApp(.maillageThread, d, r)
+            let ops = OperationsEssai(racine: d.racine)
+            _ = try await Self.appli(d, r, operations: ops).recuperer()
+            compte = ops.compte
+        }
+        #expect(compte > 3)
+        for k in 1...compte {
+            let (d, r, avant, _) = try await Self.interrompueAvantLaValidation(avecExistant: avecExistant)
+            let t = try Self.travaillerCommeLApp(.maillageThread, d, r)
+            // La reprise s'arrete net a l'operation k...
+            let ops = OperationsEssai(racine: d.racine, mode: .depuis(k))
+            _ = try? await Self.appli(d, r, operations: ops).recuperer()
+            try Self.verifierTravailConserve(t, d, r, "reprise arretee a l'operation \(k)")
+            // ...et le lancement suivant l'acheve.
+            _ = try await Self.appli(d, r).recuperer()
+            try Self.verifierTravailConserve(t, d, r, "apres la reprise de la reprise \(k)")
+            if avecExistant {
+                let conserve = d.url("\(ApplicationImport.nomConserve)/\(G.identifiant(.maillageThread).uuidString)/surnoms.json")
+                #expect(try C.sha256(Data(contentsOf: conserve)) == avant["surnoms.json"], "reprise \(k) : l'original est garde")
+            }
+            #expect(try Self.arbre(d)["imports.json"] == avant["imports.json"], "reprise \(k) : imports.json")
+            #expect(try Self.arbre(d).keys.contains { $0.hasPrefix(ApplicationImport.nomTravail) } == false, "reprise \(k) : dossier de travail")
+            #expect(try await Self.appli(d, r).recuperer() == .rienAFaire)
+        }
+    }
+
+    @Test func unEchecDeLaValidationLaisseCeQueLAppAEcritEntretemps() async throws {
+        let m = try await Self.modele(.maillageThread, avecExistant: true)
+        let (d, r) = try await Self.depart(.maillageThread, avecExistant: true)
+        let avant = try Self.arbre(d)
+        let ajout = Data("\n".utf8)
+        let ecrit = OSAllocatedUnfairLock<Data?>(initialState: nil)
+        let surnoms = d.url("surnoms.json")
+        // L'app ajoute une ligne a un fichier deja mis en place, juste avant l'echange d'imports.json qui echoue.
+        let validation = m.validation
+        let ops = OperationsEssai(racine: d.racine, mode: .unique(validation)) { k, _ in
+            guard k == validation, let actuel = try? Data(contentsOf: surnoms) else { return }
+            try? (actuel + ajout).write(to: surnoms)
+            ecrit.withLock { $0 = actuel + ajout }
+        }
+        do {
+            _ = try await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread))
+            throw Echec("l'application aurait du echouer")
+        } catch let e as ErreurApplication {
+            guard case .echecAvecReste(.validation, let laisses, _) = e else { throw Echec("\(e)") }
+            #expect(laisses.fichiers == ["surnoms.json"] && laisses.reglages.isEmpty)
+        }
+        #expect(try Self.octets(d, "surnoms.json") == ecrit.withLock { $0 }, "la ligne de l'app est la")
+        #expect(try Self.arbre(d)["imports.json"] == avant["imports.json"], "imports.json est revenu")
+        let conserve = d.url("\(ApplicationImport.nomConserve)/\(G.identifiant(.maillageThread).uuidString)/surnoms.json")
+        #expect(try C.sha256(Data(contentsOf: conserve)) == avant["surnoms.json"], "l'original est garde")
+        #expect(try Self.arbre(d).keys.contains { $0.hasPrefix(ApplicationImport.nomTravail) } == false)
+    }
+
+    @Test func lesPreferencesDeLAppSontCellesDeSonIdentite() throws {
+        // Un bundle d'essai avec une autre identite (celle de l'app de repetition).
+        let dossier = FileManager.default.temporaryDirectory.appendingPathComponent("bundle-\(UUID().uuidString).bundle")
+        try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dossier) }
+        let info = ["CFBundleIdentifier": "fr.djoko.maillage.iot.repetition"]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0).write(to: dossier.appendingPathComponent("Info.plist"))
+        let bundle = try #require(Bundle(url: dossier))
+        #expect(bundle.bundleIdentifier == "fr.djoko.maillage.iot.repetition")
+        let repetition = PreferencesUserDefaults.app(bundle: bundle)
+        #expect(repetition.domaine == "fr.djoko.maillage.iot.repetition" && repetition.suite == nil)
+        #expect(PreferencesUserDefaults.pourApp(identifiant: nil).domaine == "fr.djoko.maillage.iot", "sans identifiant, celui de l'app publiee")
+        #expect(PreferencesUserDefaults.app.domaine == PreferencesUserDefaults.app(bundle: .main).domaine)
+        #expect(PreferencesUserDefaults.app.domaine == (Bundle.main.bundleIdentifier ?? "fr.djoko.maillage.iot"))
+    }
+
+    @Test func unReglageQueLImportNAPasEcritNEstJamaisRetireApresUnEchec() async throws {
+        let propre = try D(), rp = ReglagesEssai()
+        let ops0 = OperationsEssai(racine: propre.racine)
+        _ = try Self.repris(await Self.appli(propre, rp, operations: ops0).reprendre(export: Self.exemple(.maillageThread)))
+        let n = try #require(ops0.journal.firstIndex { $0.hasPrefix("deplacer A:") }) + 1
+
+        let d = try D(), r = ReglagesEssai()
+        // Djoko pose un reglage que le plan comptait ecrire, au moment ou le premier fichier est deplace (et l'echec tombe).
+        let ops = OperationsEssai(racine: d.racine, mode: .unique(n)) { k, _ in if k == n { r.poser("thread.sondeHote", "MON-HOTE") } }
+        await #expect(throws: ErreurApplication.self) {
+            try await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread))
+        }
+        #expect(r.objet("thread.sondeHote") as? String == "MON-HOTE", "le reglage de Djoko n'a pas ete ecrit par l'import : il reste")
+    }
+
+    @Test func unReglageQueLImportNAPasEcritNEstJamaisRetireApresUnArret() async throws {
+        let propre = try D(), rp = ReglagesEssai()
+        let ops0 = OperationsEssai(racine: propre.racine)
+        _ = try Self.repris(await Self.appli(propre, rp, operations: ops0).reprendre(export: Self.exemple(.maillageThread)))
+        let n = try #require(ops0.journal.firstIndex { $0.hasPrefix("deplacer A:") }) + 1
+
+        let d = try D(), r = ReglagesEssai()
+        await Self.importArreteA(n, .maillageThread, d, r)
+        r.poser("thread.sondeHote", "MON-HOTE")
+        r.poser("zigbee.autre", 3)
+        _ = try await Self.appli(d, r).recuperer()
+        #expect(r.objet("thread.sondeHote") as? String == "MON-HOTE")
+        #expect(r.objet("zigbee.autre") as? Int == 3)
+    }
+
+    @Test func unDossierDeDonneesAbsentNeResteJamaisVideApresUnArret() async throws {
+        let m = try await Self.modele(.maillageThread, avecExistant: false)
+        for n in 1...m.validation {
+            let d = try D(), r = ReglagesEssai()
+            try FileManager.default.removeItem(at: d.racine)
+            let ops = OperationsEssai(racine: d.racine, mode: .depuis(n))
+            do { _ = try await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread)) } catch {}
+            _ = try await Self.appli(d, r).recuperer()
+            #expect(!FileManager.default.fileExists(atPath: d.racine.path), "arret a l'operation \(n) : le dossier cree est retire")
+        }
+    }
+
+    @Test func unJournalAuxCheminsHorsDuDossierNeFaitRienHorsDuDossier() async throws {
+        let id = UUID()
+        for nom in ["remplaces", "crees", "dossiersCrees"] {
+            let d = try D(), r = ReglagesEssai()
+            let dehors = d.racine.deletingLastPathComponent().appendingPathComponent("dehors-\(UUID().uuidString)")
+            defer { try? FileManager.default.removeItem(at: dehors) }
+            let chemin = "../" + dehors.lastPathComponent
+            var j = JournalApplication(identifiant: id, remplaces: [], crees: [], dossiersCrees: [], racineCreee: false, empreintes: [:],
+                                       phase: .remplacement)
+            switch nom {
+            case "remplaces": j.remplaces = [chemin]
+            case "crees": j.crees = [chemin]
+            default: j.dossiersCrees = [chemin]
+            }
+            try d.ecrire("\(ApplicationImport.nomTravail)/journal.json", try C.encodeur().encode(j))
+            // Une sauvegarde a l'endroit ou le chemin la ferait chercher, et un element hors du dossier a la cible.
+            try FileManager.default.createDirectory(at: d.url("\(ApplicationImport.nomTravail)/\(ApplicationImport.nomSauvegarde)"),
+                                                    withIntermediateDirectories: true)
+            try d.ecrire("\(ApplicationImport.nomTravail)/\(dehors.lastPathComponent)", "sauvegarde")
+            if nom == "dossiersCrees" {
+                try FileManager.default.createDirectory(at: dehors, withIntermediateDirectories: true)
+            } else {
+                try Data("a moi".utf8).write(to: dehors)
+            }
+            let avant = try Self.arbre(d)
+            await #expect(throws: ErreurApplication.self, "\(nom)") { try await Self.appli(d, r).recuperer() }
+            #expect(FileManager.default.fileExists(atPath: dehors.path), "\(nom) : l'element hors du dossier est intact")
+            if nom != "dossiersCrees" { #expect(try Data(contentsOf: dehors) == Data("a moi".utf8), "\(nom)") }
+            #expect(try Self.arbre(d) == avant, "\(nom) : rien n'est touche dans le dossier non plus")
+        }
+    }
+
+    @Test func enPhaseDePreparationLesDossiersDeLAppNeSontPasRetires() async throws {
+        let propre = try D(), rp = ReglagesEssai()
+        let ops0 = OperationsEssai(racine: propre.racine)
+        _ = try Self.repris(await Self.appli(propre, rp, operations: ops0).reprendre(export: Self.exemple(.maillageThread)))
+        // Arret au premier fichier d'attente : le journal est ecrit, rien n'est deplace.
+        let n = try #require(ops0.journal.firstIndex { $0.hasPrefix("ecrire A:") }) + 1
+
+        let d = try D(), r = ReglagesEssai()
+        let ops = OperationsEssai(racine: d.racine, mode: .depuis(n))
+        do { _ = try await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread)) } catch {}
+        // L'app tourne et cree ses dossiers (vides) entretemps.
+        for dossier in ["Thread", "Journal"] { try FileManager.default.createDirectory(at: d.url(dossier), withIntermediateDirectories: true) }
+        _ = try await Self.appli(d, r).recuperer()
+        for dossier in ["Thread", "Journal"] {
+            #expect(FileManager.default.fileExists(atPath: d.url(dossier).path), "\(dossier) est a l'app, pas a l'import")
+        }
     }
 
     // MARK: Hors du fil principal

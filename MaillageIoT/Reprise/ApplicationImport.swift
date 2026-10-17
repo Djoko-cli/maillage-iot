@@ -19,21 +19,30 @@ import MaillageCoeur
 //   0. verifications sans ecriture : l'export est intact et identique a celui du plan (manifeste et reglages a l'identique,
 //      empreintes relues) ; son identifiant n'est pas deja dans `imports.json` ; le dossier de donnees et les cles de
 //      preferences sont ceux que le plan a lus (empreinte de chaque fichier). Sinon le plan est recalcule (jusqu'a 3 fois).
-//   1. le dossier de travail est cree ; `journal.json` y est ecrit (atomiquement) AVANT tout deplacement : il dit quels
-//      fichiers sont remplaces, lesquels sont crees, quels dossiers sont crees, quelles cles de preferences sont ecrites.
+//   1. le dossier de travail est cree (avec la racine, en un seul appel : jamais une racine vide sans dossier de travail) ;
+//      `journal.json` y est ecrit (atomiquement) AVANT tout deplacement : il dit quels fichiers sont remplaces, lesquels sont
+//      crees, quels dossiers sont crees, et l'empreinte SHA-256 de chaque fichier que l'import va mettre en place.
 //   2. dossier d'attente (`attente/`) : chaque fichier du plan y est ecrit (contenu converti) ou copie (fichier de l'export),
 //      puis son empreinte est verifiee ; le nouvel `imports.json` (l'ancien plus une ligne) y est ecrit aussi.
 //   3. remplacement : pour chaque fichier, l'original est DEPLACE dans `sauvegarde/` (empreinte comparee a celle du plan : un
 //      fichier modifie entretemps arrete tout), puis le fichier d'attente est deplace a sa place.
 //   4. preferences : les cles du plan sont ecrites (toutes etaient absentes ; sinon le plan est recalcule). Seulement ici,
-//      une fois les fichiers en place.
+//      une fois les fichiers en place. Le journal, passe a la phase `reglages`, dit d'abord pour chaque cle la valeur qui va
+//      etre ecrite et l'etat d'avant.
 //   5. VALIDATION : `imports.json` est remplace de la meme facon (original en sauvegarde, nouveau fichier deplace d'attente :
 //      un renommage, jamais une ecriture en place). C'est l'instant ou la reprise existe.
 //   6. nettoyage du dossier de travail (sans effet sur le resultat : une erreur ici ne defait rien).
 //
-// RETOUR EN ARRIERE. Toute erreur avant l'instant 5 defait ce qui a ete fait : les fichiers de `sauvegarde/` retournent a
-// leur place, les fichiers crees sont retires, les dossiers crees aussi s'ils sont vides, les cles de preferences ecrites
-// sont retirees. Le dossier de l'app est alors octet pour octet ce qu'il etait. Si le retour en arriere echoue lui-meme (ou
+// RETOUR EN ARRIERE. Toute erreur avant l'instant 5 defait ce qui a ete fait : les reglages ecrits sont retires (ou remis),
+// les fichiers de `sauvegarde/` retournent a leur place, les fichiers crees sont retires, les dossiers crees aussi s'ils sont
+// vides. Le dossier de l'app est alors octet pour octet ce qu'il etait.
+//
+// Il ne defait que ce que l'import a ECRIT, et seulement tant que cela n'a pas bouge : un fichier n'est retire (ou remplace
+// par son original) que si son contenu a encore l'empreinte que l'import a mise en place ; un reglage n'est retire (ou remis)
+// que s'il a encore la valeur que l'import a ecrite ; un reglage que l'import n'a pas ecrit n'est jamais touche. Si l'app a
+// ecrit depuis (apres un arret, puis un usage normal), son travail est LAISSE en place et cite (`ElementsLaisses`) ; l'original
+// d'un fichier laisse est garde a part (`conserve`), jamais efface avec le dossier de travail. Si le retour en arriere echoue
+// lui-meme (ou
 // si l'app s'arrete en plein milieu), `recuperer()` le refait au lancement suivant, d'apres `journal.json` : decision
 // ANNULER, sauf si `imports.json` contient deja l'identifiant de cet import (la validation a eu lieu : on termine le
 // nettoyage). On n'acheve jamais une reprise a moitie : annuler est toujours possible (les originaux sont en sauvegarde),
@@ -83,6 +92,9 @@ struct OperationsFichiersReelles: OperationsFichiers {
 protocol PreferencesReprise: Sendable {
     /// Les cles du domaine persistant de l'app (jamais les valeurs globales du Mac).
     func clesPresentes() -> Set<String>
+    /// Les valeurs actuelles de ces cles dans le domaine de l'app (une cle absente, ou d'un type que l'export ne connait pas,
+    /// n'est pas dans le resultat).
+    func valeurs(pour cles: [String]) -> [String: ContratExport.Valeur]
     func ecrire(_ valeurs: [String: ContratExport.Valeur]) throws
     func retirer(_ cles: [String])
 }
@@ -93,8 +105,18 @@ struct PreferencesUserDefaults: PreferencesReprise {
     let suite: String?
     let domaine: String
 
-    /// Les vraies preferences de Maillage IoT.
-    static let app = PreferencesUserDefaults(suite: nil, domaine: "fr.djoko.maillage.iot")
+    /// Le domaine de l'app publiee, quand le bundle n'a pas d'identifiant (jamais en pratique).
+    static let domaineParDefaut = "fr.djoko.maillage.iot"
+
+    /// Les vraies preferences de l'app qui tourne : son domaine est son identifiant (`Bundle.main`), donc celui de l'app de
+    /// repetition dans l'app de repetition, jamais celui de l'app publiee.
+    static var app: PreferencesUserDefaults { app(bundle: .main) }
+
+    static func app(bundle: Bundle) -> PreferencesUserDefaults { pourApp(identifiant: bundle.bundleIdentifier) }
+
+    static func pourApp(identifiant: String?) -> PreferencesUserDefaults {
+        PreferencesUserDefaults(suite: nil, domaine: identifiant ?? domaineParDefaut)
+    }
 
     private func defauts() -> UserDefaults {
         suite.flatMap { UserDefaults(suiteName: $0) } ?? .standard
@@ -102,6 +124,27 @@ struct PreferencesUserDefaults: PreferencesReprise {
 
     func clesPresentes() -> Set<String> {
         Set(defauts().persistentDomain(forName: domaine)?.keys.map { $0 } ?? [])
+    }
+
+    func valeurs(pour cles: [String]) -> [String: ContratExport.Valeur] {
+        let presentes = defauts().persistentDomain(forName: domaine) ?? [:]
+        var r: [String: ContratExport.Valeur] = [:]
+        for cle in cles { if let objet = presentes[cle], let v = Self.valeur(objet) { r[cle] = v } }
+        return r
+    }
+
+    /// La valeur typee d'un objet de preferences (un booleen, un entier et un decimal ne se confondent pas).
+    private static func valeur(_ objet: Any) -> ContratExport.Valeur? {
+        switch objet {
+        case let n as NSNumber:
+            if CFGetTypeID(n) == CFBooleanGetTypeID() { return .bool(n.boolValue) }
+            return ["d", "f"].contains(String(cString: n.objCType)) ? .decimal(n.doubleValue) : .entier(n.intValue)
+        case let t as String: return .texte(t)
+        case let d as Data: return .donnees(d)
+        case let l as [String]: return .listeTextes(l)
+        case let l as [Int]: return .listeEntiers(l)
+        default: return nil
+        }
     }
 
     func ecrire(_ valeurs: [String: ContratExport.Valeur]) throws {
@@ -237,8 +280,21 @@ enum ErreurApplication: Error, Equatable, Sendable {
     /// Une operation a echoue. `retablie` : le dossier de l'app est revenu a l'identique ; sinon `recuperer()` le fera au
     /// prochain lancement. `code` : domaine et code de l'erreur du systeme, jamais un chemin.
     case echec(EtapeApplication, retablie: Bool, code: String)
+    /// Une operation a echoue et le retour en arriere a tout defait SAUF ce que l'app avait ecrit entretemps : cela reste en
+    /// place (voir `ElementsLaisses`).
+    case echecAvecReste(EtapeApplication, ElementsLaisses, code: String)
     /// Une application interrompue n'a pas pu etre defaite (ni terminee) : rien n'est efface, a refaire.
     case recuperationImpossible(code: String)
+}
+
+/// Ce qu'un retour en arriere a laisse en place parce que l'app l'avait ecrit depuis l'import (un fichier dont le contenu n'a
+/// plus l'empreinte que l'import avait mise, un reglage qui n'a plus la valeur ecrite par l'import). Pour un fichier qui
+/// remplacait un original, l'original est garde dans `.reprise-conservee/<identifiant de l'import>/<chemin>`.
+struct ElementsLaisses: Equatable, Sendable {
+    var fichiers: [String] = []
+    var reglages: [String] = []
+
+    var estVide: Bool { fichiers.isEmpty && reglages.isEmpty }
 }
 
 enum IssueRecuperation: Equatable, Sendable {
@@ -247,13 +303,23 @@ enum IssueRecuperation: Equatable, Sendable {
     case nettoyee
     /// Une application interrompue avant la validation : defaite, le dossier est comme avant.
     case annulee
+    /// Idem, sauf ce que l'app avait ecrit depuis l'arret : laisse en place, cite.
+    case annuleeSauf(ElementsLaisses)
     /// Une application interrompue apres la validation : seul le nettoyage restait.
     case terminee
 }
 
+/// Un reglage ecrit par l'import : la valeur ecrite (le retour en arriere ne le touche que s'il l'a encore) et l'etat d'avant
+/// (nil : absent).
+struct ReglageJournal: Codable, Equatable, Sendable {
+    var cle: String
+    var ecrite: ContratExport.Valeur
+    var avant: ContratExport.Valeur?
+}
+
 /// Ce que `journal.json` du dossier de travail garde pour retablir l'etat d'avant.
 struct JournalApplication: Codable, Equatable, Sendable {
-    static let versionCourante = 1
+    static let versionCourante = 2
     var version = JournalApplication.versionCourante
     var identifiant: UUID
     /// Les fichiers qui existaient et sont remplaces (l'original va dans `sauvegarde/`), `imports.json` en dernier.
@@ -263,16 +329,24 @@ struct JournalApplication: Codable, Equatable, Sendable {
     /// Les dossiers qui n'existaient pas, du plus haut au plus bas.
     var dossiersCrees: [String]
     var racineCreee: Bool
-    /// Les cles de preferences qui vont etre ecrites (toutes absentes).
-    var reglages: [String]
+    /// Pour chaque fichier que l'import met en place (`imports.json` compris), l'empreinte SHA-256 de son contenu : le
+    /// retour en arriere ne retire ou ne remplace que ce qui l'a encore.
+    var empreintes: [String: String]
+    /// Les reglages ecrits, renseignes en passant a la phase `reglages` (avant la premiere ecriture).
+    var reglagesEcrits: [ReglageJournal] = []
     var phase: Phase = .preparation
 
     /// Jusqu'ou l'application est allee : tant que le remplacement n'a pas commence, rien de ce qui est dans le dossier
-    /// de donnees n'est le travail de l'application (un fichier "cree" qui s'y trouve n'est pas le sien).
+    /// de donnees n'est le travail de l'application (un fichier "cree" qui s'y trouve n'est pas le sien) ; tant que la phase
+    /// `reglages` n'a pas commence, aucun reglage n'est le sien.
     enum Phase: String, Codable, Sendable {
         case preparation
         case remplacement
+        case reglages
     }
+
+    /// Tous les chemins que le journal nomme : relus, ils doivent rester dans le dossier de donnees.
+    var chemins: [String] { remplaces + crees + dossiersCrees + Array(empreintes.keys) }
 }
 
 // MARK: L'application
@@ -283,6 +357,8 @@ actor ApplicationImport {
     static let nomJournal = "journal.json"
     static let nomAttente = "attente"
     static let nomSauvegarde = "sauvegarde"
+    /// Le dossier (a la racine du dossier de donnees) ou va l'original d'un fichier que l'app a ecrit depuis l'import.
+    static let nomConserve = ".reprise-conservee"
     /// Combien de fois le plan est refait quand l'etat de l'app bouge sous nos pieds.
     static let tentatives = 3
 
@@ -450,14 +526,23 @@ actor ApplicationImport {
             }
         }
         dossiersCrees.sort { $0.split(separator: "/").count < $1.split(separator: "/").count }
+        // L'empreinte de chaque fichier tel que l'import le met en place (verifiee dans l'attente avant le remplacement).
+        var empreintes: [String: String] = [:]
+        for (chemin, contenu) in aPlacer {
+            switch contenu {
+            case .donnees(let donnees): empreintes[chemin] = ContratExport.sha256(donnees)
+            case .copie(_, let sha256): empreintes[chemin] = sha256
+            }
+        }
         var journal = JournalApplication(identifiant: p.manifeste.identifiant, remplaces: remplaces, crees: crees,
                                          dossiersCrees: dossiersCrees, racineCreee: !EtatDonnees.existe(racine),
-                                         reglages: plan.reglages.keys.sorted())
+                                         empreintes: empreintes)
 
         var etape = EtapeApplication.preparation
         do {
             // 1. Dossier de travail et journal, avant tout deplacement.
-            if journal.racineCreee { try operations.creerDossier(racine) }
+            // Un seul appel pour la racine (si elle manque) et le dossier de travail : un arret ne laisse jamais une racine
+            // vide sans dossier de travail.
             try operations.creerDossier(travail)
             try operations.creerDossier(attente)
             try operations.creerDossier(sauvegarde)
@@ -474,19 +559,30 @@ actor ApplicationImport {
             for dossier in dossiersCrees { try operations.creerDossier(racine.appendingPathComponent(dossier)) }
             for (chemin, _) in aPlacer.dropLast() { try mettreEnPlace(chemin, remplaces: remplaces, etat: p.etat) }
 
-            // 4. Preferences, une fois les fichiers en place.
+            // 4. Preferences, une fois les fichiers en place. Le journal dit d'abord ce qui va etre ecrit (valeur et etat
+            // d'avant) : le retour en arriere ne touche que ces cles, et seulement si elles ont encore cette valeur.
             etape = .reglages
             guard preferences.clesPresentes().isDisjoint(with: plan.reglages.keys) else { throw EtatChange() }
+            let avant = preferences.valeurs(pour: plan.reglages.keys.sorted())
+            journal.reglagesEcrits = plan.reglages.sorted { $0.key < $1.key }.map {
+                ReglageJournal(cle: $0.key, ecrite: $0.value, avant: avant[$0.key])
+            }
+            journal.phase = .reglages
+            try operations.ecrire(try ContratExport.encodeur().encode(journal), vers: fichierJournal, atomique: true)
             try preferences.ecrire(plan.reglages)
 
             // 5. La validation : imports.json prend sa place.
             etape = .validation
             try mettreEnPlace(JournalImports.nomFichier, remplaces: remplaces, etat: p.etat)
         } catch {
-            let retablie = (try? retablir(journal)) != nil
-            if error is EtatChange, retablie { throw error }
-            if error is ExportChange, retablie { throw ErreurApplication.exportModifie }
-            throw ErreurApplication.echec(etape, retablie: retablie, code: Self.code(error))
+            let retour = Result { try retablir(journal) }
+            // Defait, ou defait sauf ce que l'app a ecrit entretemps (laisse en place : le plan refait le fusionnera).
+            if case .success(let laisses) = retour {
+                if error is EtatChange { throw error }
+                if error is ExportChange { throw ErreurApplication.exportModifie }
+                if !laisses.estVide { throw ErreurApplication.echecAvecReste(etape, laisses, code: Self.code(error)) }
+            }
+            throw ErreurApplication.echec(etape, retablie: (try? retour.get()) != nil, code: Self.code(error))
         }
 
         // 6. Nettoyage : sans effet sur le resultat.
@@ -530,42 +626,96 @@ actor ApplicationImport {
     /// Defait ce que le journal dit avoir ete fait, sans rien supposer de ce qui l'a vraiment ete : chaque etape regarde
     /// l'etat des fichiers, donc elle se refait sans danger. Chaque etape est tentee meme si la precedente echoue ; la
     /// premiere erreur est rendue a la fin, et le dossier de travail reste alors pour la reprise suivante.
-    private func retablir(_ j: JournalApplication) throws {
+    ///
+    /// Ne defait que ce que l'import a ecrit et qui n'a pas bouge depuis (empreinte, valeur) : le reste est rendu, pas touche.
+    private func retablir(_ j: JournalApplication) throws -> ElementsLaisses {
         var premiereErreur: (any Error)?
+        var laisses = ElementsLaisses()
         func essayer(_ action: () throws -> Void) {
             do { try action() } catch { if premiereErreur == nil { premiereErreur = error } }
         }
-        // Les originaux d'abord (imports.json le dernier de la liste : le premier defait).
+        // Les reglages d'abord (ecrits apres les fichiers, defaits avant eux) : seulement ceux que l'import a ecrits, et
+        // seulement s'ils ont encore la valeur qu'il a ecrite.
+        if j.phase == .reglages {
+            let actuelles = preferences.valeurs(pour: j.reglagesEcrits.map(\.cle))
+            let presentes = preferences.clesPresentes()
+            for reglage in j.reglagesEcrits.reversed() {
+                if actuelles[reglage.cle] == reglage.ecrite {
+                    if let avant = reglage.avant {
+                        essayer { try preferences.ecrire([reglage.cle: avant]) }
+                    } else {
+                        preferences.retirer([reglage.cle])
+                    }
+                } else if presentes.contains(reglage.cle) {
+                    laisses.reglages.append(reglage.cle)
+                }
+            }
+        }
+        // Les originaux (imports.json le dernier de la liste : le premier defait).
         for chemin in j.remplaces.reversed() {
             let sauv = sauvegarde.appendingPathComponent(chemin)
             let cible = racine.appendingPathComponent(chemin)
             guard EtatDonnees.existe(sauv) else { continue }
+            if EtatDonnees.existe(cible), !contientEncore(cible, empreinte: j.empreintes[chemin]) {
+                // L'app a ecrit apres l'import : son fichier reste, l'original est garde a part.
+                laisses.fichiers.append(chemin)
+                essayer { try conserver(sauv, chemin: chemin, identifiant: j.identifiant) }
+                continue
+            }
             essayer {
                 if EtatDonnees.existe(cible) { try operations.supprimer(cible) }
                 try operations.deplacer(de: sauv, vers: cible)
             }
         }
         // Les fichiers crees, seulement ceux que l'application a mis en place (le remplacement a commence et leur fichier
-        // d'attente est parti).
-        for chemin in j.crees.reversed() where j.phase == .remplacement {
+        // d'attente est parti), et seulement s'ils ont encore le contenu mis en place.
+        for chemin in j.crees.reversed() where j.phase != .preparation {
             let cible = racine.appendingPathComponent(chemin)
             guard !EtatDonnees.existe(attente.appendingPathComponent(chemin)), EtatDonnees.existe(cible) else { continue }
-            essayer { try operations.supprimer(cible) }
+            if contientEncore(cible, empreinte: j.empreintes[chemin]) {
+                essayer { try operations.supprimer(cible) }
+            } else {
+                laisses.fichiers.append(chemin)
+            }
         }
-        // Les dossiers crees, s'ils sont vides, du plus bas au plus haut.
-        for dossier in j.dossiersCrees.reversed() {
+        // Les dossiers crees, s'ils sont vides, du plus bas au plus haut : seulement une fois le remplacement commence (avant,
+        // l'import n'en a cree aucun, ceux qui existent sont a l'app).
+        for dossier in j.dossiersCrees.reversed() where j.phase != .preparation {
             let url = racine.appendingPathComponent(dossier)
             guard let contenu = try? FileManager.default.contentsOfDirectory(atPath: url.path), contenu.isEmpty else { continue }
             essayer { try operations.supprimer(url) }
         }
-        if j.phase == .remplacement { preferences.retirer(j.reglages) }
         if premiereErreur == nil { essayer { try supprimerJournalEtTravail() } }
         // La racine, si l'application l'a creee et qu'elle est de nouveau vide.
-        if premiereErreur == nil, j.racineCreee,
-           let contenu = try? FileManager.default.contentsOfDirectory(atPath: racine.path), contenu.isEmpty {
-            essayer { try operations.supprimer(racine) }
-        }
+        if premiereErreur == nil, j.racineCreee { supprimerRacineSiVide(&premiereErreur) }
         if let erreur = premiereErreur { throw erreur }
+        laisses.fichiers.reverse()
+        return laisses
+    }
+
+    /// Le fichier a-t-il encore le contenu que l'import y a mis ? (Illisible, ou lien, ou dossier : non.)
+    private func contientEncore(_ url: URL, empreinte: String?) -> Bool {
+        guard let empreinte, let actuelle = try? EtatDonnees.empreinte(url) else { return false }
+        return actuelle.taille >= 0 && actuelle.sha256 == empreinte
+    }
+
+    /// Garde l'original d'un fichier que l'app a ecrit depuis l'import, hors du dossier de travail (qui va etre efface).
+    private func conserver(_ sauv: URL, chemin: String, identifiant: UUID) throws {
+        let base = racine.appendingPathComponent(Self.nomConserve, isDirectory: true)
+            .appendingPathComponent(identifiant.uuidString, isDirectory: true)
+        var destination = base.appendingPathComponent(chemin)
+        var i = 1
+        while EtatDonnees.existe(destination) {
+            destination = base.appendingPathComponent("\(chemin).\(i)")
+            i += 1
+        }
+        try operations.creerDossier(destination.deletingLastPathComponent())
+        try operations.deplacer(de: sauv, vers: destination)
+    }
+
+    private func supprimerRacineSiVide(_ erreur: inout (any Error)?) {
+        guard let contenu = try? FileManager.default.contentsOfDirectory(atPath: racine.path), contenu.isEmpty else { return }
+        do { try operations.supprimer(racine) } catch { if erreur == nil { erreur = error } }
     }
 
     /// Le journal part le premier : sans lui, un dossier de travail restant n'est plus qu'un reste a effacer (jamais un
@@ -583,16 +733,27 @@ actor ApplicationImport {
     private func recupererSync() throws -> IssueRecuperation {
         guard EtatDonnees.existe(travail) else { return .rienAFaire }
         guard EtatDonnees.existe(fichierJournal) else {
-            // Arret avant le journal : rien n'a ete deplace.
+            // Arret avant le journal (ou entre la suppression du journal et celle du dossier de travail) : rien n'est a
+            // defaire. Une racine devenue vide est retiree : si l'import l'a creee, il ne la laisse pas ; sinon elle ne
+            // contenait rien, et l'app la recree.
+            var erreur: (any Error)?
             do { try operations.supprimer(travail) } catch {
                 throw ErreurApplication.recuperationImpossible(code: Self.code(error))
             }
+            supprimerRacineSiVide(&erreur)
+            if let erreur { throw ErreurApplication.recuperationImpossible(code: Self.code(erreur)) }
             return .nettoyee
         }
         let journal: JournalApplication
         do {
             journal = try ContratExport.decodeur().decode(JournalApplication.self, from: Data(contentsOf: fichierJournal))
             guard journal.version == JournalApplication.versionCourante else { throw CocoaError(.fileReadCorruptFile) }
+            // Un journal abime mais lisible ne doit jamais faire agir hors du dossier de donnees (ni dans le dossier de
+            // travail lui-meme, ni sur imports.json comme fichier cree).
+            guard journal.chemins.allSatisfy({ ContratExport.cheminEstValide($0)
+                && $0.split(separator: "/").first.map(String.init) != Self.nomTravail }) else {
+                throw CocoaError(.fileReadCorruptFile)
+            }
         } catch {
             throw ErreurApplication.recuperationImpossible(code: Self.code(error))
         }
@@ -600,8 +761,10 @@ actor ApplicationImport {
             nettoyer()
             return .terminee
         }
-        do { try retablir(journal) } catch { throw ErreurApplication.recuperationImpossible(code: Self.code(error)) }
-        return .annulee
+        do {
+            let laisses = try retablir(journal)
+            return laisses.estVide ? .annulee : .annuleeSauf(laisses)
+        } catch { throw ErreurApplication.recuperationImpossible(code: Self.code(error)) }
     }
 
     private static func code(_ erreur: any Error) -> String {
