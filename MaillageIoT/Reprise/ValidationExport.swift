@@ -100,6 +100,39 @@ struct ResumeExport: Equatable, Sendable {
 
     func nombre(_ genre: GenreContenu) -> Int { fichiersParGenre[genre] ?? 0 }
 
+    // Textes du resume : le pluriel suit le catalogue (variations `one` / `other` de chaque cle), jamais un « s » colle.
+
+    /// « 1 fichier », « 2 fichiers ».
+    static func nombreDeFichiers(_ n: Int, locale: Locale) -> String { traduire("\(n) fichiers", locale) }
+
+    /// « 1 réglage repris », « 2 réglages repris ».
+    static func nombreDeReglagesRepris(_ n: Int, locale: Locale) -> String { traduire("\(n) réglages repris", locale) }
+
+    /// « 1 réglage laissé de côté », « 2 réglages laissés de côté ».
+    static func nombreDeReglagesLaissesDeCote(_ n: Int, locale: Locale) -> String {
+        traduire("\(n) réglages laissés de côté", locale)
+    }
+
+    /// « 1 fichier non repris », « 2 fichiers non repris ».
+    static func nombreDeFichiersNonRepris(_ n: Int, locale: Locale) -> String {
+        traduire("\(n) fichiers non repris", locale)
+    }
+
+    /// La ligne d'une famille pour l'ecran de confirmation : « Surnoms : 1 fichier ».
+    func ligne(_ genre: GenreContenu, locale: Locale) -> String {
+        traduire("\(genre.libelle(locale: locale)) : \(Self.nombreDeFichiers(nombre(genre), locale: locale))", locale)
+    }
+
+    func texteReglagesRepris(locale: Locale) -> String { Self.nombreDeReglagesRepris(reglagesRepris, locale: locale) }
+
+    func texteReglagesLaissesDeCote(locale: Locale) -> String {
+        Self.nombreDeReglagesLaissesDeCote(reglagesNonRepris.count, locale: locale)
+    }
+
+    func texteFichiersNonRepris(locale: Locale) -> String {
+        Self.nombreDeFichiersNonRepris(fichiersNonRepris.count, locale: locale)
+    }
+
     init(manifeste: ContratExport.Manifeste, reglages: ContratExport.Reglages) {
         identifiant = manifeste.identifiant
         app = manifeste.app
@@ -171,6 +204,38 @@ struct JournalImports: Codable, Equatable, Sendable {
         let url = dossierDonnees.appendingPathComponent(nomFichier)
         guard FileManager.default.fileExists(atPath: url.path) else { return .vide }
         return try ContratExport.decodeur().decode(JournalImports.self, from: Data(contentsOf: url))
+    }
+
+    /// Nom de la copie d'un journal illisible, quand `imports.json.abime` existe deja.
+    static func nomCopieAbimee(date: Date, rang: Int) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyyMMdd-HHmmss"
+        return "imports-\(f.string(from: date))\(rang > 1 ? "-\(rang)" : "").json.abime"
+    }
+
+    /// Met de cote un `imports.json` illisible (JSON invalide, vide, version inconnue...) : le fichier est renomme en
+    /// `imports.json.abime` (ou `imports-AAAAMMJJ-HHMMSS.json.abime`, suivi d'un rang si besoin, quand ce nom existe
+    /// deja), **jamais supprime ni ecrase**. Ensuite le journal est absent : la validation reprend comme si aucun import
+    /// n'avait eu lieu (un export deja repris pourra etre propose de nouveau, sans danger : le premier import l'emporte
+    /// et la reprise est idempotente fichier par fichier). Renvoie l'emplacement de la copie, ou `nil` quand il n'y a
+    /// rien a mettre de cote : journal absent, ou lisible (un journal valide garde la trace des reprises faites).
+    @discardableResult
+    static func mettreDeCoteImportsAbime(dans dossierDonnees: URL, date: Date = .now) throws -> URL? {
+        let fm = FileManager.default
+        let url = dossierDonnees.appendingPathComponent(nomFichier)
+        guard fm.fileExists(atPath: url.path) else { return nil }
+        if (try? lire(dans: dossierDonnees)) != nil { return nil }
+        var rang = 0
+        while true {
+            let nom = rang == 0 ? "\(nomFichier).abime" : nomCopieAbimee(date: date, rang: rang)
+            let cible = dossierDonnees.appendingPathComponent(nom)
+            rang += 1
+            if fm.fileExists(atPath: cible.path) { continue }
+            try fm.moveItem(at: url, to: cible)
+            return cible
+        }
     }
 }
 
@@ -255,8 +320,9 @@ enum CauseRefus: Error, Equatable, Sendable {
     case tailleFausse(String)
     case empreinteFausse(String)
     case appDifferente
-    /// `imports.json` existe mais ne se lit pas : on ne sait pas si l'export est deja repris.
-    case journalDesImportsIllisible
+    /// `imports.json` existe mais ne se lit pas : on ne sait pas si l'export est deja repris. `chemin` : le fichier, avec
+    /// le dossier de l'app. La cause dit quoi faire (`JournalImports.mettreDeCoteImportsAbime`).
+    case journalDesImportsIllisible(chemin: String)
 
     /// Le message, dans la langue de l'app.
     var message: String { texte(locale: .current) }
@@ -274,7 +340,14 @@ enum CauseRefus: Error, Equatable, Sendable {
         case .appInconnue(let a):
             traduire("Cet export vient d'une app inconnue (« \(affichable(a)) »). Maillage IoT reprend Maillage Thread et Maillage Zigbee.", locale)
         case .versionNonPrise(let app, let version):
-            traduire("La version « \(affichable(version)) » de \(app.nomApp) n'est pas prise en charge : la reprise accepte les versions \(ValidationExport.seriesPrises(de: app, locale: locale)).", locale)
+            switch ValidationExport.sens(de: version, app: app) {
+            case .tropRecente:
+                traduire("La version « \(affichable(version)) » de \(app.nomApp) est plus récente que celles que cette version de Maillage IoT sait reprendre (\(ValidationExport.seriesPrises(de: app, locale: locale))) : mettez Maillage IoT à jour, puis réessayez.", locale)
+            case .tropAncienne:
+                traduire("La version « \(affichable(version)) » de \(app.nomApp) est trop ancienne pour la reprise (versions acceptées : \(ValidationExport.seriesPrises(de: app, locale: locale))) : mettez \(app.nomApp) à jour, puis refaites l'export.", locale)
+            case .inconnue:
+                traduire("La version « \(affichable(version)) » de \(app.nomApp) n'est pas prise en charge : la reprise accepte les versions \(ValidationExport.seriesPrises(de: app, locale: locale)).", locale)
+            }
         case .cheminInvalide(let c):
             traduire("Le chemin « \(affichable(c)) » est invalide ou sort du dossier d'export.", locale)
         case .lienSymbolique(let c):
@@ -303,8 +376,8 @@ enum CauseRefus: Error, Equatable, Sendable {
             traduire("« \(affichable(c)) » n'a pas l'empreinte indiquée par le manifeste : le fichier a été modifié ou abîmé.", locale)
         case .appDifferente:
             traduire("reglages.json vient d'une autre app que celle du manifeste.", locale)
-        case .journalDesImportsIllisible:
-            traduire("Le journal des reprises de Maillage IoT (imports.json) est illisible : impossible de savoir si cet export a déjà été repris.", locale)
+        case .journalDesImportsIllisible(let chemin):
+            traduire("Le journal des reprises de Maillage IoT est illisible (\(affichableChemin(chemin))) : impossible de savoir si cet export a déjà été repris. Mettez ce fichier de côté (il est renommé en imports.json.abime, jamais supprimé), puis recommencez : un export déjà repris pourra être proposé de nouveau, sans danger.", locale)
         }
     }
 }
@@ -335,6 +408,30 @@ enum ValidationExport {
             nombres.append(n)
         }
         return (series[app] ?? []).contains { $0.majeure == nombres[0] && $0.mineure == nombres[1] }
+    }
+
+    /// Pourquoi une version n'est pas prise : plus recente que toutes les series connues (il faut mettre Maillage IoT a
+    /// jour), plus ancienne que toutes (il faut mettre l'ancienne app a jour et refaire l'export), ou autrement (version
+    /// mal formee, ou dans les series mais refusee pour sa forme).
+    enum SensVersion: Equatable, Sendable { case tropRecente, tropAncienne, inconnue }
+
+    /// Le sens du refus d'une version, lu avec indulgence : les deux premiers composants, chiffres de tete seulement
+    /// (`1.5.0-beta` est plus recente que 1.4). Sans serie lisible, ou dans l'intervalle des series : `inconnue`.
+    static func sens(de version: String, app: ContratExport.AppSource) -> SensVersion {
+        let composants = version.split(separator: ".", omittingEmptySubsequences: false)
+        guard composants.count >= 2 else { return .inconnue }
+        func nombre(_ c: Substring) -> Int? {
+            let chiffres = c.prefix { $0.isASCII && $0.isNumber }
+            return chiffres.isEmpty || chiffres.count > 9 ? nil : Int(chiffres)
+        }
+        guard let majeure = nombre(composants[0]), let mineure = nombre(composants[1]),
+              let premiere = series[app]?.first, let derniere = series[app]?.last else { return .inconnue }
+        func avant(_ a: (Int, Int), _ b: (majeure: Int, mineure: Int)) -> Bool {
+            a.0 != b.majeure ? a.0 < b.majeure : a.1 < b.mineure
+        }
+        if avant((majeure, mineure), premiere) { return .tropAncienne }
+        if avant((derniere.majeure, derniere.mineure), (majeure, mineure)) { return .tropRecente }
+        return .inconnue
     }
 
     /// Les series prises d'une app, en texte (`1.3 et 1.4`), pour le message.
@@ -370,10 +467,15 @@ enum ValidationExport {
     }
 
     /// `valider(dossier:imports:)` avec le journal des reprises lu dans le dossier de donnees de Maillage IoT
-    /// (`imports.json`). Absent : aucune reprise. Illisible : refus (`journalDesImportsIllisible`).
+    /// (`imports.json`). Absent : aucune reprise. Illisible : refus (`journalDesImportsIllisible`, avec le chemin du
+    /// fichier) ; `JournalImports.mettreDeCoteImportsAbime` le met de cote pour reprendre comme si aucun import n'avait eu lieu.
     static func valider(dossier: URL, dossierDonnees: URL) -> ResultatValidation {
         let imports: JournalImports
-        do { imports = try JournalImports.lire(dans: dossierDonnees) } catch { return .refuse(.journalDesImportsIllisible) }
+        do {
+            imports = try JournalImports.lire(dans: dossierDonnees)
+        } catch {
+            return .refuse(.journalDesImportsIllisible(chemin: dossierDonnees.appendingPathComponent(JournalImports.nomFichier).path))
+        }
         return valider(dossier: dossier, imports: imports)
     }
 
@@ -441,4 +543,13 @@ private func affichable(_ texte: String) -> String {
         $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
     }))
     return propre.count > 60 ? String(propre.prefix(60)) + "…" : propre
+}
+
+/// Un chemin de fichier de l'app, nettoye comme `affichable` mais coupe au **debut** (jamais la fin : c'est le nom du
+/// fichier qui compte), a 200 caracteres.
+private func affichableChemin(_ chemin: String) -> String {
+    let propre = String(String.UnicodeScalarView(chemin.unicodeScalars.filter {
+        $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
+    }))
+    return propre.count > 200 ? "…" + String(propre.suffix(199)) : propre
 }

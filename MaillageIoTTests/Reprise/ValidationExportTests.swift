@@ -485,7 +485,87 @@ struct ValidationExportTests {
         #expect(throws: (any Error).self) { try JournalImports.lire(dans: racine) }
         // Illisible : on ne sait pas si l'export est deja repris, donc on ne le laisse pas passer.
         let dossier = try ExportsExempleTests.dossier(.maillageThread)
-        #expect(ValidationExport.valider(dossier: dossier, dossierDonnees: racine) == .refuse(.journalDesImportsIllisible))
+        let chemin = racine.appendingPathComponent("imports.json").path
+        let resultat = ValidationExport.valider(dossier: dossier, dossierDonnees: racine)
+        #expect(resultat == .refuse(.journalDesImportsIllisible(chemin: chemin)))
+        // La cause dit ou est le fichier (avec son dossier) et quoi faire.
+        guard case .refuse(let cause) = resultat else { return }
+        for langue in ["fr", "en"] {
+            let texte = cause.texte(locale: Locale(identifier: langue))
+            #expect(texte.contains(chemin), "chemin absent (\(langue)) : \(texte)")
+            #expect(texte.contains("imports.json.abime"), "mise de cote non dite (\(langue)) : \(texte)")
+        }
+    }
+
+    // MARK: Journal des imports abime : mise de cote
+
+    static func dossierDonneesAvecJournal(_ contenu: String?) throws -> URL {
+        let racine = FileManager.default.temporaryDirectory.appendingPathComponent("donnees-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: racine, withIntermediateDirectories: true)
+        if let contenu { try Data(contenu.utf8).write(to: racine.appendingPathComponent("imports.json")) }
+        return racine
+    }
+
+    @Test(arguments: C.AppSource.allCases)
+    func leJournalAbimeMisDeCotePermetDeReprendreCommeSiRienNAvaitEuLieu(app: C.AppSource) throws {
+        let racine = try Self.dossierDonneesAvecJournal("{ pas du JSON")
+        defer { try? FileManager.default.removeItem(at: racine) }
+        let dossier = try ExportsExempleTests.dossier(app)
+        guard case .refuse = ValidationExport.valider(dossier: dossier, dossierDonnees: racine) else { throw Echec("accepte") }
+        let mis = try #require(try JournalImports.mettreDeCoteImportsAbime(dans: racine))
+        #expect(mis.lastPathComponent == "imports.json.abime")
+        #expect(mis.deletingLastPathComponent().path == racine.path)
+        // Le fichier est renomme, jamais supprime ni modifie.
+        #expect(try Data(contentsOf: mis) == Data("{ pas du JSON".utf8))
+        #expect(!FileManager.default.fileExists(atPath: racine.appendingPathComponent("imports.json").path))
+        guard case .acceptee(let resume) = ValidationExport.valider(dossier: dossier, dossierDonnees: racine) else {
+            throw Echec("toujours refuse")
+        }
+        #expect(resume.app == app)
+    }
+
+    @Test
+    func unJournalVideEstMisDeCoteAussi() throws {
+        let racine = try Self.dossierDonneesAvecJournal("")
+        defer { try? FileManager.default.removeItem(at: racine) }
+        let mis = try #require(try JournalImports.mettreDeCoteImportsAbime(dans: racine))
+        #expect(FileManager.default.fileExists(atPath: mis.path))
+        guard case .acceptee = ValidationExport.valider(dossier: try ExportsExempleTests.dossier(.maillageThread),
+                                                        dossierDonnees: racine) else { throw Echec("refuse") }
+    }
+
+    @Test
+    func uneCopieAbimeDejaPresenteNEstJamaisEcrasee() throws {
+        let racine = try Self.dossierDonneesAvecJournal("premier")
+        defer { try? FileManager.default.removeItem(at: racine) }
+        let instant = Date(timeIntervalSince1970: 1_790_000_000)  // 2026-09-21T14:13:20Z
+        let premier = try #require(try JournalImports.mettreDeCoteImportsAbime(dans: racine, date: instant))
+        #expect(premier.lastPathComponent == "imports.json.abime")
+        // Un second journal abime : le nom existe, la copie porte la date.
+        try Data("second".utf8).write(to: racine.appendingPathComponent("imports.json"))
+        let second = try #require(try JournalImports.mettreDeCoteImportsAbime(dans: racine, date: instant))
+        #expect(second.lastPathComponent == "imports-20260921-141320.json.abime")
+        // Un troisieme a la meme seconde : jamais le meme nom.
+        try Data("troisieme".utf8).write(to: racine.appendingPathComponent("imports.json"))
+        let troisieme = try #require(try JournalImports.mettreDeCoteImportsAbime(dans: racine, date: instant))
+        #expect(Set([premier, second, troisieme].map(\.lastPathComponent)).count == 3)
+        #expect(try Data(contentsOf: premier) == Data("premier".utf8))
+        #expect(try Data(contentsOf: second) == Data("second".utf8))
+        #expect(try Data(contentsOf: troisieme) == Data("troisieme".utf8))
+    }
+
+    @Test
+    func unJournalLisibleOuAbsentNEstPasMisDeCote() throws {
+        // Seul un journal illisible se met de cote : un journal valide garde la trace des reprises deja faites.
+        let valide = try JournalImports(imports: [ImportRepris(identifiant: UUID(), app: .maillageThread, versionApp: "1.4.0",
+                                                               date: Date(timeIntervalSince1970: 1_790_000_000))]).donnees()
+        let racine = try Self.dossierDonneesAvecJournal(String(decoding: valide, as: UTF8.self))
+        defer { try? FileManager.default.removeItem(at: racine) }
+        #expect(try JournalImports.mettreDeCoteImportsAbime(dans: racine) == nil)
+        #expect(try Data(contentsOf: racine.appendingPathComponent("imports.json")) == valide)
+        let sans = try Self.dossierDonneesAvecJournal(nil)
+        defer { try? FileManager.default.removeItem(at: sans) }
+        #expect(try JournalImports.mettreDeCoteImportsAbime(dans: sans) == nil)
     }
 
     @Test
@@ -518,7 +598,8 @@ struct ValidationExportTests {
         .cheminInvalide("../x"), .lienSymbolique("x"), .empreinteInvalide("x"), .tailleInvalide("x"),
         .cheminEnDouble("x"), .nomReserve("manifeste.json"), .reglagesAbsents, .reglagesIllisibles(.champManquant("format")),
         .fichierManquant("x"), .fichierEnTrop("x"), .fichierInconnu("x"), .tailleFausse("x"), .empreinteFausse("x"),
-        .appDifferente, .journalDesImportsIllisible,
+        .appDifferente, .journalDesImportsIllisible(chemin: "/donnees/imports.json"),
+        .versionNonPrise(app: .maillageZigbee, version: "1.0.0"), .versionNonPrise(app: .maillageThread, version: "1.4.0-beta"),
     ]
 
     @Test(arguments: causes)
@@ -589,5 +670,94 @@ struct ValidationExportTests {
         #expect(DetailIllisible(contrat: "valeur invalide") == .valeurInvalide(nil))
         #expect(DetailIllisible(contrat: "lecture impossible") == .lectureImpossible)
         #expect(DetailIllisible(contrat: "quelque chose de neuf") == .autre("quelque chose de neuf"))
+    }
+
+    // MARK: Version trop recente ou trop ancienne : que faire
+
+    @Test(arguments: [("1.5.0", C.AppSource.maillageThread), ("2.0.0", .maillageThread), ("1.3.0", .maillageZigbee),
+                      ("1.3", .maillageZigbee), ("10.0", .maillageZigbee)])
+    func uneVersionTropRecenteInviteAMettreAJourMaillageIoT(version: String, app: C.AppSource) {
+        let cause = CauseRefus.versionNonPrise(app: app, version: version)
+        #expect(ValidationExport.sens(de: version, app: app) == .tropRecente)
+        let fr = cause.texte(locale: Locale(identifier: "fr"))
+        let en = cause.texte(locale: Locale(identifier: "en"))
+        #expect(fr.contains("mettez Maillage IoT à jour"), "\(fr)")
+        #expect(en.contains("Update Maillage IoT"), "\(en)")
+        #expect(!fr.contains("refaites l'export") && !en.contains("export again"))
+        #expect(fr.contains(version) && fr.contains(app.nomApp))
+    }
+
+    @Test(arguments: [("1.2.0", C.AppSource.maillageThread), ("1.0.0", .maillageThread), ("0.9", .maillageThread),
+                      ("1.0.9", .maillageZigbee), ("0.1.0", .maillageZigbee)])
+    func uneVersionTropAncienneInviteAMettreAJourLAncienneApp(version: String, app: C.AppSource) {
+        let cause = CauseRefus.versionNonPrise(app: app, version: version)
+        #expect(ValidationExport.sens(de: version, app: app) == .tropAncienne)
+        let fr = cause.texte(locale: Locale(identifier: "fr"))
+        let en = cause.texte(locale: Locale(identifier: "en"))
+        #expect(fr.contains("mettez \(app.nomApp) à jour"), "\(fr)")
+        #expect(en.contains("Update \(app.nomApp)"), "\(en)")
+        #expect(!fr.contains("mettez Maillage IoT"), "\(fr)")
+        #expect(fr.contains(version))
+    }
+
+    @Test(arguments: ["", "abc", "1.4.0-beta", " 1.4.0", "v1.3.0", "1.03.0", "1"])
+    func uneVersionIllisibleOuDansLesSeriesPriseNeDitPasDeMettreAJour(version: String) {
+        #expect(ValidationExport.sens(de: version, app: .maillageThread) == .inconnue)
+        let fr = CauseRefus.versionNonPrise(app: .maillageThread, version: version).texte(locale: Locale(identifier: "fr"))
+        #expect(!fr.contains("à jour"), "\(fr)")
+        #expect(fr.contains("1.3") && fr.contains("1.4"))
+    }
+
+    @Test
+    func laVersionTropRecenteDeBoutEnBout() throws {
+        let copie = try Copie(.maillageThread)
+        try copie.modifierManifeste { $0["versionApp"] = "1.5.0" }
+        let cause = try Self.refus(copie)
+        #expect(cause == .versionNonPrise(app: .maillageThread, version: "1.5.0"))
+        #expect(cause.texte(locale: Locale(identifier: "fr")).contains("mettez Maillage IoT à jour"))
+    }
+
+    // MARK: Pluriels du resume
+
+    @Test(arguments: [(0, "0 fichier", "0 files"), (1, "1 fichier", "1 file"), (2, "2 fichiers", "2 files"),
+                      (12, "12 fichiers", "12 files")])
+    func lesFichiersDuResumeSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
+        #expect(ResumeExport.nombreDeFichiers(n, locale: Locale(identifier: "fr")) == fr)
+        #expect(ResumeExport.nombreDeFichiers(n, locale: Locale(identifier: "en")) == en)
+    }
+
+    @Test(arguments: [(1, "1 réglage repris", "1 setting taken over"), (2, "2 réglages repris", "2 settings taken over")])
+    func lesReglagesReprisSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
+        #expect(ResumeExport.nombreDeReglagesRepris(n, locale: Locale(identifier: "fr")) == fr)
+        #expect(ResumeExport.nombreDeReglagesRepris(n, locale: Locale(identifier: "en")) == en)
+    }
+
+    @Test(arguments: [(1, "1 réglage laissé de côté", "1 setting left out"),
+                      (2, "2 réglages laissés de côté", "2 settings left out")])
+    func lesReglagesLaissesDeCoteSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
+        #expect(ResumeExport.nombreDeReglagesLaissesDeCote(n, locale: Locale(identifier: "fr")) == fr)
+        #expect(ResumeExport.nombreDeReglagesLaissesDeCote(n, locale: Locale(identifier: "en")) == en)
+    }
+
+    @Test(arguments: [(1, "1 fichier non repris", "1 file not taken over"), (3, "3 fichiers non repris", "3 files not taken over")])
+    func lesFichiersNonReprisSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
+        #expect(ResumeExport.nombreDeFichiersNonRepris(n, locale: Locale(identifier: "fr")) == fr)
+        #expect(ResumeExport.nombreDeFichiersNonRepris(n, locale: Locale(identifier: "en")) == en)
+    }
+
+    @Test(arguments: C.AppSource.allCases)
+    func lesLignesDuResumeUtilisentLesComptesDeLExport(app: C.AppSource) throws {
+        guard case .acceptee(let resume) = ValidationExport.valider(dossier: try ExportsExempleTests.dossier(app), imports: .vide) else {
+            throw Echec("refuse")
+        }
+        let fr = Locale(identifier: "fr")
+        #expect(resume.ligne(.surnoms, locale: fr) == "Surnoms : 1 fichier")
+        #expect(resume.ligne(.journal, locale: fr) == "Journal des événements : 2 fichiers")
+        #expect(resume.ligne(.journal, locale: Locale(identifier: "en")) == "Event log: 2 files")
+        #expect(resume.texteReglagesRepris(locale: fr) == ResumeExport.nombreDeReglagesRepris(resume.reglagesRepris, locale: fr))
+        #expect(resume.texteReglagesLaissesDeCote(locale: fr)
+                == ResumeExport.nombreDeReglagesLaissesDeCote(resume.reglagesNonRepris.count, locale: fr))
+        #expect(resume.texteFichiersNonRepris(locale: fr)
+                == ResumeExport.nombreDeFichiersNonRepris(resume.fichiersNonRepris.count, locale: fr))
     }
 }

@@ -801,6 +801,86 @@
         }
       }
     },
+    "%lld fichiers" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld files"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichier"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichiers"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld fichiers non repris" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld file not taken over"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld files not taken over"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichier non repris"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichiers non repris"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld inconnus" : {
       "localizations" : {
         "en" : {
@@ -989,6 +1069,86 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$lld routeurs · %2$lld appareils finaux · %3$lld liens radio"
+          }
+        }
+      }
+    },
+    "%lld réglages laissés de côté" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld setting left out"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld settings left out"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglage laissé de côté"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglages laissés de côté"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld réglages repris" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld setting taken over"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld settings taken over"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglage repris"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réglages repris"
+                }
+              }
+            }
           }
         }
       }
@@ -3761,6 +3921,38 @@
         }
       }
     },
+    "La version « %@ » de %@ est plus récente que celles que cette version de Maillage IoT sait reprendre (%@) : mettez Maillage IoT à jour, puis réessayez." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version “%1$@” of %2$@ is newer than the versions this version of Maillage IoT can import (%3$@). Update Maillage IoT, then try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version « %1$@ » de %2$@ est plus récente que celles que cette version de Maillage IoT sait reprendre (%3$@) : mettez Maillage IoT à jour, puis réessayez."
+          }
+        }
+      }
+    },
+    "La version « %@ » de %@ est trop ancienne pour la reprise (versions acceptées : %@) : mettez %@ à jour, puis refaites l'export." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version “%1$@” of %2$@ is too old to import (accepted versions: %3$@). Update %4$@, then export again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version « %1$@ » de %2$@ est trop ancienne pour la reprise (versions acceptées : %3$@) : mettez %4$@ à jour, puis refaites l'export."
+          }
+        }
+      }
+    },
     "La version « %@ » de %@ n'est pas prise en charge : la reprise accepte les versions %@." : {
       "localizations" : {
         "en" : {
@@ -3921,18 +4113,18 @@
         }
       }
     },
-    "Le journal des reprises de Maillage IoT (imports.json) est illisible : impossible de savoir si cet export a déjà été repris." : {
+    "Le journal des reprises de Maillage IoT est illisible (%@) : impossible de savoir si cet export a déjà été repris. Mettez ce fichier de côté (il est renommé en imports.json.abime, jamais supprimé), puis recommencez : un export déjà repris pourra être proposé de nouveau, sans danger." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The Maillage IoT import log (imports.json) is unreadable, so there is no way to know whether this export was already imported."
+            "value" : "The Maillage IoT import log is unreadable (%@), so there is no way to know whether this export was already imported. Set this file aside (it is renamed to imports.json.abime, never deleted), then start again: an export that was already imported can be offered again, which is safe."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le journal des reprises de Maillage IoT (imports.json) est illisible : impossible de savoir si cet export a déjà été repris."
+            "value" : "Le journal des reprises de Maillage IoT est illisible (%@) : impossible de savoir si cet export a déjà été repris. Mettez ce fichier de côté (il est renommé en imports.json.abime, jamais supprimé), puis recommencez : un export déjà repris pourra être proposé de nouveau, sans danger."
           }
         }
       }
