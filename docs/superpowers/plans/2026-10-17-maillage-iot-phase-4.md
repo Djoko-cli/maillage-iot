@@ -44,10 +44,10 @@
 - Create: `MaillageCoeur/Reprise/ContratExport.swift` (manifeste version 1 : identifiant d'export, app source et version, date, fichiers avec chemin relatif, taille, empreinte SHA-256 ; `reglages.json` : dictionnaire typé des réglages repris ; les noms des fichiers connus par app source), `outils/verifier-contrats.sh` (compare `ContratExport.swift` et `ProtocolePasseur.swift` aux autres dépôts s'ils sont présents, par `cmp`).
 - Test: `MaillageCoeurTests/ContratExportTests.swift`.
 
-- [ ] **Step 1: RED** — aller-retour du manifeste ; refus d'une version inconnue ; refus d'un chemin absolu ou qui sort du dossier ; empreinte SHA-256 d'un fichier connu.
-- [ ] **Step 2: GREEN** — écrire le contrat (Foundation et CryptoKit seulement, autonome) et le script.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reprise : contrat d'export commun aux trois depots ».
+- [x] **Step 1: RED** — aller-retour du manifeste ; refus d'une version inconnue ; refus d'un chemin absolu ou qui sort du dossier ; empreinte SHA-256 d'un fichier connu.
+- [x] **Step 2: GREEN** — écrire le contrat (Foundation et CryptoKit seulement, autonome) et le script.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reprise : contrat d'export commun aux trois depots ».
 
 ---
 
