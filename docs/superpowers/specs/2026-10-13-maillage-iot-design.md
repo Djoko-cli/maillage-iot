@@ -329,8 +329,7 @@ Zigbee/
     journal reçoivent leur protocole ;
   - les fichiers propres à un module (historique de la sonde, identités, adresses, noms du pont, appariements) sont
     rangés dans `Thread/` ou `Zigbee/` sans changement de clé ;
-  - `noms.json` de Thread devient `releve-maison.json` : ses identifiants de nœud reçoivent le préfixe, jamais
-    l'`id` HomeKit des accessoires ;
+  - `noms.json` de Thread devient `releve-maison.json`, sans préfixe (6.8, 3) ;
   - `pieces-routeurs.json` (des deux apps) devient `pieces-noeuds.json` ;
   - l'historique de plus de 90 jours est laissé de côté ;
   - les réglages repris sont rangés sous leurs nouvelles clés (2.3).
@@ -628,6 +627,27 @@ Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
 5. L'onglet d'un protocole éteint est grisé, sauf « Activer ce protocole » (règle unique pour les deux sondes).
 6. Mesures : avant de toucher la vue, la référence de l'étape 1 (Thread seul) est relevée sur `e32f3a5` dans une
    copie de travail à part ; l'outil mesure l'ouverture de la vue et le zoom ; la mesure finale la compare.
+
+### 6.8 Ajustements du 17/10 pour la phase 4 (reprise)
+
+D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`), proposés avec le plan de la phase 4 :
+1. **`ContratExport.swift` vit dans le cœur**, autonome comme `ProtocolePasseur.swift` (Foundation seul), recopié à
+   l'octet dans les deux anciennes apps ; un script de contrôle le compare par `cmp` quand les autres dépôts sont là.
+2. **Les lignes JSONL ne changent pas** (journal et historiques) : le manifeste porte la version du format ; seule
+   exception, chaque ligne du journal de Zigbee 1.1.1 reçoit `"protocole":"zigbee"` (sans quoi elle serait lue comme
+   Thread).
+3. **`noms.json` de Thread devient `releve-maison.json` sans préfixe** (précise 4.3 : le relevé ne contient aucun
+   identifiant de nœud du graphe). Le relevé est un cache du démon : celui déjà présent est gardé, sinon le plus
+   récent des imports.
+4. **Fichiers communs** : `surnoms.json` (version 1) et `pieces-noeuds.json` (version 2) sont écrits par l'import
+   avec leurs clés préfixées, jamais déposés tels quels ; `positions-pieces.json` se fusionne en profondeur (maison,
+   étage, pièce) ; le premier import l'emporte, le second ajoute ce qui manque.
+5. **L'historique de plus de 90 jours** est écarté par fichier mensuel entier (comme la purge) ; le journal importé
+   est ajouté et trié à la lecture.
+6. **Après un import réussi, l'app se relance d'elle-même** (ses modules lisent leurs fichiers au lancement).
+7. **La répétition** se fait avec une identité de test (« Maillage IoT Répétition », identifiant, conteneur et
+   services de trousseau à part, sans Sparkle, jamais publiée), sur une copie des vraies données.
+8. Les réglages `liensMontres` et `voisinsALaSelection` restent propres à Zigbee (`zigbee.`), comme le code (précise 2.3).
 
 ## 7. Risques et parades
 
