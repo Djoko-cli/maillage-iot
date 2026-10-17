@@ -1,0 +1,3 @@
+{"constate":true,"date":"2026-10-15T07:59:00.000Z","details":{},"gravite":"info","type":"surveillanceDemarree"}
+{"constate":false,"date":"2026-10-15T08:05:00.000Z","details":{"partition":"0000000A"},"gravite":"info","reseau":"0000000000000000","sujet":{"id":"0000000000000002","nom":"Prise 1"},"type":"appareilNouveau"}
+{"constate":false,"date":"2026-10-16T09:00:00.000Z","details":{},"gravite":"alerte","reseau":"0000000000000000","sujet":{"id":"Routeur 2","nom":"Routeur B"},"type":"routeurDisparu"}

@@ -150,8 +150,8 @@ D'après la spec 4.3, 4.4, 6.8 (relance).
 
 Fait dans leurs dépôts par les sessions Thread (`maillage-thread`, version 1.4.0, non publiée avant la phase 5) et Zigbee (`maillage-zigbee`, version 1.2.0), sur la spec 4.1-4.2 et le `ContratExport.swift` de la tâche 1, recopié à l'octet.
 
-- [ ] **Step 1: Envoyer** — à chaque session : la spec 4.1-4.2, le contrat, l'inventaire de son app (sans valeur réelle), les règles d'anonymat ; chacune écrit l'export (menu et bandeau « … devient Maillage IoT », « Exporter pour Maillage IoT… », dossier choisi par un panneau, « Ne plus ouvrir à l'ouverture de session ») et produit dans ses tests un export d'exemple anonymisé.
-- [ ] **Step 2: Intégrer** — remplacer les exports provisoires de la tâche 2 par les leurs ; les tests des tâches 3 à 6 passent sans changer d'attente (sinon : écart entre le format écrit et le format lu, à corriger côté export ou côté import).
+- [x] **Step 1: Envoyer** — à chaque session : la spec 4.1-4.2, le contrat, l'inventaire de son app (sans valeur réelle), les règles d'anonymat ; chacune écrit l'export (menu et bandeau « … devient Maillage IoT », « Exporter pour Maillage IoT… », dossier choisi par un panneau, « Ne plus ouvrir à l'ouverture de session ») et produit dans ses tests un export d'exemple anonymisé.
+- [x] **Step 2: Intégrer** — ajouter leurs exports à côté des exports provisoires de la tâche 2, qui restent (décision du 17/10 : les tests des tâches 3 à 6 comptent sur leur contenu ; `outils/recopier-exports-anciennes-apps.sh`, `ExportsAnciennesAppsTests`) ; les tests des tâches 3 à 6 passent sans changer d'attente (sinon : écart entre le format écrit et le format lu, à corriger côté export ou côté import).
 - [ ] **Step 3: Contrôler** — `outils/verifier-contrats.sh` : `ContratExport.swift` identique dans les trois dépôts.
 - [ ] **Step 4: Commit** — « Reprise : exports d'exemple des anciennes apps, contrat identique dans les trois depots ».
 

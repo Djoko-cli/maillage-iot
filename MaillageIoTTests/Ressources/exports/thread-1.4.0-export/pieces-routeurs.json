@@ -1,0 +1,13 @@
+{
+  "appareils" : {
+    "Maison 1" : {
+      "0000000000000002" : "Pièce 2"
+    }
+  },
+  "maisons" : {
+    "Maison 1" : {
+      "Routeur 1" : "Pièce 1"
+    }
+  },
+  "version" : 1
+}

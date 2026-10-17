@@ -14,7 +14,7 @@ import MaillageCoeur
 ///   `MaillageIoTTests/Ressources/exports/` ;
 /// - `ExportsExempleTests` (cible MaillageIoTTests) ecrit les memes dossiers dans un dossier temporaire et les compare
 ///   octet par octet aux dossiers commites : un ecart d'un seul octet fait echouer le test.
-/// Ces exports seront remplaces a la tache 9 par ceux que produisent les anciennes apps.
+/// Ces exports restent (tache 9) ; ceux que produisent les anciennes apps s'ajoutent a cote (outils/recopier-exports-anciennes-apps.sh).
 enum GenerateurExportsExemple {
     typealias C = ContratExport
 

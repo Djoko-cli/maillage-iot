@@ -2,13 +2,29 @@
 
 Deux dossiers d'export au contrat v1 (`MaillageCoeur/Reprise/ContratExport.swift`), aux formats que Maillage Thread 1.3.0 et
 Maillage Zigbee 1.1.1 écrivent, avec des **valeurs inventées seulement** (identifiants comme `0000000000000001`,
-`SONDE-T1`, « Pièce 1 », « Routeur 1 »). Ils servent aux tests de validation, de conversion et d'import. Ils seront
-**remplacés à la tâche 9** par les exports que produisent les anciennes apps ; les attentes des tests ne doivent pas changer.
+`SONDE-T1`, « Pièce 1 », « Routeur 1 »). Ils servent aux tests de validation, de conversion et d'import. Les exports que produisent
+les anciennes apps (tâche 9) s'**ajoutent** à côté, sans les remplacer (voir ci-dessous) : les attentes des tests ne changent pas.
 
 | Dossier | App source | Version |
 |---|---|---|
 | `thread-1.3.0/` | Maillage Thread | 1.3.0 |
 | `zigbee-1.1.1/` | Maillage Zigbee | 1.1.1 |
+| `thread-1.4.0-export/` | Maillage Thread | 1.4.0 (écrit par l'app elle-même) |
+| `zigbee-1.2.0-export/` | Maillage Zigbee | 1.2.0 (écrit par l'app elle-même) |
+
+## Exports écrits par les anciennes apps (tâche 9)
+
+`thread-1.4.0-export/` et `zigbee-1.2.0-export/` sont des **copies à l'octet** des exports d'exemple que Maillage Thread 1.4.0 et
+Maillage Zigbee 1.2.0 produisent dans leurs propres tests (`docs/export-exemple/` de chaque dépôt, valeurs inventées). On ne les
+modifie jamais ici : `ORIGINE.md` dit de quel dépôt et de quel commit ils viennent, et
+
+```bash
+bash outils/recopier-exports-anciennes-apps.sh              # recopie depuis les dépôts voisins, vérifie les empreintes
+bash outils/recopier-exports-anciennes-apps.sh --verifier   # ne modifie rien : les copies sont-elles à jour ?
+```
+
+les met à jour (`DEPOT_THREAD=` / `DEPOT_ZIGBEE=` pour d'autres emplacements). Le test `ExportsAnciennesAppsTests` les fait passer par
+toute la chaîne : contrat, validation, conversion, application, réimport. Les dates de ces exports sont aussi le 2026-10-17 12:00 UTC.
 
 ## Date de référence fixe
 
