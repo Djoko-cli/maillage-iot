@@ -12,9 +12,15 @@
 # mais ne change pas le code) ; CONTRATS_AVERTIR_SEULEMENT=0 outils/tester.sh le rend bloquant (copie differente = code 1).
 # Avant de compiler, lance la garde des deux sondes (outils/verifier-sondes.sh) : etat de sonde ecrit hors de son pilote, port
 # ouvert hors du fichier +USB ; un defaut arrete la porte (code 1) avant toute compilation.
+# Puis la garde d'identite (outils/verifier_identite.py) : aucun litteral de service de trousseau ou d'identifiant de l'app
+# reelle dans le code (hors IdentiteApp et des cas listes), sinon l'app de repetition ecrirait dans le trousseau de l'app reelle
+# sans qu'aucun test le voie (ils tournent dans l'app reelle) ; meme arret (code 1) avant toute compilation.
+# Porte complete (sans argument) : apres les tests, elle construit aussi l'app de repetition (outils/repetition.sh construire :
+# schema MaillageIoTRepetition, produit controle, rien lance) ; l'autre classe MisesAJour (#else) doit suivre la vraie.
 set -u
 cd "$(dirname "$0")/.."
 bash outils/verifier-sondes.sh || exit 1
+python3 -I outils/verifier_identite.py || exit 1
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot}
 JOURNAL=${TMPDIR:-/tmp}/maillage-iot-tests.log
 xcodegen generate --quiet || exit 1
@@ -55,6 +61,11 @@ if [ "$CODE" -eq 0 ] && [ $# -gt 0 ]; then
       done
     fi
   fi
+fi
+# Porte complete : l'app de repetition se construit aussi (construction et controle du produit seulement, aucun lancement).
+if [ $# -eq 0 ]; then
+  echo "--- app de repetition (outils/repetition.sh construire) ---"
+  bash outils/repetition.sh construire || CODE=1
 fi
 # Etape informative (apres le bilan des tests, pour rester lisible) ; seule une copie DIFFERENTE peut la faire echouer,
 # et seulement hors du mode avertissement.

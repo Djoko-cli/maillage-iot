@@ -3,7 +3,8 @@
 # (fr.djoko.maillage.iot.repetition : conteneur, preferences, notifications, ouverture de session et services de trousseau
 # `.repetition` a part, sans Sparkle, jamais publiee). Elle se lance A COTE de l'app reelle, qu'elle ne touche pas.
 #
-#   bash outils/repetition.sh construire    icone (derivee de celle de l'app), projet, compilation Debug, controle du produit
+#   bash outils/repetition.sh construire    icone (derivee de celle de l'app, si besoin), projet, compilation Debug, controle du produit
+#   bash outils/repetition.sh icone         l'icone seule : regeneree si elle manque ou si sa source change, sinon inchangee
 #   bash outils/repetition.sh lancer [-demo]   construit si besoin, puis ouvre la repetition (l'app reelle reste ouverte) ;
 #                                           `-demo` : la demo de l'app (rien lu ni ecrit : ni ouverture de session inscrite,
 #                                           ni notification demandee, ni sonde cherchee), pour verifier le lancement sans
@@ -26,11 +27,27 @@ JOURNAL=${TMPDIR:-/tmp}/maillage-iot-repetition.log
 
 echec() { echo "echec : $*" >&2; exit 1; }
 
+# Empreinte des sources de l'icone (celle de l'app et le generateur) : l'icone de repetition, commitee, ne se regenere que si
+# elle manque ou si cette empreinte change ; sinon la construction ne touche a aucun fichier suivi (ImageIO peut ecrire
+# d'autres octets d'une version de macOS a l'autre : une regeneration inutile salirait l'arbre).
+EMPREINTE=outils/icone/repetition.empreinte
+empreinte_sources() {
+  cat MaillageIoT/Ressources/AppIcon.icon/icon.json MaillageIoT/Ressources/AppIcon.icon/Assets/constellation.png \
+    outils/icone/generer-repetition.swift | shasum -a 256 | cut -d' ' -f1
+}
+
 icone() {
   [ -f outils/icone/generer-repetition.swift ] || echec "outils/icone/generer-repetition.swift manque"
   [ -f MaillageIoT/Ressources/AppIcon.icon/Assets/constellation.png ] || echec "l'icone de l'app manque (MaillageIoT/Ressources/AppIcon.icon)"
+  local courante; courante=$(empreinte_sources)
+  if [ -s "$ICONE/Assets/constellation.png" ] && [ -s "$ICONE/icon.json" ] && [ "$(cat "$EMPREINTE" 2>/dev/null)" = "$courante" ]; then
+    echo "icone de repetition a jour (inchangee)"
+    return 0
+  fi
   swift outils/icone/generer-repetition.swift > /dev/null || echec "l'icone de repetition n'a pas pu etre derivee"
   [ -s "$ICONE/Assets/constellation.png" ] && [ -s "$ICONE/icon.json" ] || echec "l'icone de repetition manque ($ICONE)"
+  echo "$courante" > "$EMPREINTE"
+  echo "icone de repetition regeneree (source changee : a commiter)"
 }
 
 # Le produit est bien l'identite de repetition, sans Sparkle, avec son icone.
@@ -98,8 +115,9 @@ etat() {
 
 case "${1:-}" in
   construire) construire ;;
+  icone) icone ;;
   lancer) shift; lancer "$@" ;;
   quitter) quitter ;;
   etat) etat ;;
-  *) echo "usage : bash outils/repetition.sh construire|lancer|quitter|etat" >&2; exit 2 ;;
+  *) echo "usage : bash outils/repetition.sh construire|icone|lancer|quitter|etat" >&2; exit 2 ;;
 esac

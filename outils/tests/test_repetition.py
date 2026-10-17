@@ -3,6 +3,7 @@ declaration de la cible dans project.yml (sans Sparkle, identifiant et suffixe a
 
   python3 -m unittest discover -s outils/tests
 """
+import hashlib
 import os
 import plistlib
 import subprocess
@@ -67,9 +68,67 @@ class GardeDePublication(unittest.TestCase):
         os.makedirs(os.path.join(d, "Vide.app"))
         self.assertEqual(lancer(os.path.join(d, "Vide.app")).returncode, 2)
 
+    def test_un_chemin_qui_n_existe_pas_n_est_jamais_publiable(self):
+        # La garde ne doit pas echouer ouvert : un chemin mal tape ou pas encore construit sort en code 2, avec sa cause.
+        d = tempfile.mkdtemp()
+        for cible in (os.path.join(d, "absent", "Maillage IoT Repetition.app"), os.path.join(d, "Absent.app"),
+                      os.path.join(d, "Info.plist"), "Maillage IoT Repetition", "dossier/sans/app", "x.app"):
+            r = lancer(cible)
+            self.assertEqual(r.returncode, 2, cible)
+            self.assertNotIn("publiable", r.stdout, cible)
+            self.assertIn("illisible", r.stderr, cible)
+
+    def test_une_app_illisible_ou_sans_identifiant_n_est_pas_publiable(self):
+        # Info.plist qui n'est pas un plist, ou sans CFBundleIdentifier : code 2, jamais « publiable ».
+        faux = app({})
+        with open(os.path.join(faux, "Contents", "Info.plist"), "wb") as f:
+            f.write(b"ceci n'est pas un plist")
+        self.assertEqual(lancer(faux).returncode, 2)
+        with open(os.path.join(faux, "Contents", "Info.plist"), "wb") as f:
+            f.write(b'<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key>')
+        self.assertEqual(lancer(faux).returncode, 2)
+        self.assertEqual(lancer(app({"CFBundleName": "Maillage IoT"})).returncode, 2)
+        self.assertEqual(lancer(app({"CFBundleIdentifier": ""})).returncode, 2)
+        plist = os.path.join(tempfile.mkdtemp(), "Info.plist")
+        with open(plist, "wb") as f:
+            plistlib.dump({"CFBundleName": "Maillage IoT"}, f)
+        self.assertEqual(lancer(plist).returncode, 2)
+
+    def test_seul_un_identifiant_nu_explicite_se_lit_comme_identifiant(self):
+        self.assertEqual(lancer("fr.djoko.maillage.iot").returncode, 0)
+        self.assertEqual(lancer("fr.djoko.maillage.iot.Repetition").returncode, 1)
+        # Pas une forme d'identifiant : espace, « / », « .app », un seul segment.
+        for cible in ("fr.djoko maillage", "a/b.c", "app", "fr.djoko.maillage.iot.app"):
+            self.assertEqual(lancer(cible).returncode, 2, cible)
+
     def test_le_controle_inverse_de_repetition_sh(self):
         self.assertEqual(lancer("--verifier-est-repetition", "fr.djoko.maillage.iot.repetition").returncode, 0)
         self.assertEqual(lancer("--verifier-est-repetition", "fr.djoko.maillage.iot").returncode, 1)
+
+
+class IconeDeRepetition(unittest.TestCase):
+    """La construction ne salit jamais l'arbre : l'icone de repetition ne se regenere que si elle manque ou si sa source change."""
+    SOURCES = ("MaillageIoT/Ressources/AppIcon.icon/icon.json", "MaillageIoT/Ressources/AppIcon.icon/Assets/constellation.png",
+               "outils/icone/generer-repetition.swift")
+    EMPREINTE = "outils/icone/repetition.empreinte"
+    PNG = "MaillageIoTRepetition/Ressources/AppIconRepetition.icon/Assets/constellation.png"
+
+    def test_l_empreinte_suit_les_sources_de_l_icone(self):
+        # Une source changee sans icone regeneree (ou l'inverse) fait echouer la porte, au lieu d'une icone perimee.
+        h = hashlib.sha256()
+        for chemin in self.SOURCES:
+            with open(os.path.join(RACINE, chemin), "rb") as f:
+                h.update(f.read())
+        with open(os.path.join(RACINE, self.EMPREINTE)) as f:
+            self.assertEqual(f.read().strip(), h.hexdigest())
+
+    def test_une_icone_a_jour_n_est_pas_reecrite(self):
+        png = os.path.join(RACINE, self.PNG)
+        avant = (os.stat(png).st_mtime_ns, os.path.getsize(png))
+        r = subprocess.run(["bash", os.path.join(RACINE, "outils", "repetition.sh"), "icone"], capture_output=True, text=True, cwd=RACINE)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("a jour", r.stdout)
+        self.assertEqual((os.stat(png).st_mtime_ns, os.path.getsize(png)), avant)
 
 
 @unittest.skipIf(yaml is None, "PyYAML absent")
@@ -98,6 +157,21 @@ class CibleDeRepetition(unittest.TestCase):
         self.assertNotEqual(droits, self.reelle["settings"]["base"]["CODE_SIGN_ENTITLEMENTS"])
         with open(os.path.join(RACINE, droits), "rb") as f:
             self.assertNotIn("com.apple.security.temporary-exception.mach-lookup.global-name", plistlib.load(f))
+
+    def test_la_cible_reelle_garde_son_identite_et_sparkle(self):
+        # Rien n'a change pour l'app publiee : identifiant, Sparkle (paquet, flux, cle, droits) et icone.
+        base = self.reelle["settings"]["base"]
+        self.assertEqual(base["PRODUCT_BUNDLE_IDENTIFIER"], "fr.djoko.maillage.iot")
+        self.assertEqual(base["ASSETCATALOG_COMPILER_APPICON_NAME"], "AppIcon")
+        self.assertIn({"package": "Sparkle"}, self.reelle["dependencies"])
+        self.assertIn("Sparkle", self.projet["packages"])
+        infos = self.reelle["info"]["properties"]
+        for cle in ("SUFeedURL", "SUPublicEDKey", "SUEnableAutomaticChecks"):
+            self.assertIn(cle, infos)
+        self.assertNotIn(refuser_repetition.CLE_SUFFIXE, infos)
+        self.assertNotIn("REPETITION", base.get("SWIFT_ACTIVE_COMPILATION_CONDITIONS", ""))
+        with open(os.path.join(RACINE, base["CODE_SIGN_ENTITLEMENTS"]), "rb") as f:
+            self.assertIn("com.apple.security.temporary-exception.mach-lookup.global-name", plistlib.load(f))
 
     def test_son_icone_n_est_pas_celle_de_l_app(self):
         self.assertEqual(self.cible["settings"]["base"]["ASSETCATALOG_COMPILER_APPICON_NAME"], "AppIconRepetition")

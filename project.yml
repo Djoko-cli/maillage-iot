@@ -143,7 +143,7 @@ targets:
   # en propre : l'identifiant (donc le conteneur du bac a sable, les preferences, les notifications et l'ouverture de session),
   # le suffixe `.repetition` des services de trousseau ecrits (MaillageSuffixeServices, lu par IdentiteApp), l'icone, les droits
   # et l'Info.plist. Sans Sparkle : aucun cadre lie, aucune cle SU* (la condition de compilation REPETITION donne une classe
-  # MisesAJour inerte). JAMAIS publiee : outils/refuser-repetition.sh, que la publication appelle. Construite et lancee par
+  # MisesAJour inerte). JAMAIS publiee : outils/refuser_repetition.py, que la publication appelle. Construite et lancee par
   # outils/repetition.sh (schema MaillageIoTRepetition).
   MaillageIoTRepetition:
     type: application

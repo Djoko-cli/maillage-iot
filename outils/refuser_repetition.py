@@ -3,7 +3,10 @@
   python3 -I outils/refuser_repetition.py CIBLE                      code 1 si CIBLE est la repetition
   python3 -I outils/refuser_repetition.py --verifier-est-repetition CIBLE   l'inverse (outils/repetition.sh controle son produit)
 
-CIBLE : une app (.app), un Info.plist, ou un identifiant de bundle. La publication (outils/publier.sh, phase 5) l'appelle sur
+CIBLE : une app (.app), un Info.plist, ou un identifiant de bundle NU (forme d'identifiant : segments de lettres, chiffres
+et tirets separes par des points, sans « / » ni espace, et ne finissant pas par « .app » ou « .plist »). La garde n'echoue
+jamais ouvert : une cible qui n'existe pas, qu'on ne lit pas, ou dont l'Info.plist n'a pas d'identifiant sort en code 2, avec sa
+cause (jamais « publiable »). La publication (outils/publier.sh, phase 5) l'appelle sur
 l'app a publier, AVANT toute signature, notarisation ou ecriture du flux : une repetition qui y passerait installerait chez
 les utilisateurs une app sans mise a jour, aux services de trousseau a part.
 
@@ -12,24 +15,42 @@ Une cible est la repetition si l'un de ces signes y est : identifiant de bundle 
 """
 import os
 import plistlib
+import re
 import sys
+from xml.parsers.expat import ExpatError
 
 SUFFIXE = ".repetition"
 CLE_SUFFIXE = "MaillageSuffixeServices"
 
 
+IDENTIFIANT = re.compile(r"^[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
+
+
+class CibleIllisible(Exception):
+    """La cible n'est ni une app, ni un Info.plist, ni un identifiant nu : la garde refuse de conclure."""
+
+
+def est_identifiant_nu(cible):
+    return bool(IDENTIFIANT.match(cible)) and not cible.lower().endswith((".app", ".plist"))
+
+
 def charger_info(cible):
-    """L'Info.plist de CIBLE (dict) ; un identifiant seul donne un dict a cet identifiant."""
+    """L'Info.plist de CIBLE (dict) ; un identifiant nu explicite donne un dict a cet identifiant."""
     if os.path.isdir(cible):
         chemin = os.path.join(cible, "Contents", "Info.plist")
         if not os.path.isfile(chemin):
-            raise FileNotFoundError("pas d'Info.plist dans " + cible)
+            raise CibleIllisible("pas d'Info.plist dans " + cible)
     elif os.path.isfile(cible):
         chemin = cible
-    else:
+    elif est_identifiant_nu(cible):
         return {"CFBundleIdentifier": cible}
+    else:
+        raise CibleIllisible("ni une app ni un Info.plist qui existe, ni un identifiant de bundle")
     with open(chemin, "rb") as f:
-        return plistlib.load(f)
+        info = plistlib.load(f)
+    if not isinstance(info, dict):
+        raise CibleIllisible("Info.plist qui n'est pas un dictionnaire")
+    return info
 
 
 def signes_de_repetition(info):
@@ -55,8 +76,12 @@ def main(argv):
         print(__doc__, file=sys.stderr)
         return 2
     try:
-        signes = signes_de_repetition(charger_info(argv[0]))
-    except (OSError, plistlib.InvalidFileException) as e:
+        info = charger_info(argv[0])
+        signes = signes_de_repetition(info)
+        # Un signe de repetition suffit a refuser ; sans signe, une app sans identifiant n'est pas un « publiable » : on ne sait pas ce qu'elle est.
+        if not signes and not str(info.get("CFBundleIdentifier", "")).strip():
+            raise CibleIllisible("Info.plist sans CFBundleIdentifier")
+    except (OSError, ValueError, ExpatError, plistlib.InvalidFileException, CibleIllisible) as e:
         print("refuser_repetition : %s illisible (%s)" % (argv[0], e), file=sys.stderr)
         return 2
     if inverse:
