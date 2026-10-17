@@ -2065,6 +2065,22 @@
         }
       }
     },
+    "Autres fichiers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other files"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres fichiers"
+          }
+        }
+      }
+    },
     "Autres pièces" : {
       "localizations" : {
         "en" : {
@@ -2173,6 +2189,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capture enregistrée : %@"
+          }
+        }
+      }
+    },
+    "Ce dossier n'est pas un export de reprise : manifeste.json est absent." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This folder is not an export from an old app: manifeste.json is missing."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce dossier n'est pas un export de reprise : manifeste.json est absent."
           }
         }
       }
@@ -2301,6 +2333,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cet appareil n'est pas connu du pont."
+          }
+        }
+      }
+    },
+    "Cet export vient d'une app inconnue (« %@ »). Maillage IoT reprend Maillage Thread et Maillage Zigbee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This export comes from an unknown app (“%@”). Maillage IoT can import from Maillage Thread and Maillage Zigbee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet export vient d'une app inconnue (« %@ »). Maillage IoT reprend Maillage Thread et Maillage Zigbee."
           }
         }
       }
@@ -2653,6 +2701,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dernier relevé"
+          }
+        }
+      }
+    },
+    "Dernier état des réseaux" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last known network state"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernier état des réseaux"
           }
         }
       }
@@ -3169,6 +3233,22 @@
         }
       }
     },
+    "Historique du maillage" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mesh history"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique du maillage"
+          }
+        }
+      }
+    },
     "Hors de la maison" : {
       "localizations" : {
         "en" : {
@@ -3361,6 +3441,22 @@
         }
       }
     },
+    "JSON invalide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "invalid JSON"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON invalide"
+          }
+        }
+      }
+    },
     "Journal" : {
       "localizations" : {
         "en" : {
@@ -3373,6 +3469,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Journal"
+          }
+        }
+      }
+    },
+    "Journal des événements" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Event log"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal des événements"
           }
         }
       }
@@ -3421,6 +3533,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "L'autoriser dans Réglages Système, Général, Ouverture et extensions."
+          }
+        }
+      }
+    },
+    "L'empreinte de « %@ » est mal formée dans le manifeste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The checksum of “%@” is malformed in the manifest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'empreinte de « %@ » est mal formée dans le manifeste."
           }
         }
       }
@@ -3617,6 +3745,38 @@
         }
       }
     },
+    "La taille de « %@ » est invalide dans le manifeste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The size of “%@” is invalid in the manifest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La taille de « %@ » est invalide dans le manifeste."
+          }
+        }
+      }
+    },
+    "La version « %@ » de %@ n'est pas prise en charge : la reprise accepte les versions %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version “%1$@” of %2$@ is not supported: the import accepts versions %3$@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version « %1$@ » de %2$@ n'est pas prise en charge : la reprise accepte les versions %3$@."
+          }
+        }
+      }
+    },
     "Langue" : {
       "localizations" : {
         "en" : {
@@ -3665,6 +3825,22 @@
         }
       }
     },
+    "Le chemin « %@ » est invalide ou sort du dossier d'export." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The path “%@” is invalid or leaves the export folder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le chemin « %@ » est invalide ou sort du dossier d'export."
+          }
+        }
+      }
+    },
     "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher." : {
       "localizations" : {
         "en" : {
@@ -3677,6 +3853,134 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le code Matter ne passe pas par le réseau : branchez la sonde en USB pour l'afficher."
+          }
+        }
+      }
+    },
+    "Le dossier contient « %@ », que le manifeste ne liste pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The folder contains “%@”, which the manifest does not list."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier contient « %@ », que le manifeste ne liste pas."
+          }
+        }
+      }
+    },
+    "Le dossier d'export n'a pas pu être lu : vérifiez qu'il est complet et que Maillage IoT a le droit de le lire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export folder could not be read. Check that it is complete and that Maillage IoT is allowed to read it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier d'export n'a pas pu être lu : vérifiez qu'il est complet et que Maillage IoT a le droit de le lire."
+          }
+        }
+      }
+    },
+    "Le fichier « %@ » est listé dans le manifeste mais absent du dossier." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The file “%@” is listed in the manifest but missing from the folder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier « %@ » est listé dans le manifeste mais absent du dossier."
+          }
+        }
+      }
+    },
+    "Le format de cet export (%lld) n'est pas pris en charge par cette version de Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The format of this export (%lld) is not supported by this version of Maillage IoT."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le format de cet export (%lld) n'est pas pris en charge par cette version de Maillage IoT."
+          }
+        }
+      }
+    },
+    "Le journal des reprises de Maillage IoT (imports.json) est illisible : impossible de savoir si cet export a déjà été repris." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Maillage IoT import log (imports.json) is unreadable, so there is no way to know whether this export was already imported."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le journal des reprises de Maillage IoT (imports.json) est illisible : impossible de savoir si cet export a déjà été repris."
+          }
+        }
+      }
+    },
+    "Le manifeste liste « %@ », qui n'est pas un fichier de cette app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The manifest lists “%@”, which is not a file of this app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le manifeste liste « %@ », qui n'est pas un fichier de cette app."
+          }
+        }
+      }
+    },
+    "Le manifeste liste « %@ », un nom réservé à l'export lui-même." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The manifest lists “%@”, a name reserved for the export itself."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le manifeste liste « %@ », un nom réservé à l'export lui-même."
+          }
+        }
+      }
+    },
+    "Le manifeste ne liste pas reglages.json." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The manifest does not list reglages.json."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le manifeste ne liste pas reglages.json."
           }
         }
       }
@@ -4993,6 +5297,22 @@
         }
       }
     },
+    "Pièces et dispositions" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rooms and layouts"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pièces et dispositions"
+          }
+        }
+      }
+    },
     "Placer dans une pièce…" : {
       "localizations" : {
         "en" : {
@@ -5501,6 +5821,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relancer maintenant"
+          }
+        }
+      }
+    },
+    "Relevé de Maison" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home survey"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relevé de Maison"
           }
         }
       }
@@ -6525,6 +6861,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Surnom"
+          }
+        }
+      }
+    },
+    "Surnoms" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicknames"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surnoms"
           }
         }
       }
@@ -7665,6 +8017,22 @@
         }
       }
     },
+    "champ manquant : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "missing field: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "champ manquant : %@"
+          }
+        }
+      }
+    },
     "chef" : {
       "localizations" : {
         "en" : {
@@ -8561,6 +8929,22 @@
         }
       }
     },
+    "lecture impossible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "cannot be read"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "lecture impossible"
+          }
+        }
+      }
+    },
     "lecture impossible : %@" : {
       "localizations" : {
         "en" : {
@@ -8749,6 +9133,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOS refuse la recherche du pont Hue à l'app (liste des services Bonjour de l'app pas à jour pour macOS) : redémarrez le Mac, ou saisissez l'adresse du pont."
+          }
+        }
+      }
+    },
+    "manifeste.json est illisible (%@). Refaites l'export depuis l'ancienne app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "manifeste.json is unreadable (%@). Export again from the old app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "manifeste.json est illisible (%@). Refaites l'export depuis l'ancienne app."
           }
         }
       }
@@ -9297,6 +9697,38 @@
         }
       }
     },
+    "reglages.json est illisible (%@). Refaites l'export depuis l'ancienne app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reglages.json is unreadable (%@). Export again from the old app."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reglages.json est illisible (%@). Refaites l'export depuis l'ancienne app."
+          }
+        }
+      }
+    },
+    "reglages.json vient d'une autre app que celle du manifeste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reglages.json comes from a different app than the manifest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reglages.json vient d'une autre app que celle du manifeste."
+          }
+        }
+      }
+    },
     "relevé en cours…" : {
       "localizations" : {
         "en" : {
@@ -9437,6 +9869,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "routeurs entendus : %1$lld sur %2$lld"
+          }
+        }
+      }
+    },
+    "réglage %@ d'un type inconnu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "setting %1$@ has an unknown type: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "réglage %1$@ d'un type inconnu : %2$@"
+          }
+        }
+      }
+    },
+    "réglage en double : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "duplicate setting: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "réglage en double : %@"
+          }
+        }
+      }
+    },
+    "réglage sans nom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "setting without a name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "réglage sans nom"
           }
         }
       }
@@ -9681,6 +10161,22 @@
         }
       }
     },
+    "type inattendu : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unexpected type: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "type inattendu : %@"
+          }
+        }
+      }
+    },
     "un enfant ne parle qu'à son parent" : {
       "localizations" : {
         "en" : {
@@ -9693,6 +10189,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "un enfant ne parle qu'à son parent"
+          }
+        }
+      }
+    },
+    "valeur absente : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "missing value: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "valeur absente : %@"
+          }
+        }
+      }
+    },
+    "valeur invalide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "invalid value"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "valeur invalide"
+          }
+        }
+      }
+    },
+    "valeur invalide : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "invalid value: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "valeur invalide : %@"
           }
         }
       }
@@ -9789,6 +10333,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "vérifié par la sonde %@"
+          }
+        }
+      }
+    },
+    "« %@ » est un lien symbolique : un export n'en contient pas." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” is a symbolic link: an export never contains one."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » est un lien symbolique : un export n'en contient pas."
+          }
+        }
+      }
+    },
+    "« %@ » figure deux fois dans le manifeste." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” appears twice in the manifest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » figure deux fois dans le manifeste."
+          }
+        }
+      }
+    },
+    "« %@ » n'a pas l'empreinte indiquée par le manifeste : le fichier a été modifié ou abîmé." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” does not have the checksum given by the manifest: the file was modified or damaged."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » n'a pas l'empreinte indiquée par le manifeste : le fichier a été modifié ou abîmé."
+          }
+        }
+      }
+    },
+    "« %@ » n'a pas la taille indiquée par le manifeste : le fichier est incomplet ou a été modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” does not have the size given by the manifest: the file is incomplete or was modified."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ » n'a pas la taille indiquée par le manifeste : le fichier est incomplet ou a été modifié."
           }
         }
       }

@@ -70,10 +70,10 @@ D'après `inventaire-phase-4.md` §1-2. Ils seront remplacés à la tâche 9 par
 - Create: `MaillageIoT/Reprise/ValidationExport.swift`.
 - Test: `MaillageIoTTests/Reprise/ValidationExportTests.swift`.
 
-- [ ] **Step 1: RED** — les deux exports d'exemple sont acceptés ; refusés avec une cause lisible : empreinte fausse, taille fausse, fichier manquant, fichier en trop non listé, version inconnue, app source inconnue, chemin qui sort du dossier, manifeste illisible.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reprise : validation du manifeste et des empreintes ».
+- [x] **Step 1: RED** — les deux exports d'exemple sont acceptés ; refusés avec une cause lisible : empreinte fausse, taille fausse, fichier manquant, fichier en trop non listé, version inconnue, app source inconnue, chemin qui sort du dossier, manifeste illisible.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reprise : validation du manifeste et des empreintes ».
 
 ---
 
