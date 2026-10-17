@@ -1,0 +1,83 @@
+{
+  "app" : "zigbee",
+  "date" : "2026-10-17T12:00:00Z",
+  "fichiers" : [
+    {
+      "chemin" : "Journal/journal-2026-04.jsonl",
+      "sha256" : "3aeda07cd31ece17428866a1fac9543739c79ed3023d338ed9cf0da9a9c6f1ea",
+      "taille" : 295
+    },
+    {
+      "chemin" : "Journal/journal-2026-10.jsonl",
+      "sha256" : "66f790dccc6486e8995015f0deb8b91fcfedff55bb7f4ad694a15a7c9b06c87e",
+      "taille" : 1876
+    },
+    {
+      "chemin" : "appariements-maison.json",
+      "sha256" : "d9380ca7ceb37e03b1d074b2e3d80f6e8bf14531469742d72cfba2d99b388392",
+      "taille" : 165
+    },
+    {
+      "chemin" : "dernier-maillage.json",
+      "sha256" : "5b2c0380406734283598c702600677fb1c2a7d7f7ef12140f85f139ada6deb62",
+      "taille" : 1761
+    },
+    {
+      "chemin" : "maillage-2026-04.jsonl",
+      "sha256" : "d778148b0192e01ff8af033bf03cbfd230559a771616ab4e4fc289308c921fcf",
+      "taille" : 1479
+    },
+    {
+      "chemin" : "maillage-2026-10.jsonl",
+      "sha256" : "87cb33bb911ef74d20b2134e73fa93b2c41bb88fe21e4ecccf2c8b9493025429",
+      "taille" : 2853
+    },
+    {
+      "chemin" : "noms-pont.json",
+      "sha256" : "f4657516bb6227d800f5434993a75670377fa35b61a5b1bde1232292133a6189",
+      "taille" : 1614
+    },
+    {
+      "chemin" : "pieces-routeurs.json",
+      "sha256" : "30fd552e77db7668950569572954ae597cd87a07bae5f34a45227d79ea728e0b",
+      "taille" : 216
+    },
+    {
+      "chemin" : "positions-pieces.json",
+      "sha256" : "e7c09f4a60c4b917799549e2e8e5bec00840cc80c9c9c89999c3950cb9333533",
+      "taille" : 908
+    },
+    {
+      "chemin" : "releve-maison.json",
+      "sha256" : "e2184bc81e0f4f380b02d85a731a895eece668634d14b0c85ca738c0073fec28",
+      "taille" : 1372
+    },
+    {
+      "chemin" : "surnoms.json",
+      "sha256" : "cfb14df3a29fa4168d8a61b5fbeafa099619fe054a11b72908a61fcba8c50c46",
+      "taille" : 110
+    },
+    {
+      "chemin" : "reglages.json",
+      "sha256" : "8d78938cb368de0eafd302fa245fd4f2a6cd1bcd7cd637d160a55b1b0b461633",
+      "taille" : 2466
+    }
+  ],
+  "fichiersNonRepris" : [
+    {
+      "chemin" : ".DS_Store",
+      "raison" : "exclu"
+    },
+    {
+      "chemin" : "noms-pont.illisible-20261003-093000.json",
+      "raison" : "exclu"
+    },
+    {
+      "chemin" : "sonde-diagnostic.json",
+      "raison" : "horsContrat"
+    }
+  ],
+  "format" : 1,
+  "identifiant" : "00000000-0000-4000-8000-000000000201",
+  "versionApp" : "1.1.1"
+}

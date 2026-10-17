@@ -1,0 +1,69 @@
+{
+  "accessoires" : [
+    {
+      "categorie" : "Prise",
+      "connexion" : "connected",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "idHue" : "00000000-0000-4000-8000-0000000000D1",
+      "idModele" : "MOD-Prise",
+      "ieee" : "00000000000000C1",
+      "modele" : "Modele Prise",
+      "nom" : "Routeur 1",
+      "origine" : "maison",
+      "piece" : "Pièce 1"
+    },
+    {
+      "batterie" : {
+        "alerte" : false,
+        "charge" : "horsCharge",
+        "niveau" : 18
+      },
+      "categorie" : "Capteur",
+      "connexion" : "connected",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "idHue" : "00000000-0000-4000-8000-0000000000D2",
+      "idModele" : "MOD-Capteur",
+      "ieee" : "00000000000000F1",
+      "modele" : "Modele Capteur",
+      "nom" : "Capteur 1",
+      "origine" : "pont",
+      "piece" : "Pièce 2"
+    },
+    {
+      "categorie" : "Ampoule",
+      "connexion" : "connected",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "idHue" : "00000000-0000-4000-8000-0000000000D3",
+      "idModele" : "MOD-Ampoule",
+      "ieee" : "00000000000000F2",
+      "modele" : "Modele Ampoule",
+      "nom" : "Ampoule 1",
+      "origine" : "pont"
+    }
+  ],
+  "date" : "2026-10-14T09:00:00.000Z",
+  "domicile" : "0000000000000B01",
+  "reseau" : {
+    "canal" : 15,
+    "epid" : "0000000000000E02"
+  },
+  "version" : 1,
+  "zones" : [
+    {
+      "nom" : "Étage 1",
+      "pieces" : [
+        "Pièce 1",
+        "Pièce 2"
+      ]
+    },
+    {
+      "nom" : "Étage 2",
+      "pieces" : [
+        "Pièce 3"
+      ]
+    }
+  ]
+}

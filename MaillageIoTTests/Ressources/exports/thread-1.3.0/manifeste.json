@@ -1,0 +1,102 @@
+{
+  "app" : "thread",
+  "date" : "2026-10-17T12:00:00Z",
+  "fichiers" : [
+    {
+      "chemin" : "Journal/journal-2026-04.jsonl",
+      "sha256" : "313d2984ea6698e1ea180a4fc2ea5d88ba1cc0ed0d3d9cfe87fa06d1f6e979be",
+      "taille" : 299
+    },
+    {
+      "chemin" : "Journal/journal-2026-10.jsonl",
+      "sha256" : "3d823acf10be250d3634571a69bb368aa2e34f27ca857445c3e19239bb0f039f",
+      "taille" : 1231
+    },
+    {
+      "chemin" : "associations.json",
+      "sha256" : "26173a5dcc3afd874fe8d9371d400848ec6d4c298d2f8b8d9b3c078d4fa3f5d9",
+      "taille" : 88
+    },
+    {
+      "chemin" : "dernier-maillage.json",
+      "sha256" : "eb7287d760bfa0b489082cf0e862ce891ded2b996a20046890744c364f67b6e0",
+      "taille" : 1227
+    },
+    {
+      "chemin" : "dernieres-adresses.json",
+      "sha256" : "50bf4eb0bd6d07b0ffe2efb801d0f3a8849652e883b011e940d1c1c4f1c02608",
+      "taille" : 217
+    },
+    {
+      "chemin" : "identites-routeurs.json",
+      "sha256" : "a1db394d4d731bcd33f983053b141b994e78dc51a9d33e53e7b5d1e4034ce844",
+      "taille" : 150
+    },
+    {
+      "chemin" : "maillage-2026-04.jsonl",
+      "sha256" : "b1a8a4b17c2eb7bae82cd939760db4659bbf5c6993516f220700c9d4ba0ba9a6",
+      "taille" : 1116
+    },
+    {
+      "chemin" : "maillage-2026-07.jsonl",
+      "sha256" : "77a4c0cad334e4090b36f89b993c496af0a79575f2cee56401bfe58c652398c7",
+      "taille" : 1086
+    },
+    {
+      "chemin" : "maillage-2026-09.jsonl",
+      "sha256" : "59556c98331844663d031ada108be17b5ab16bb3eef022febe2761fdb89da88f",
+      "taille" : 1448
+    },
+    {
+      "chemin" : "maillage-2026-10.jsonl",
+      "sha256" : "e1f95b526b4f5ba74aea95e5d687c7260d1dff5816bbc83794ea074486800bd4",
+      "taille" : 1810
+    },
+    {
+      "chemin" : "noms.json",
+      "sha256" : "e16384c3cfb6f421d03c295ab84ee6b6e8fe88b0f7a99b037b610287637b9a60",
+      "taille" : 1340
+    },
+    {
+      "chemin" : "pieces-routeurs.json",
+      "sha256" : "889c17a244baa9bea66a71cb88a5f01d8f6c0c3a8ab7c0a35af8296e8134d816",
+      "taille" : 253
+    },
+    {
+      "chemin" : "positions-pieces.json",
+      "sha256" : "4211687af84ea4221bda4b364fca488873f1328cba051bffaf561f9718372dd3",
+      "taille" : 900
+    },
+    {
+      "chemin" : "surnoms.json",
+      "sha256" : "b19039307d44067c4ea5c43d9363c210d9d7336488425090c0d589ee5c6a6ed0",
+      "taille" : 179
+    },
+    {
+      "chemin" : "reglages.json",
+      "sha256" : "fd8a5d17dfbc1bc35e5cea4cc17833e73dcca70e5ff8fac45da1553c6ddb9f54",
+      "taille" : 2024
+    }
+  ],
+  "fichiersNonRepris" : [
+    {
+      "chemin" : ".DS_Store",
+      "raison" : "exclu"
+    },
+    {
+      "chemin" : "Journal/.DS_Store",
+      "raison" : "exclu"
+    },
+    {
+      "chemin" : "cache-temporaire.json",
+      "raison" : "horsContrat"
+    },
+    {
+      "chemin" : "surnoms.illisible-20261001-101500.json",
+      "raison" : "exclu"
+    }
+  ],
+  "format" : 1,
+  "identifiant" : "00000000-0000-4000-8000-000000000101",
+  "versionApp" : "1.3.0"
+}

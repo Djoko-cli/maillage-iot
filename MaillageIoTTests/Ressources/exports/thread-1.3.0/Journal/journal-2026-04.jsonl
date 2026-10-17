@@ -1,0 +1,2 @@
+{"constate":true,"date":"2026-04-10T10:00:00.000Z","details":{},"gravite":"info","type":"surveillanceDemarree"}
+{"constate":false,"date":"2026-04-10T10:05:00.000Z","details":{},"gravite":"alerte","reseau":"0000000000000E01","sujet":{"id":"Routeur 2","nom":"Routeur du bas"},"type":"routeurDisparu"}

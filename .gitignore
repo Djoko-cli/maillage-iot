@@ -34,6 +34,11 @@ passeur-demande.json
 releve-maison.json
 noms-pont.json
 appariements-maison.json
+# ...sauf les exports d'exemple de la reprise (phase 4) : valeurs inventees, produits par outils/generer-exports-exemple.sh
+!/MaillageIoTTests/Ressources/exports/*/noms.json
+!/MaillageIoTTests/Ressources/exports/*/releve-maison.json
+!/MaillageIoTTests/Ressources/exports/*/noms-pont.json
+!/MaillageIoTTests/Ressources/exports/*/appariements-maison.json
 # Info.plist generes par xcodegen (project.yml, info:)
 MaillageIoT/Info.plist
 Passeur/Info.plist

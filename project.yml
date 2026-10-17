@@ -264,8 +264,17 @@ targets:
     platform: macOS
     sources:
       - path: MaillageIoTTests
+        excludes:
+          - "Ressources/exports/**"
+      # Les exports d'exemple de la reprise (phase 4) : un dossier copie tel quel dans le paquet de test, sous son arbre
+      # (thread-1.3.0, zigbee-1.1.1), jamais aplati en ressources.
+      - path: MaillageIoTTests/Ressources/exports
+        type: folder
       - path: MaillageCoeurTests/VecteursH1.swift
       - path: MaillageCoeurTests/AssistantIdNoeud.swift
+      # Le generateur de ces exports (outils/generer-exports-exemple.sh le compile avec le contrat) : les tests le relancent
+      # et comparent son resultat aux dossiers commites.
+      - path: outils/exports-exemple/Generateur.swift
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur

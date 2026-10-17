@@ -1,0 +1,7 @@
+{"constate":true,"date":"2026-10-02T06:00:00.000Z","details":{"routeurs":"3"},"gravite":"info","type":"surveillanceDemarree"}
+{"constate":true,"date":"2026-10-02T06:00:01.000Z","details":{},"gravite":"info","reseau":"0000000000000E01","sujet":{"id":"Routeur 1","nom":"Routeur du haut"},"type":"routeurApparu"}
+{"constate":false,"date":"2026-10-05T09:30:00.000Z","details":{},"gravite":"info","periode":{"duration":300,"start":"2026-10-05T09:25:00.000Z"},"type":"veille"}
+{"apres":"absent","avant":"présent","constate":false,"date":"2026-10-08T14:10:00.000Z","details":{},"gravite":"attention","reseau":"0000000000000E01","sujet":{"id":"0000000000000001","nom":"Prise 1"},"type":"appareilDisparu"}
+{"constate":false,"date":"2026-10-08T14:40:00.000Z","details":{},"gravite":"info","reseau":"0000000000000E01","sujet":{"id":"0000000000000001","nom":"Prise 1"},"type":"appareilRevenu"}
+{"apres":"Routeur 2","avant":"Routeur 1","constate":false,"date":"2026-10-11T18:20:00.000Z","details":{},"gravite":"info","sujet":{"id":"0000000000000021","nom":"Capteur 1"},"type":"parentChange"}
+{"constate":false,"date":"2026-10-14T08:00:00.000Z","details":{"partitions":"2"},"gravite":"alerte","reseau":"0000000000000E01","type":"reseauScinde"}

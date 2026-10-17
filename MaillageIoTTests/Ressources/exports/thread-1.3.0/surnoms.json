@@ -1,0 +1,7 @@
+{
+  "0000000000000001" : "Prise 1",
+  "0000000000000002" : "Capteur 1",
+  "instance:Routeur 2" : "Routeur du bas",
+  "rloc:0800" : "Routeur 3",
+  "Routeur 1" : "Routeur du haut"
+}

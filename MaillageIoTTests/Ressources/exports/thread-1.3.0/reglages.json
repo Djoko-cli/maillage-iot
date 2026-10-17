@@ -1,0 +1,86 @@
+{
+  "app" : "thread",
+  "format" : 1,
+  "nonRepris" : {
+    "NSNavPanelExpandedStateForSaveMode" : "horsContrat",
+    "NSOSPLastRootDirectory" : "horsContrat",
+    "NSWindow Frame SUUpdateAlert2" : "horsContrat",
+    "NSWindow Frame com_apple_SwiftUI_Settings_window" : "horsContrat",
+    "NSWindow Frame graphe" : "horsContrat",
+    "NSWindow Frame journal" : "horsContrat",
+    "SUAutomaticallyUpdate" : "horsContrat",
+    "SUEnableAutomaticChecks" : "horsContrat",
+    "SUHasLaunchedBefore" : "horsContrat",
+    "SULastCheckTime" : "horsContrat",
+    "SUSkippedVersion" : "horsContrat",
+    "SUUpdateGroupIdentifier" : "horsContrat",
+    "dossierNoms" : "horsContrat",
+    "reglages.onglet" : "horsContrat"
+  },
+  "valeurs" : {
+    "AppleLanguages" : {
+      "type" : "listeTextes",
+      "valeur" : [
+        "fr"
+      ]
+    },
+    "etagesEnGrille" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "grapheDejaOuvert" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "legendeRepliee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.informations" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "notification.pertes" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "notification.routeurDisparu" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.scission" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "ouvertureSessionProposee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "scissionsNotifiees" : {
+      "type" : "listeTextes",
+      "valeur" : [
+        "0000000000000E01"
+      ]
+    },
+    "sondeHote" : {
+      "type" : "texte",
+      "valeur" : "sonde-t1.local"
+    },
+    "sondeLiaison" : {
+      "type" : "texte",
+      "valeur" : "reseau"
+    },
+    "sondeNom" : {
+      "type" : "texte",
+      "valeur" : "SONDE-T1"
+    },
+    "sondeSerieUSB" : {
+      "type" : "texte",
+      "valeur" : "SERIE-T1"
+    },
+    "vuePieces3D" : {
+      "type" : "bool",
+      "valeur" : true
+    }
+  }
+}

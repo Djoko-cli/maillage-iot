@@ -1,0 +1,49 @@
+{
+  "maisons" : {
+    "Maison 1" : {
+      "aCote" : {
+        "zone:Jardin" : {
+          "dehors" : true,
+          "etage" : "zone:Étage 1"
+        }
+      },
+      "etages" : {
+        "zone:Étage 1" : {
+          "piece:Pièce 1" : {
+            "x" : 1.5,
+            "z" : -2
+          },
+          "piece:Pièce 2" : {
+            "x" : -3.25,
+            "z" : 0.5
+          }
+        },
+        "zone:Étage 2" : {
+          "piece:Pièce 3" : {
+            "x" : 0,
+            "z" : 4
+          }
+        }
+      },
+      "ordreEtages" : [
+        "zone:Étage 1",
+        "zone:Étage 2",
+        "zone:Jardin"
+      ]
+    },
+    "Maison 2" : {
+      "etages" : {
+        "zone:Zone 1" : {
+          "routeur:0000000000000011" : {
+            "x" : 2,
+            "z" : 2
+          }
+        }
+      },
+      "ordreEtages" : [
+        "zone:Zone 1"
+      ]
+    }
+  },
+  "version" : 1
+}

@@ -58,9 +58,9 @@ D'après `inventaire-phase-4.md` §1-2. Ils seront remplacés à la tâche 9 par
 **Files:**
 - Create: `MaillageIoTTests/Ressources/exports/thread-1.3.0/` et `zigbee-1.1.1/` (manifeste, fichiers aux formats réels de chaque app, `reglages.json`, valeurs inventées seulement ; un historique de plus de 90 jours et un journal Zigbee sans `protocole`), et l'outil qui les produit (`outils/` ou un test qui les écrit une fois).
 
-- [ ] **Step 1: Écrire** les deux exports, chaque fichier de l'inventaire présent au moins une fois.
-- [ ] **Step 2: Vérifier** — la garde d'anonymat passe sur ces fichiers ; les empreintes du manifeste sont justes.
-- [ ] **Step 3: Commit** — « Reprise : exports d'exemple provisoires de Thread 1.3.0 et Zigbee 1.1.1 ».
+- [x] **Step 1: Écrire** les deux exports, chaque fichier de l'inventaire présent au moins une fois.
+- [x] **Step 2: Vérifier** — la garde d'anonymat passe sur ces fichiers ; les empreintes du manifeste sont justes.
+- [x] **Step 3: Commit** — « Reprise : exports d'exemple provisoires de Thread 1.3.0 et Zigbee 1.1.1 ».
 
 ---
 
