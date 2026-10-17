@@ -14,7 +14,8 @@
     "SULastCheckTime" : "horsContrat",
     "SUSkippedVersion" : "horsContrat",
     "SUUpdateGroupIdentifier" : "horsContrat",
-    "reglages.onglet" : "horsContrat"
+    "reglages.onglet" : "horsContrat",
+    "sondeJournalPages" : "transitoire"
   },
   "valeurs" : {
     "AppleLanguages" : {
@@ -67,16 +68,6 @@
     "sondeIeee" : {
       "type" : "texte",
       "valeur" : "00000000000000E1"
-    },
-    "sondeJournalPages" : {
-      "type" : "listeEntiers",
-      "valeur" : [
-        12,
-        7,
-        9,
-        15,
-        8
-      ]
     },
     "sondeNom" : {
       "type" : "texte",

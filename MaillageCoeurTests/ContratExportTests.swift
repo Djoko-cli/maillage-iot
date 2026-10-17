@@ -450,7 +450,7 @@ struct ContratExportTests {
         ]) { a, _ in a }
         let zigbee = communs.merging([
             "sondeSerieUSB": .texte, "sondeNom": .texte, "sondeIeee": .texte, "sondeNomWifi": .texte,
-            "sondeJournalPages": .listeEntiers, "sondePagesTables": .entier, "sondeChemin": .texte,
+            "sondePagesTables": .entier, "sondeChemin": .texte,
             "pont.hue": .donnees, "liensMontres": .texte, "voisinsALaSelection": .bool,
             "notification.routeurDisparu": .bool, "notification.pertes": .bool, "notification.informations": .bool,
         ]) { a, _ in a }
@@ -531,7 +531,7 @@ struct ContratExportTests {
     }
 
     @Test func raisonsNonReprises() {
-        #expect(C.RaisonNonRepris.allCases.map(\.rawValue) == ["horsContrat", "exclu", "typeInattendu"])
+        #expect(C.RaisonNonRepris.allCases.map(\.rawValue) == ["horsContrat", "exclu", "typeInattendu", "transitoire"])
     }
 
     /// Classement de ce qu'une ancienne app voit dans son `Application Support` : le meme pour les deux apps.
@@ -631,25 +631,52 @@ struct ContratExportTests {
     /// Chaque type de l'inventaire est lu strictement : texte, donnees, listes de textes et d'entiers.
     @Test func reglagesTypesStricts() {
         let ok = C.reglages(depuis: [
-            "sondeNom": "Sonde 1", "pont.hue": Data([1, 2, 3]), "sondeJournalPages": [1, 2, 300] as [Int],
+            "sondeNom": "Sonde 1", "pont.hue": Data([1, 2, 3]), "sondeIeee": "0000000000000001",
             "AppleLanguages": ["fr", "en"],
         ], app: .maillageZigbee)
         #expect(ok.valeurs == [
             "sondeNom": .texte("Sonde 1"), "pont.hue": .donnees(Data([1, 2, 3])),
-            "sondeJournalPages": .listeEntiers([1, 2, 300]), "AppleLanguages": .listeTextes(["fr", "en"]),
+            "sondeIeee": .texte("0000000000000001"), "AppleLanguages": .listeTextes(["fr", "en"]),
         ])
         #expect(ok.nonRepris.isEmpty)
         let mauvais = C.reglages(depuis: [
-            "sondeNom": 12, "pont.hue": "texte", "sondeJournalPages": [1, true] as [Any],
+            "sondeNom": 12, "pont.hue": "texte", "sondeIeee": 5,
             "AppleLanguages": ["fr", 1] as [Any], "sondeChemin": ["a"] as [String],
         ], app: .maillageZigbee)
         #expect(mauvais.valeurs.isEmpty)
         #expect(mauvais.nonRepris == [
-            "sondeNom": .typeInattendu, "pont.hue": .typeInattendu, "sondeJournalPages": .typeInattendu,
+            "sondeNom": .typeInattendu, "pont.hue": .typeInattendu, "sondeIeee": .typeInattendu,
             "AppleLanguages": .typeInattendu, "sondeChemin": .typeInattendu,
         ])
-        #expect(C.reglages(depuis: ["sondeJournalPages": [Int]()], app: .maillageZigbee).valeurs
-                == ["sondeJournalPages": .listeEntiers([])])
+        #expect(C.reglages(depuis: ["AppleLanguages": [String]()], app: .maillageZigbee).valeurs
+                == ["AppleLanguages": .listeTextes([])])
+    }
+
+    /// `sondeJournalPages` est la fenetre glissante de 10 minutes du budget de la tournee, ecrite par Maillage Zigbee
+    /// en `[Double]` (instant, pages, instant, pages...) : sans sens apres un export pris plus tot, elle n'est jamais
+    /// reprise, quel que soit son type, et jamais citee `typeInattendu`. Seule sa cle est citee, sans valeur.
+    @Test func budgetDeTourneeEstTransitoire() throws {
+        for brut: Any in [[1_760_000_000.5, 12.0, 1_760_000_100.25, 7.0] as [Double], [1, 2, 300] as [Int],
+                          [Double](), "texte", true] {
+            let r = C.reglages(depuis: ["sondeJournalPages": brut], app: .maillageZigbee)
+            #expect(r.valeurs.isEmpty, "aucune valeur gardee : \(brut)")
+            #expect(r.nonRepris == ["sondeJournalPages": .transitoire], "\(brut)")
+        }
+        #expect(C.typeAttendu(cle: "sondeJournalPages", de: .maillageZigbee) == nil)
+        #expect(!C.reglagesConnus(de: .maillageZigbee).contains { $0.cle == "sondeJournalPages" })
+        // Le domaine persistant d'une vraie lecture (liste de Double dans UserDefaults), cle citee et valeur absente.
+        let nom = "fr.djoko.test.contrat-\(UUID().uuidString)"
+        let defauts = try #require(UserDefaults(suiteName: nom))
+        defer { defauts.removePersistentDomain(forName: nom) }
+        defauts.set([1_760_000_000.5, 12.0] as [Double], forKey: "sondeJournalPages")
+        let r = C.reglagesPersistants(de: .maillageZigbee, domaine: nom, defauts: defauts)
+        #expect(r.valeurs.isEmpty)
+        #expect(r.nonRepris == ["sondeJournalPages": .transitoire])
+        #expect(try C.lireReglages(C.ecrire(r)) == r)
+        #expect(Self.texte(try C.ecrire(r)).contains("\"sondeJournalPages\" : \"transitoire\""))
+        // Maillage Thread n'a pas cette cle : citee `horsContrat` comme toute cle inconnue.
+        #expect(C.reglages(depuis: ["sondeJournalPages": [1.0]], app: .maillageThread).nonRepris
+                == ["sondeJournalPages": .horsContrat])
     }
 
     /// Une cle inconnue (Sparkle, fenetres, onglet, ancien dossier des noms, ou une cle de l'autre app) est citee
@@ -684,13 +711,11 @@ struct ContratExportTests {
         defauts.set(true, forKey: "vuePieces3D")
         defauts.set(1, forKey: "etagesEnGrille")
         defauts.set(7, forKey: "sondePagesTables")
-        defauts.set([3, 4], forKey: "sondeJournalPages")
         let sans = C.reglagesPersistants(de: .maillageZigbee, domaine: nom, defauts: defauts)
         #expect(sans.valeurs["AppleLanguages"] == nil, "la langue du Mac n'est pas celle de l'app")
         #expect(sans.nonRepris["AppleLanguages"] == nil)
         #expect(sans.valeurs["vuePieces3D"] == .bool(true))
         #expect(sans.valeurs["sondePagesTables"] == .entier(7))
-        #expect(sans.valeurs["sondeJournalPages"] == .listeEntiers([3, 4]))
         #expect(sans.nonRepris["etagesEnGrille"] == .typeInattendu, "un 1 entier n'est pas un booleen")
         #expect(sans.app == .maillageZigbee)
         defauts.set(["fr"], forKey: "AppleLanguages")

@@ -95,7 +95,10 @@ enum GenerateurExportsExemple {
         guard reglages.valeurs.count == C.reglagesConnus(de: app).count else {
             throw Erreur.reglages("un reglage de l'inventaire manque ou n'a pas le bon type")
         }
-        guard reglages.nonRepris.values.allSatisfy({ $0 == .horsContrat }), !reglages.nonRepris.isEmpty else {
+        let attendus = reglages.nonRepris.allSatisfy {
+            $0.value == .horsContrat || ($0.key == "sondeJournalPages" && $0.value == .transitoire)
+        }
+        guard attendus, !reglages.nonRepris.isEmpty else {
             throw Erreur.reglages("les reglages non repris attendus (Sparkle, fenetres) ne sont pas cites")
         }
         try C.ecrire(reglages).write(to: dossier.appendingPathComponent(C.nomReglages))
@@ -523,7 +526,8 @@ enum GenerateurExportsExemple {
             d["sondeNom"] = "SONDE-Z1"
             d["sondeIeee"] = sondeZigbee
             d["sondeNomWifi"] = "Wifi 1"
-            d["sondeJournalPages"] = [12, 7, 9, 15, 8].map(nombre)
+            // Comme l'app Zigbee l'ecrit : des Double (instant, pages, instant, pages...), transitoire pour le contrat.
+            d["sondeJournalPages"] = [1_760_000_000.5, 12.0, 1_760_000_060.25, 7.0] as [Double]
             d["sondePagesTables"] = nombre(4)
             d["sondeChemin"] = "automatique"
             d["pont.hue"] = Data(#"{"adresse":"192.0.2.10","identifiant":"\#(pontZigbee)","manuel":false,"modele":"BSB002"}"#.utf8)

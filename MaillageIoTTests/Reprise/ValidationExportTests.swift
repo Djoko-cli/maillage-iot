@@ -94,7 +94,7 @@ struct ValidationExportTests {
     // MARK: Resume pour l'assistant
 
     @Test(arguments: [(C.AppSource.maillageThread, [1, 2, 1, 4, 4, 2], 15, 14, 4),
-                      (C.AppSource.maillageZigbee, [1, 2, 1, 3, 2, 2], 19, 13, 3)])
+                      (C.AppSource.maillageZigbee, [1, 2, 1, 3, 2, 2], 18, 14, 3)])
     func leResumeCompteChaqueGenre(app: C.AppSource, comptes: [Int], repris: Int, nonRepris: Int, citesFichiers: Int) throws {
         let resultat = ValidationExport.valider(dossier: try ExportsExempleTests.dossier(app), imports: .vide)
         guard case .acceptee(let resume) = resultat else { throw Echec("refuse : \(resultat)") }
