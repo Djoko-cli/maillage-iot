@@ -1,6 +1,7 @@
 import Foundation
 import MaillageCoeur
 import ProtocoleThread
+import ProtocoleZigbee
 
 // Phase 4, tache 4 : les regles de fusion d'un export avec ce que Maillage IoT a deja, partagees par la conversion de
 // Thread (`ConversionThread`) et celle de Zigbee (tache 5). Deux niveaux :
@@ -168,6 +169,74 @@ enum FusionReprise {
             ajoutees += 1
         }
         return (sortie, ajoutees, dejaPresentes)
+    }
+
+    /// Marque une ligne de journal du protocole donne : la ligne recoit `"protocole":"<protocole>"` a la place que
+    /// l'encodeur de l'app lui donnerait (cles triees : avant la premiere cle qui suit « protocole », sinon en dernier),
+    /// sans toucher a un seul autre octet. Une ligne qui a deja un `protocole` au premier niveau, ou qui n'est pas un
+    /// objet JSON, est rendue telle quelle. Deterministe (memes octets pour une meme ligne, d'un import a l'autre) et
+    /// idempotente (une ligne marquee n'est plus changee) : la comparaison de doublons se fait sur les lignes marquees.
+    static func avecProtocole(_ ligne: Data, _ protocole: Protocole) -> Data {
+        guard objet(ligne) != nil else { return ligne }
+        let octets = [UInt8](ligne)
+        var cles: [(nom: String, debut: Int)] = []
+        var profondeur = 0
+        var attendCle = false
+        var i = 0
+        while i < octets.count {
+            let o = octets[i]
+            switch o {
+            case UInt8(ascii: "\""):
+                // Une chaine : on cherche sa fin (un guillemet non echappe).
+                var fin = i + 1
+                while fin < octets.count, octets[fin] != UInt8(ascii: "\"") {
+                    fin += octets[fin] == UInt8(ascii: "\\") ? 2 : 1
+                }
+                guard fin < octets.count else { return ligne }
+                if profondeur == 1, attendCle {
+                    let brut = Data(octets[i...fin])
+                    let nom = (try? JSONDecoder().decode(String.self, from: brut)) ?? ""
+                    cles.append((nom, i))
+                    attendCle = false
+                }
+                i = fin
+            case UInt8(ascii: "{"):
+                profondeur += 1
+                if profondeur == 1 { attendCle = true }
+            case UInt8(ascii: "["):
+                profondeur += 1
+            case UInt8(ascii: "}"), UInt8(ascii: "]"):
+                profondeur -= 1
+            case UInt8(ascii: ","):
+                if profondeur == 1 { attendCle = true }
+            default:
+                break
+            }
+            i += 1
+        }
+        guard !cles.contains(where: { $0.nom == "protocole" }) else { return ligne }
+        let champ = Array("\"protocole\":\"\(protocole.rawValue)\"".utf8)
+        var sortie = octets
+        if let apres = cles.first(where: { $0.nom > "protocole" }) {
+            sortie.insert(contentsOf: champ + [UInt8(ascii: ",")], at: apres.debut)
+        } else if let fermeture = octets.lastIndex(of: UInt8(ascii: "}")) {
+            sortie.insert(contentsOf: (cles.isEmpty ? [] : [UInt8(ascii: ",")]) + champ, at: fermeture)
+        } else {
+            return ligne
+        }
+        return Data(sortie)
+    }
+
+    private struct DateDuReleve: Decodable {
+        var version: Int
+        var date: Date
+    }
+
+    /// La date d'un `noms-pont.json` (le dernier releve du pont) ; nil s'il est illisible ou d'une version plus recente.
+    static func dateDuReleveDuPont(_ donnees: Data) -> Date? {
+        guard let n = try? CodageJSON.decodeur().decode(DateDuReleve.self, from: donnees),
+              n.version <= NomsZigbee.versionActuelle, (try? NomsZigbee.lire(donnees)) != nil else { return nil }
+        return n.date
     }
 
     /// Le fichier se termine-t-il par une fin de ligne (ou est-il vide) ? Seul le dernier octet est lu.
@@ -577,18 +646,70 @@ struct ConstructionPlan {
         placer(cible, .donnees(donnees), sources: [chemin])
     }
 
+    /// `noms-pont.json` (Zigbee) : le dernier releve du pont, un cache comme `dernier-maillage.json` ; le plus recent
+    /// (`date`) l'emporte, a egalite l'existant ; sans existant, copie.
+    mutating func nomsPont(_ chemin: String, vers cible: String) throws {
+        guard let date = FusionReprise.dateDuReleveDuPont(try lireExport(chemin)) else {
+            laisser(.fichier(chemin), .fichierIllisible)
+            return
+        }
+        guard FileManager.default.fileExists(atPath: existant(cible).path) else {
+            try copier(chemin, vers: cible)
+            return
+        }
+        guard let donnees = try? Data(contentsOf: existant(cible)), let present = FusionReprise.dateDuReleveDuPont(donnees) else {
+            laisser(.fichier(chemin), .fichierExistantNonLisible)
+            return
+        }
+        if date > present {
+            try copier(chemin, vers: cible)
+        } else {
+            laisser(.fichier(chemin), .dejaDansMaillageIoT)
+        }
+    }
+
+    /// `appariements-maison.json` (Zigbee, v1) : fusion des appareils (adresse longue -> identifiant HomeKit), l'existant
+    /// gagne ; sans existant, copie telle quelle.
+    mutating func appariements(_ chemin: String, vers cible: String) throws {
+        guard case .lue(let importes) = FusionReprise.lire(MemoireAppariements.self, try urlExport(chemin), version: MemoireAppariements.versionActuelle) else {
+            laisser(.fichier(chemin), .fichierIllisible)
+            return
+        }
+        guard !importes.ids.isEmpty else {
+            laisser(.fichier(chemin), .vide)
+            return
+        }
+        switch FusionReprise.lire(MemoireAppariements.self, existant(cible), version: MemoireAppariements.versionActuelle) {
+        case .absente:
+            try copier(chemin, vers: cible)
+        case .nonLisible:
+            laisser(.fichier(chemin), .fichierExistantNonLisible)
+        case .lue(let presents):
+            let (fusion, refuses) = FusionReprise.fusionner(presents.ids, avec: importes.ids)
+            if refuses > 0 { laisser(.entrees(fichier: chemin, nombre: refuses), .dejaDansMaillageIoT) }
+            if fusion == presents.ids {
+                laisser(.fichier(chemin), .dejaDansMaillageIoT)
+            } else {
+                placer(cible, .donnees(try FusionReprise.encodeur().encode(MemoireAppariements(ids: fusion))), sources: [chemin])
+            }
+        }
+    }
+
     // MARK: Fichiers mensuels (historique, journal)
 
     /// Un fichier mensuel : ecarte si son mois est fini depuis plus de 90 jours ; sinon copie tel quel (sans existant), ou
     /// ajoute a la suite de celui de Maillage IoT sans doublon de ligne (`FusionReprise.ajouter`). Aucune ligne n'est
-    /// reecrite.
-    mutating func mensuel(_ chemin: String, vers cible: String) throws {
+    /// reecrite, sauf par `transformer` (le journal de Zigbee 1.1.1 : `FusionReprise.avecProtocole`). Il s'applique a
+    /// chaque ligne de l'export AVANT la comparaison des doublons, doit rendre les memes octets pour la meme ligne
+    /// (reimporter le meme export ne change rien) et ne peut plus passer par la copie : le fichier est ecrit en entier.
+    mutating func mensuel(_ chemin: String, vers cible: String, transformer: ((Data) -> Data)? = nil) throws {
         if FusionReprise.moisEstTropAncien(chemin, maintenant: maintenant, calendrier: calendrier) == true {
             laisser(.fichier(chemin), .plusDe90Jours)
             return
         }
         let source = try urlExport(chemin)
-        guard FileManager.default.fileExists(atPath: existant(cible).path) else {
+        let existe = FileManager.default.fileExists(atPath: existant(cible).path)
+        if !existe, transformer == nil {
             let finit: Bool
             do { finit = try FusionReprise.finitParFinDeLigne(source) } catch { throw ErreurConversion.lectureImpossible(chemin) }
             guard manifeste.fichiers.first(where: { $0.chemin == chemin })?.taille != 0 else {
@@ -604,11 +725,19 @@ struct ConstructionPlan {
             }
             return
         }
+        let importees = FusionReprise.lignes(try lireExport(chemin)).map { transformer?($0) ?? $0 }
+        guard existe else {
+            guard !importees.isEmpty else {
+                laisser(.fichier(chemin), .vide)
+                return
+            }
+            placer(cible, .donnees(FusionReprise.ajouter(existant: Data(), importees: importees).donnees), sources: [chemin])
+            return
+        }
         guard let present = try? Data(contentsOf: existant(cible)) else {
             laisser(.fichier(chemin), .fichierExistantNonLisible)
             return
         }
-        let importees = FusionReprise.lignes(try lireExport(chemin))
         let resultat = FusionReprise.ajouter(existant: present, importees: importees)
         if resultat.ajoutees > 0 {
             if resultat.dejaPresentes > 0 { laisser(.entrees(fichier: chemin, nombre: resultat.dejaPresentes), .dejaDansMaillageIoT) }

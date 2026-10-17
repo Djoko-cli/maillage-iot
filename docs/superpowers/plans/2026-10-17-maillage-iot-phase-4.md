@@ -98,10 +98,10 @@ D'après `inventaire-phase-4.md` (Thread) ; spec 4.3, 6.8.
 - Create: `MaillageIoT/Reprise/ConversionZigbee.swift`.
 - Test: `MaillageIoTTests/Reprise/ConversionZigbeeTests.swift`.
 
-- [ ] **Step 1: RED** — un test par fichier et par réglage de l'inventaire (Zigbee) : surnoms et pièces préfixés `zigbee:` (jamais lus par les lecteurs de secours, qui supposent Thread) ; `noms-pont.json`, `appariements-maison.json`, `dernier-maillage.json`, historiques → `Zigbee/` ; **chaque ligne du journal reçoit `"protocole":"zigbee"`** ; relevé de Maison selon la règle 6.8 ; réglages `sonde*` → `zigbee.*`, `pont.hue` repris (pour la reprise de la clé du pont), budget de tournée, `liensMontres` et `voisinsALaSelection` → `zigbee.` ; non repris cités au résumé.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Reprise : conversion des donnees de Zigbee 1.1.1 ».
+- [x] **Step 1: RED** — un test par fichier et par réglage de l'inventaire (Zigbee) : surnoms et pièces préfixés `zigbee:` (jamais lus par les lecteurs de secours, qui supposent Thread) ; `noms-pont.json`, `appariements-maison.json`, `dernier-maillage.json`, historiques → `Zigbee/` ; **chaque ligne du journal reçoit `"protocole":"zigbee"`** ; relevé de Maison selon la règle 6.8 ; réglages `sonde*` → `zigbee.*`, `pont.hue` repris (pour la reprise de la clé du pont), budget de tournée, `liensMontres` et `voisinsALaSelection` → `zigbee.` ; non repris cités au résumé.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Reprise : conversion des donnees de Zigbee 1.1.1 ».
 
 ---
 
