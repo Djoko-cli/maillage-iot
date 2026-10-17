@@ -85,7 +85,7 @@ struct FenetreReglages: View {
             case .general:
                 page {
                     ouvertureALaConnexion
-                    sectionMisesAJour
+                    if MisesAJour.moteurPresent { sectionMisesAJour }
                     choixDeLangue
                     vueParPieces
                     reprise

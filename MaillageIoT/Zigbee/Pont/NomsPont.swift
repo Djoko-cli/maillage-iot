@@ -77,9 +77,7 @@ struct DependancesPont: Sendable {
     /// Celles de l'app : URLSession verifie, trousseau du Mac, preferences, `Application Support`.
     static func systeme(cache: URL?) -> DependancesPont {
         DependancesPont(transport: TransportURLSession(),
-                        trousseau: TrousseauRepris(actuel: TrousseauSystemeZigbee(),
-                                                   ancien: TrousseauSystemeZigbee(service: TrousseauRepris.servicePontAncien),
-                                                   reprises: .preferences(cle: MemoireReprises.clePontZigbee)),
+                        trousseau: IdentiteApp.courante.trousseauPontHue(),
                         memoire: MemoirePreferences(),
                         cache: cache, attendre: { try await Task.sleep(for: $0) }, maintenant: { Date() },
                         nomMac: (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? "Mac")

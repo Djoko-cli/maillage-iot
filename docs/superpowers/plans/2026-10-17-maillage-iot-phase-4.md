@@ -139,10 +139,10 @@ D'après la spec 4.3, 4.4, 6.8 (relance).
 - Modify: `project.yml` (configuration ou cible « Maillage IoT Répétition » : identifiant `fr.djoko.maillage.iot.repetition`, conteneur à part, services de trousseau suffixés `.repetition`, sans Sparkle) ; le code qui nomme les services de trousseau les lit depuis l'identité (jamais en dur pour la répétition) ; la publication (phase 5) refusera cette identité.
 - Test: un test que les services de trousseau de la répétition diffèrent de ceux de l'app.
 
-- [ ] **Step 1: RED** — test ci-dessus.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte de la tâche ; l'app de répétition se compile et se lance à côté de l'app réelle.
-- [ ] **Step 4: Commit** — « Reprise : identite de repetition, a cote de l'app reelle ».
+- [x] **Step 1: RED** — test ci-dessus.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte de la tâche ; l'app de répétition se compile et se lance à côté de l'app réelle.
+- [x] **Step 4: Commit** — « Reprise : identite de repetition, a cote de l'app reelle ».
 
 ---
 

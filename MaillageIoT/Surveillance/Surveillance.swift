@@ -82,7 +82,7 @@ final class Surveillance {
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
     static let dureeHistorique: TimeInterval = 30 * 24 * 3600
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
-    nonisolated static let journalMac = Logger(subsystem: "fr.djoko.maillage.iot", category: "historique")
+    nonisolated static let journalMac = Logger(subsystem: IdentiteApp.courante.identifiant, category: "historique")
 
     /// Lance par les tests (heberges dans l'app) : ne rien ecouter ni ecrire.
     static var sousTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }

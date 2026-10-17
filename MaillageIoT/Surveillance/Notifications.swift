@@ -11,7 +11,7 @@ import os
 /// fenetre de l'app est au premier plan.
 @MainActor
 final class Notifications {
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "notifications")
+    nonisolated static let journal = Logger(subsystem: IdentiteApp.courante.identifiant, category: "notifications")
     /// Delegue du centre de notifications, retenu ici : le centre ne le garde qu'en reference faible.
     private let presentation = PresentationAuPremierPlan()
 

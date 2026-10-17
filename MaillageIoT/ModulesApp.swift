@@ -59,17 +59,13 @@ struct ModulesApp {
         sondeThread = SondeMaillageThread(
             actif: !inerte,
             trousseau: inerte ? TrousseauMemoireThread()
-                : TrousseauReprisThread(actuel: TrousseauSystemeThread(),
-                                        ancien: TrousseauSystemeThread(service: TrousseauReprisThread.serviceAncien),
-                                        reprises: .preferences(cle: MemoireReprises.cleSondeThread)),
+                : IdentiteApp.courante.trousseauThread(),
             fichierIdentites: SondeMaillageThread.fichierIdentites(demo: demo != nil, sousTests: sousTests),
             cartes: cartes)
         sondeZigbee = SondeMaillageZigbee(
             actif: !inerte,
             trousseau: inerte ? TrousseauMemoireZigbee()
-                : TrousseauRepris(actuel: CheminSonde.trousseau(),
-                                  ancien: TrousseauSystemeZigbee(service: TrousseauRepris.serviceSondeAncien),
-                                  reprises: .preferences(cle: MemoireReprises.cleSondeZigbee)),
+                : IdentiteApp.courante.trousseauSondeZigbee(),
             cartes: cartes)
     }
 

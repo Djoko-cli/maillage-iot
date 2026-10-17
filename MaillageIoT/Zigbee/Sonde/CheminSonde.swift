@@ -29,15 +29,16 @@ enum Acces: Equatable, Sendable {
 enum CheminSonde {
     /// Cle des preferences du reglage.
     static let cleReglage = "zigbee.sondeChemin"
-    /// Trousseau des cles de l'acces par le reseau : compte = adresse longue de la sonde.
-    static let serviceTrousseau = "fr.djoko.maillage.iot.sonde-zigbee"
+    /// Trousseau des cles de l'acces par le reseau : compte = adresse longue de la sonde ; le service est celui de l'identite
+    /// de l'app (`fr.djoko.maillage.iot.sonde-zigbee`, suivi de `.repetition` dans l'app de repetition).
+    static var serviceTrousseau: String { IdentiteApp.courante.serviceSondeZigbee }
 
     /// Le trousseau du systeme pour les cles de l'acces par le reseau (l'app seulement, jamais les tests) : libelle
     /// « Maillage IoT - sonde Zigbee <adresse longue> (clé <empreinte>) », commentaire = empreinte (spec sonde Wi-Fi, 4.3).
-    static func trousseau() -> TrousseauSystemeZigbee {
-        TrousseauSystemeZigbee(service: serviceTrousseau) { ieee, cle in
+    static func trousseau(identite: IdentiteApp = .courante) -> TrousseauSystemeZigbee {
+        TrousseauSystemeZigbee(service: identite.serviceSondeZigbee) { ieee, cle in
             let empreinte = H1.octets(hexa: cle).map { H1.kid(cle: $0) }
-            return ("Maillage IoT - sonde Zigbee \(ieee)" + (empreinte.map { " (clé \($0))" } ?? ""), empreinte)
+            return ("\(identite.nom) - sonde Zigbee \(ieee)" + (empreinte.map { " (clé \($0))" } ?? ""), empreinte)
         }
     }
 

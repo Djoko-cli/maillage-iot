@@ -39,7 +39,7 @@ final class SondeMaillageThread {
     }
 
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "sonde")
+    nonisolated static let journal = Logger(subsystem: IdentiteApp.courante.identifiant, category: "sonde")
     /// Numero de serie USB de la sonde retenue (l'adresse MAC du C6).
     static let cleSerie = "thread.sondeSerieUSB"
     /// Nom de la sonde retenue, donne par la carte (`bonjour`).

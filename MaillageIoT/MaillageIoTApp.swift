@@ -130,8 +130,10 @@ struct MaillageIoTApp: App {
         // Les Reglages sont une fenetre AppKit (`ControleurReglages`) : Cmd-virgule l'ouvre.
         .commands {
             CommandGroup(after: .appInfo) {
-                Button("Rechercher les mises à jour…") { misesAJour.rechercher() }
-                    .disabled(!misesAJour.peutRechercher)
+                if MisesAJour.moteurPresent {
+                    Button("Rechercher les mises à jour…") { misesAJour.rechercher() }
+                        .disabled(!misesAJour.peutRechercher)
+                }
             }
             CommandGroup(replacing: .appSettings) {
                 Button("Réglages…") { reglages.montrer() }

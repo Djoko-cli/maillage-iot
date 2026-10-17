@@ -232,13 +232,18 @@ struct LecteurEtatSystemeReel: LecteurEtatSysteme {
     let notifications: @Sendable () async -> StatutNotifications
     let ouverture: @Sendable () -> StatutOuverture
     let reseauLocalRefuse: @Sendable () async -> Bool
+    /// L'identite de l'app : ses services de trousseau (ceux de la repetition dans l'app de repetition, jamais ceux de l'app
+    /// publiee). Les services des anciennes apps sont les memes pour toutes.
+    let identite: IdentiteApp
 
     init(inventaire: any InventaireTrousseau = InventaireTrousseauSysteme(), suite: String? = nil,
+         identite: IdentiteApp = .courante,
          notifications: @escaping @Sendable () async -> StatutNotifications = Self.notificationsDuSysteme,
          ouverture: @escaping @Sendable () -> StatutOuverture = { StatutOuverture(SMAppService.mainApp.status) },
          reseauLocalRefuse: @escaping @Sendable () async -> Bool) {
         self.inventaire = inventaire
         self.suite = suite
+        self.identite = identite
         self.notifications = notifications
         self.ouverture = ouverture
         self.reseauLocalRefuse = reseauLocalRefuse
@@ -255,11 +260,11 @@ struct LecteurEtatSystemeReel: LecteurEtatSysteme {
                      tentees: Set(preferences.stringArray(forKey: memoire) ?? []))
         }
         return EtatSystemeReprise(
-            sondeThread: etat(nouveau: TrousseauSystemeThread.serviceParDefaut, ancien: TrousseauReprisThread.serviceAncien,
+            sondeThread: etat(nouveau: identite.serviceSondeThread, ancien: TrousseauReprisThread.serviceAncien,
                               memoire: MemoireReprises.cleSondeThread),
-            sondeZigbee: etat(nouveau: CheminSonde.serviceTrousseau, ancien: TrousseauRepris.serviceSondeAncien,
+            sondeZigbee: etat(nouveau: identite.serviceSondeZigbee, ancien: TrousseauRepris.serviceSondeAncien,
                               memoire: MemoireReprises.cleSondeZigbee),
-            pontHue: etat(nouveau: TrousseauSystemeZigbee.servicePontParDefaut, ancien: TrousseauRepris.servicePontAncien,
+            pontHue: etat(nouveau: identite.servicePontHue, ancien: TrousseauRepris.servicePontAncien,
                           memoire: MemoireReprises.clePontZigbee),
             notifications: await notifications(), ouverture: ouverture(), reseauLocalRefuse: await reseauLocalRefuse())
     }

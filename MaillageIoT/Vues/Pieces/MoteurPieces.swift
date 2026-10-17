@@ -147,7 +147,7 @@ final class MoteurPieces {
         didSet { reveiller() }
     }
 
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "pieces")
+    nonisolated static let journal = Logger(subsystem: IdentiteApp.courante.identifiant, category: "pieces")
 
     // MARK: Etat non observe
 

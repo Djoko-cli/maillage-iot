@@ -106,7 +106,7 @@ struct PreferencesUserDefaults: PreferencesReprise {
     let domaine: String
 
     /// Le domaine de l'app publiee, quand le bundle n'a pas d'identifiant (jamais en pratique).
-    static let domaineParDefaut = "fr.djoko.maillage.iot"
+    static let domaineParDefaut = IdentiteApp.identifiantPublie
 
     /// Les vraies preferences de l'app qui tourne : son domaine est son identifiant (`Bundle.main`), donc celui de l'app de
     /// repetition dans l'app de repetition, jamais celui de l'app publiee.

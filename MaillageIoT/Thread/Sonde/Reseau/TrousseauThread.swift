@@ -36,16 +36,19 @@ enum ErreurTrousseauThread: Error, Equatable, Sendable, LocalizedError {
     }
 }
 
-/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.sonde-thread`,
-/// compte = nom d'hote SRP (sans `.local`), valeur = 64 hexa MAJUSCULES, commentaire =
+/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.sonde-thread` (suivi de
+/// `.repetition` dans l'app de repetition : `IdentiteApp`), compte = nom d'hote SRP (sans `.local`), valeur = 64 hexa MAJUSCULES, commentaire =
 /// empreinte. Non synchronise.
 struct TrousseauSystemeThread: TrousseauClesThread {
     let service: String
-    /// Le service de l'app (les cles de ses sondes Thread).
-    static let serviceParDefaut = "fr.djoko.maillage.iot.sonde-thread"
+    /// Le nom de l'app, dans le libelle des elements (colonne Nom de Trousseaux d'acces).
+    let nomApp: String
+    /// Le service de l'app (les cles de ses sondes Thread), celui de son identite.
+    static var serviceParDefaut: String { IdentiteApp.courante.serviceSondeThread }
 
-    init(service: String = TrousseauSystemeThread.serviceParDefaut) {
+    init(service: String = TrousseauSystemeThread.serviceParDefaut, nomApp: String = IdentiteApp.courante.nom) {
         self.service = service
+        self.nomApp = nomApp
     }
 
     private func requete(_ nom: String? = nil) -> [String: Any] {
@@ -82,7 +85,7 @@ struct TrousseauSystemeThread: TrousseauClesThread {
     func ranger(nom: String, cle: Data, empreinte: String) throws {
         let valeurs: [String: Any] = [kSecValueData as String: Data(H1.hexa(cle).utf8),
                                       kSecAttrComment as String: empreinte,
-                                      kSecAttrLabel as String: "Maillage IoT - sonde Thread \(nom)"]
+                                      kSecAttrLabel as String: "\(nomApp) - sonde Thread \(nom)"]
         var s = SecItemUpdate(requete(nom) as CFDictionary, valeurs as CFDictionary)
         if s == errSecItemNotFound {
             s = SecItemAdd(requete(nom).merging(valeurs) { $1 } as CFDictionary, nil)
