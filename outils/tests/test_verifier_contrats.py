@@ -10,7 +10,8 @@ import unittest
 
 RACINE = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 SCRIPT = os.path.join(RACINE, "outils", "verifier-contrats.sh")
-FICHIERS = ["MaillageCoeur/Reprise/ContratExport.swift", "MaillageCoeur/Noms/ProtocolePasseur.swift"]
+FICHIERS = ["MaillageCoeur/Reprise/ContratExport.swift", "MaillageCoeurTests/ContratExportTests.swift",
+            "MaillageCoeur/Noms/ProtocolePasseur.swift"]
 
 _TEMPORAIRES = []
 
@@ -41,26 +42,27 @@ def lancer(thread, zigbee):
 
 
 class VerifierContratsTests(unittest.TestCase):
-    def test_les_deux_fichiers_existent_ici(self):
+    def test_les_fichiers_existent_ici(self):
         for f in FICHIERS:
             self.assertTrue(os.path.isfile(os.path.join(RACINE, f)), f)
 
     def test_copies_identiques(self):
         code, sortie = lancer(depot(FICHIERS), depot(FICHIERS))
         self.assertEqual(code, 0, sortie)
-        self.assertIn("4 identique(s), 0 pas encore recopie(s), 0 defaut(s)", sortie)
+        self.assertIn("6 identique(s), 0 pas encore recopie(s), 0 defaut(s)", sortie)
 
     def test_depots_absents_ne_sont_pas_un_defaut(self):
         absent = os.path.join(tempfile.gettempdir(), "contrats-absent-" + os.urandom(4).hex())
         code, sortie = lancer(absent, absent)
         self.assertEqual(code, 0, sortie)
         self.assertIn("pas encore recopie : thread/MaillageCoeur/Reprise/ContratExport.swift", sortie)
-        self.assertIn("0 identique(s), 4 pas encore recopie(s), 0 defaut(s)", sortie)
+        self.assertIn("0 identique(s), 6 pas encore recopie(s), 0 defaut(s)", sortie)
 
     def test_contrat_d_export_pas_encore_recopie_mais_passeur_identique(self):
-        code, sortie = lancer(depot(FICHIERS[1:]), depot(FICHIERS[1:]))
+        code, sortie = lancer(depot(FICHIERS[2:]), depot(FICHIERS[2:]))
         self.assertEqual(code, 0, sortie)
-        self.assertIn("2 identique(s), 2 pas encore recopie(s), 0 defaut(s)", sortie)
+        self.assertIn("2 identique(s), 4 pas encore recopie(s), 0 defaut(s)", sortie)
+        self.assertIn("pas encore recopie : thread/MaillageCoeurTests/ContratExportTests.swift", sortie)
 
     def test_copie_differente_est_un_defaut(self):
         for i, f in enumerate(FICHIERS):

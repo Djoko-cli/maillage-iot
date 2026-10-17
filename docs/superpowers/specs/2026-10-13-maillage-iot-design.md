@@ -631,7 +631,7 @@ Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
 ### 6.8 Ajustements du 17/10 pour la phase 4 (reprise)
 
 D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`), proposés avec le plan de la phase 4 :
-1. **`ContratExport.swift` vit dans le cœur**, autonome comme `ProtocolePasseur.swift` (Foundation seul), recopié à
+1. **`ContratExport.swift` vit dans le cœur**, autonome comme `ProtocolePasseur.swift` (Foundation et CryptoKit seulement), recopié à
    l'octet dans les deux anciennes apps ; un script de contrôle le compare par `cmp` quand les autres dépôts sont là.
 2. **Les lignes JSONL ne changent pas** (journal et historiques) : le manifeste porte la version du format ; seule
    exception, chaque ligne du journal de Zigbee 1.1.1 reçoit `"protocole":"zigbee"` (sans quoi elle serait lue comme

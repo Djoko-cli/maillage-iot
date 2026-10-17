@@ -3,6 +3,7 @@
 #   bash outils/verifier-contrats.sh
 # Fichiers compares, au meme chemin relatif dans chaque depot (la copie de reference est celle de ce depot) :
 #   MaillageCoeur/Reprise/ContratExport.swift   contrat de l'export de reprise (spec 4.1, 6.8)
+#   MaillageCoeurTests/ContratExportTests.swift ses tests, recopies avec lui
 #   MaillageCoeur/Noms/ProtocolePasseur.swift   contrat du demon Passeur Noms
 # Depots compares, par defaut les voisins de celui-ci (meme dossier parent) :
 #   ../maillage-thread   (Maillage Thread)      ../maillage-zigbee   (Maillage Zigbee)
@@ -15,7 +16,7 @@ set -u
 cd "$(dirname "$0")/.." || exit 1
 RACINE=$(pwd)
 PARENT=${MAILLAGE_DEPOTS:-$(dirname "$RACINE")}
-FICHIERS="MaillageCoeur/Reprise/ContratExport.swift MaillageCoeur/Noms/ProtocolePasseur.swift"
+FICHIERS="MaillageCoeur/Reprise/ContratExport.swift MaillageCoeurTests/ContratExportTests.swift MaillageCoeur/Noms/ProtocolePasseur.swift"
 DEPOTS="thread:${DEPOT_THREAD:-$PARENT/maillage-thread} zigbee:${DEPOT_ZIGBEE:-$PARENT/maillage-zigbee}"
 DEFAUTS=0
 IDENTIQUES=0

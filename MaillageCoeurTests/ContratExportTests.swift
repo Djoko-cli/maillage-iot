@@ -14,13 +14,34 @@ struct ContratExportTests {
     static let date = Date(timeIntervalSince1970: 1_792_238_400)
     static let sha = String(repeating: "ab", count: 32)
 
-    static func manifeste(app: C.AppSource = .maillageThread, fichiers: [C.Fichier]? = nil) -> C.Manifeste {
+    static let nonRepris: [C.FichierNonRepris] = [
+        C.FichierNonRepris(chemin: "cache.tmp", raison: .horsContrat),
+        C.FichierNonRepris(chemin: ".DS_Store", raison: .exclu),
+    ]
+
+    static func manifeste(app: C.AppSource = .maillageThread, fichiers: [C.Fichier]? = nil,
+                          nonRepris: [C.FichierNonRepris]? = nil) -> C.Manifeste {
         C.Manifeste(identifiant: identifiant, app: app, versionApp: "9.9.9", date: date,
                     fichiers: fichiers ?? [
                         C.Fichier(chemin: "surnoms.json", taille: 12, sha256: sha),
                         C.Fichier(chemin: "Journal/journal-2026-10.jsonl", taille: 0, sha256: String(repeating: "0", count: 64)),
                         C.Fichier(chemin: "reglages.json", taille: 345, sha256: sha),
-                    ])
+                    ], fichiersNonRepris: nonRepris ?? Self.nonRepris)
+    }
+
+    /// L'erreur est `Erreur.illisible` : retourne son texte (la cause, sans valeur), nil pour toute autre erreur.
+    static func causeIllisible(_ erreur: any Error) -> String? {
+        if case C.Erreur.illisible(let cause) = erreur { return cause }
+        return nil
+    }
+
+    /// La cause d'illisibilite de la lecture du manifeste (nil : lecture reussie ou autre erreur).
+    static func causeManifeste(_ json: String) -> String? {
+        do { _ = try C.lireManifeste(Data(json.utf8)); return nil } catch { return causeIllisible(error) }
+    }
+
+    static func causeReglages(_ json: String) -> String? {
+        do { _ = try C.lireReglages(Data(json.utf8)); return nil } catch { return causeIllisible(error) }
     }
 
     static func texte(_ d: Data) -> String { String(decoding: d, as: UTF8.self) }
@@ -60,6 +81,16 @@ struct ContratExportTests {
               "taille" : 345
             }
           ],
+          "fichiersNonRepris" : [
+            {
+              "chemin" : ".DS_Store",
+              "raison" : "exclu"
+            },
+            {
+              "chemin" : "cache.tmp",
+              "raison" : "horsContrat"
+            }
+          ],
           "format" : 1,
           "identifiant" : "00000000-0000-4000-8000-000000000001",
           "versionApp" : "9.9.9"
@@ -79,7 +110,7 @@ struct ContratExportTests {
     /// Une date avec des fractions est ramenee a la seconde a la construction : ce qui s'ecrit se relit egal.
     @Test func dateALaSeconde() throws {
         let m = C.Manifeste(identifiant: Self.identifiant, app: .maillageZigbee, versionApp: "1", date: Self.date + 0.789,
-                            fichiers: [])
+                            fichiers: [], fichiersNonRepris: [])
         #expect(m.date == Self.date)
         #expect(try C.lireManifeste(C.ecrire(m)) == m)
     }
@@ -105,20 +136,24 @@ struct ContratExportTests {
         }
     }
 
-    /// Un manifeste mal forme est « illisible », sans plantage : JSON invalide, champ manquant, mauvais type.
+    /// Un manifeste mal forme est "illisible", sans plantage, avec la cause (champ ou chemin, jamais une valeur) :
+    /// JSON invalide, champ manquant, mauvais type.
     @Test func manifesteIllisible() throws {
         let bon = Self.texte(try C.ecrire(Self.manifeste()))
-        let casses = [
-            "pas du JSON",
-            "[]",
-            "{}",
-            bon.replacingOccurrences(of: "\"versionApp\"", with: "\"autreCle\""),
-            bon.replacingOccurrences(of: "\"taille\" : 12", with: "\"taille\" : \"12\""),
-            bon.replacingOccurrences(of: "2026-10-17T12:00:00Z", with: "hier"),
-            bon.replacingOccurrences(of: "00000000-0000-4000-8000-000000000001", with: "pas-un-uuid"),
+        let casses: [(String, String)] = [
+            ("pas du JSON", "JSON invalide"),
+            ("[]", "type inattendu : (racine)"),
+            ("{}", "champ manquant : format"),
+            (bon.replacingOccurrences(of: "\"versionApp\"", with: "\"autreCle\""), "champ manquant : versionApp"),
+            (bon.replacingOccurrences(of: "\"fichiersNonRepris\"", with: "\"autreCle\""), "champ manquant : fichiersNonRepris"),
+            (bon.replacingOccurrences(of: "\"taille\" : 12", with: "\"taille\" : \"12\""), "type inattendu : fichiers[0].taille"),
+            (bon.replacingOccurrences(of: "\"format\" : 1", with: "\"format\" : \"1\""), "type inattendu : format"),
+            (bon.replacingOccurrences(of: "2026-10-17T12:00:00Z", with: "hier"), "valeur invalide"),
+            (bon.replacingOccurrences(of: "00000000-0000-4000-8000-000000000001", with: "pas-un-uuid"), "valeur invalide : identifiant"),
+            (bon.replacingOccurrences(of: "\"exclu\"", with: "\"autre\""), "valeur invalide : fichiersNonRepris[0].raison"),
         ]
-        for c in casses {
-            #expect(throws: C.Erreur.illisible, "\(c.prefix(40))") { try C.lireManifeste(Data(c.utf8)) }
+        for (json, cause) in casses {
+            #expect(Self.causeManifeste(json) == cause, "\(json.prefix(40))")
         }
     }
 
@@ -286,17 +321,19 @@ struct ContratExportTests {
             "AppleLanguages": .listeTextes(["fr", "en"]),
             "listeVide": .listeTextes([]),
             "sondeJournalPages": .listeEntiers([1, 2, 300, -4]),
-        ])
+        ], nonRepris: ["SUHasLaunchedBefore": .horsContrat, "vuePieces3D": .typeInattendu])
         let json = try C.ecrire(r)
         #expect(try C.lireReglages(json) == r)
         #expect(try C.ecrire(r) == json)
         let t = Self.texte(json)
         #expect(t.contains("\"pont.hue\" : {\n      \"type\" : \"donnees\",\n      \"valeur\" : \"AAH+/w==\"\n    }"))
         #expect(t.contains("\"sondePagesTables\" : {\n      \"type\" : \"entier\",\n      \"valeur\" : 7\n    }"))
+        #expect(t.contains("\"SUHasLaunchedBefore\" : \"horsContrat\""))
+        #expect(t.contains("\"vuePieces3D\" : \"typeInattendu\""))
         #expect(t.contains("\"app\" : \"zigbee\""))
         #expect(t.contains("\"format\" : 1"))
         let cles = t.components(separatedBy: "\n").compactMap { l -> String? in
-            guard l.hasPrefix("    \""), let f = l.dropFirst(5).firstIndex(of: "\"") else { return nil }
+            guard l.hasPrefix("    \""), l.hasSuffix(": {"), let f = l.dropFirst(5).firstIndex(of: "\"") else { return nil }
             return String(l.dropFirst(5)[..<f])
         }
         #expect(cles == cles.sorted(), "cles triees")
@@ -305,7 +342,7 @@ struct ContratExportTests {
     /// Un 1 entier et un 1,0 decimal, un booleen et un 1 : le type ecrit est celui qu'on relit.
     @Test func typesNeSeConfondentPas() throws {
         let r = C.Reglages(app: .maillageThread, valeurs: ["a": .entier(1), "b": .decimal(1.0), "c": .bool(true),
-                                                          "d": .texte("1"), "e": .listeEntiers([1])])
+                                                          "d": .texte("1"), "e": .listeEntiers([1])], nonRepris: [:])
         let relu = try C.lireReglages(C.ecrire(r))
         #expect(relu.valeurs["a"] == .entier(1))
         #expect(relu.valeurs["b"] == .decimal(1.0))
@@ -316,13 +353,13 @@ struct ContratExportTests {
     }
 
     @Test func reglagesVides() throws {
-        let r = C.Reglages(app: .maillageThread, valeurs: [:])
+        let r = C.Reglages(app: .maillageThread, valeurs: [:], nonRepris: [:])
         #expect(try C.lireReglages(C.ecrire(r)) == r)
     }
 
     /// Format inconnu, app inconnue, type de valeur inconnu (jamais ignore en silence), cle vide, JSON mal forme.
     @Test func reglagesRefuses() throws {
-        let bon = Self.texte(try C.ecrire(C.Reglages(app: .maillageThread, valeurs: ["a": .bool(true)])))
+        let bon = Self.texte(try C.ecrire(C.Reglages(app: .maillageThread, valeurs: ["a": .bool(true)], nonRepris: [:])))
         let v2 = Data(bon.replacingOccurrences(of: "\"format\" : 1", with: "\"format\" : 2").utf8)
         #expect(throws: C.Erreur.formatInconnu(2)) { try C.lireReglages(v2) }
         let app = Data(bon.replacingOccurrences(of: "\"thread\"", with: "\"autre\"").utf8)
@@ -331,15 +368,15 @@ struct ContratExportTests {
         #expect(throws: C.Erreur.valeurInconnue(cle: "a", type: "date")) { try C.lireReglages(type) }
         let vide = Data(bon.replacingOccurrences(of: "\"a\"", with: "\"\"").utf8)
         #expect(throws: C.Erreur.cleInvalide) { try C.lireReglages(vide) }
-        let mauvais = Data(bon.replacingOccurrences(of: "true", with: "\"oui\"").utf8)
-        #expect(throws: C.Erreur.illisible) { try C.lireReglages(mauvais) }
-        #expect(throws: C.Erreur.illisible) { try C.lireReglages(Data("{}".utf8)) }
-        #expect(throws: C.Erreur.illisible) { try C.lireReglages(Data("pas du json".utf8)) }
+        #expect(Self.causeReglages(bon.replacingOccurrences(of: "true", with: "\"oui\"")) == "type inattendu : valeurs.a.valeur")
+        #expect(Self.causeReglages("{}") == "champ manquant : format")
+        #expect(Self.causeReglages("pas du json") == "JSON invalide")
+        #expect(Self.causeReglages(bon.replacingOccurrences(of: "\"nonRepris\"", with: "\"autre\"")) == "champ manquant : nonRepris")
     }
 
     /// Un decimal qui ne s'ecrit pas en JSON (NaN, infini) n'est jamais ecrit tronque : l'ecriture echoue.
     @Test func decimalNonFini() {
-        let r = C.Reglages(app: .maillageThread, valeurs: ["x": .decimal(.nan)])
+        let r = C.Reglages(app: .maillageThread, valeurs: ["x": .decimal(.nan)], nonRepris: [:])
         #expect(throws: (any Error).self) { try C.ecrire(r) }
     }
 
@@ -396,7 +433,7 @@ struct ContratExportTests {
     }
 
     /// Les reglages de l'inventaire (17/10) : chacun a son type, par app ; les cles absentes de la liste restent a
-    /// l'import de dire « ignore ».
+    /// l'import de dire "ignore".
     @Test func reglagesConnus() {
         func types(_ app: C.AppSource) -> [String: C.TypeValeur] {
             Dictionary(uniqueKeysWithValues: C.reglagesConnus(de: app).map { ($0.cle, $0.type) })
@@ -445,5 +482,460 @@ struct ContratExportTests {
         #expect(C.nomManifeste == "manifeste.json")
         #expect(C.nomReglages == "reglages.json")
         #expect(C.formatCourant == 1)
+    }
+
+    // MARK: Identite des anciennes apps
+
+    /// Identifiant de bundle, nom affiche et dossier d'Application Support des deux anciennes apps (project.yml et
+    /// `Surveillance.swift` de chacune) : constantes du contrat, jamais dans le JSON.
+    @Test func identiteDesAnciennesApps() {
+        #expect(C.AppSource.maillageThread.identifiantBundle == "fr.djoko.maillage")
+        #expect(C.AppSource.maillageZigbee.identifiantBundle == "fr.djoko.maillage.zigbee")
+        #expect(C.AppSource.maillageThread.nomApp == "Maillage Thread")
+        #expect(C.AppSource.maillageZigbee.nomApp == "Maillage Zigbee")
+        #expect(C.AppSource.maillageThread.dossierDonnees == "Maillage Thread")
+        #expect(C.AppSource.maillageZigbee.dossierDonnees == "Maillage Zigbee")
+        #expect(Set(C.AppSource.allCases.map(\.identifiantBundle)).count == 2)
+    }
+
+    // MARK: Ce qui n'est pas repris : fichiers
+
+    @Test func fichiersNonReprisTries() {
+        let m = Self.manifeste(nonRepris: [
+            C.FichierNonRepris(chemin: "zeta.bin", raison: .horsContrat),
+            C.FichierNonRepris(chemin: "Alpha.bin", raison: .horsContrat),
+            C.FichierNonRepris(chemin: ".DS_Store", raison: .exclu),
+        ])
+        #expect(m.fichiersNonRepris.map(\.chemin) == [".DS_Store", "Alpha.bin", "zeta.bin"])
+    }
+
+    /// Un fichier non repris est cite avec sa raison ; un chemin invalide, un doublon (entre eux ou avec un fichier
+    /// repris, casse comprise) ou `manifeste.json` sont refuses, a l'ecriture comme a la lecture.
+    @Test func fichiersNonReprisRefuses() throws {
+        func avec(_ n: C.FichierNonRepris...) -> C.Manifeste { Self.manifeste(nonRepris: n) }
+        func nr(_ c: String) -> C.FichierNonRepris { C.FichierNonRepris(chemin: c, raison: .horsContrat) }
+        let cas: [(C.Manifeste, C.Erreur)] = [
+            (avec(nr("../x")), .cheminInvalide("../x")),
+            (avec(nr("/etc/x")), .cheminInvalide("/etc/x")),
+            (avec(nr("a.bin"), nr("a.bin")), .cheminEnDouble("a.bin")),
+            (avec(nr("a.bin"), nr("A.BIN")), .cheminEnDouble("a.bin")),  // trie : A.BIN d'abord
+            (avec(nr("surnoms.json")), .cheminEnDouble("surnoms.json")),
+            (avec(nr("SURNOMS.json")), .cheminEnDouble("SURNOMS.json")),
+            (avec(nr("manifeste.json")), .nomReserve("manifeste.json")),
+        ]
+        for (m, erreur) in cas {
+            #expect(throws: erreur) { try C.ecrire(m) }
+            let json = (try? C.encodeur().encode(m)) ?? Data()
+            #expect(throws: erreur) { try C.lireManifeste(json) }
+        }
+    }
+
+    @Test func raisonsNonReprises() {
+        #expect(C.RaisonNonRepris.allCases.map(\.rawValue) == ["horsContrat", "exclu", "typeInattendu"])
+    }
+
+    /// Classement de ce qu'une ancienne app voit dans son `Application Support` : le meme pour les deux apps.
+    @Test func classerLesFichiersVus() throws {
+        let vus = ["surnoms.json", "noms.json", "Journal/journal-2026-10.jsonl", ".DS_Store", "Journal/.DS_Store",
+                   "noms.illisible-1.json", "Sparkle.xml", "Thread/x.json", "associations.json", "reglages.json",
+                   "manifeste.json", "maillage-2026-10.jsonl"]
+        let thread = try C.classerFichiers(vus: vus, de: .maillageThread)
+        #expect(thread.aCopier == ["Journal/journal-2026-10.jsonl", "associations.json", "maillage-2026-10.jsonl",
+                                   "noms.json", "surnoms.json"])
+        #expect(thread.nonRepris == [
+            C.FichierNonRepris(chemin: ".DS_Store", raison: .exclu),
+            C.FichierNonRepris(chemin: "Journal/.DS_Store", raison: .exclu),
+            C.FichierNonRepris(chemin: "Sparkle.xml", raison: .horsContrat),
+            C.FichierNonRepris(chemin: "Thread/x.json", raison: .horsContrat),
+            C.FichierNonRepris(chemin: "manifeste.json", raison: .horsContrat),
+            C.FichierNonRepris(chemin: "noms.illisible-1.json", raison: .exclu),
+            C.FichierNonRepris(chemin: "reglages.json", raison: .horsContrat),
+        ])
+        let zigbee = try C.classerFichiers(vus: vus, de: .maillageZigbee)
+        #expect(zigbee.aCopier == ["Journal/journal-2026-10.jsonl", "maillage-2026-10.jsonl", "surnoms.json"])
+        #expect(zigbee.nonRepris.contains(C.FichierNonRepris(chemin: "noms.json", raison: .horsContrat)))
+        #expect(zigbee.nonRepris.contains(C.FichierNonRepris(chemin: "associations.json", raison: .horsContrat)))
+        #expect(zigbee.aCopier.count + zigbee.nonRepris.count == vus.count, "rien n'est perdu en silence")
+        #expect(thread.aCopier.count + thread.nonRepris.count == vus.count)
+        #expect(throws: C.Erreur.cheminInvalide("../x")) { try C.classerFichiers(vus: ["../x"], de: .maillageThread) }
+    }
+
+    // MARK: Ce qui n'est pas repris : reglages
+
+    @Test func reglagesNonReprisRefuses() throws {
+        let bon = Self.texte(try C.ecrire(C.Reglages(app: .maillageThread, valeurs: ["a": .bool(true)],
+                                                    nonRepris: ["SUHasLaunchedBefore": .horsContrat])))
+        #expect(try C.lireReglages(Data(bon.utf8)).nonRepris == ["SUHasLaunchedBefore": .horsContrat])
+        let vide = Data(bon.replacingOccurrences(of: "\"SUHasLaunchedBefore\"", with: "\"\"").utf8)
+        #expect(throws: C.Erreur.cleInvalide) { try C.lireReglages(vide) }
+        let double = Data(bon.replacingOccurrences(of: "\"SUHasLaunchedBefore\"", with: "\"a\"").utf8)
+        #expect(throws: C.Erreur.cleEnDouble("a")) { try C.lireReglages(double) }
+        #expect(Self.causeReglages(bon.replacingOccurrences(of: "\"horsContrat\"", with: "\"autre\""))
+                == "valeur invalide : nonRepris.SUHasLaunchedBefore")
+        // l'ecriture refuse les memes cas
+        #expect(throws: C.Erreur.cleInvalide) {
+            try C.ecrire(C.Reglages(app: .maillageThread, valeurs: [:], nonRepris: ["": .horsContrat]))
+        }
+        #expect(throws: C.Erreur.cleEnDouble("a")) {
+            try C.ecrire(C.Reglages(app: .maillageThread, valeurs: ["a": .bool(true)], nonRepris: ["a": .typeInattendu]))
+        }
+    }
+
+    // MARK: Lecture des reglages d'une ancienne app
+
+    /// Un booleen n'est pas un nombre, un nombre n'est pas un booleen : `1` ne devient jamais `true`, `true` jamais `1`.
+    /// Une valeur du mauvais type est citee `typeInattendu`, jamais perdue en silence ni convertie.
+    @Test func reglagesBoolContreEntier() {
+        let thread = C.reglages(depuis: [
+            "vuePieces3D": true, "legendeRepliee": false,
+            "etagesEnGrille": 1, "grapheDejaOuvert": 0, "ouvertureSessionProposee": 1.0,
+        ], app: .maillageThread)
+        #expect(thread.valeurs == ["vuePieces3D": .bool(true), "legendeRepliee": .bool(false)])
+        #expect(thread.nonRepris == ["etagesEnGrille": .typeInattendu, "grapheDejaOuvert": .typeInattendu,
+                                     "ouvertureSessionProposee": .typeInattendu])
+        #expect(thread.app == .maillageThread)
+
+        let zigbee = C.reglages(depuis: ["sondePagesTables": 7, "voisinsALaSelection": true], app: .maillageZigbee)
+        #expect(zigbee.valeurs == ["sondePagesTables": .entier(7), "voisinsALaSelection": .bool(true)])
+        #expect(zigbee.nonRepris.isEmpty)
+        for mauvais: Any in [true, false, 7.5, "7", Double.nan] {
+            let r = C.reglages(depuis: ["sondePagesTables": mauvais], app: .maillageZigbee)
+            #expect(r.valeurs.isEmpty, "\(mauvais)")
+            #expect(r.nonRepris == ["sondePagesTables": .typeInattendu], "\(mauvais)")
+        }
+        let negatif = C.reglages(depuis: ["sondePagesTables": -3], app: .maillageZigbee)
+        #expect(negatif.valeurs == ["sondePagesTables": .entier(-3)])
+    }
+
+    /// Chaque type de l'inventaire est lu strictement : texte, donnees, listes de textes et d'entiers.
+    @Test func reglagesTypesStricts() {
+        let ok = C.reglages(depuis: [
+            "sondeNom": "Sonde 1", "pont.hue": Data([1, 2, 3]), "sondeJournalPages": [1, 2, 300] as [Int],
+            "AppleLanguages": ["fr", "en"],
+        ], app: .maillageZigbee)
+        #expect(ok.valeurs == [
+            "sondeNom": .texte("Sonde 1"), "pont.hue": .donnees(Data([1, 2, 3])),
+            "sondeJournalPages": .listeEntiers([1, 2, 300]), "AppleLanguages": .listeTextes(["fr", "en"]),
+        ])
+        #expect(ok.nonRepris.isEmpty)
+        let mauvais = C.reglages(depuis: [
+            "sondeNom": 12, "pont.hue": "texte", "sondeJournalPages": [1, true] as [Any],
+            "AppleLanguages": ["fr", 1] as [Any], "sondeChemin": ["a"] as [String],
+        ], app: .maillageZigbee)
+        #expect(mauvais.valeurs.isEmpty)
+        #expect(mauvais.nonRepris == [
+            "sondeNom": .typeInattendu, "pont.hue": .typeInattendu, "sondeJournalPages": .typeInattendu,
+            "AppleLanguages": .typeInattendu, "sondeChemin": .typeInattendu,
+        ])
+        #expect(C.reglages(depuis: ["sondeJournalPages": [Int]()], app: .maillageZigbee).valeurs
+                == ["sondeJournalPages": .listeEntiers([])])
+    }
+
+    /// Une cle inconnue (Sparkle, fenetres, onglet, ancien dossier des noms, ou une cle de l'autre app) est citee
+    /// `horsContrat`, sans valeur ; une cle connue absente reste absente (aucun defaut).
+    @Test func reglagesCleInconnueEstCitee() throws {
+        let domaine: [String: Any] = [
+            "SUHasLaunchedBefore": true, "NSWindow Frame graphe": "10 20 300 400", "reglages.onglet": "notifications",
+            "dossierNoms": Data([9]), "motDePasseWifi": "secret-invente", "scissionsNotifiees": ["a"],
+            "vuePieces3D": true,
+        ]
+        let r = C.reglages(depuis: domaine, app: .maillageZigbee)
+        #expect(r.valeurs == ["vuePieces3D": .bool(true)])
+        #expect(Set(r.nonRepris.keys) == ["SUHasLaunchedBefore", "NSWindow Frame graphe", "reglages.onglet", "dossierNoms",
+                                          "motDePasseWifi", "scissionsNotifiees"])
+        #expect(r.nonRepris.values.allSatisfy { $0 == .horsContrat })
+        #expect(C.reglages(depuis: ["scissionsNotifiees": ["a"]], app: .maillageThread).valeurs
+                == ["scissionsNotifiees": .listeTextes(["a"])], "connue de Thread")
+        let vide = C.reglages(depuis: [:], app: .maillageThread)
+        #expect(vide.valeurs.isEmpty && vide.nonRepris.isEmpty, "sondeLiaison absente : ni valeur ni defaut")
+        // Le resultat s'ecrit et se relit egal.
+        #expect(try C.lireReglages(C.ecrire(r)) == r)
+        // Une cle vide ne peut pas etre citee : elle est ignoree, l'ecriture reste possible.
+        #expect(C.reglages(depuis: ["": 1], app: .maillageThread).nonRepris.isEmpty)
+    }
+
+    /// Lecture du domaine persistant de l'app, jamais des valeurs globales du Mac : `AppleLanguages` n'est repris que
+    /// si l'app l'a ecrit elle-meme. Domaine invente (jamais celui d'une vraie app).
+    @Test func reglagesLangueDeLAppEtNonDuMac() throws {
+        let nom = "fr.djoko.test.contrat-\(UUID().uuidString)"
+        let defauts = try #require(UserDefaults(suiteName: nom))
+        defer { defauts.removePersistentDomain(forName: nom) }
+        defauts.set(true, forKey: "vuePieces3D")
+        defauts.set(1, forKey: "etagesEnGrille")
+        defauts.set(7, forKey: "sondePagesTables")
+        defauts.set([3, 4], forKey: "sondeJournalPages")
+        let sans = C.reglagesPersistants(de: .maillageZigbee, domaine: nom, defauts: defauts)
+        #expect(sans.valeurs["AppleLanguages"] == nil, "la langue du Mac n'est pas celle de l'app")
+        #expect(sans.nonRepris["AppleLanguages"] == nil)
+        #expect(sans.valeurs["vuePieces3D"] == .bool(true))
+        #expect(sans.valeurs["sondePagesTables"] == .entier(7))
+        #expect(sans.valeurs["sondeJournalPages"] == .listeEntiers([3, 4]))
+        #expect(sans.nonRepris["etagesEnGrille"] == .typeInattendu, "un 1 entier n'est pas un booleen")
+        #expect(sans.app == .maillageZigbee)
+        defauts.set(["fr"], forKey: "AppleLanguages")
+        let avec = C.reglagesPersistants(de: .maillageZigbee, domaine: nom, defauts: defauts)
+        #expect(avec.valeurs["AppleLanguages"] == .listeTextes(["fr"]), "la langue choisie dans l'app est reprise")
+        #expect(C.reglagesPersistants(de: .maillageThread, domaine: nom + ".vide", defauts: defauts).valeurs.isEmpty)
+    }
+
+    // MARK: Description d'un fichier en un seul passage
+
+    /// Taille et empreinte viennent des memes octets : un fichier qui grandit pendant la lecture donne une taille et une
+    /// empreinte qui se correspondent, toujours un prefixe du fichier (le fichier ne fait qu'avancer).
+    @Test func empreinteEtTailleDesMemesOctets() throws {
+        let d = try Self.dossier()
+        defer { try? FileManager.default.removeItem(at: d) }
+        let url = d.appendingPathComponent("grandit.jsonl")
+        try Data(repeating: 0x41, count: 2 * 1024 * 1024).write(to: url)
+        let petit = d.appendingPathComponent("petit.json")
+        try Data("abc".utf8).write(to: petit)
+        let (taille, sha) = try C.empreinte(fichier: petit)
+        #expect(taille == 3)
+        #expect(sha == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+        #expect(try C.sha256(fichier: petit) == sha)
+
+        let fini = DispatchSemaphore(value: 0)
+        let chunk = Data((0..<4096).map { UInt8(truncatingIfNeeded: $0 &* 7 &+ 1) })
+        Thread.detachNewThread {
+            if let ecrivain = try? FileHandle(forWritingTo: url) {
+                _ = try? ecrivain.seekToEnd()
+                for _ in 0..<3000 { try? ecrivain.write(contentsOf: chunk) }
+                try? ecrivain.close()
+            }
+            fini.signal()
+        }
+        var mesures: [(Int64, String)] = []
+        var descriptions: [C.Fichier] = []
+        for _ in 0..<25 {
+            mesures.append(try C.empreinte(fichier: url))
+            descriptions.append(try C.Fichier.decrire(chemin: "grandit.jsonl", dans: d))
+        }
+        fini.wait()
+        let final = try Data(contentsOf: url)
+        #expect(final.count == 2 * 1024 * 1024 + 3000 * 4096)
+        for (t, h) in mesures {
+            #expect(t >= 2 * 1024 * 1024 && Int(t) <= final.count)
+            #expect(C.sha256(final.prefix(Int(t))) == h, "taille \(t) et empreinte decrivent les memes octets")
+        }
+        for f in descriptions {
+            #expect(C.sha256(final.prefix(Int(f.taille))) == f.sha256, "decrire : taille \(f.taille) coherente")
+        }
+    }
+
+    // MARK: Verification d'un dossier d'export
+
+    struct Export {
+        let dossier: URL
+        let manifeste: C.Manifeste
+        let reglages: C.Reglages
+    }
+
+    /// Un export valide, ecrit sur le disque : des fichiers connus, `reglages.json`, `manifeste.json`. `fichiers` :
+    /// chemin -> contenu (inventes).
+    static func exportValide(app: C.AppSource = .maillageThread,
+                             fichiers: [String: String] = ["surnoms.json": "{}", "Journal/journal-2026-10.jsonl": "ligne\n"],
+                             nonRepris: [C.FichierNonRepris]? = nil) throws -> Export {
+        let d = try dossier()
+        let reglages = C.Reglages(app: app, valeurs: ["vuePieces3D": .bool(true)], nonRepris: ["SUHasLaunchedBefore": .horsContrat])
+        var tous = fichiers
+        tous["reglages.json"] = texte(try C.ecrire(reglages))
+        for (chemin, contenu) in tous {
+            let url = try C.resoudre(chemin, dans: d)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data(contenu.utf8).write(to: url)
+        }
+        let decrits = try tous.keys.sorted().map { try C.Fichier.decrire(chemin: $0, dans: d) }
+        let m = manifeste(app: app, fichiers: decrits, nonRepris: nonRepris)
+        try C.ecrire(m).write(to: d.appendingPathComponent("manifeste.json"))
+        return Export(dossier: d, manifeste: m, reglages: reglages)
+    }
+
+    /// Reecrit le manifeste du dossier (pour fabriquer un export altere).
+    static func remplacerManifeste(_ m: C.Manifeste, dans d: URL) throws {
+        try C.ecrire(m).write(to: d.appendingPathComponent("manifeste.json"))
+    }
+
+    @Test func dossierValideAccepte() throws {
+        for app in C.AppSource.allCases {
+            let e = try Self.exportValide(app: app)
+            defer { try? FileManager.default.removeItem(at: e.dossier) }
+            let (m, r) = try C.verifierDossier(e.dossier)
+            #expect(m == e.manifeste)
+            #expect(r == e.reglages)
+            #expect(m.fichiers.map(\.chemin) == ["Journal/journal-2026-10.jsonl", "reglages.json", "surnoms.json"])
+        }
+        // Un dossier d'export sans aucun fichier repris : le seul reglages.json suffit.
+        let seul = try Self.exportValide(fichiers: [:])
+        defer { try? FileManager.default.removeItem(at: seul.dossier) }
+        #expect(try C.verifierDossier(seul.dossier).0.fichiers.map(\.chemin) == ["reglages.json"])
+    }
+
+    /// Le Finder peut poser un `.DS_Store` dans le dossier : tolere. Tout autre fichier non liste est refuse.
+    @Test func dossierAvecDSStoreAccepte() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        try Data("x".utf8).write(to: e.dossier.appendingPathComponent(".DS_Store"))
+        try Data("x".utf8).write(to: e.dossier.appendingPathComponent("Journal/.DS_Store"))
+        _ = try C.verifierDossier(e.dossier)
+    }
+
+    @Test func dossierSansManifeste() throws {
+        let d = try Self.dossier()
+        defer { try? FileManager.default.removeItem(at: d) }
+        #expect(throws: C.Erreur.manifesteAbsent) { try C.verifierDossier(d) }
+        #expect(throws: C.Erreur.manifesteAbsent) { try C.verifierDossier(d.appendingPathComponent("absent")) }
+    }
+
+    /// Un manifeste illisible, d'un autre format ou d'une app inconnue donne l'erreur du contrat, rien de plus vague.
+    @Test func dossierManifesteRefuse() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let cible = e.dossier.appendingPathComponent("manifeste.json")
+        let bon = Self.texte(try Data(contentsOf: cible))
+        func essayer(_ json: String) -> (any Error)? {
+            try? Data(json.utf8).write(to: cible)
+            do { _ = try C.verifierDossier(e.dossier); return nil } catch { return error }
+        }
+        #expect(Self.causeIllisible(essayer("pas du JSON") ?? C.Erreur.manifesteAbsent) == "JSON invalide")
+        #expect(essayer(bon.replacingOccurrences(of: "\"format\" : 1", with: "\"format\" : 2")) as? C.Erreur == .formatInconnu(2))
+        #expect(essayer(bon.replacingOccurrences(of: "\"app\" : \"thread\"", with: "\"app\" : \"matter\"")) as? C.Erreur
+                == .appInconnue("matter"))
+        #expect(essayer(bon.replacingOccurrences(of: "\"surnoms.json\"", with: "\"../surnoms.json\"")) as? C.Erreur
+                == .cheminInvalide("../surnoms.json"))
+    }
+
+    @Test func dossierSansReglagesListes() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let sans = e.manifeste.fichiers.filter { $0.chemin != "reglages.json" }
+        try Self.remplacerManifeste(Self.manifeste(fichiers: sans), dans: e.dossier)
+        #expect(throws: C.Erreur.reglagesAbsents) { try C.verifierDossier(e.dossier) }
+    }
+
+    @Test func dossierFichierManquant() throws {
+        for manquant in ["surnoms.json", "Journal/journal-2026-10.jsonl", "reglages.json"] {
+            let e = try Self.exportValide()
+            defer { try? FileManager.default.removeItem(at: e.dossier) }
+            try FileManager.default.removeItem(at: e.dossier.appendingPathComponent(manquant))
+            #expect(throws: C.Erreur.fichierManquant(manquant)) { try C.verifierDossier(e.dossier) }
+        }
+    }
+
+    @Test func dossierFichierEnTrop() throws {
+        for (chemin, dossierIntermediaire) in [("autre.json", false), ("Journal/autre.jsonl", true), ("Neuf/profond/x.bin", true)] {
+            let e = try Self.exportValide()
+            defer { try? FileManager.default.removeItem(at: e.dossier) }
+            let url = e.dossier.appendingPathComponent(chemin)
+            if dossierIntermediaire {
+                try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            }
+            try Data("x".utf8).write(to: url)
+            #expect(throws: C.Erreur.fichierEnTrop(chemin)) { try C.verifierDossier(e.dossier) }
+        }
+        // Un fichier mis de cote par l'app (illisible) n'est pas copie : s'il est la, il est en trop.
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        try Data("x".utf8).write(to: e.dossier.appendingPathComponent("noms.illisible-1.json"))
+        #expect(throws: C.Erreur.fichierEnTrop("noms.illisible-1.json")) { try C.verifierDossier(e.dossier) }
+    }
+
+    @Test func dossierFichierInconnuDeLApp() throws {
+        // associations.json est a Thread seulement ; autre.txt n'est a personne.
+        for (app, chemin) in [(C.AppSource.maillageZigbee, "associations.json"), (.maillageThread, "autre.txt"),
+                              (.maillageThread, "Thread/surnoms.json"), (.maillageThread, "maillage-2026-13.jsonl")] {
+            let e = try Self.exportValide(app: app, fichiers: [chemin: "{}"])
+            defer { try? FileManager.default.removeItem(at: e.dossier) }
+            #expect(throws: C.Erreur.fichierInconnu(chemin)) { try C.verifierDossier(e.dossier) }
+        }
+    }
+
+    @Test func dossierTailleOuEmpreinteFausse() throws {
+        // Taille fausse : le manifeste annonce un octet de plus.
+        let t = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: t.dossier) }
+        let faux = t.manifeste.fichiers.map {
+            $0.chemin == "surnoms.json" ? C.Fichier(chemin: $0.chemin, taille: $0.taille + 1, sha256: $0.sha256) : $0
+        }
+        try Self.remplacerManifeste(Self.manifeste(fichiers: faux), dans: t.dossier)
+        #expect(throws: C.Erreur.tailleFausse("surnoms.json")) { try C.verifierDossier(t.dossier) }
+        // Empreinte fausse : meme taille, contenu change apres le manifeste.
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        try Data("[]".utf8).write(to: e.dossier.appendingPathComponent("surnoms.json"))
+        #expect(throws: C.Erreur.empreinteFausse("surnoms.json")) { try C.verifierDossier(e.dossier) }
+        // Contenu plus court : la taille est refusee d'abord.
+        try Data("{".utf8).write(to: e.dossier.appendingPathComponent("surnoms.json"))
+        #expect(throws: C.Erreur.tailleFausse("surnoms.json")) { try C.verifierDossier(e.dossier) }
+    }
+
+    @Test func dossierReglagesIncoherents() throws {
+        // Reglages d'une autre app que le manifeste (empreinte juste : le fichier est bien celui annonce).
+        let e = try Self.exportValide(app: .maillageThread)
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let autres = try C.ecrire(C.Reglages(app: .maillageZigbee, valeurs: [:], nonRepris: [:]))
+        try autres.write(to: e.dossier.appendingPathComponent("reglages.json"))
+        let decrits = try e.manifeste.fichiers.map { try C.Fichier.decrire(chemin: $0.chemin, dans: e.dossier) }
+        try Self.remplacerManifeste(Self.manifeste(app: .maillageThread, fichiers: decrits), dans: e.dossier)
+        #expect(throws: C.Erreur.appDifferente) { try C.verifierDossier(e.dossier) }
+        // reglages.json illisible, mais annonce correctement.
+        try Data("pas du json".utf8).write(to: e.dossier.appendingPathComponent("reglages.json"))
+        let decrits2 = try e.manifeste.fichiers.map { try C.Fichier.decrire(chemin: $0.chemin, dans: e.dossier) }
+        try Self.remplacerManifeste(Self.manifeste(app: .maillageThread, fichiers: decrits2), dans: e.dossier)
+        #expect(throws: C.Erreur.illisible("JSON invalide")) { try C.verifierDossier(e.dossier) }
+    }
+
+    @Test func dossierLienSymbolique() throws {
+        let dehors = try Self.dossier()
+        defer { try? FileManager.default.removeItem(at: dehors) }
+        try Data("{}".utf8).write(to: dehors.appendingPathComponent("secret.json"))
+        // Fichier liste remplace par un lien.
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let cible = e.dossier.appendingPathComponent("surnoms.json")
+        try FileManager.default.removeItem(at: cible)
+        try FileManager.default.createSymbolicLink(at: cible, withDestinationURL: dehors.appendingPathComponent("secret.json"))
+        #expect(throws: C.Erreur.lienSymbolique("surnoms.json")) { try C.verifierDossier(e.dossier) }
+        // Lien en plus, vers un dossier ou un fichier.
+        let f = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: f.dossier) }
+        try FileManager.default.createSymbolicLink(at: f.dossier.appendingPathComponent("Voisin"), withDestinationURL: dehors)
+        #expect(throws: C.Erreur.lienSymbolique("Voisin")) { try C.verifierDossier(f.dossier) }
+    }
+
+    /// Le fichier de reglages est lu une seule fois : ce qui est verifie est ce qui est decode.
+    @Test func dossierReglagesLusUneFois() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        let (_, r) = try C.verifierDossier(e.dossier)
+        #expect(r.valeurs["vuePieces3D"] == .bool(true))
+        #expect(r.nonRepris["SUHasLaunchedBefore"] == .horsContrat)
+    }
+
+    // MARK: Cas du manifeste relus (relecture de la tache 1)
+
+    /// Deux chemins qui ne different que par la normalisation Unicode sont le meme fichier pour le Mac.
+    @Test func cheminsNFCEtNFD() {
+        let nfc = "caf\u{E9}.json", nfd = "cafe\u{301}.json"
+        #expect(nfc.unicodeScalars.count != nfd.unicodeScalars.count, "deux suites d'octets differentes")
+        let m = Self.manifeste(fichiers: [C.Fichier(chemin: nfc, taille: 1, sha256: Self.sha),
+                                          C.Fichier(chemin: nfd, taille: 1, sha256: Self.sha)])
+        #expect(throws: C.Erreur.cheminEnDouble(nfd)) { try C.ecrire(m) }
+    }
+
+    /// Seul le manifeste de la racine est reserve ; un `manifeste.json` dans un dossier est un chemin comme un autre
+    /// (la verification d'un dossier le refuse comme fichier inconnu).
+    @Test func nomReserveSeulementALaRacine() throws {
+        let m = Self.manifeste(fichiers: [C.Fichier(chemin: "Journal/manifeste.json", taille: 1, sha256: Self.sha)])
+        #expect(try C.lireManifeste(C.ecrire(m)) == m)
+        #expect(!C.estConnu("Journal/manifeste.json", de: .maillageThread))
+    }
+
+    /// Un champ ajoute au manifeste par une version future du format 1 est ignore (lecture tolerante) ; la regle est
+    /// ecrite dans le contrat.
+    @Test func champInconnuTolere() throws {
+        let m = Self.manifeste()
+        let bon = Self.texte(try C.ecrire(m))
+        let plus = bon.replacingOccurrences(of: "\"format\" : 1,", with: "\"format\" : 1,\n  \"ajoute\" : true,")
+        #expect(try C.lireManifeste(Data(plus.utf8)) == m)
     }
 }
