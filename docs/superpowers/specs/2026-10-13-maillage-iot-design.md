@@ -637,8 +637,8 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
    exception, chaque ligne du journal de Zigbee 1.1.1 reçoit `"protocole":"zigbee"` (sans quoi elle serait lue comme
    Thread).
 3. **`noms.json` de Thread devient `releve-maison.json` sans préfixe** (précise 4.3 : le relevé ne contient aucun
-   identifiant de nœud du graphe). Le relevé est un cache du démon : celui déjà présent est gardé, sinon le plus
-   récent des imports.
+   identifiant de nœud du graphe). Le relevé est un cache du démon : le plus récent l'emporte (celui déjà présent
+   ou celui de l'import).
 4. **Fichiers communs** : `surnoms.json` (version 1) et `pieces-noeuds.json` (version 2) sont écrits par l'import
    avec leurs clés préfixées, jamais déposés tels quels ; `positions-pieces.json` se fusionne en profondeur (maison,
    étage, pièce) ; le premier import l'emporte, le second ajoute ce qui manque.
