@@ -881,13 +881,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld file not taken over"
+                  "value" : "%lld file not imported"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld files not taken over"
+                  "value" : "%lld files not imported"
                 }
               }
             }
@@ -1153,13 +1153,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld setting taken over"
+                  "value" : "%lld setting imported"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld settings taken over"
+                  "value" : "%lld settings imported"
                 }
               }
             }
@@ -3782,7 +3782,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Files taken over: %lld"
+            "value" : "Files imported: %lld"
           }
         },
         "fr" : {
@@ -4893,6 +4893,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Le profil de Passeur Noms expire le %@ : relance outils/passeur.sh."
+          }
+        }
+      }
+    },
+    "Le réseau local ne se lit pas à l'avance : si Maillage IoT ne trouve rien sur le réseau, vérifier son autorisation dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The local network permission cannot be read in advance: if Maillage IoT finds nothing on the network, check it in System Settings › Privacy & Security › Local Network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le réseau local ne se lit pas à l'avance : si Maillage IoT ne trouve rien sur le réseau, vérifier son autorisation dans Réglages Système › Confidentialité et sécurité › Réseau local."
           }
         }
       }
@@ -7249,18 +7265,18 @@
         }
       }
     },
-    "Rien à refaire : tout est en ordre." : {
+    "Rien à refaire d'après ce que macOS indique." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nothing left to do: everything is in order."
+            "value" : "Nothing left to do, as far as macOS reports."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rien à refaire : tout est en ordre."
+            "value" : "Rien à refaire d'après ce que macOS indique."
           }
         }
       }
@@ -7542,7 +7558,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Settings taken over: %lld"
+            "value" : "Settings imported: %lld"
           }
         },
         "fr" : {
@@ -12070,7 +12086,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "To redo"
+            "value" : "Still to do"
           }
         },
         "fr" : {

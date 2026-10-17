@@ -726,7 +726,7 @@ struct ValidationExportTests {
         #expect(ResumeExport.nombreDeFichiers(n, locale: Locale(identifier: "en")) == en)
     }
 
-    @Test(arguments: [(1, "1 réglage repris", "1 setting taken over"), (2, "2 réglages repris", "2 settings taken over")])
+    @Test(arguments: [(1, "1 réglage repris", "1 setting imported"), (2, "2 réglages repris", "2 settings imported")])
     func lesReglagesReprisSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
         #expect(ResumeExport.nombreDeReglagesRepris(n, locale: Locale(identifier: "fr")) == fr)
         #expect(ResumeExport.nombreDeReglagesRepris(n, locale: Locale(identifier: "en")) == en)
@@ -739,7 +739,7 @@ struct ValidationExportTests {
         #expect(ResumeExport.nombreDeReglagesLaissesDeCote(n, locale: Locale(identifier: "en")) == en)
     }
 
-    @Test(arguments: [(1, "1 fichier non repris", "1 file not taken over"), (3, "3 fichiers non repris", "3 files not taken over")])
+    @Test(arguments: [(1, "1 fichier non repris", "1 file not imported"), (3, "3 fichiers non repris", "3 files not imported")])
     func lesFichiersNonReprisSeDisentAuSingulierOuAuPluriel(n: Int, fr: String, en: String) {
         #expect(ResumeExport.nombreDeFichiersNonRepris(n, locale: Locale(identifier: "fr")) == fr)
         #expect(ResumeExport.nombreDeFichiersNonRepris(n, locale: Locale(identifier: "en")) == en)

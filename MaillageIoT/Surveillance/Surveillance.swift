@@ -38,6 +38,10 @@ final class Surveillance {
     /// Le modele de Zigbee : pont, sonde, suivi des connexions, historique, noms, fichiers sous `Zigbee/`.
     let zigbee: SurveillanceZigbee
 
+    /// La coque a ete arretee (`arreter()`), par exemple pour une reprise de donnees : tant qu'elle l'est, aucun reglage ne
+    /// relance un module (`ModulesApp`), et les pages des protocoles sont grisees. Remise a faux par `demarrer()`.
+    private(set) var arretee = false
+
     /// Les modeles de protocole de l'app.
     var modeles: [any ModeleProtocole] { [thread, zigbee] }
 
@@ -143,6 +147,7 @@ final class Surveillance {
     }
 
     func demarrer() {
+        arretee = false
         switch mode {
         case .demo:
             modeles.forEach { $0.demarrer() }
@@ -176,6 +181,7 @@ final class Surveillance {
     }
 
     func arreter() {
+        arretee = true
         modeles.forEach { $0.arreter() }
         observateurs.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         observateurs = []

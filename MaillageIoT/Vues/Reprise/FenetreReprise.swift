@@ -1,3 +1,4 @@
+import AppKit
 import MaillageCoeur
 import SwiftUI
 
@@ -33,7 +34,19 @@ struct FenetreReprise: View {
             .padding(.vertical, 12)
         }
         .frame(width: Self.largeur, height: Self.hauteur)
-        .task(id: assistant.etape) { await assistant.surveillerAncienneApp() }
+        // L'ancienne app qui tourne se reverifie ; le resume relit « À refaire » sur l'etat reel (les reponses de macOS aux
+        // notifications et a la cle, l'issue de Bonjour arrivent apres coup), et de nouveau quand l'app ou la fenetre revient
+        // au premier plan (l'utilisateur sort de Reglages Systeme).
+        .task(id: assistant.etape) {
+            await assistant.surveillerAncienneApp()
+            await assistant.surveillerARefaire()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await assistant.relireARefaire() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            Task { await assistant.relireARefaire() }
+        }
     }
 
     // MARK: Contenu de chaque etape
@@ -101,7 +114,7 @@ struct FenetreReprise: View {
 
     private func dejaRepris(_ reprise: ImportRepris) -> some View {
         Section {
-            Text("Cet export de \(reprise.app.nomApp) \(reprise.versionApp) a déjà été repris le \(reprise.date.formatted(date: .abbreviated, time: .shortened)). Il n'y a rien à refaire.")
+            Text("Cet export de \(reprise.app.nomApp) \(reprise.versionApp) a déjà été repris le \(TexteReprise.date(reprise.date, locale: locale)). Il n'y a rien à refaire.")
         } header: {
             Text("Déjà repris")
         }
@@ -111,7 +124,7 @@ struct FenetreReprise: View {
         Group {
             Section {
                 LabeledContent("Ancienne app", value: "\(resume.app.nomApp) \(resume.versionApp)")
-                LabeledContent("Export du", value: resume.date.formatted(date: .abbreviated, time: .shortened))
+                LabeledContent("Export du", value: TexteReprise.date(resume.date, locale: locale))
                 ForEach(GenreContenu.allCases.filter { resume.nombre($0) > 0 }, id: \.self) { genre in
                     Text(resume.ligne(genre, locale: locale))
                 }
@@ -194,7 +207,7 @@ struct FenetreReprise: View {
             }
             Section {
                 if taches.isEmpty {
-                    Label("Rien à refaire : tout est en ordre.", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    Label(ListeARefaire.rienARefaire(locale: locale), systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                 } else {
                     ForEach(taches, id: \.self) { tache in
                         VStack(alignment: .leading, spacing: 2) {
@@ -203,8 +216,12 @@ struct FenetreReprise: View {
                         }
                     }
                 }
+                // Le reseau local ne se lit pas a l'avance : la liste ne peut pas affirmer qu'il est en ordre.
+                if !taches.contains(.autoriserReseauLocal) {
+                    Text(ListeARefaire.noteReseauLocal(locale: locale)).font(.caption).foregroundStyle(.secondary)
+                }
             } header: {
-                Text("À refaire")
+                Text(ListeARefaire.titreSection(locale: locale))
             }
             if assistant.relanceEchouee {
                 Section {

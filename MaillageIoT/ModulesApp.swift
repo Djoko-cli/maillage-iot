@@ -89,13 +89,14 @@ struct ModulesApp {
     /// Arrete tout ce qui ecrit dans le dossier de donnees ou lit le reseau, avant une reprise de donnees (phase 4, tache 7) :
     /// les modeles de protocole, les deux sondes, le pont Hue et sa decouverte Bonjour, le client du demon Passeur Noms. L'app
     /// se relance apres la reprise : rien n'est rallume ici.
+    /// Les modules que `arreterTout` arrete, dans l'ordre : le test de la reprise verifie que chaque module porte par `ModulesApp`
+    /// y figure (un module ajoute ou retire sans y toucher fait echouer `tousLesModulesDeLAppSArretent`).
+    var modulesArretables: [any ModuleArretable] {
+        [surveillance, sondeThread, sondeZigbee, nomsPont, decouverte, nomsMaison]
+    }
+
     func arreterTout() {
-        surveillance.arreter()
-        sondeThread.arreter()
-        sondeZigbee.arreter()
-        nomsPont.arreter()
-        decouverte.arreter()
-        nomsMaison.arreter()
+        modulesArretables.forEach { $0.arreter() }
     }
 
     /// Thread : la sonde donne ses maillages au modele, qui lui rend les appareils a resoudre ; la sonde suit `actif` du
@@ -109,7 +110,9 @@ struct ModulesApp {
         st.reseauConnu = { [weak s] in s?.thread.instantane != nil }
         // Automatique : la sonde est « annoncee » quand son hote est dans l'instantane (ce que Bonjour voit deja).
         s.thread.surAnnonces = { [weak st] hotes in st?.annoncesChangees(hotes) }
-        s.thread.surActivite = { [weak st] actif in
+        s.thread.surActivite = { [weak st, weak s] actif in
+            // Arrete pour une reprise de donnees : rien ne repart avant la relance de l'app (la sonde est arretee, pas relancee).
+            if actif, s?.arretee == true { return }
             if actif { st?.demarrer() } else { st?.arreter() }
         }
         // Eteint au lancement : arrete comme par l'interrupteur (`actif` faux), sinon un choix des Reglages (« Liaison »)
@@ -135,7 +138,9 @@ struct ModulesApp {
         }
         sz.surTournee = { [weak s] enCours in s?.zigbee.tourneeEnCours = enCours }
         sz.surOubli = { [weak s] in s?.zigbee.oublierMaillage() }
-        s.zigbee.surActivite = { [weak nomsPont, weak b, weak sz] actif in
+        s.zigbee.surActivite = { [weak s, weak nomsPont, weak b, weak sz] actif in
+            // Arrete pour une reprise de donnees : rien ne repart avant la relance de l'app.
+            if actif, s?.arretee == true { return }
             if actif {
                 nomsPont?.demarrer()
                 b?.demarrer()

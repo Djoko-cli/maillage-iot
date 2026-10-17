@@ -37,7 +37,7 @@ struct MaillageIoTApp: App {
         // Un seul `ApplicationImport` pour toute l'app : deux reprises ne se chevauchent jamais.
         let importeur = ApplicationImport(dossierDonnees: Surveillance.dossierParDefaut)
         let recuperation: Result<IssueRecuperation, ErreurApplication>? =
-            Self.demo || Surveillance.sousTests ? nil : importeur.recupererAuLancement()
+            LancementReprise.disponible(demo: Self.demo) && !Surveillance.sousTests ? importeur.recupererAuLancement() : nil
         // `-demo` rejoue les deux demos ensemble, `-demo-thread` et `-demo-zigbee` chacune seule (l'autre protocole eteint).
         let m = ModulesApp(demo: Self.demoLancee)
         let s = m.surveillance
@@ -65,7 +65,8 @@ struct MaillageIoTApp: App {
         _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: m.nomsMaison,
                                                            nomsPont: m.nomsPont, sonde: m.sondeThread,
                                                            sondeZigbee: m.sondeZigbee, misesAJour: mj,
-                                                           reprise: controleurReprise))
+                                                           // En demo, aucune reprise : la demo ne lit ni n'ecrit rien sur le disque.
+                                                           reprise: LancementReprise.disponible(demo: Self.demo) ? controleurReprise : nil))
         let premier = !UserDefaults.standard.bool(forKey: Self.clePremierGraphe)
         ouvrirGraphe = !Surveillance.sousTests && (Self.demo || premier)
         guard !Surveillance.sousTests else { return }

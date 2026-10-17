@@ -5,6 +5,9 @@ import Foundation
 // L'entree « Reprendre des donnees… » de Reglages > General reste toujours la.
 
 enum LancementReprise {
+    /// La reprise existe : jamais en demo (qui ne lit ni n'ecrit rien sur le disque : pas de section « Reprise » dans les Reglages,
+    /// pas de recuperation ni de proposition au lancement, aucun import possible).
+    static func disponible(demo: Bool) -> Bool { !demo }
     /// Le drapeau « la proposition a ete faite » (preferences de l'app).
     static let clePropositionFaite = "repriseProposee"
 

@@ -171,6 +171,16 @@ enum TacheARefaire: Hashable, Sendable {
 }
 
 enum ListeARefaire {
+    /// Le titre de la section du resume.
+    static func titreSection(locale: Locale) -> String { traduire("À refaire", locale) }
+
+    /// La liste est vide : ce que l'app sait seulement (jamais « tout est en ordre » : le reseau local ne se lit pas).
+    static func rienARefaire(locale: Locale) -> String { traduire("Rien à refaire d'après ce que macOS indique.", locale) }
+
+    /// Ce que l'app ne peut pas lire a l'avance : l'autorisation du reseau local (seul son refus, vu par Bonjour, est connu).
+    static func noteReseauLocal(locale: Locale) -> String {
+        traduire("Le réseau local ne se lit pas à l'avance : si Maillage IoT ne trouve rien sur le réseau, vérifier son autorisation dans Réglages Système › Confidentialité et sécurité › Réseau local.", locale)
+    }
     /// Ce qui reste a faire apres la reprise d'un export de `app`, d'apres l'etat reel : les cles de ses protocoles, puis les
     /// notifications, le reseau local, l'ouverture de session. Vide quand tout est en ordre.
     static func pour(_ app: ContratExport.AppSource, etat: EtatSystemeReprise) -> [TacheARefaire] {

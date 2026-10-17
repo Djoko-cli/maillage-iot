@@ -92,6 +92,8 @@ final class AssistantReprise {
     nonisolated static let pasVerification: Duration = .milliseconds(500)
     /// Rythme de `surveillerAncienneApp`.
     nonisolated static let pasSurveillance: Duration = .seconds(1)
+    /// Rythme de la relecture de « A refaire » pendant que le resume est montre.
+    @ObservationIgnored private let pasRelecture: Duration
 
     init(importeur: any ImporteurExport, dossierDonnees: URL,
          applications: any ApplicationsLancees = ApplicationsLanceesSysteme(), lecteur: any LecteurEtatSysteme,
@@ -99,7 +101,9 @@ final class AssistantReprise {
          relancer: @escaping @MainActor () async throws -> Void = { try await LangueApp.relancer() },
          choisirDossier: @escaping @MainActor () -> URL? = { PanneauExport.choisir() },
          attendre: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-         quitter: @escaping @MainActor () -> Void = { NSApp.terminate(nil) }) {
+         quitter: @escaping @MainActor () -> Void = { NSApp.terminate(nil) },
+         pasRelecture: Duration = .seconds(2)) {
+        self.pasRelecture = pasRelecture
         self.importeur = importeur
         self.dossierDonnees = dossierDonnees
         self.applications = applications
@@ -131,6 +135,14 @@ final class AssistantReprise {
         if case .refuse(.journalDesImportsIllisible) = etape, dossierChoisi != nil, !occupe { return true }
         return false
     }
+
+    /// La preparation de l'export (jusqu'a 100 Mo) est gardee en memoire.
+    var preparationGardee: Bool { preparation != nil }
+
+    /// La croix de la fenetre ne ferme rien tant que les modules sont arretes : l'app ne tourne jamais sans eux, en silence.
+    /// Apres un echec, la croix relance l'app ; si la relance n'aboutit pas, la fenetre reste avec « Quitter Maillage IoT » et le
+    /// resume (qui reste aussi garde pour le lancement suivant).
+    var fermetureRefusee: Bool { modulesArretes }
 
     // MARK: Parcours
 
@@ -288,11 +300,14 @@ final class AssistantReprise {
     /// « Quitter Maillage IoT » : quand la relance n'a pas abouti.
     func quitterMaillageIoT() { quitter() }
 
-    /// La fenetre se ferme : apres un echec, l'app se relance ; sur le resume, il est acquitte.
+    /// La fenetre se ferme : apres un echec, l'app se relance ; sur le resume, il est acquitte (sauf si la relance n'a pas
+    /// abouti : le resume reste, l'app ne tourne pas encore sur les donnees reprises) ; sur la confirmation (ou un refus), la
+    /// preparation est lachee.
     func fenetreFermee() async {
         switch etape {
         case .echec: await relancerApresEchec()
-        case .termine: terminer()
+        case .termine: if !relanceEchouee { terminer() }
+        case .refuse, .impossible, .dejaRepris, .confirmation: recommencer()
         default: break
         }
     }
@@ -302,6 +317,29 @@ final class AssistantReprise {
         DepotResume(preferences: preferences).effacer()
         proposition = false
         if case .termine = etape { etape = .accueil }
+    }
+
+    // MARK: Relecture de « A refaire »
+
+    /// Relit l'etat reel du Mac et refait la liste « A refaire » du resume montre : une ligne qui n'est plus vraie disparait, une
+    /// ligne vraie apparait (la reponse de macOS aux notifications, a la cle du pont, l'issue de Bonjour viennent apres le
+    /// lancement). Sans effet hors du resume. Le resume lui-meme ne change pas.
+    func relireARefaire() async {
+        guard case .termine(let final, let avant) = etape else { return }
+        let taches = ListeARefaire.pour(final.app, etat: await lecteur.lire())
+        // L'etat a pu changer pendant la lecture (le resume est acquitte, ou remplace) : on ne l'ecrase pas.
+        guard case .termine(let encore, let courantes) = etape, encore == final, courantes == avant, taches != avant else { return }
+        etape = .termine(final, taches)
+    }
+
+    /// Relit « A refaire » tant que le resume est montre (la fenetre la lance avec sa tache, et la relit aussi au retour de l'app
+    /// au premier plan). Une vraie attente, pas `attendre`.
+    func surveillerARefaire() async {
+        while !Task.isCancelled, case .termine = etape {
+            try? await Task.sleep(for: pasRelecture)
+            guard !Task.isCancelled else { return }
+            await relireARefaire()
+        }
     }
 
     // MARK: Lancement

@@ -219,7 +219,7 @@ struct AssistantRepriseTests {
             #expect(lignes.allSatisfy { !$0.isEmpty })
         }
         #expect(final.lignesReprises(locale: Self.fr)[0] == "Fichiers repris : \(resultat.fichiersEcrits.count)")
-        #expect(final.lignesReprises(locale: Self.en)[0] == "Files taken over: \(resultat.fichiersEcrits.count)")
+        #expect(final.lignesReprises(locale: Self.en)[0] == "Files imported: \(resultat.fichiersEcrits.count)")
         #expect(final.lignesReprises(locale: Self.fr)[1] == "Réglages repris : \(resultat.reglagesEcrits.count)")
         #expect(final.origine(locale: Self.fr).contains(app.nomApp) && final.origine(locale: Self.fr).contains(resume.versionApp))
         #expect(final.texteLaisses(locale: Self.fr) == nil)
@@ -327,6 +327,21 @@ struct AssistantRepriseTests {
         func lire() async -> EtatSystemeReprise { etat }
     }
 
+    /// Un lecteur dont l'etat change entre deux lectures (l'issue de Bonjour, des notifications, du dialogue de cle).
+    final class LecteurMutable: LecteurEtatSysteme, Sendable {
+        private let courant: OSAllocatedUnfairLock<EtatSystemeReprise>
+        let lectures = OSAllocatedUnfairLock(initialState: 0)
+
+        init(_ etat: EtatSystemeReprise) { courant = OSAllocatedUnfairLock(initialState: etat) }
+
+        func changer(_ modification: @Sendable (inout EtatSystemeReprise) -> Void) { courant.withLock { modification(&$0) } }
+
+        func lire() async -> EtatSystemeReprise {
+            lectures.withLock { $0 += 1 }
+            return courant.withLock { $0 }
+        }
+    }
+
     /// Un importeur qui compte ses appels et note l'ordre des evenements (avec les modules et la relance).
     final class ImporteurEspion: ImporteurExport, Sendable {
         let reel: ApplicationImport
@@ -395,7 +410,8 @@ struct AssistantRepriseTests {
         let relances: OSAllocatedUnfairLock<Int>
 
         init(porte: Porte? = nil, erreur: ErreurApplication? = nil, relanceEchoue: Bool = false, etat: EtatSystemeReprise = AssistantRepriseTests.enOrdre,
-             choix: URL? = nil, delaiQuitter: Duration = .zero) throws {
+             choix: URL? = nil, delaiQuitter: Duration = .zero, lecteur: (any LecteurEtatSysteme)? = nil,
+             pasRelecture: Duration = .seconds(2)) throws {
             donnees = try D()
             reglages = Reglages()
             (preferences, nomPreferences) = AssistantRepriseTests.preferences()
@@ -405,7 +421,7 @@ struct AssistantRepriseTests {
             importeur = ImporteurEspion(ApplicationImportTests.appli(donnees, reglages), evenements: evenements, porte: porte, erreur: erreur)
             let ev = evenements, rel = relances
             assistant = AssistantReprise(
-                importeur: importeur, dossierDonnees: donnees.racine, applications: apps, lecteur: LecteurFactice(etat: etat),
+                importeur: importeur, dossierDonnees: donnees.racine, applications: apps, lecteur: lecteur ?? LecteurFactice(etat: etat),
                 preferences: preferences,
                 arreterModules: { ev.withLock { $0.append("arreterModules") } },
                 relancer: {
@@ -414,7 +430,7 @@ struct AssistantRepriseTests {
                     if relanceEchoue { throw CocoaError(.fileNoSuchFile) }
                 },
                 choisirDossier: { choix },
-                attendre: { _ in })
+                attendre: { _ in }, pasRelecture: pasRelecture)
         }
 
         func nettoyer() { preferences.removePersistentDomain(forName: nomPreferences) }
@@ -593,6 +609,133 @@ struct AssistantRepriseTests {
         #expect(propre.relances.withLock { $0 } == 0)
     }
 
+    // MARK: Correctifs du tour 1
+
+    /// I1 : la liste « A refaire » se relit sur l'etat reel tant que le resume est montre : une ligne qui n'est plus vraie
+    /// disparait, une ligne vraie apparait (le refus de la cle, l'issue de Bonjour, celle des notifications).
+    @MainActor
+    @Test func laListeARefaireSeRelitEtSuitLEtatDuMac() async throws {
+        var depart = Self.enOrdre
+        depart.pontHue = .aReprendre
+        depart.notifications = .nonDemandees
+        let lecteur = LecteurMutable(depart)
+        let b = try Banc(relanceEchoue: true, lecteur: lecteur)
+        defer { b.nettoyer() }
+        await b.assistant.relireARefaire()
+        #expect(b.assistant.etape == .accueil && lecteur.lectures.withLock { $0 } == 0, "hors du resume, rien ne se relit")
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageZigbee))
+        await b.assistant.lancer()
+        guard case .termine(let final, let avant) = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(avant == [.reprendreCle(.pontHue), .accepterNotifications])
+        // macOS a refuse la cle du pont, et Djoko a accepte les notifications : « Autoriser » disparait, « Appairer » apparait.
+        lecteur.changer { $0.pontHue = .nonAboutie; $0.notifications = .autorisees }
+        await b.assistant.relireARefaire()
+        guard case .termine(let memeResume, let apres) = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(memeResume == final, "le resume ne change pas")
+        #expect(apres == [.relierPontHue])
+        // Bonjour voit le refus du reseau local.
+        lecteur.changer { $0.reseauLocalRefuse = true }
+        await b.assistant.relireARefaire()
+        guard case .termine(_, let reseau) = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(reseau == [.relierPontHue, .autoriserReseauLocal])
+        // Tout est en ordre : la liste se vide.
+        lecteur.changer { $0 = Self.enOrdre }
+        await b.assistant.relireARefaire()
+        guard case .termine(_, let vide) = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(vide.isEmpty)
+    }
+
+    /// I1 : la fenetre qui montre le resume relit toute seule (le dialogue de cle ou de notifications se repond apres coup).
+    @MainActor
+    @Test func leResumeRelitLaListeToutSeulJusquAuTermine() async throws {
+        var depart = Self.enOrdre
+        depart.notifications = .nonDemandees
+        let lecteur = LecteurMutable(depart)
+        let b = try Banc(relanceEchoue: true, lecteur: lecteur, pasRelecture: .milliseconds(10))
+        defer { b.nettoyer() }
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await b.assistant.lancer()
+        guard case .termine(_, let avant) = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(avant == [.accepterNotifications])
+        let suivi = Task { @MainActor in await b.assistant.surveillerARefaire() }
+        lecteur.changer { $0.notifications = .autorisees }
+        var liste: [TacheARefaire] = avant
+        for _ in 0..<300 {
+            if case .termine(_, let t) = b.assistant.etape { liste = t }
+            if liste.isEmpty { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(liste.isEmpty, "la ligne n'est plus vraie : elle a disparu")
+        // « Termine » : la surveillance s'arrete d'elle-meme.
+        b.assistant.terminer()
+        await suivi.value
+        #expect(b.assistant.etape == .accueil)
+    }
+
+    /// M2 : tant que les modules sont arretes, la fenetre ne se ferme pas en laissant l'app tourner sans eux, et le resume reste.
+    @MainActor
+    @Test func fermerLaFenetreNeLaisseJamaisLAppSansSesModules() async throws {
+        let b = try Banc(relanceEchoue: true)
+        defer { b.nettoyer() }
+        #expect(!b.assistant.fermetureRefusee, "modules en marche : la fenetre se ferme")
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await b.assistant.lancer()
+        #expect(b.assistant.relanceEchouee && b.assistant.fermetureRefusee)
+        await b.assistant.fenetreFermee()
+        guard case .termine = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(DepotResume(preferences: b.preferences).lire() != nil, "le resume reste")
+        #expect(b.assistant.fermetureRefusee)
+        // Un echec dont la relance echoue aussi : meme garde.
+        let c = try Banc(erreur: .etatInstable, relanceEchoue: true)
+        defer { c.nettoyer() }
+        await c.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await c.assistant.lancer()
+        #expect(c.assistant.fermetureRefusee, "echec, relance pas encore tentee : la croix relance, elle ne ferme pas")
+        await c.assistant.relancerApresEchec()
+        #expect(c.assistant.relanceEchouee && c.assistant.fermetureRefusee)
+    }
+
+    /// M9 : la preparation (jusqu'a 100 Mo) est lachee quand la fenetre est fermee sur l'etape de confirmation.
+    @MainActor
+    @Test func fermerLaFenetreSurLaConfirmationLacheLaPreparation() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        #expect(b.assistant.peutLancer && b.assistant.preparationGardee)
+        await b.assistant.fenetreFermee()
+        #expect(b.assistant.etape == .accueil && !b.assistant.preparationGardee && !b.assistant.peutLancer)
+        await b.assistant.lancer()
+        #expect(b.importeur.nombre("appliquer") == 0)
+    }
+
+    /// M6 : « Rien a refaire » ne dit pas plus que ce que l'app sait (le reseau local ne se lit pas).
+    @Test func rienARefaireNeDitPasPlusQueCeQueLAppSait() {
+        let fr = ListeARefaire.rienARefaire(locale: Self.fr)
+        let en = ListeARefaire.rienARefaire(locale: Self.en)
+        #expect(!fr.contains("tout est en ordre") && fr.contains("macOS"))
+        #expect(!en.contains("everything is in order") && en.contains("macOS") && en != fr)
+        let noteFr = ListeARefaire.noteReseauLocal(locale: Self.fr)
+        let noteEn = ListeARefaire.noteReseauLocal(locale: Self.en)
+        #expect(noteFr.contains("réseau local") && noteEn.contains("local network") && noteEn != noteFr)
+    }
+
+    /// M10 : anglais coherent (« Imported »), « Still to do », dates formatees avec la langue de l'environnement.
+    @Test func lAnglaisDeLaRepriseEstCoherentEtLesDatesSuiventLaLangue() throws {
+        #expect(ListeARefaire.titreSection(locale: Self.en) == "Still to do")
+        #expect(ListeARefaire.titreSection(locale: Self.fr) == "À refaire")
+        let date = Date(timeIntervalSince1970: 1_800_000_000)
+        let fr = TexteReprise.date(date, locale: Self.fr)
+        let en = TexteReprise.date(date, locale: Self.en)
+        #expect(fr != en, "fr : \(fr), en : \(en)")
+        #expect(fr.localizedCaseInsensitiveContains("janv") || fr.localizedCaseInsensitiveContains("déc") || fr.localizedCaseInsensitiveContains("janvier"))
+    }
+
+    /// M1 : en demo, ni section « Reprise » ni proposition ni recuperation ; hors demo, oui.
+    @Test func enDemoAucuneRepriseNEstPossible() {
+        #expect(!LancementReprise.disponible(demo: true))
+        #expect(LancementReprise.disponible(demo: false))
+    }
+
     @MainActor
     @Test func unExportDejaReprisNeSeReprendPasDeuxFois() async throws {
         let b = try Banc()
@@ -668,12 +811,66 @@ struct AssistantRepriseTests {
         n.arreter()
     }
 
+    /// `arreterTout` arrete TOUS les modules de l'app : chaque module que `ModulesApp` porte (sonde, pont, decouverte, client du
+    /// demon, coque...) est dans la liste de ceux qu'elle arrete. Un module retire de la liste, ou ajoute a l'app sans y etre
+    /// inscrit, fait echouer ce test (les arrets eux-memes sont testes module par module).
     @MainActor
     @Test func tousLesModulesDeLAppSArretent() {
         let m = ModulesApp(demo: nil, sousTests: true)
+        let arretes = m.modulesArretables.map { ObjectIdentifier($0) }
+        let portes = Mirror(reflecting: m).children.compactMap { $0.value as? any ModuleArretable }
+        #expect(portes.count == 6, "la coque, deux sondes, le pont, sa decouverte, le client du demon : \(portes.count)")
+        for module in portes {
+            #expect(arretes.contains(ObjectIdentifier(module)), "\(type(of: module)) n'est pas arrete par arreterTout")
+        }
+        #expect(Set(arretes).count == arretes.count, "aucun module n'est arrete deux fois")
         m.surveillance.demarrer()
         m.arreterTout() // inertes sous les tests : l'appel ne doit rien ouvrir, rien casser, et se repeter sans danger
         m.arreterTout()
+        #expect(m.surveillance.arretee, "la coque se sait arretee")
+    }
+
+    /// Apres `arreterTout`, aucun reglage ne relance un module avant la relance de l'app (M4) : « Activer ce protocole » ne
+    /// rallume ni la sonde de Thread, ni celle de Zigbee, ni le pont, ni Bonjour ; les pages des protocoles sont grisees.
+    @MainActor
+    @Test func apresLArretAucunReglageNeRelanceUnModule() async throws {
+        let (pp, dp) = try SondeMaillageTests.preferences()
+        defer { pp.removePersistentDomain(forName: dp) }
+        pp.set(SondeMaillageTests.port.serie, forKey: SondeMaillageThread.cleSerie)
+        let b = try BancActivation()
+        defer { b.nettoyer() }
+        let registre = RegistrePorts()
+        let ports = FabriquePorts()
+        let branche = SondeMaillageTests.port
+        let sonde = SondeMaillageThread(preferences: pp, actif: true,
+                                        ouvrirCanal: { registre.canal($0, CanalRejoue { CanalRejoue.reseauMinimal($0) }) },
+                                        surveillerPorts: ports.fabriquer, listerPorts: { [branche] })
+        let z = try ArretSondeZigbeeTests.banc()
+        defer { z.nettoyer() }
+        let pont = ArretNomsPontTests.banc()
+        let ecoutePont = BonjourFactice(type: DecouvertePont.type)
+        let decouverte = DecouvertePont(navigateur: ecoutePont)
+        ModulesApp.relierThread(b.s, sonde: sonde)
+        ModulesApp.relierZigbee(b.s, sonde: z.sonde, nomsPont: pont.pont, decouverte: decouverte)
+        b.s.demarrer()
+        #expect(b.s.protocoleReglable(.thread) && b.s.protocoleReglable(.zigbee))
+        // L'arret de la reprise (ce que fait `ModulesApp.arreterTout`).
+        b.s.arreter()
+        sonde.arreter()
+        z.sonde.arreter()
+        pont.pont.arreter()
+        decouverte.arreter()
+        #expect(!b.s.protocoleReglable(.thread) && !b.s.protocoleReglable(.zigbee), "les pages des protocoles sont grisees")
+        // Un interrupteur manie pendant la reprise ne rallume rien.
+        b.s.thread.actif = false
+        b.s.thread.actif = true
+        b.s.zigbee.actif = false
+        b.s.zigbee.actif = true
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(!sonde.actif && sonde.tachesPlanifiees == 0, "la sonde de Thread reste arretee")
+        #expect(!z.sonde.actif && z.sonde.tachesPlanifiees == 0, "la sonde de Zigbee reste arretee")
+        #expect(!decouverte.demarree && !ecoutePont.enMarche && pont.pont.suspendu, "ni Bonjour du pont, ni le pont")
+        #expect(registre.ouverts == 0 && z.registre.ouverts == 0, "aucun port rouvert")
     }
 
     // MARK: Premier lancement

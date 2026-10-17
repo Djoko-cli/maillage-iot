@@ -28,7 +28,7 @@
   "Fichier de Maillage IoT illisible, laissé intact": "Maillage IoT file unreadable, left untouched",
   "Fichier sans contenu": "File with no content",
   "Fichier système ou temporaire": "System or temporary file",
-  "Fichiers repris : %lld": "Files taken over: %lld",
+  "Fichiers repris : %lld": "Files imported: %lld",
   "Historique de plus de 90 jours": "History older than 90 days",
   "Ignoré": "Ignored",
   "Illisible ou d'une version inconnue": "Unreadable or of an unknown version",
@@ -40,6 +40,7 @@
   "La reprise a échoué pendant %@ (%@), et tout ce qu'elle avait fait est défait. %@": "The import failed during %1$@ (%2$@), and everything it had done was undone. %3$@",
   "La reprise a échoué pendant %@ (%@). Le dossier sera remis en état au prochain lancement de Maillage IoT.": "The import failed during %1$@ (%2$@). The folder will be restored the next time Maillage IoT starts.",
   "La reprise a échoué pendant %@ (%@). Rien n'a été modifié.": "The import failed during %1$@ (%2$@). Nothing was changed.",
+  "Le réseau local ne se lit pas à l'avance : si Maillage IoT ne trouve rien sur le réseau, vérifier son autorisation dans Réglages Système › Confidentialité et sécurité › Réseau local.": "The local network permission cannot be read in advance: if Maillage IoT finds nothing on the network, check it in System Settings › Privacy & Security › Local Network.",
   "Les données de Maillage IoT n'ont pas cessé de changer pendant la reprise : rien n'a été modifié. Réessayer dans un instant.": "Maillage IoT's data kept changing during the import: nothing was changed. Try again in a moment.",
   "Les données de Maillage IoT ont changé pendant la reprise : elle a été recalculée, sans rien écraser de ce qui avait été fait.": "Maillage IoT's data changed during the import: it was recomputed, without overwriting anything that had been done.",
   "Les notifications sont refusées : les autoriser dans Réglages Système › Notifications › Maillage IoT.": "Notifications are denied: allow them in System Settings › Notifications › Maillage IoT.",
@@ -67,10 +68,10 @@
   "Reprise en cours… Ne pas quitter Maillage IoT.": "Import in progress… Do not quit Maillage IoT.",
   "Reprise terminée. Maillage IoT se relance pour lire les données reprises…": "Import finished. Maillage IoT is restarting to read the imported data…",
   "Rien n'a été repris.": "Nothing was imported.",
-  "Rien à refaire : tout est en ordre.": "Nothing left to do: everything is in order.",
+  "Rien à refaire d'après ce que macOS indique.": "Nothing left to do, as far as macOS reports.",
   "Réglage d'un type inattendu": "Setting of an unexpected type",
   "Réglage transitoire, sans sens après coup": "Transient setting, meaningless afterwards",
-  "Réglages repris : %lld": "Settings taken over: %lld",
+  "Réglages repris : %lld": "Settings imported: %lld",
   "Sans équivalent dans Maillage IoT": "No equivalent in Maillage IoT",
   "Terminé": "Done",
   "Une reprise interrompue a été défaite au lancement : Maillage IoT est revenu à l'état d'avant. La reprise peut être refaite.": "An interrupted import was undone at launch: Maillage IoT is back to its previous state. The import can be done again.",
@@ -87,5 +88,5 @@
   "macOS n'a pas encore reçu de réponse : accepter la demande d'autorisation de Maillage IoT.": "macOS has not received an answer yet: accept the Maillage IoT authorization request.",
   "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra.": "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice.",
   "« Repartir d'un journal vide » renomme le journal des reprises en imports.json.abime, sans rien supprimer, puis vérifie de nouveau l'export.": "“Start from an empty log” renames the import log to imports.json.abime, without deleting anything, then verifies the export again.",
-  "À refaire": "To redo"
+  "À refaire": "Still to do"
 }

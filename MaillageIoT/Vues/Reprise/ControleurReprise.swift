@@ -36,8 +36,17 @@ final class ControleurReprise: NSObject, NSWindowDelegate {
         return f
     }
 
-    /// Fermer la fenetre d'un assistant dont les modules sont arretes (apres un echec) relance l'app ; sur le resume, c'est le
-    /// lire.
+    /// Tant que les modules sont arretes (reprise en cours, echec, relance qui n'a pas abouti), la croix ne ferme pas la fenetre :
+    /// l'app ne tourne jamais sans ses modules, en silence. Apres un echec, elle relance l'app ; si la relance n'aboutit pas, la
+    /// fenetre reste, avec le resume et « Quitter Maillage IoT ».
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard assistant.fermetureRefusee else { return true }
+        Task { await assistant.relancerApresEchec() }
+        NSSound.beep()
+        return false
+    }
+
+    /// Fermer la fenetre : sur le resume, c'est le lire ; sur la confirmation, la preparation est lachee.
     func windowWillClose(_ notification: Notification) {
         Task { await assistant.fenetreFermee() }
     }

@@ -50,3 +50,6 @@ extension SondeMaillageThread {
         [boucle, reprise, nouvelEssai, retourUSB].filter { $0 != nil && $0?.isCancelled == false }.count
     }
 }
+
+/// La reprise de donnees arrete la sonde avec les autres modules (`ModulesApp.arreterTout`).
+extension SondeMaillageThread: ModuleArretable {}

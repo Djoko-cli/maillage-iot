@@ -141,6 +141,11 @@ struct DepotResume {
 // MARK: Textes des erreurs et des elements laisses
 
 enum TexteReprise {
+    /// Une date et son heure dans la langue de l'environnement de la fenetre (jamais celle du systeme).
+    static func date(_ date: Date, locale: Locale) -> String {
+        date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale))
+    }
+
     /// « Ce que l'app avait ecrit entre-temps est reste en place : surnoms.json, thread.sondeHote » ; nil si rien.
     static func laisses(_ l: ElementsLaisses, locale: Locale) -> String? {
         guard !l.estVide else { return nil }
@@ -165,7 +170,7 @@ enum TexteReprise {
         case .exportModifie:
             return traduire("L'export a changé pendant la reprise : refaire l'export depuis l'ancienne app, puis recommencer. Rien n'a été modifié.", locale)
         case .dejaRepris(let reprise):
-            let date = reprise.date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale))
+            let date = Self.date(reprise.date, locale: locale)
             return traduire("Cet export a déjà été repris le \(date). Rien n'a été modifié.", locale)
         case .etatInstable:
             return traduire("Les données de Maillage IoT n'ont pas cessé de changer pendant la reprise : rien n'a été modifié. Réessayer dans un instant.", locale)
