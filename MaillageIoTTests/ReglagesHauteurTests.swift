@@ -24,7 +24,8 @@ struct ReglagesHauteurTests {
     /// trousseau du Mac ; l'onglet retenu est ecrit dans des preferences en memoire, jamais dans celles de l'app.
     static func fenetre(onglet: OngletReglages, sondeThread: SondeMaillageThread? = nil,
                         sondeZigbee: SondeMaillageZigbee? = nil,
-                        surveillance: Surveillance = Surveillance(mode: .direct, dossier: nil)) async throws -> (NSWindow, OngletsReglages) {
+                        surveillance: Surveillance = Surveillance(mode: .direct, dossier: nil),
+                        reprise: ControleurReprise? = nil) async throws -> (NSWindow, OngletsReglages) {
         let (p, _) = try SondeMaillageTests.preferences()
         let thread = try sondeThread ?? {
             let (pt, _) = try SondeMaillageTests.preferences()
@@ -38,7 +39,7 @@ struct ReglagesHauteurTests {
         let controleur = ControleurReglages(surveillance: surveillance,
                                             ouverture: OuvertureSession(), nomsMaison: NomsPasseur(), nomsPont: NomsPont(),
                                             sonde: thread, sondeZigbee: zigbee, misesAJour: MisesAJour(demarrer: false),
-                                            preferences: p)
+                                            reprise: reprise, preferences: p)
         await thread.connecter(SondeMaillageTests.port, choisi: true)
         await zigbee.connecter(SondeMaillageZigbeeTests.port, choisi: true)
         p.set(onglet.rawValue, forKey: OngletReglages.cle)

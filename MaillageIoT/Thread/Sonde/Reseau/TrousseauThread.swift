@@ -41,8 +41,10 @@ enum ErreurTrousseauThread: Error, Equatable, Sendable, LocalizedError {
 /// empreinte. Non synchronise.
 struct TrousseauSystemeThread: TrousseauClesThread {
     let service: String
+    /// Le service de l'app (les cles de ses sondes Thread).
+    static let serviceParDefaut = "fr.djoko.maillage.iot.sonde-thread"
 
-    init(service: String = "fr.djoko.maillage.iot.sonde-thread") {
+    init(service: String = TrousseauSystemeThread.serviceParDefaut) {
         self.service = service
     }
 

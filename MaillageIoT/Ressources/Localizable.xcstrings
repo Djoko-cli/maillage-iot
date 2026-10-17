@@ -65,6 +65,22 @@
         }
       }
     },
+    "%@ : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : %2$lld"
+          }
+        }
+      }
+    },
     "%@ : LQI %lld" : {
       "localizations" : {
         "en" : {
@@ -493,6 +509,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ n'est pas une sonde Zigbee (« %2$@ »)"
+          }
+        }
+      }
+    },
+    "%@ tourne encore : une sonde USB ne peut avoir qu'un seul maître. La quitter avant la reprise." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is still running: a USB probe can only have one owner. Quit it before the import."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ tourne encore : une sonde USB ne peut avoir qu'un seul maître. La quitter avant la reprise."
           }
         }
       }
@@ -1505,6 +1537,22 @@
         }
       }
     },
+    "Accepter les notifications" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accept notifications"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accepter les notifications"
+          }
+        }
+      }
+    },
     "Accessoire introuvable dans Maison" : {
       "localizations" : {
         "en" : {
@@ -1809,6 +1857,22 @@
         }
       }
     },
+    "Ancienne app" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Old app"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ancienne app"
+          }
+        }
+      }
+    },
     "Annuler" : {
       "localizations" : {
         "en" : {
@@ -1821,6 +1885,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Appairer le pont Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pair the Hue bridge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appairer le pont Hue"
           }
         }
       }
@@ -1917,6 +1997,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Approuver dans Réglages Système…"
+          }
+        }
+      }
+    },
+    "Approuver l'ouverture à la connexion" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approve opening at login"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Approuver l'ouverture à la connexion"
           }
         }
       }
@@ -2177,6 +2273,86 @@
         }
       }
     },
+    "Autoriser la reprise de la clé de la sonde Thread" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow the Thread probe key to be imported"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser la reprise de la clé de la sonde Thread"
+          }
+        }
+      }
+    },
+    "Autoriser la reprise de la clé de la sonde Zigbee" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow the Zigbee probe key to be imported"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser la reprise de la clé de la sonde Zigbee"
+          }
+        }
+      }
+    },
+    "Autoriser la reprise de la clé du pont Hue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow the Hue bridge key to be imported"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser la reprise de la clé du pont Hue"
+          }
+        }
+      }
+    },
+    "Autoriser le réseau local" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow the local network"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser le réseau local"
+          }
+        }
+      }
+    },
+    "Autoriser les notifications" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow notifications"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les notifications"
+          }
+        }
+      }
+    },
     "Autorisez Maillage IoT dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
       "localizations" : {
         "en" : {
@@ -2305,6 +2481,22 @@
         }
       }
     },
+    "Brancher la sonde %@ en USB pour sa mise en service réseau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plug in the %@ probe over USB to set it up for network access"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brancher la sonde %@ en USB pour sa mise en service réseau"
+          }
+        }
+      }
+    },
     "Branchez la sonde 1.1.0 en USB, hors tournée." : {
       "localizations" : {
         "en" : {
@@ -2397,6 +2589,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce nœud n'est plus visible."
+          }
+        }
+      }
+    },
+    "Ce que l'app avait écrit entre-temps est resté en place, rien n'a été écrasé : %@. Les originaux remplacés sont gardés dans le dossier .reprise-conservee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What the app wrote in the meantime was left in place, nothing was overwritten: %@. The replaced originals are kept in the .reprise-conservee folder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que l'app avait écrit entre-temps est resté en place, rien n'a été écrasé : %@. Les originaux remplacés sont gardés dans le dossier .reprise-conservee."
           }
         }
       }
@@ -2497,6 +2705,38 @@
         }
       }
     },
+    "Cet export a déjà été repris le %@. Rien n'a été modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This export was already imported on %@. Nothing was changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet export a déjà été repris le %@. Rien n'a été modifié."
+          }
+        }
+      }
+    },
+    "Cet export de %@ %@ a déjà été repris le %@. Il n'y a rien à refaire." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This export of %1$@ %2$@ was already imported on %3$@. There is nothing to redo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet export de %1$@ %2$@ a déjà été repris le %3$@. Il n'y a rien à refaire."
+          }
+        }
+      }
+    },
     "Cet export vient d'une app inconnue (« %@ »). Maillage IoT reprend Maillage Thread et Maillage Zigbee." : {
       "localizations" : {
         "en" : {
@@ -2557,6 +2797,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chemin"
+          }
+        }
+      }
+    },
+    "Choisir" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir"
+          }
+        }
+      }
+    },
+    "Choisir le dossier d'export…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the export folder…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le dossier d'export…"
+          }
+        }
+      }
+    },
+    "Choisir le dossier écrit par « Exporter pour Maillage IoT… », dans Maillage Thread ou Maillage Zigbee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the folder written by “Export for Maillage IoT…” in Maillage Thread or Maillage Zigbee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le dossier écrit par « Exporter pour Maillage IoT… », dans Maillage Thread ou Maillage Zigbee."
+          }
+        }
+      }
+    },
+    "Choisir un autre dossier…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose another folder…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir un autre dossier…"
           }
         }
       }
@@ -2737,6 +3041,22 @@
         }
       }
     },
+    "Contenu de l'export, vérifié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export contents, verified"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contenu de l'export, vérifié"
+          }
+        }
+      }
+    },
     "Coordinateur (le pont)" : {
       "localizations" : {
         "en" : {
@@ -2829,6 +3149,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dans Maison : + › Ajouter un accessoire › Plus d'options, puis ce code."
+          }
+        }
+      }
+    },
+    "Dans l'ancienne app (version 1.4.0 de Thread, 1.2.0 de Zigbee ou plus récente), le menu « Exporter pour Maillage IoT… » écrit un dossier. Il suffit de le choisir ici : l'ancienne app n'est pas modifiée, et rien n'est repris tant que l'export n'est pas vérifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the old app (Thread 1.4.0, Zigbee 1.2.0 or newer), the “Export for Maillage IoT…” menu writes a folder. Just choose it here: the old app is not modified, and nothing is imported until the export has been verified."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dans l'ancienne app (version 1.4.0 de Thread, 1.2.0 de Zigbee ou plus récente), le menu « Exporter pour Maillage IoT… » écrit un dossier. Il suffit de le choisir ici : l'ancienne app n'est pas modifiée, et rien n'est repris tant que l'export n'est pas vérifié."
           }
         }
       }
@@ -2977,6 +3313,38 @@
         }
       }
     },
+    "Déjà dans Maillage IoT (ce qui existait est gardé)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already in Maillage IoT (what existed is kept)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà dans Maillage IoT (ce qui existait est gardé)"
+          }
+        }
+      }
+    },
+    "Déjà repris" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already imported"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà repris"
+          }
+        }
+      }
+    },
     "Démo" : {
       "localizations" : {
         "en" : {
@@ -3037,6 +3405,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Empreinte incohérente avec la clé reçue : clé non rangée."
+          }
+        }
+      }
+    },
+    "En attente de la fermeture de %@…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for %@ to quit…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de la fermeture de %@…"
           }
         }
       }
@@ -3233,6 +3617,38 @@
         }
       }
     },
+    "Export du" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exported on"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export du"
+          }
+        }
+      }
+    },
+    "Export refusé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export refused"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export refusé"
+          }
+        }
+      }
+    },
     "Fabriques : %lld" : {
       "localizations" : {
         "en" : {
@@ -3313,6 +3729,70 @@
         }
       }
     },
+    "Fichier de Maillage IoT illisible, laissé intact" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT file unreadable, left untouched"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier de Maillage IoT illisible, laissé intact"
+          }
+        }
+      }
+    },
+    "Fichier sans contenu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File with no content"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier sans contenu"
+          }
+        }
+      }
+    },
+    "Fichier système ou temporaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System or temporary file"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier système ou temporaire"
+          }
+        }
+      }
+    },
+    "Fichiers repris : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Files taken over: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichiers repris : %lld"
+          }
+        }
+      }
+    },
     "Firmware" : {
       "localizations" : {
         "en" : {
@@ -3389,6 +3869,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Historique de la sonde"
+          }
+        }
+      }
+    },
+    "Historique de plus de 90 jours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History older than 90 days"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique de plus de 90 jours"
           }
         }
       }
@@ -3569,6 +4065,38 @@
         }
       }
     },
+    "Ignoré" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignored"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignoré"
+          }
+        }
+      }
+    },
+    "Illisible ou d'une version inconnue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unreadable or of an unknown version"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illisible ou d'une version inconnue"
+          }
+        }
+      }
+    },
     "Installer automatiquement" : {
       "localizations" : {
         "en" : {
@@ -3713,6 +4241,38 @@
         }
       }
     },
+    "L'export a changé pendant la reprise : refaire l'export depuis l'ancienne app, puis recommencer. Rien n'a été modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export changed during the import: export again from the old app, then start over. Nothing was changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'export a changé pendant la reprise : refaire l'export depuis l'ancienne app, puis recommencer. Rien n'a été modifié."
+          }
+        }
+      }
+    },
+    "L'export n'a pas pu être vérifié" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The export could not be verified"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'export n'a pas pu être vérifié"
+          }
+        }
+      }
+    },
     "LQI %@ / %@" : {
       "localizations" : {
         "en" : {
@@ -3725,6 +4285,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "LQI %1$@ / %2$@"
+          }
+        }
+      }
+    },
+    "La clé de l'ancienne app n'a pas pu être reprise. Appuyer sur le bouton du pont, puis le lier dans Réglages › Zigbee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The old app's key could not be imported. Press the bridge button, then pair it in Settings › Zigbee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La clé de l'ancienne app n'a pas pu être reprise. Appuyer sur le bouton du pont, puis le lier dans Réglages › Zigbee."
+          }
+        }
+      }
+    },
+    "La clé de l'ancienne app n'a pas pu être reprise. Une nouvelle clé sera écrite dans la sonde et dans le trousseau de Maillage IoT : l'ancienne clé est remplacée, et l'ancienne app verra la sonde injoignable." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The old app's key could not be imported. A new key will be written to the probe and to the Maillage IoT keychain: the old key is replaced, and the old app will see the probe as unreachable."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La clé de l'ancienne app n'a pas pu être reprise. Une nouvelle clé sera écrite dans la sonde et dans le trousseau de Maillage IoT : l'ancienne clé est remplacée, et l'ancienne app verra la sonde injoignable."
           }
         }
       }
@@ -3773,6 +4365,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "La langue change au prochain lancement."
+          }
+        }
+      }
+    },
+    "La reprise a échoué" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The import failed"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La reprise a échoué"
+          }
+        }
+      }
+    },
+    "La reprise a échoué pendant %@ (%@), et tout ce qu'elle avait fait est défait. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The import failed during %1$@ (%2$@), and everything it had done was undone. %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La reprise a échoué pendant %1$@ (%2$@), et tout ce qu'elle avait fait est défait. %3$@"
+          }
+        }
+      }
+    },
+    "La reprise a échoué pendant %@ (%@). Le dossier sera remis en état au prochain lancement de Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The import failed during %1$@ (%2$@). The folder will be restored the next time Maillage IoT starts."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La reprise a échoué pendant %1$@ (%2$@). Le dossier sera remis en état au prochain lancement de Maillage IoT."
+          }
+        }
+      }
+    },
+    "La reprise a échoué pendant %@ (%@). Rien n'a été modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The import failed during %1$@ (%2$@). Nothing was changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La reprise a échoué pendant %1$@ (%2$@). Rien n'a été modifié."
           }
         }
       }
@@ -4273,6 +4929,38 @@
         }
       }
     },
+    "Les données de Maillage IoT n'ont pas cessé de changer pendant la reprise : rien n'a été modifié. Réessayer dans un instant." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT's data kept changing during the import: nothing was changed. Try again in a moment."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les données de Maillage IoT n'ont pas cessé de changer pendant la reprise : rien n'a été modifié. Réessayer dans un instant."
+          }
+        }
+      }
+    },
+    "Les données de Maillage IoT ont changé pendant la reprise : elle a été recalculée, sans rien écraser de ce qui avait été fait." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT's data changed during the import: it was recomputed, without overwriting anything that had been done."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les données de Maillage IoT ont changé pendant la reprise : elle a été recalculée, sans rien écraser de ce qui avait été fait."
+          }
+        }
+      }
+    },
     "Les noms, les pièces et les étages (zones) viennent de l'app Maison, lus par Passeur Noms, qui les envoie dès qu'ils changent ; le pont Hue donne les adresses, l'état de connexion et les piles." : {
       "localizations" : {
         "en" : {
@@ -4285,6 +4973,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les noms, les pièces et les étages (zones) viennent de l'app Maison, lus par Passeur Noms, qui les envoie dès qu'ils changent ; le pont Hue donne les adresses, l'état de connexion et les piles."
+          }
+        }
+      }
+    },
+    "Les notifications sont refusées : les autoriser dans Réglages Système › Notifications › Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications are denied: allow them in System Settings › Notifications › Maillage IoT."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notifications sont refusées : les autoriser dans Réglages Système › Notifications › Maillage IoT."
           }
         }
       }
@@ -4493,6 +5197,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Maillage IoT"
+          }
+        }
+      }
+    },
+    "Maillage IoT a cessé d'écouter pour la reprise : il doit se relancer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT stopped listening for the import: it has to restart."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT a cessé d'écouter pour la reprise : il doit se relancer."
+          }
+        }
+      }
+    },
+    "Maillage IoT attend d'être approuvé : l'accepter dans Réglages Système › Général › Ouverture." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT is waiting for approval: accept it in System Settings › General › Login Items."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT attend d'être approuvé : l'accepter dans Réglages Système › Général › Ouverture."
+          }
+        }
+      }
+    },
+    "Maillage IoT n'a pas pu se relancer seul : le quitter, puis le rouvrir, pour qu'il lise les données reprises." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT could not restart by itself: quit it, then reopen it so that it reads the imported data."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT n'a pas pu se relancer seul : le quitter, puis le rouvrir, pour qu'il lise les données reprises."
+          }
+        }
+      }
+    },
+    "Maillage IoT n'a pas pu se relancer seul : le quitter, puis le rouvrir." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT could not restart by itself: quit it, then reopen it."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT n'a pas pu se relancer seul : le quitter, puis le rouvrir."
+          }
+        }
+      }
+    },
+    "Maillage IoT ne s'ouvre pas à la connexion : allumer l'interrupteur dans Réglages › Général." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT does not open at login: turn the switch on in Settings › General."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT ne s'ouvre pas à la connexion : allumer l'interrupteur dans Réglages › Général."
+          }
+        }
+      }
+    },
+    "Maillage IoT remplace Maillage Thread et Maillage Zigbee. Les surnoms, les pièces, l'historique et les réglages de l'ancienne app peuvent être repris." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT replaces Maillage Thread and Maillage Zigbee. The nicknames, rooms, history and settings of the old app can be brought over."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT remplace Maillage Thread et Maillage Zigbee. Les surnoms, les pièces, l'historique et les réglages de l'ancienne app peuvent être repris."
           }
         }
       }
@@ -5457,6 +6257,22 @@
         }
       }
     },
+    "Pendant la reprise, Maillage IoT cesse d'écouter. Une fois les données en place, il se relance seul et affiche ce qui a été repris, ce qui a été ignoré et ce qui reste à faire. Si quelque chose échoue, rien n'est modifié." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "During the import, Maillage IoT stops listening. Once the data is in place, it restarts by itself and shows what was imported, what was ignored and what is left to do. If anything fails, nothing is changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendant la reprise, Maillage IoT cesse d'écouter. Une fois les données en place, il se relance seul et affiche ce qui a été repris, ce qui a été ignoré et ce qui reste à faire. Si quelque chose échoue, rien n'est modifié."
+          }
+        }
+      }
+    },
     "Pile et Network Data" : {
       "localizations" : {
         "en" : {
@@ -5517,6 +6333,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placer dans une pièce…"
+          }
+        }
+      }
+    },
+    "Plus tard" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Later"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
           }
         }
       }
@@ -5697,6 +6529,22 @@
         }
       }
     },
+    "Propre à l'ancienne app (mises à jour, fenêtres…)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Specific to the old app (updates, windows…)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Propre à l'ancienne app (mises à jour, fenêtres…)"
+          }
+        }
+      }
+    },
     "Préfixe %@ retiré" : {
       "localizations" : {
         "en" : {
@@ -5805,6 +6653,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Qualité du lien vers le parent"
+          }
+        }
+      }
+    },
+    "Quitter %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quit %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quitter %@"
           }
         }
       }
@@ -6001,6 +6865,22 @@
         }
       }
     },
+    "Relancer Maillage IoT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restart Maillage IoT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relancer Maillage IoT"
+          }
+        }
+      }
+    },
     "Relancer maintenant" : {
       "localizations" : {
         "en" : {
@@ -6029,6 +6909,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Relevé de Maison"
+          }
+        }
+      }
+    },
+    "Relevé de Maison déjà plus récent dans Maillage IoT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home survey already newer in Maillage IoT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relevé de Maison déjà plus récent dans Maillage IoT"
           }
         }
       }
@@ -6097,6 +6993,22 @@
         }
       }
     },
+    "Repartir d'un journal vide" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start from an empty log"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repartir d'un journal vide"
+          }
+        }
+      }
+    },
     "Replacer les pièces automatiquement" : {
       "localizations" : {
         "en" : {
@@ -6129,6 +7041,166 @@
         }
       }
     },
+    "Reprend les surnoms, les pièces, l'historique et les réglages de Maillage Thread ou de Maillage Zigbee, à partir de leur export." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brings over the nicknames, rooms, history and settings of Maillage Thread or Maillage Zigbee, from their export."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprend les surnoms, les pièces, l'historique et les réglages de Maillage Thread ou de Maillage Zigbee, à partir de leur export."
+          }
+        }
+      }
+    },
+    "Reprendre" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre"
+          }
+        }
+      }
+    },
+    "Reprendre des données" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import data"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre des données"
+          }
+        }
+      }
+    },
+    "Reprendre des données…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import data…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre des données…"
+          }
+        }
+      }
+    },
+    "Reprendre les surnoms, les pièces, l'historique et les réglages de Maillage Thread ou de Maillage Zigbee." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bring over the nicknames, rooms, history and settings of Maillage Thread or Maillage Zigbee."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprendre les surnoms, les pièces, l'historique et les réglages de Maillage Thread ou de Maillage Zigbee."
+          }
+        }
+      }
+    },
+    "Repris" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repris"
+          }
+        }
+      }
+    },
+    "Repris depuis %@ %@, export du %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imported from %1$@ %2$@, export of %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repris depuis %1$@ %2$@, export du %3$@"
+          }
+        }
+      }
+    },
+    "Reprise" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise"
+          }
+        }
+      }
+    },
+    "Reprise en cours… Ne pas quitter Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import in progress… Do not quit Maillage IoT."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise en cours… Ne pas quitter Maillage IoT."
+          }
+        }
+      }
+    },
+    "Reprise terminée. Maillage IoT se relance pour lire les données reprises…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import finished. Maillage IoT is restarting to read the imported data…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprise terminée. Maillage IoT se relance pour lire les données reprises…"
+          }
+        }
+      }
+    },
     "Retirer le surnom" : {
       "localizations" : {
         "en" : {
@@ -6157,6 +7229,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rien de visible sur le réseau local depuis %@"
+          }
+        }
+      }
+    },
+    "Rien n'a été repris." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing was imported."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n'a été repris."
+          }
+        }
+      }
+    },
+    "Rien à refaire : tout est en ordre." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing left to do: everything is in order."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à refaire : tout est en ordre."
           }
         }
       }
@@ -6397,6 +7501,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Routeurs : %1$lld · appareils : %2$lld · injoignables : %3$lld"
+          }
+        }
+      }
+    },
+    "Réglage d'un type inattendu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setting of an unexpected type"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage d'un type inattendu"
+          }
+        }
+      }
+    },
+    "Réglage transitoire, sans sens après coup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transient setting, meaningless afterwards"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglage transitoire, sans sens après coup"
+          }
+        }
+      }
+    },
+    "Réglages repris : %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings taken over: %lld"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages repris : %lld"
           }
         }
       }
@@ -6849,6 +8001,22 @@
         }
       }
     },
+    "Sans équivalent dans Maillage IoT" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No equivalent in Maillage IoT"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans équivalent dans Maillage IoT"
+          }
+        }
+      }
+    },
     "Service Bonjour" : {
       "localizations" : {
         "en" : {
@@ -7149,6 +8317,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tables des routeurs"
+          }
+        }
+      }
+    },
+    "Terminé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminé"
           }
         }
       }
@@ -7489,6 +8673,54 @@
         }
       }
     },
+    "Une reprise interrompue a été défaite au lancement : Maillage IoT est revenu à l'état d'avant. La reprise peut être refaite." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An interrupted import was undone at launch: Maillage IoT is back to its previous state. The import can be done again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une reprise interrompue a été défaite au lancement : Maillage IoT est revenu à l'état d'avant. La reprise peut être refaite."
+          }
+        }
+      }
+    },
+    "Une reprise interrompue a été défaite au lancement, sauf ce que l'app avait écrit depuis. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An interrupted import was undone at launch, except for what the app has written since. %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une reprise interrompue a été défaite au lancement, sauf ce que l'app avait écrit depuis. %@"
+          }
+        }
+      }
+    },
+    "Une reprise interrompue n'a pas pu être défaite (%@). Rien n'a été effacé : relancer Maillage IoT pour réessayer." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An interrupted import could not be undone (%@). Nothing was deleted: restart Maillage IoT to try again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une reprise interrompue n'a pas pu être défaite (%@). Rien n'a été effacé : relancer Maillage IoT pour réessayer."
+          }
+        }
+      }
+    },
     "Utiliser cette adresse" : {
       "localizations" : {
         "en" : {
@@ -7677,6 +8909,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vue par pièces"
+          }
+        }
+      }
+    },
+    "Vérification de l'export…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifying the export…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification de l'export…"
+          }
+        }
+      }
+    },
+    "Vérifier de nouveau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check again"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérifier de nouveau"
           }
         }
       }
@@ -8993,6 +10257,38 @@
         }
       }
     },
+    "l'écriture des réglages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "writing the settings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "l'écriture des réglages"
+          }
+        }
+      }
+    },
+    "la préparation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "preparation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la préparation"
+          }
+        }
+      }
+    },
     "la sonde" : {
       "localizations" : {
         "en" : {
@@ -9085,6 +10381,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "la sonde refuse : %@"
+          }
+        }
+      }
+    },
+    "la validation" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "validation"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "la validation"
+          }
+        }
+      }
+    },
+    "le remplacement des fichiers" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "replacing the files"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "le remplacement des fichiers"
           }
         }
       }
@@ -9277,6 +10605,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "lue"
+          }
+        }
+      }
+    },
+    "macOS a refusé le réseau local à Maillage IoT : l'autoriser dans Réglages Système › Confidentialité et sécurité › Réseau local." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS denied Maillage IoT the local network: allow it in System Settings › Privacy & Security › Local Network."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS a refusé le réseau local à Maillage IoT : l'autoriser dans Réglages Système › Confidentialité et sécurité › Réseau local."
+          }
+        }
+      }
+    },
+    "macOS demandera l'accord à la première connexion. La clé est alors recopiée dans Maillage IoT ; l'ancienne app garde la sienne et son accès." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS will ask for approval at the first connection. The key is then copied into Maillage IoT; the old app keeps its own key and its access."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS demandera l'accord à la première connexion. La clé est alors recopiée dans Maillage IoT ; l'ancienne app garde la sienne et son accès."
+          }
+        }
+      }
+    },
+    "macOS n'a pas encore reçu de réponse : accepter la demande d'autorisation de Maillage IoT." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS has not received an answer yet: accept the Maillage IoT authorization request."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n'a pas encore reçu de réponse : accepter la demande d'autorisation de Maillage IoT."
+          }
+        }
+      }
+    },
+    "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra."
           }
         }
       }
@@ -10593,6 +11985,22 @@
         }
       }
     },
+    "« Repartir d'un journal vide » renomme le journal des reprises en imports.json.abime, sans rien supprimer, puis vérifie de nouveau l'export." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“Start from an empty log” renames the import log to imports.json.abime, without deleting anything, then verifies the export again."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Repartir d'un journal vide » renomme le journal des reprises en imports.json.abime, sans rien supprimer, puis vérifie de nouveau l'export."
+          }
+        }
+      }
+    },
     "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau »." : {
       "localizations" : {
         "en" : {
@@ -10653,6 +12061,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "· vu %@"
+          }
+        }
+      }
+    },
+    "À refaire" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To redo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À refaire"
           }
         }
       }

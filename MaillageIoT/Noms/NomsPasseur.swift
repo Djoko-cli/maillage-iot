@@ -90,6 +90,8 @@ final class NomsPasseur {
     @ObservationIgnored private let attentes: [Duration]
     @ObservationIgnored private let lanceur: Lanceur
     @ObservationIgnored private var abonnement: AbonnementPasseur?
+    /// `arreter()` a ete appele (et `demarrer()` pas depuis) : aucun abonnement, aucune ecriture.
+    @ObservationIgnored private var arrete = false
     @ObservationIgnored private var minuterie: Task<Void, Never>?
     @ObservationIgnored private var reprise: Task<Void, Never>?
     @ObservationIgnored private var effacement: Task<Void, Never>?
@@ -128,13 +130,32 @@ final class NomsPasseur {
 
     /// Donne le releve garde et s'abonne au demon.
     func demarrer() {
+        arrete = false
         surReleve?(releve)
         abonner()
     }
 
+    /// Arrete le client (avant une reprise de donnees, qui ecrit dans le dossier de l'app) : l'abonnement est ferme, plus aucun
+    /// reabonnement ni aucune minuterie, et un releve qui arriverait quand meme n'est plus ecrit. Le releve garde reste lu.
+    func arreter() {
+        arrete = true
+        reprise?.cancel()
+        reprise = nil
+        minuterie?.cancel()
+        minuterie = nil
+        gardeReleve?.cancel()
+        gardeReleve = nil
+        effacement?.cancel()
+        effacement = nil
+        abonnement?.fermer()
+        abonnement = nil
+        connecte = false
+        releveEnCours = false
+    }
+
     /// Ouvre l'ecoute, puis l'URL `abonner` avec son port et un jeton neuf. Un abonnement a la fois ; jamais inerte.
     func abonner() {
-        guard !inerte, cache != nil, abonnement == nil else { return }
+        guard !inerte, !arrete, cache != nil, abonnement == nil else { return }
         reprise?.cancel()
         reprise = nil
         let a = AbonnementPasseur(jeton: EnvoiPasseur.nouveauJeton())
@@ -268,6 +289,7 @@ final class NomsPasseur {
     /// Retient un releve recu : le releve s'il est reussi, sinon le probleme ; le releve retenu est ecrit dans le
     /// conteneur, d'un coup (ecriture atomique). Inerte : garde et transmis, jamais ecrit.
     func integrer(_ r: NomsMaison) {
+        guard !arrete else { return }
         let (garde, p) = Self.retenir(r, ancien: releve)
         probleme = p
         guard garde != releve else { return }

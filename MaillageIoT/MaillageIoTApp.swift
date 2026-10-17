@@ -17,6 +17,9 @@ struct MaillageIoTApp: App {
     @State private var sondeZigbee: SondeMaillageZigbee
     @State private var reglages: ControleurReglages
     @State private var misesAJour: MisesAJour
+    /// L'assistant de reprise (fenetre AppKit, ouvert par Reglages > General, par le premier lancement, par le resume qui suit
+    /// une reprise).
+    @State private var reprise: ControleurReprise
     private let notifications = Notifications()
     /// Bonjour `_hue._tcp` (le pont de Zigbee), demarre hors demo et hors tests : le seul de l'app.
     private let decouverte: DecouvertePont
@@ -29,6 +32,12 @@ struct MaillageIoTApp: App {
     static let clePremierGraphe = "grapheDejaOuvert"
 
     init() {
+        // Une reprise interrompue (l'app arretee en pleine application) est defaite AVANT tout le reste : les modules lisent le
+        // dossier de donnees des leur initialisation (`ModulesApp`), il doit etre dans un etat sain. Ni en demo ni sous les tests.
+        // Un seul `ApplicationImport` pour toute l'app : deux reprises ne se chevauchent jamais.
+        let importeur = ApplicationImport(dossierDonnees: Surveillance.dossierParDefaut)
+        let recuperation: Result<IssueRecuperation, ErreurApplication>? =
+            Self.demo || Surveillance.sousTests ? nil : importeur.recupererAuLancement()
         // `-demo` rejoue les deux demos ensemble, `-demo-thread` et `-demo-zigbee` chacune seule (l'autre protocole eteint).
         let m = ModulesApp(demo: Self.demoLancee)
         let s = m.surveillance
@@ -44,9 +53,19 @@ struct MaillageIoTApp: App {
         // compilation de travail.
         let mj = MisesAJour.pourLApp(demo: Self.demo)
         _misesAJour = State(initialValue: mj)
+        // L'assistant de reprise : les modules sont arretes avant l'application, l'etat reel du Mac est lu au moment du resume
+        // (le refus du reseau local vient de Bonjour, au pont).
+        let pont = m.nomsPont
+        let assistant = AssistantReprise(
+            importeur: importeur, dossierDonnees: Surveillance.dossierParDefaut,
+            lecteur: LecteurEtatSystemeReel(reseauLocalRefuse: { await MainActor.run { pont.reseauLocalRefuse } }),
+            arreterModules: { m.arreterTout() })
+        let controleurReprise = ControleurReprise(assistant: assistant)
+        _reprise = State(initialValue: controleurReprise)
         _reglages = State(initialValue: ControleurReglages(surveillance: s, ouverture: o, nomsMaison: m.nomsMaison,
                                                            nomsPont: m.nomsPont, sonde: m.sondeThread,
-                                                           sondeZigbee: m.sondeZigbee, misesAJour: mj))
+                                                           sondeZigbee: m.sondeZigbee, misesAJour: mj,
+                                                           reprise: controleurReprise))
         let premier = !UserDefaults.standard.bool(forKey: Self.clePremierGraphe)
         ouvrirGraphe = !Surveillance.sousTests && (Self.demo || premier)
         guard !Surveillance.sousTests else { return }
@@ -60,6 +79,16 @@ struct MaillageIoTApp: App {
             n.demanderAutorisation()
             o.proposerAuPremierLancement()
             m.brancher()
+            // Ce que la recuperation du lancement a defait (jamais en silence), le resume d'une reprise qui vient d'avoir lieu, la
+            // proposition du premier lancement : la fenetre s'ouvre seulement s'il y a quelque chose a dire.
+            if let recuperation {
+                Task { @MainActor in
+                    if await assistant.preparerLancement(recuperation: recuperation) {
+                        try? await Task.sleep(for: .seconds(1))
+                        controleurReprise.montrer()
+                    }
+                }
+            }
         }
         s.demarrer()
         // `--args -demo -captures <dossier>` : images de la vue par pieces, puis l'app quitte.

@@ -70,6 +70,7 @@ struct FenetreReglages: View {
     @Environment(OuvertureSession.self) private var ouverture
     @Environment(SondeMaillageThread.self) private var sonde
     @Environment(MisesAJour.self) private var misesAJour
+    @Environment(\.controleurReprise) private var controleurReprise
     @AppStorage(FenetrePieces.cleGrille) private var etagesEnGrille = true
     @State private var messageCapture: String?
     @State private var langue = LangueApp.lire()
@@ -87,6 +88,7 @@ struct FenetreReglages: View {
                     sectionMisesAJour
                     choixDeLangue
                     vueParPieces
+                    reprise
                 }
             case .notifications: page { notifications }
             case .maison: page { ReglagesMaison() }
@@ -188,6 +190,20 @@ struct FenetreReglages: View {
             }
             if let messageLangue {
                 Text(messageLangue).foregroundStyle(.red)
+            }
+        }
+    }
+
+    /// Onglet General : reprendre les donnees de Maillage Thread ou de Maillage Zigbee (l'assistant de reprise). Toujours la, meme
+    /// apres une premiere reprise : la seconde ancienne app se reprend de la meme facon.
+    @ViewBuilder
+    private var reprise: some View {
+        if let controleurReprise {
+            Section("Reprise") {
+                Button("Reprendre des données…") { controleurReprise.montrer() }
+                Text("Reprend les surnoms, les pièces, l'historique et les réglages de Maillage Thread ou de Maillage Zigbee, à partir de leur export.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }

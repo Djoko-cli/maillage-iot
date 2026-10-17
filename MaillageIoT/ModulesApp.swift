@@ -61,7 +61,7 @@ struct ModulesApp {
             trousseau: inerte ? TrousseauMemoireThread()
                 : TrousseauReprisThread(actuel: TrousseauSystemeThread(),
                                         ancien: TrousseauSystemeThread(service: TrousseauReprisThread.serviceAncien),
-                                        reprises: .preferences(cle: "thread.repriseTrousseauSonde")),
+                                        reprises: .preferences(cle: MemoireReprises.cleSondeThread)),
             fichierIdentites: SondeMaillageThread.fichierIdentites(demo: demo != nil, sousTests: sousTests),
             cartes: cartes)
         sondeZigbee = SondeMaillageZigbee(
@@ -69,7 +69,7 @@ struct ModulesApp {
             trousseau: inerte ? TrousseauMemoireZigbee()
                 : TrousseauRepris(actuel: CheminSonde.trousseau(),
                                   ancien: TrousseauSystemeZigbee(service: TrousseauRepris.serviceSondeAncien),
-                                  reprises: .preferences(cle: "zigbee.repriseTrousseauSonde")),
+                                  reprises: .preferences(cle: MemoireReprises.cleSondeZigbee)),
             cartes: cartes)
     }
 
@@ -84,6 +84,18 @@ struct ModulesApp {
         nomsMaison.demarrer()
         Self.relierThread(s, sonde: sondeThread)
         Self.relierZigbee(s, sonde: sondeZigbee, nomsPont: nomsPont, decouverte: decouverte)
+    }
+
+    /// Arrete tout ce qui ecrit dans le dossier de donnees ou lit le reseau, avant une reprise de donnees (phase 4, tache 7) :
+    /// les modeles de protocole, les deux sondes, le pont Hue et sa decouverte Bonjour, le client du demon Passeur Noms. L'app
+    /// se relance apres la reprise : rien n'est rallume ici.
+    func arreterTout() {
+        surveillance.arreter()
+        sondeThread.arreter()
+        sondeZigbee.arreter()
+        nomsPont.arreter()
+        decouverte.arreter()
+        nomsMaison.arreter()
     }
 
     /// Thread : la sonde donne ses maillages au modele, qui lui rend les appareils a resoudre ; la sonde suit `actif` du

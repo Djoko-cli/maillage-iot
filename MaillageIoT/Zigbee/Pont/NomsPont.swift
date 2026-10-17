@@ -79,7 +79,7 @@ struct DependancesPont: Sendable {
         DependancesPont(transport: TransportURLSession(),
                         trousseau: TrousseauRepris(actuel: TrousseauSystemeZigbee(),
                                                    ancien: TrousseauSystemeZigbee(service: TrousseauRepris.servicePontAncien),
-                                                   reprises: .preferences(cle: "zigbee.repriseTrousseauPont")),
+                                                   reprises: .preferences(cle: MemoireReprises.clePontZigbee)),
                         memoire: MemoirePreferences(),
                         cache: cache, attendre: { try await Task.sleep(for: $0) }, maintenant: { Date() },
                         nomMac: (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? "Mac")

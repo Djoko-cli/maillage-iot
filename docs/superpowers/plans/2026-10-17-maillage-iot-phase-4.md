@@ -126,10 +126,10 @@ D'après la spec 4.3, 4.4, 6.8 (relance).
 - Create: `MaillageIoT/Vues/Reprise/` (fenêtre de l'assistant : choix du dossier d'export par un panneau d'ouverture, validation, ancienne app qui tourne signalée avec « Quitter Maillage Thread » ou Zigbee, résumé de ce qui a été repris et ignoré, liste « À refaire » selon l'état réel des clés du trousseau, des autorisations et de l'ouverture de session, relance de l'app) ; entrée « Reprendre des données… » dans Réglages › Général ; proposition au premier lancement.
 - Test: `MaillageIoTTests/Reprise/AssistantRepriseTests.swift` (textes du résumé et de « À refaire » selon les cas, détection de l'ancienne app par son identifiant, aucun import sans validation).
 
-- [ ] **Step 1: RED** — tests ci-dessus.
-- [ ] **Step 2: GREEN** — implémenter (catalogue fr + en).
-- [ ] **Step 3: Vérifier** — porte de la tâche ; captures de l'assistant (chemins au rapport).
-- [ ] **Step 4: Commit** — « Reprise : assistant, resume et liste a refaire ».
+- [x] **Step 1: RED** — tests ci-dessus.
+- [x] **Step 2: GREEN** — implémenter (catalogue fr + en).
+- [x] **Step 3: Vérifier** — porte de la tâche ; captures de l'assistant (chemins au rapport).
+- [x] **Step 4: Commit** — « Reprise : assistant, resume et liste a refaire ».
 
 ---
 

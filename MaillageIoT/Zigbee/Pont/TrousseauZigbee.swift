@@ -38,8 +38,10 @@ struct TrousseauSystemeZigbee: TrousseauClesZigbee {
 
     let service: String
     let etiquette: Etiquette
+    /// Le service de l'app pour les cles des ponts Hue.
+    static let servicePontParDefaut = "fr.djoko.maillage.iot.pont-hue"
 
-    init(service: String = "fr.djoko.maillage.iot.pont-hue",
+    init(service: String = TrousseauSystemeZigbee.servicePontParDefaut,
          etiquette: @escaping Etiquette = { identifiant, _ in ("Maillage IoT - pont Hue \(identifiant)", nil) }) {
         self.service = service
         self.etiquette = etiquette

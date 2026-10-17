@@ -24,6 +24,8 @@ final class ControleurReglages {
     @ObservationIgnored private let sonde: SondeMaillageThread
     @ObservationIgnored private let sondeZigbee: SondeMaillageZigbee
     @ObservationIgnored private let misesAJour: MisesAJour
+    /// L'assistant de reprise (« Reprendre des donnees… », Reglages > General) ; nil dans les tests des vues.
+    @ObservationIgnored private let reprise: ControleurReprise?
     /// Les preferences qui gardent l'onglet retenu (celles de l'app ; en memoire dans les tests).
     @ObservationIgnored private let preferences: UserDefaults
     /// Creee a la premiere ouverture, puis gardee : elle rouvre sur le meme onglet.
@@ -34,7 +36,7 @@ final class ControleurReglages {
 
     init(surveillance: Surveillance, ouverture: OuvertureSession, nomsMaison: NomsPasseur, nomsPont: NomsPont,
          sonde: SondeMaillageThread, sondeZigbee: SondeMaillageZigbee, misesAJour: MisesAJour,
-         preferences: UserDefaults = .standard) {
+         reprise: ControleurReprise? = nil, preferences: UserDefaults = .standard) {
         self.surveillance = surveillance
         self.ouverture = ouverture
         self.nomsMaison = nomsMaison
@@ -42,6 +44,7 @@ final class ControleurReglages {
         self.sonde = sonde
         self.sondeZigbee = sondeZigbee
         self.misesAJour = misesAJour
+        self.reprise = reprise
         self.preferences = preferences
     }
 
@@ -73,6 +76,7 @@ final class ControleurReglages {
                 .environment(sondeZigbee)
                 .environment(suivi)
                 .environment(misesAJour)
+                .environment(\.controleurReprise, reprise)
             // Sans `sizingOptions` : la page n'annonce pas de taille preferee, sinon le redimensionnement
             // natif, sans animation, prendrait le pas sur `ajuster`.
             let hote = NSHostingController(rootView: page)
