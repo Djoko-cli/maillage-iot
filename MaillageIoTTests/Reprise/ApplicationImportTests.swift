@@ -980,6 +980,70 @@ struct ApplicationImportTests {
         }
     }
 
+    // MARK: Phase 4, tache 7 : reports de la tache 6
+
+    /// Carry 6 : un changement d'etat PENDANT l'application, apres qu'un fichier a ete mis en place et que l'app l'a fait
+    /// grandir : le retour en arriere laisse le travail de l'app, le plan est refait, et le resultat le cite (jamais en silence).
+    @Test func unEtatQuiBougePendantLApplicationCiteCeQueLAppAEcritEntretemps() async throws {
+        let (d, r) = try await Self.depart(.maillageThread, avecExistant: true)
+        let journal = d.url("Journal/journal-2026-10.jsonl")
+        let surnoms = d.url("surnoms.json")
+        let tire = OSAllocatedUnfairLock(initialState: false)
+        // Juste avant que surnoms.json ne soit deplace : l'app ajoute une ligne au journal deja mis en place, et change surnoms.json.
+        let ops = OperationsEssai(racine: d.racine) { _, nom in
+            guard nom.hasPrefix("deplacer surnoms.json ->"), !tire.withLock({ let deja = $0; $0 = true; return deja }) else { return }
+            if let actuel = try? Data(contentsOf: journal) { try? (actuel + Data("{\"ligne\":\"de Djoko\"}\n".utf8)).write(to: journal) }
+            try? Data(#"{"surnoms":{"thread:rloc:0800":"Mon routeur"},"version":1}"#.utf8).write(to: surnoms)
+        }
+        let resultat = try Self.repris(await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread)))
+        #expect(resultat.planRecalcule)
+        #expect(resultat.laisses.fichiers.contains("Journal/journal-2026-10.jsonl"), "ce que l'app a ecrit est cite : \(resultat.laisses)")
+        #expect(try String(decoding: Self.octets(d, "Journal/journal-2026-10.jsonl"), as: UTF8.self).contains("de Djoko"), "la ligne de l'app est la")
+        let obtenu = try #require(Self.objet(d, "surnoms.json")["surnoms"] as? [String: String])
+        #expect(obtenu["thread:rloc:0800"] == "Mon routeur")
+        let conserve = d.url("\(ApplicationImport.nomConserve)/\(G.identifiant(.maillageThread).uuidString)/Journal/journal-2026-10.jsonl")
+        #expect(FileManager.default.fileExists(atPath: conserve.path), "l'original du journal est garde a part")
+    }
+
+    /// Idem quand l'etat bouge a chaque essai : l'erreur finale cite les elements laisses.
+    @Test func unEtatInstableCiteCeQueLAppAEcritEntretemps() async throws {
+        let (d, r) = try await Self.depart(.maillageThread, avecExistant: true)
+        let journal = d.url("Journal/journal-2026-10.jsonl")
+        let surnoms = d.url("surnoms.json")
+        let compteur = OSAllocatedUnfairLock(initialState: 0)
+        let ops = OperationsEssai(racine: d.racine) { _, nom in
+            guard nom.hasPrefix("deplacer surnoms.json ->") else { return }
+            let k = compteur.withLock { $0 += 1; return $0 }
+            if let actuel = try? Data(contentsOf: journal) { try? (actuel + Data("{\"ligne\":\"\(k)\"}\n".utf8)).write(to: journal) }
+            try? Data(#"{"surnoms":{"thread:rloc:0800":"Version \#(k)"},"version":1}"#.utf8).write(to: surnoms)
+        }
+        do {
+            _ = try await Self.appli(d, r, operations: ops).reprendre(export: Self.exemple(.maillageThread))
+            throw Echec("l'application aurait du renoncer")
+        } catch let e as ErreurApplication {
+            guard case .echecAvecReste(_, let laisses, _) = e else { throw Echec("erreur sans les elements laisses : \(e)") }
+            #expect(laisses.fichiers.contains("Journal/journal-2026-10.jsonl"))
+        }
+    }
+
+    /// Carry 1 : la recuperation du lancement est synchrone (elle precede la construction des modules, qui lisent le dossier
+    /// des l'init) et fait la meme chose que `recuperer()`.
+    @Test func laRecuperationDuLancementEstSynchroneEtDefaitUneApplicationInterrompue() async throws {
+        let (d, r, avant, _) = try await Self.interrompueAvantLaValidation(avecExistant: true)
+        let a = Self.appli(d, r)
+        let issue = a.recupererAuLancement()
+        #expect(issue == .success(.annulee))
+        #expect(try Self.arbre(d) == avant)
+        #expect(a.recupererAuLancement() == .success(.rienAFaire))
+        let (d2, r2) = try (D(), ReglagesEssai())
+        try FileManager.default.createDirectory(at: d2.url(ApplicationImport.nomTravail), withIntermediateDirectories: true)
+        try Data("pas du json".utf8).write(to: d2.url("\(ApplicationImport.nomTravail)/journal.json"))
+        guard case .failure(.recuperationImpossible) = Self.appli(d2, r2).recupererAuLancement() else {
+            throw Echec("un journal illisible doit etre rendu, pas efface")
+        }
+        #expect(FileManager.default.fileExists(atPath: d2.url("\(ApplicationImport.nomTravail)/journal.json").path))
+    }
+
     // MARK: Hors du fil principal
 
     @MainActor

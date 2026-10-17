@@ -250,6 +250,9 @@ struct ResultatApplication: Equatable, Sendable {
     let nonPris: [ElementNonPris]
     /// Vrai si l'etat de l'app a change depuis `preparer` : le plan a ete refait avant d'etre applique.
     let planRecalcule: Bool
+    /// Ce qu'un essai abandonne a laisse en place parce que l'app l'avait ecrit entretemps (le plan refait l'a fusionne) :
+    /// a citer au resume, jamais en silence.
+    var laisses = ElementsLaisses()
 }
 
 enum IssueReprise: Sendable {
@@ -295,6 +298,12 @@ struct ElementsLaisses: Equatable, Sendable {
     var reglages: [String] = []
 
     var estVide: Bool { fichiers.isEmpty && reglages.isEmpty }
+
+    /// Ajoute ce que `autres` cite, sans doublon (un meme fichier laisse a deux essais n'est cite qu'une fois).
+    mutating func ajouter(_ autres: ElementsLaisses) {
+        for f in autres.fichiers where !fichiers.contains(f) { fichiers.append(f) }
+        for r in autres.reglages where !reglages.contains(r) { reglages.append(r) }
+    }
 }
 
 enum IssueRecuperation: Equatable, Sendable {
@@ -369,7 +378,8 @@ actor ApplicationImport {
     private let calendrier: Calendar
 
     /// Un changement du dossier de donnees ou des preferences depuis le plan : interne, jamais montre.
-    private struct EtatChange: Error {}
+    /// `laisses` : ce que le retour en arriere a laisse en place (l'app l'avait ecrit entretemps), a citer.
+    private struct EtatChange: Error { var laisses = ElementsLaisses() }
     /// Un fichier de l'export n'a plus l'empreinte du manifeste.
     private struct ExportChange: Error {}
 
@@ -383,10 +393,10 @@ actor ApplicationImport {
         self.calendrier = calendrier
     }
 
-    private var travail: URL { racine.appendingPathComponent(Self.nomTravail, isDirectory: true) }
-    private var attente: URL { travail.appendingPathComponent(Self.nomAttente, isDirectory: true) }
-    private var sauvegarde: URL { travail.appendingPathComponent(Self.nomSauvegarde, isDirectory: true) }
-    private var fichierJournal: URL { travail.appendingPathComponent(Self.nomJournal) }
+    private nonisolated var travail: URL { racine.appendingPathComponent(Self.nomTravail, isDirectory: true) }
+    private nonisolated var attente: URL { travail.appendingPathComponent(Self.nomAttente, isDirectory: true) }
+    private nonisolated var sauvegarde: URL { travail.appendingPathComponent(Self.nomSauvegarde, isDirectory: true) }
+    private nonisolated var fichierJournal: URL { travail.appendingPathComponent(Self.nomJournal) }
 
     // MARK: API
 
@@ -411,6 +421,7 @@ actor ApplicationImport {
     func appliquer(_ preparation: PreparationImport) async throws -> ResultatApplication {
         var courante = preparation
         var recalcule = false
+        var laisses = ElementsLaisses()
         for _ in 0..<Self.tentatives {
             _ = try recupererSync()
             let (manifeste, reglages) = try verifier(preparation.dossierExport)
@@ -425,11 +436,16 @@ actor ApplicationImport {
                 recalcule = true
             }
             do {
-                return try appliquerPlan(courante, imports: imports, planRecalcule: recalcule)
-            } catch is EtatChange {
+                var resultat = try appliquerPlan(courante, imports: imports, planRecalcule: recalcule)
+                resultat.laisses = laisses
+                return resultat
+            } catch let e as EtatChange {
+                laisses.ajouter(e.laisses)
                 continue
             }
         }
+        // Rien n'a ete modifie par l'import ; ce que l'app a ecrit entretemps reste en place et est cite.
+        if !laisses.estVide { throw ErreurApplication.echecAvecReste(.remplacement, laisses, code: "etat-instable") }
         throw ErreurApplication.etatInstable
     }
 
@@ -445,6 +461,15 @@ actor ApplicationImport {
     /// interrompue. `preparer` et `appliquer` l'appellent aussi.
     func recuperer() async throws -> IssueRecuperation {
         try recupererSync()
+    }
+
+    /// La meme recuperation, synchrone et hors de l'acteur : l'app l'appelle dans `App.init`, AVANT de construire ses modules
+    /// (qui lisent le dossier de donnees des leur initialisation) et sans attendre. Seulement au lancement, quand rien d'autre
+    /// n'utilise cette instance. L'erreur est rendue, jamais levee : le lanceur la montre a l'utilisateur.
+    nonisolated func recupererAuLancement() -> Result<IssueRecuperation, ErreurApplication> {
+        do { return .success(try recupererSync()) } catch let e as ErreurApplication { return .failure(e) } catch {
+            return .failure(.recuperationImpossible(code: Self.code(error)))
+        }
     }
 
     // MARK: Preparation
@@ -578,8 +603,11 @@ actor ApplicationImport {
             let retour = Result { try retablir(journal) }
             // Defait, ou defait sauf ce que l'app a ecrit entretemps (laisse en place : le plan refait le fusionnera).
             if case .success(let laisses) = retour {
-                if error is EtatChange { throw error }
-                if error is ExportChange { throw ErreurApplication.exportModifie }
+                if error is EtatChange { throw EtatChange(laisses: laisses) }
+                if error is ExportChange {
+                    throw laisses.estVide ? ErreurApplication.exportModifie
+                        : ErreurApplication.echecAvecReste(etape, laisses, code: "export-modifie")
+                }
                 if !laisses.estVide { throw ErreurApplication.echecAvecReste(etape, laisses, code: Self.code(error)) }
             }
             throw ErreurApplication.echec(etape, retablie: (try? retour.get()) != nil, code: Self.code(error))
@@ -628,7 +656,7 @@ actor ApplicationImport {
     /// premiere erreur est rendue a la fin, et le dossier de travail reste alors pour la reprise suivante.
     ///
     /// Ne defait que ce que l'import a ecrit et qui n'a pas bouge depuis (empreinte, valeur) : le reste est rendu, pas touche.
-    private func retablir(_ j: JournalApplication) throws -> ElementsLaisses {
+    private nonisolated func retablir(_ j: JournalApplication) throws -> ElementsLaisses {
         var premiereErreur: (any Error)?
         var laisses = ElementsLaisses()
         func essayer(_ action: () throws -> Void) {
@@ -694,13 +722,13 @@ actor ApplicationImport {
     }
 
     /// Le fichier a-t-il encore le contenu que l'import y a mis ? (Illisible, ou lien, ou dossier : non.)
-    private func contientEncore(_ url: URL, empreinte: String?) -> Bool {
+    private nonisolated func contientEncore(_ url: URL, empreinte: String?) -> Bool {
         guard let empreinte, let actuelle = try? EtatDonnees.empreinte(url) else { return false }
         return actuelle.taille >= 0 && actuelle.sha256 == empreinte
     }
 
     /// Garde l'original d'un fichier que l'app a ecrit depuis l'import, hors du dossier de travail (qui va etre efface).
-    private func conserver(_ sauv: URL, chemin: String, identifiant: UUID) throws {
+    private nonisolated func conserver(_ sauv: URL, chemin: String, identifiant: UUID) throws {
         let base = racine.appendingPathComponent(Self.nomConserve, isDirectory: true)
             .appendingPathComponent(identifiant.uuidString, isDirectory: true)
         var destination = base.appendingPathComponent(chemin)
@@ -713,24 +741,24 @@ actor ApplicationImport {
         try operations.deplacer(de: sauv, vers: destination)
     }
 
-    private func supprimerRacineSiVide(_ erreur: inout (any Error)?) {
+    private nonisolated func supprimerRacineSiVide(_ erreur: inout (any Error)?) {
         guard let contenu = try? FileManager.default.contentsOfDirectory(atPath: racine.path), contenu.isEmpty else { return }
         do { try operations.supprimer(racine) } catch { if erreur == nil { erreur = error } }
     }
 
     /// Le journal part le premier : sans lui, un dossier de travail restant n'est plus qu'un reste a effacer (jamais un
     /// retablissement a refaire).
-    private func supprimerJournalEtTravail() throws {
+    private nonisolated func supprimerJournalEtTravail() throws {
         if EtatDonnees.existe(fichierJournal) { try operations.supprimer(fichierJournal) }
         try? operations.supprimer(travail)
     }
 
     /// Apres la validation : le reste du dossier de travail est inutile. Une erreur ici ne change rien au resultat.
-    private func nettoyer() {
+    private nonisolated func nettoyer() {
         try? supprimerJournalEtTravail()
     }
 
-    private func recupererSync() throws -> IssueRecuperation {
+    private nonisolated func recupererSync() throws -> IssueRecuperation {
         guard EtatDonnees.existe(travail) else { return .rienAFaire }
         guard EtatDonnees.existe(fichierJournal) else {
             // Arret avant le journal (ou entre la suppression du journal et celle du dossier de travail) : rien n'est a
