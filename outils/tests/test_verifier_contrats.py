@@ -35,8 +35,11 @@ def depot(fichiers=(), modifies=()):
     return d
 
 
-def lancer(thread, zigbee):
+def lancer(thread, zigbee, avertir=None):
     env = dict(os.environ, DEPOT_THREAD=thread, DEPOT_ZIGBEE=zigbee)
+    env.pop("CONTRATS_AVERTIR_SEULEMENT", None)
+    if avertir is not None:
+        env["CONTRATS_AVERTIR_SEULEMENT"] = avertir
     r = subprocess.run(["bash", SCRIPT], capture_output=True, text=True, env=env)
     return r.returncode, r.stdout
 
@@ -74,6 +77,20 @@ class VerifierContratsTests(unittest.TestCase):
             code, sortie = lancer(depot(FICHIERS), depot(autre, [f]))
             self.assertEqual(code, 1, sortie)
             self.assertIn("DIFFERENT : zigbee/" + f, sortie)
+
+    def test_mode_avertissement_ne_bloque_pas_mais_le_dit(self):
+        code, sortie = lancer(depot([], [FICHIERS[0]]), depot(FICHIERS), avertir="1")
+        self.assertEqual(code, 0, sortie)
+        self.assertIn("DIFFERENT : thread/" + FICHIERS[0], sortie)
+        self.assertIn("avertissement : 1 copie(s) differente(s)", sortie)
+        code, sortie = lancer(depot([], [FICHIERS[0]]), depot(FICHIERS), avertir="0")
+        self.assertEqual(code, 1, sortie)
+        self.assertNotIn("avertissement", sortie)
+
+    def test_mode_avertissement_sans_difference_reste_silencieux(self):
+        code, sortie = lancer(depot(FICHIERS), depot(FICHIERS), avertir="1")
+        self.assertEqual(code, 0, sortie)
+        self.assertNotIn("avertissement", sortie)
 
     def test_une_difference_malgre_une_copie_absente(self):
         code, sortie = lancer(depot([], [FICHIERS[0]]), "/inexistant")

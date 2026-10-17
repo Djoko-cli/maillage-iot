@@ -11,7 +11,10 @@
 # (ou MAILLAGE_DEPOTS=/dossier-parent). Un depot ou un fichier absent n'est pas une erreur : "pas encore recopie"
 # (le contrat d'export est recopie dans les anciennes apps apres ce depot). Une copie presente mais differente est un
 # defaut. Code 0 : aucune difference ; code 1 : au moins une copie differente, ou fichier de reference absent.
-# Ne modifie rien. Pas encore branche dans tester.sh.
+# Mode avertissement : CONTRATS_AVERTIR_SEULEMENT=1 affiche les defauts comme des "avertissement(s)" et sort avec le
+# code 0 (a retirer quand les deux anciennes apps auront recopie le contrat). outils/tester.sh l'appelle en etape
+# informative, en mode avertissement par defaut ; CONTRATS_AVERTIR_SEULEMENT=0 outils/tester.sh le rend bloquant.
+# Ne modifie rien.
 set -u
 cd "$(dirname "$0")/.." || exit 1
 RACINE=$(pwd)
@@ -44,4 +47,8 @@ for f in $FICHIERS; do
   done
 done
 echo "verifier-contrats : $IDENTIQUES identique(s), $ABSENTS pas encore recopie(s), $DEFAUTS defaut(s)"
+if [ "$DEFAUTS" -gt 0 ] && [ "${CONTRATS_AVERTIR_SEULEMENT:-0}" = 1 ]; then
+  echo "avertissement : $DEFAUTS copie(s) differente(s), a recopier dans l'autre depot (mode CONTRATS_AVERTIR_SEULEMENT=1, code 0)"
+  exit 0
+fi
 [ "$DEFAUTS" -eq 0 ]

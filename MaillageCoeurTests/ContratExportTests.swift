@@ -424,10 +424,11 @@ struct ContratExportTests {
     }
 
     @Test func fichiersExclus() {
-        for nom in [".DS_Store", "Journal/.DS_Store", "noms.illisible-20261017-120000.json", "Journal/x.illisible-1.json"] {
+        for nom in [".DS_Store", "Journal/.DS_Store", "noms.illisible-20261017-120000.json", "Journal/x.illisible-1.json",
+                    "._surnoms.json", "Journal/._journal-2026-10.jsonl"] {
             #expect(C.estExcluDeLExport(nom), "\(nom)")
         }
-        for nom in ["surnoms.json", "illisible.json", "x.illisible-1.txt", "maillage-2026-10.jsonl"] {
+        for nom in ["surnoms.json", "illisible.json", "x.illisible-1.txt", "maillage-2026-10.jsonl", "_x.json", "x._json"] {
             #expect(!C.estExcluDeLExport(nom), "\(nom)")
         }
     }
@@ -823,6 +824,30 @@ struct ContratExportTests {
         try Data("x".utf8).write(to: e.dossier.appendingPathComponent(".DS_Store"))
         try Data("x".utf8).write(to: e.dossier.appendingPathComponent("Journal/.DS_Store"))
         _ = try C.verifierDossier(e.dossier)
+    }
+
+    /// Copie sur une cle FAT ou exFAT, macOS pose un compagnon AppleDouble `._<nom>` a cote de chaque fichier : tolere,
+    /// comme `.DS_Store`, a toute profondeur. Seuls les noms qui COMMENCENT par `._` le sont ; tout autre fichier non
+    /// liste reste refuse.
+    @Test func dossierAvecFichiersAppleDoubleAccepte() throws {
+        let e = try Self.exportValide()
+        defer { try? FileManager.default.removeItem(at: e.dossier) }
+        for chemin in ["._manifeste.json", "._reglages.json", "Journal/._journal-2026-10.jsonl", "Thread/._dernier-maillage.json"] {
+            let url = e.dossier.appendingPathComponent(chemin)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("x".utf8).write(to: url)
+        }
+        let (m, _) = try C.verifierDossier(e.dossier)
+        #expect(!m.fichiers.contains { $0.chemin.contains("._") })
+    }
+
+    @Test func dossierAvecFauxAppleDoubleRefuse() throws {
+        for chemin in ["_x.json", "x._json", "Journal/_x.json", "Journal/x._jsonl", ".x.json"] {
+            let e = try Self.exportValide()
+            defer { try? FileManager.default.removeItem(at: e.dossier) }
+            try Data("x".utf8).write(to: e.dossier.appendingPathComponent(chemin))
+            #expect(throws: C.Erreur.fichierEnTrop(chemin)) { try C.verifierDossier(e.dossier) }
+        }
     }
 
     @Test func dossierSansManifeste() throws {
