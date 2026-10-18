@@ -711,10 +711,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 - « Associer » pour Zigbee : associer à la main un appareil du pont à un accessoire de Maison (écriture dans
   `MemoireAppariements`), à côté de l'appariement automatique (étape 3b, 15/10).
 - Fusion des deux firmwares de sonde, si un jour une carte porte les deux radios.
-- Icône de l'app (Dock et barre des menus) : retirer le badge « T » hérité de Maillage Thread, à l'étape 3 avec
-  l'interface à deux protocoles (banc de l'étape 1, 14/10).
-- Fiche d'un nœud Zigbee : renommer le bouton « Identifier » (clignotement par le pont Hue) en « Identifier par
-  Hue », pour faire la paire avec « Identifier par Maison » ; « Identification… » suit (banc de l'étape 2, 14/10).
 - **Contrôle de taille avant lecture dans le contrat d'export** (mineur m1 de la relecture finale de la phase 4,
   18/10) : `manifeste.json` et `reglages.json` sont lus en entier avant tout contrôle de taille, si bien qu'un export
   abîmé ou trafiqué de plusieurs Go ferait tomber l'app au lieu de donner une cause lisible (rien n'est écrit). À faire :
