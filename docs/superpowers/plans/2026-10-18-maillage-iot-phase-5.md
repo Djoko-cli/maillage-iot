@@ -43,10 +43,10 @@
 **Interfaces:**
 - Produces: `outils/publication.py publier …` (options de Thread, inchangées) ; variables d'environnement lues : `CONTROLE_ANONYMISATION`, `TABLE_ANONYMISATION`, `SPARKLE_BIN`, `IDENTITE_SIGNATURE`, `NOTARISER`, `PROFIL_NOTARISATION`.
 
-- [ ] **Step 1: Test RED** — `test_outil_publication_identique.py` : `publication.py` et `test_publication.py` ont la même empreinte SHA-256 que ceux de `DEPOT_THREAD` (défaut `../maillage-thread`) ; le test est sauté avec un message si `DEPOT_THREAD` est absent (clone isolé), jamais vert en silence. Lancer : `/usr/bin/python3 -I -m unittest outils.tests.test_outil_publication_identique` → échec (fichiers absents).
-- [ ] **Step 2: Recopier** (agent Haiku) les trois fichiers avec `cp -p`, puis `cmp` sur chacun.
-- [ ] **Step 3: Vérifier** — `NOTARISER=1 PROFIL_NOTARISATION=djoko-notarisation IDENTITE_SIGNATURE="Developer ID Application" /usr/bin/python3 -m unittest discover -s outils/tests` : les 105 tests de `test_publication.py` et tous les autres verts (l'environnement de publication ne doit pas fuir dans les tests).
-- [ ] **Step 4: Commit** — « Publication : outil de Maillage Thread recopie a l'octet ».
+- [x] **Step 1: Test RED** — `test_outil_publication_identique.py` : `publication.py` et `test_publication.py` ont la même empreinte SHA-256 que ceux de `DEPOT_THREAD` (défaut `../maillage-thread`) ; le test est sauté avec un message si `DEPOT_THREAD` est absent (clone isolé), jamais vert en silence. Lancer : `/usr/bin/python3 -I -m unittest outils.tests.test_outil_publication_identique` → échec (fichiers absents).
+- [x] **Step 2: Recopier** (agent Haiku) les trois fichiers avec `cp -p`, puis `cmp` sur chacun.
+- [x] **Step 3: Vérifier** — `NOTARISER=1 PROFIL_NOTARISATION=djoko-notarisation IDENTITE_SIGNATURE="Developer ID Application" /usr/bin/python3 -m unittest discover -s outils/tests` : les 105 tests de `test_publication.py` et tous les autres verts (l'environnement de publication ne doit pas fuir dans les tests).
+- [x] **Step 4: Commit** — « Publication : outil de Maillage Thread recopie a l'octet ».
 
 ---
 
