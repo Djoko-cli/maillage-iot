@@ -467,6 +467,7 @@ L'annonce doit pointer vers quelque chose qui existe :
    renvoie vers la 1.0.0.
 3. Les README des anciens dépôts reçoivent un bandeau « This project continues as Maillage IoT ».
 4. **L'archivage des anciens dépôts sur GitHub** est demandé à Djoko à ce moment-là : c'est une action publique.
+   Décision du 18/10 : les deux anciens dépôts restent en l'état, sans archivage.
 
 ## 6. Étapes, tests et rôles
 
