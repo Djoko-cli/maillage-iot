@@ -256,7 +256,7 @@ targets:
         PRODUCT_MODULE_NAME: Passeur
         PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.passeur
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        MARKETING_VERSION: "2.0"
+        MARKETING_VERSION: "2.1"
         CURRENT_PROJECT_VERSION: "1"
         CODE_SIGN_ENTITLEMENTS: Passeur/Passeur.entitlements
         # HomeKit exige un profil : signature automatique ; l'equipe est donnee par outils/passeur.sh
