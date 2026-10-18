@@ -362,6 +362,14 @@ final class AssistantReprise {
         return montrer
     }
 
+    /// Le resume en attente est a l'ecran : il a ete montre, il ne reviendra pas (la fenetre garde le sien jusqu'a « Termine » ou
+    /// la croix). Avant l'affichage la cle reste : si l'app quitte avant d'ouvrir la fenetre, le lancement suivant le montre.
+    /// Apres une relance qui a echoue, la cle reste aussi : l'app ne tourne pas encore sur les donnees reprises.
+    func resumeMontre() {
+        guard case .termine = etape, !relanceEchouee else { return }
+        DepotResume(preferences: preferences).effacer()
+    }
+
     /// « Plus tard » : la proposition se ferme sans rien faire.
     func plusTard() { proposition = false }
 

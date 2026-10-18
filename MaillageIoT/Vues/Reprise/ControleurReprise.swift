@@ -20,6 +20,7 @@ final class ControleurReprise: NSObject, NSWindowDelegate {
         fenetre = f
         f.makeKeyAndOrderFront(nil)
         NSApp.activate()
+        assistant.resumeMontre()
     }
 
     func fermer() { fenetre?.close() }

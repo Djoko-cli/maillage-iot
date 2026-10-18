@@ -918,4 +918,103 @@ struct AssistantRepriseTests {
         #expect(await d.assistant.preparerLancement(recuperation: .success(.rienAFaire)) == false)
         #expect(d.assistant.avis == nil)
     }
+
+    // MARK: Le resume deja vu ne revient pas (banc de la repetition)
+
+    /// Apres un import et la relance : un autre modele, les memes preferences, l'etat du Mac d'alors. `lancer` y a ecrit le resume.
+    @MainActor
+    private func apresLaRelance(_ b: Banc) async throws -> AssistantReprise {
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await b.assistant.lancer()
+        #expect(DepotResume(preferences: b.preferences).lire() != nil, "l'import a garde le resume pour la relance")
+        return AssistantReprise(importeur: b.importeur, dossierDonnees: b.donnees.racine, applications: b.apps,
+                                lecteur: LecteurFactice(), preferences: b.preferences, arreterModules: {}, relancer: {},
+                                choisirDossier: { nil }, attendre: { _ in })
+    }
+
+    @MainActor
+    @Test func leResumeMontreEstEffaceDesQuilEstALEcranEtNeRevientPasAuLancementSuivant() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        #expect(DepotResume(preferences: b.preferences).lire() != nil, "pas encore montre : il reste")
+        suivant.resumeMontre()
+        guard case .termine = suivant.etape else { throw ApplicationImportTests.Echec("\(suivant.etape)") }
+        #expect(DepotResume(preferences: b.preferences).lire() == nil, "montre : il est efface, la fenetre garde le sien")
+        // L'app quitte avant que Djoko ait clique : le lancement suivant n'a plus de resume a montrer.
+        let encore = AssistantReprise(importeur: b.importeur, dossierDonnees: b.donnees.racine, applications: b.apps,
+                                      lecteur: LecteurFactice(), preferences: b.preferences, arreterModules: {}, relancer: {},
+                                      choisirDossier: { nil }, attendre: { _ in })
+        #expect(await encore.preparerLancement(recuperation: .success(.rienAFaire)) == false)
+        #expect(encore.etape == .accueil)
+    }
+
+    @MainActor
+    @Test func sansAffichageLeResumeResteEtLeLancementSuivantLeMontre() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        // L'app quitte avant d'avoir ouvert la fenetre : aucun `resumeMontre`.
+        let encore = AssistantReprise(importeur: b.importeur, dossierDonnees: b.donnees.racine, applications: b.apps,
+                                      lecteur: LecteurFactice(), preferences: b.preferences, arreterModules: {}, relancer: {},
+                                      choisirDossier: { nil }, attendre: { _ in })
+        #expect(await encore.preparerLancement(recuperation: .success(.rienAFaire)))
+        guard case .termine = encore.etape else { throw ApplicationImportTests.Echec("\(encore.etape)") }
+    }
+
+    @MainActor
+    @Test func apresTermineLaCleEstEffaceeEtLAssistantRouvreSurLAccueil() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        suivant.terminer()
+        #expect(DepotResume(preferences: b.preferences).lire() == nil)
+        #expect(suivant.etape == .accueil)
+        suivant.rouvrir()
+        #expect(suivant.etape == .accueil, "le clic sur « Reprendre des donnees… » ouvre l'accueil")
+    }
+
+    @MainActor
+    @Test func fermerLaFenetreParLaCroixEffaceLeResumeEtRouvreSurLAccueil() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        await suivant.fenetreFermee()
+        #expect(DepotResume(preferences: b.preferences).lire() == nil)
+        #expect(suivant.etape == .accueil)
+        suivant.rouvrir()
+        #expect(suivant.etape == .accueil)
+    }
+
+    @MainActor
+    @Test func siLaRelanceAEchoueLeResumeNEstPasEffaceParLAffichage() async throws {
+        let b = try Banc(relanceEchoue: true)
+        defer { b.nettoyer() }
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await b.assistant.lancer()
+        #expect(b.assistant.relanceEchouee)
+        b.assistant.resumeMontre()
+        #expect(DepotResume(preferences: b.preferences).lire() != nil, "l'app ne tourne pas encore sur les donnees reprises : il reste")
+    }
+
+    @MainActor
+    @Test func ouvrirLaFenetreDuResumeEffaceLaCleEtLaFermerRouvreSurLAccueil() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        let controleur = ControleurReprise(assistant: suivant)
+        controleur.montrer()
+        defer { controleur.fermer() }
+        #expect(DepotResume(preferences: b.preferences).lire() == nil, "la fenetre montre le resume : la cle s'efface")
+        controleur.fermer()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(suivant.etape == .accueil)
+        controleur.montrer()
+        #expect(suivant.etape == .accueil, "le second clic ouvre l'accueil")
+    }
 }
