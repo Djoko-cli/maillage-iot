@@ -125,7 +125,7 @@ Selon la fiche de passation d'Amaran (§5 et §6), dans un clone complet à part
 - [x] **Step 1: Préparer** — depuis la copie principale du dépôt, sur `main` à jour et propre (décision du 18/10 après la relecture finale : un worktree ne trouve ni `garde.local.txt` ni `.superpowers/anonymisation` pour la garde `pre-push`, et `publication.py` exige la branche `main`) ; historique complet ; auteur Djoko-cli noreply ; `SPARKLE_BIN` ; `gh auth status` ; `build/publication/1.0.0/` (gestes, exigence, notes) gardé après la publication.
 - [x] **Step 2: Publier** — `bash outils/publier.sh` dans un onglet du Terminal, journal suivi, guetteur en arrière-plan ; aucune sortie montrée sans masque.
 - [x] **Step 3: Vérifier en ligne** — version GitHub `v1.0.0` avec le .dmg ; flux brut `appcast.xml` à jour ; .dmg en ligne identique à celui du Bureau (SHA-256) ; `stapler validate` ; `spctl` sur le .dmg et l'app (sortie `origin=` masquée).
-- [ ] **Step 4: Banc avec Djoko** — installer depuis le .dmg dans `/Applications` ; retirer l'ouverture de session et les copies de travail qui pointent vers DerivedData (même identifiant) ; premier lancement : réglages et données déjà présents gardés ; « Rechercher les mises à jour… » : à jour ; la vraie reprise depuis les exports de Thread et Zigbee si Djoko la veut maintenant (sinon notée « à faire »).
+- [x] **Step 4: Banc avec Djoko** — installer depuis le .dmg dans `/Applications` ; retirer l'ouverture de session et les copies de travail qui pointent vers DerivedData (même identifiant) ; premier lancement : réglages et données déjà présents gardés ; « Rechercher les mises à jour… » : à jour ; la vraie reprise depuis les exports de Thread et Zigbee si Djoko la veut maintenant (sinon notée « à faire »).
 
 ---
 
