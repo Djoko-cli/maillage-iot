@@ -1,6 +1,24 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "NSAppleEventsUsageDescription" : {
+      "comment" : "Autorisation d'Automatisation : l'assistant de reprise demande a Maillage Thread ou Maillage Zigbee de quitter (evenement Apple « quit ») avant de reprendre leurs donnees.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT needs to control Maillage Thread or Maillage Zigbee to quit them before importing their data."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maillage IoT a besoin de contrôler Maillage Thread ou Maillage Zigbee pour les quitter avant de reprendre leurs données."
+          }
+        }
+      }
+    },
     "NSLocalNetworkUsageDescription" : {
       "comment" : "Autorisation reseau local (ecoute Bonjour des routeurs de bordure Thread, des appareils Matter et HomeKit et du pont Hue ; connexion aux sondes Thread et Zigbee par le reseau local).",
       "extractionState" : "manual",

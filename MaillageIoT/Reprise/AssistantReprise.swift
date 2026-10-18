@@ -28,9 +28,10 @@ enum SuiviAncienneApp: Equatable, Sendable {
     case absente
     /// Elle tourne : l'import ne demarre pas (une sonde USB ne peut avoir qu'un seul maitre).
     case tourne
-    /// `terminate()` envoye, l'app n'est pas encore partie.
+    /// L'evenement Apple « quit » est envoye, l'app n'est pas encore partie.
     case demandeEnvoyee
-    /// Le bac a sable a refuse `terminate()`, ou l'app tourne encore apres l'attente : l'utilisateur la quitte lui-meme.
+    /// macOS a refuse l'evenement (Automatisation non accordee...), ou l'app tourne encore apres l'attente : l'utilisateur la
+    /// quitte lui-meme.
     case aQuitterSoiMeme
 }
 
@@ -87,7 +88,7 @@ final class AssistantReprise {
 
     /// Delai avant la relance, pour que l'ecran « Relance… » se voie.
     nonisolated static let delaiAvantRelance: Duration = .seconds(2)
-    /// Combien de fois (et a quel rythme) on regarde si l'ancienne app est partie apres `terminate()`.
+    /// Combien de fois (et a quel rythme) on regarde si l'ancienne app est partie apres l'evenement « quit ».
     nonisolated static let verificationsApresQuitter = 10
     nonisolated static let pasVerification: Duration = .milliseconds(500)
     /// Rythme de `surveillerAncienneApp`.
@@ -220,17 +221,23 @@ final class AssistantReprise {
         }
     }
 
-    /// « Quitter Maillage Thread » : `terminate()`, jamais `forceTerminate()`. Refuse par le bac a sable, ou l'app tourne encore
-    /// apres quelques secondes : on demande a l'utilisateur de la quitter lui-meme, et `verifierAncienneApp` reverifie.
+    /// « Quitter Maillage Thread » : l'evenement Apple « quit » envoye a l'app de l'export (hors du fil principal, avec un delai),
+    /// jamais `forceTerminate()`. Refuse par macOS (Automatisation non accordee : -1743), ou l'app tourne encore apres quelques
+    /// secondes : on demande a l'utilisateur de la quitter lui-meme, et `verifierAncienneApp` reverifie.
     func quitterAncienneApp() async {
-        guard let app = appDeLExport, !occupe else { return }
-        guard applications.demanderDeQuitter(app.identifiantBundle) else {
+        // Une demande est deja en vol (l'invite d'Automatisation attend Djoko) : un second clic n'envoie rien de plus.
+        guard let app = appDeLExport, !occupe, ancienneApp != .demandeEnvoyee else { return }
+        ancienneApp = .demandeEnvoyee
+        let acceptee = await applications.demanderDeQuitter(app.identifiantBundle)
+        // « Annuler » pendant l'invite : la confirmation n'est plus la, rien a mettre a jour.
+        guard appDeLExport == app else { return }
+        guard acceptee else {
             ancienneApp = .aQuitterSoiMeme
             return
         }
-        ancienneApp = .demandeEnvoyee
         for _ in 0..<Self.verificationsApresQuitter {
             await attendre(Self.pasVerification)
+            guard appDeLExport == app else { return }
             if applications.instances(de: app.identifiantBundle) == 0 {
                 ancienneApp = .absente
                 return

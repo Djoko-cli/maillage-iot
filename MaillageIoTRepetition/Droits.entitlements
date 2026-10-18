@@ -12,5 +12,12 @@
 	<true/>
 	<key>com.apple.security.device.serial</key>
 	<true/>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.apple-events</key>
+	<array>
+		<string>fr.djoko.maillage</string>
+		<string>fr.djoko.maillage.zigbee</string>
+	</array>
 </dict>
 </plist>

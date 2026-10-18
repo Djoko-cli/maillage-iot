@@ -315,7 +315,7 @@ struct AssistantRepriseTests {
 
         func instances(de identifiantBundle: String) -> Int { tournent[identifiantBundle] ?? 0 }
 
-        func demanderDeQuitter(_ identifiantBundle: String) -> Bool {
+        func demanderDeQuitter(_ identifiantBundle: String) async -> Bool {
             demandes.append(identifiantBundle)
             if accepte && quitteVraiment { tournent[identifiantBundle] = nil }
             return accepte

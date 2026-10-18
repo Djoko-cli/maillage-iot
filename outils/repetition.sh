@@ -64,6 +64,13 @@ controler_produit() {
     [ -z "$(lire $cle)" ] || echec "cle $cle dans l'Info.plist"
   done
   if codesign -d --entitlements - "$APP" 2>/dev/null | grep -q mach-lookup; then echec "exception mach-lookup (Sparkle) dans les droits"; fi
+  # Quitter l'ancienne app par l'evenement Apple « quit » : l'exception du bac a sable vise exactement les deux anciennes apps.
+  local exception; exception=$(codesign -d --entitlements :- "$APP" 2>/dev/null | python3 -I -c '
+import plistlib, sys
+d = plistlib.loads(sys.stdin.buffer.read())
+print(",".join(sorted(d.get("com.apple.security.temporary-exception.apple-events", []))))')
+  [ "$exception" = "fr.djoko.maillage,fr.djoko.maillage.zigbee" ] || echec "droit apple-events du produit : '$exception'"
+  [ -n "$(lire NSAppleEventsUsageDescription)" ] || echec "NSAppleEventsUsageDescription absent de l'Info.plist"
   python3 -I outils/refuser_repetition.py --verifier-est-repetition "$APP" || echec "le produit ne se reconnait pas comme repetition"
   echo "produit controle : $APP"
 }
