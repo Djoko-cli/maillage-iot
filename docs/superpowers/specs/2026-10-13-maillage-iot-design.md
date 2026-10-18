@@ -479,7 +479,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 1 : cœur neutre et Thread à l'identique
 - [x] Phase 2 : Zigbee branché
 - [x] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
-- [ ] Phase 4 : reprise
+- [x] Phase 4 : reprise
 - [ ] Phase 5 : publication
 
 ### 6.2 Les tests
