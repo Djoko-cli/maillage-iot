@@ -174,11 +174,12 @@ struct JournalDeuxProtocolesTests {
     }
 
     /// La recherche du journal lit le titre du protocole de la ligne : un titre de Zigbee se trouve, et le nom brut d'un type de
-    /// Zigbee n'est plus ce qui est cherche.
+    /// Zigbee n'est plus ce qui est cherche. Le mot cherche est un extrait du titre dans la langue du test : « chemin vers le
+    /// pont » est une cle du catalogue (la legende), et son texte est aussi celui du titre (« path to the bridge » en anglais).
     @Test func rechercheDansLeTitreDuProtocole() {
         let chemin = Self.evenement(.cheminChange, "Lampe", protocole: .zigbee, avant: "Prise", apres: "Pont Hue")
         let lignes = [LigneJournal.evenement(chemin)]
-        #expect(FiltreJournal(recherche: "chemin vers le pont").appliquer(lignes).count == 1)
+        #expect(FiltreJournal(recherche: String(localized: "chemin vers le pont")).appliquer(lignes).count == 1)
         #expect(FiltreJournal(recherche: "cheminChange").appliquer(lignes).isEmpty)
     }
 

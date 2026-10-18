@@ -385,12 +385,13 @@ struct ActivationTests {
         b.s.zigbee.demarrer()
         #expect(!b.s.thread.rienTrouve, "avant le premier releve, rien n'est encore dit")
         #expect(b.s.zigbee.rienTrouve, "Zigbee n'a ni maillage ni appareil du pont")
+        // Les textes attendus sont ceux du catalogue (la cle est le texte francais d'aujourd'hui), dans la langue du test.
         #expect(ActivationProtocole.texteRienTrouve(.zigbee, rienTrouve: b.s.zigbee.rienTrouve)
-                == "Aucun réseau Zigbee à montrer : ni maillage de la sonde, ni appareil du pont Hue.")
+                == String(localized: "Aucun réseau Zigbee à montrer : ni maillage de la sonde, ni appareil du pont Hue."))
         b.s.thread.integrer(Annonces(date: ScenarioPanne.debut))
         #expect(b.s.thread.rienTrouve, "le Mac a releve le reseau local sans y voir de Thread")
         #expect(ActivationProtocole.texteRienTrouve(.thread, rienTrouve: b.s.thread.rienTrouve)
-                == "Aucun réseau Thread visible sur ce réseau local")
+                == String(localized: "Aucun réseau Thread visible sur ce réseau local"))
         #expect(ActivationProtocole.texteRienTrouve(.thread, rienTrouve: false) == nil)
         #expect(b.s.evenements.isEmpty && b.alertes.alertes.isEmpty && !b.s.alerte, "sans alerte ni notification")
 

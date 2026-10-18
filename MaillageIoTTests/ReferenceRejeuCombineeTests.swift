@@ -122,7 +122,8 @@ struct ReferenceRejeuCombineeTests {
             Issue.record("reference absente : ecrite dans \(ecrite.path) ; la copier dans docs/rejeu/, puis relancer")
             return
         }
-        #expect(calcule == garde, "la scene de la demo combinee a change : comparer avec docs/rejeu/maillage-iot-demo.json")
+        #expect(calcule == ReferenceRejeuTests.dansLaLangueDuTest(garde),
+                "la scene de la demo combinee a change : comparer avec docs/rejeu/maillage-iot-demo.json")
     }
 
     /// Le libelle d'un noeud de Zigbee dans la scene combinee, avant le renommage de ses homonymes de Thread.
@@ -136,10 +137,13 @@ struct ReferenceRejeuCombineeTests {
     /// libelles des homonymes de Zigbee changent (suffixe), et les pieces sont partagees (les deux protocoles les nomment de
     /// meme).
     @Test func unionDesDeuxReferences() throws {
-        let thread = try JSONDecoder().decode(ReferenceRejeuTests.Reference.self,
-                                              from: Data(contentsOf: ReferenceRejeuTests.fichier))
-        let zigbee = try JSONDecoder().decode(ReferenceRejeuZigbeeTests.Reference.self,
-                                              from: Data(contentsOf: ReferenceRejeuZigbeeTests.fichier))
+        // Les references sont relues dans la langue du test (leurs deux libelles du catalogue), comme la scene calculee.
+        let thread = try JSONDecoder().decode(
+            ReferenceRejeuTests.Reference.self,
+            from: ReferenceRejeuTests.dansLaLangueDuTest(Data(contentsOf: ReferenceRejeuTests.fichier)))
+        let zigbee = try JSONDecoder().decode(
+            ReferenceRejeuZigbeeTests.Reference.self,
+            from: ReferenceRejeuTests.dansLaLangueDuTest(Data(contentsOf: ReferenceRejeuZigbeeTests.fichier)))
         let c = try Self.reference()
 
         // Les lignes de comparaison : des textes, pour des ensembles lisibles.

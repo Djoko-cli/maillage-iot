@@ -275,8 +275,8 @@ struct SilhouettesTests {
     @Test func libellesDesRouteurs() {
         #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: true) == String(localized: "routeur Thread"))
         #expect(LegendePieces.texte(.routeurZigbee, deuxProtocoles: true) == String(localized: "routeur Zigbee"))
-        #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: false) == "routeur")
-        #expect(LegendePieces.texte(.routeurZigbee, deuxProtocoles: false) == "routeur")
+        #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: false) == String(localized: "routeur"))
+        #expect(LegendePieces.texte(.routeurZigbee, deuxProtocoles: false) == String(localized: "routeur"))
         #expect(LegendePieces.texte(.routeurSimple, deuxProtocoles: true) != LegendePieces.texte(.routeurZigbee, deuxProtocoles: true))
         for e in LegendePieces.Entree.allCases where e != .routeurSimple && e != .routeurZigbee {
             #expect(LegendePieces.texte(e, deuxProtocoles: true) == e.texte, "\(e) ne change pas")
