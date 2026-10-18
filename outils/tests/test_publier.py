@@ -46,7 +46,8 @@ schemes:
 ENREGISTREUR = r'''import json, os, sys
 with open(os.environ["ENREGISTREUR"], "w") as f:
     json.dump({"argv": sys.argv[1:], "env": {k: os.environ.get(k) for k in (
-        "DD", "CONTROLE_ANONYMISATION", "TABLE_ANONYMISATION", "NOTARISER", "PROFIL_NOTARISATION", "SPARKLE_BIN")}}, f)
+        "DD", "CONTROLE_ANONYMISATION", "TABLE_ANONYMISATION", "NOTARISER", "PROFIL_NOTARISATION", "SPARKLE_BIN",
+        "CONTROLE_THREAD", "TABLE_THREAD", "CONTROLE_ZIGBEE", "TABLE_ZIGBEE", "PUBLIER_PYTHON_ESSAI", "PYTHON")}}, f)
 '''
 
 FAUX_OUTIL = '#!/bin/sh\necho "$0 $*" >> "$ALERTE"\nexit 99\n'
@@ -60,6 +61,18 @@ print("contenu-secret-du-fichier-" + %(nom)r)
 print("ligne-fichier-secrete-en-erreur", file=sys.stderr)
 print("%(comptes)s")
 sys.exit(%(code)d)
+'''
+
+# Un faux controle qui resume sur la sortie d'erreur (comme pre-push le lit : 2>&1, derniere ligne).
+FAUX_CONTROLE_STDERR = r'''import sys
+print("contenu-secret-du-fichier-stdout")
+print("%(comptes)s", file=sys.stderr)
+sys.exit(%(code)d)
+'''
+
+# Un faux controle qui plante : ligne de contenu, puis trace Python dont le message porte du contenu de fichier.
+FAUX_CONTROLE_PLANTE = r'''print("contenu-secret-du-fichier-avant-la-trace")
+raise KeyError("valeur-secrete-12345")
 '''
 
 
@@ -105,7 +118,12 @@ class Banc:
                 shutil.copy2(chemin, os.path.join(source, "outils", nom))
         ecrire(os.path.join(source, "outils", "publication.py"), ENREGISTREUR)
         ecrire(os.path.join(source, "project.yml"), project)
-        if icone:
+        if icone == "dossier-vide":
+            os.makedirs(os.path.join(source, "MaillageIoT", "Ressources", "AppIcon.icon"))
+            ecrire(os.path.join(source, "MaillageIoT", "Ressources", "AppIcon.icon", "Assets", "x.png"), "x\n")
+        elif icone == "icon-json-vide":
+            ecrire(os.path.join(source, "MaillageIoT", "Ressources", "AppIcon.icon", "icon.json"), "")
+        elif icone:
             ecrire(os.path.join(source, "MaillageIoT", "Ressources", "AppIcon.icon", "icon.json"), "{}\n")
         git(source, "add", "-A")
         git(source, "commit", "-q", "-m", "un")
@@ -210,6 +228,16 @@ class TestPublier(unittest.TestCase):
         self.assertIn("AppIcon.icon", r.stderr)
         self.assertFalse(b.appele())
 
+    def test_icone_dossier_sans_icon_json(self):
+        """Le controle porte sur le contenu : un dossier AppIcon.icon vide (ou sans icon.json, ou icon.json vide) refuse."""
+        for icone in ("dossier-vide", "icon-json-vide"):
+            with self.subTest(icone=icone):
+                b = Banc(self, icone=icone)
+                r = b.lancer("1.0.0")
+                self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                self.assertIn("AppIcon.icon", r.stderr)
+                self.assertFalse(b.appele())
+
     def test_arguments(self):
         b = Banc(self)
         r = b.lancer("1.0.0", "--sans-bureau", env={"SPARKLE_BIN": "/essai/sparkle"})
@@ -250,18 +278,113 @@ class TestPublier(unittest.TestCase):
         self.assertEqual(env["DD"], "/essai/dd")
 
     def test_interpreteur_substituable(self):
-        """PYTHON remplace /usr/bin/python3 pour la garde et pour publication.py (les tests y mettent un enregistreur)."""
+        """PUBLIER_PYTHON_ESSAI remplace /usr/bin/python3 pour la garde et pour publication.py (les tests y mettent un
+        enregistreur) ; la variable n'arrive pas dans l'environnement de publication.py."""
         b = Banc(self)
         enregistreur = os.path.join(b.dossier, "faux-python")
-        ecrire(enregistreur, '#!/bin/sh\necho "$@" >> "$DOSSIER_APPELS"\nexit 0\n', 0o755)
+        ecrire(enregistreur, '#!/bin/sh\necho "$@" >> "$DOSSIER_APPELS"\nenv >> "$DOSSIER_ENV"\nexit 0\n', 0o755)
         appels = os.path.join(b.dossier, "appels.txt")
-        r = b.lancer("1.0.0", env={"PYTHON": enregistreur, "DOSSIER_APPELS": appels})
+        environnement = os.path.join(b.dossier, "env.txt")
+        r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels,
+                                   "DOSSIER_ENV": environnement})
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         with open(appels) as f:
             lignes = f.read().splitlines()
         self.assertEqual(len(lignes), 2, lignes)
         self.assertIn("refuser_repetition.py fr.exemple.essai", lignes[0])
         self.assertIn("outils/publication.py publier 1.0.0", lignes[1])
+        with open(environnement) as f:
+            appels_env = [x for x in f.read().split("_=/usr/bin/env\n") if x.strip()]
+        self.assertEqual(len(appels_env), 2)
+        self.assertNotIn("PUBLIER_PYTHON_ESSAI", appels_env[1])  # l'appel de publication.py
+
+    def test_python_ambiant_sans_effet(self):
+        """Un PYTHON de l'environnement (venv, pyenv...) ne change jamais l'interpreteur de la garde ni de publication.py."""
+        b = Banc(self)
+        r = b.lancer("1.0.0", env={"PYTHON": "/usr/bin/true"})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(b.appele(), "publication.py doit tourner avec le vrai interpreteur, pas avec PYTHON")
+        # et la garde de la repetition tourne pour de vrai : un identifiant de repetition est refuse malgre PYTHON=true
+        projet = PROJECT.replace('"fr.exemple.essai"', "fr.exemple.essai.repetition")
+        b = Banc(self, project=projet)
+        r = b.lancer("1.0.0", env={"PYTHON": "/usr/bin/true"})
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertFalse(b.appele())
+
+    def test_surcharges_de_test_retirees(self):
+        """Des surcharges de test dans l'environnement ambiant (controles, tables, interpreteur) n'arrivent jamais a
+        publication.py : une valeur ambiante ne remplace pas un vrai controle."""
+        b = Banc(self)
+        ambiant = {"CONTROLE_THREAD": "/bin/true", "TABLE_THREAD": "/dev/null", "CONTROLE_ZIGBEE": "/bin/true",
+                   "TABLE_ZIGBEE": "/dev/null"}
+        r = b.lancer("1.0.0", env=ambiant)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        env = b.appel_json()["env"]
+        for nom in ambiant:
+            self.assertIsNone(env[nom], nom)
+        self.assertEqual(env["CONTROLE_ANONYMISATION"], "outils/anonymisation_double.py")
+
+    def test_repetition_valeur_vide_refusee(self):
+        """Une valeur vide de --repetition (deux formes, ou valeur absente) ne saute jamais le cliquet : code 1 avec une
+        cause, avant tout appel, meme avec le Developer ID et meme avec une autre identite."""
+        b = Banc(self)
+        for args in (("1.0.0", "--repetition", ""), ("1.0.0", "--repetition="), ("1.0.0", "--repetition"),
+                     ("1.0.0", "--repetition", "", "--url-base", "http://localhost:1")):
+            for env in ({}, {"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"}):
+                with self.subTest(args=args, env=env):
+                    r = b.lancer(*args, env=env)
+                    self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                    self.assertIn("--repetition", r.stderr)
+                    self.assertFalse(b.appele())
+        self.assertFalse(b.outil_lance())
+
+    def test_repetition_valeur_non_vide_deux_formes(self):
+        """Seule une valeur non vide saute le cliquet, sous les deux formes."""
+        b = Banc(self)
+        autre = {"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"}
+        for args in (("1.0.0", "--repetition", "/tmp/x", "--url-base", "http://localhost:1"),
+                     ("1.0.0", "--repetition=/tmp/x", "--url-base", "http://localhost:1")):
+            with self.subTest(args=args):
+                if os.path.exists(b.appel):
+                    os.remove(b.appel)
+                r = b.lancer(*args, env=autre)
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertTrue(b.appele())
+                self.assertEqual(b.appel_json()["env"]["NOTARISER"], "0")
+
+    def test_abreviation_de_repetition_ne_saute_pas_le_cliquet(self):
+        """argparse accepte --repet : ici, une abreviation n'est pas reconnue, le cliquet s'applique (cote sur)."""
+        b = Banc(self)
+        r = b.lancer("1.0.0", "--repet", "/tmp/x", env={"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"})
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("Developer ID", r.stderr)
+        self.assertFalse(b.appele())
+
+    def test_aide_hors_premiere_position(self):
+        """-h ailleurs qu'en premier passe par toutes les gardes puis par publication.py (jamais d'exemption)."""
+        b = Banc(self)
+        r = b.lancer("1.0.0", "-h")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("-h", b.appel_json()["argv"])
+        os.remove(b.appel)
+        r = b.lancer("1.0.0", "-h", env={"NOTARISER": "0"})
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertFalse(b.appele())
+
+    def test_identifiants_sans_decoupage_ni_globbing(self):
+        """Un identifiant avec un joker ou une espace est transmis tel quel a la garde (un seul argument), sans
+        expansion en noms de fichiers."""
+        for valeur in ("*", "fr.exemple.* x", "fr.exemple.a b"):
+            with self.subTest(valeur=valeur):
+                b = Banc(self, project=PROJECT.replace('"fr.exemple.essai"', "'%s'" % valeur))
+                enregistreur = os.path.join(b.dossier, "faux-python")
+                ecrire(enregistreur, '#!/bin/sh\nprintf "[%s]" "$@" >> "$DOSSIER_APPELS"\necho >> "$DOSSIER_APPELS"\n'
+                       'exit 1\n', 0o755)
+                appels = os.path.join(b.dossier, "appels.txt")
+                r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels})
+                self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                with open(appels) as f:
+                    self.assertEqual(f.read(), "[-I][outils/refuser_repetition.py][%s]\n" % valeur)
 
     def test_aide(self):
         """--aide montre l'aide de publication.py sans rien verifier ni construire (meme sans icone)."""
@@ -405,6 +528,47 @@ class TestAnonymisationDouble(unittest.TestCase):
                 r = self.lancer(*self.fichiers(), script=os.path.join(racine, "outils", "anonymisation_double.py"))
                 self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
                 self.assertEqual([a["nom"] for a in self.appels()], ["thread", "zigbee"])
+
+    def test_resume_sur_la_sortie_d_erreur(self):
+        """Comme pre-push (2>&1, derniere ligne) : un controle qui resume sur stderr donne ses comptes."""
+        prive = self.privee()
+        ecrire(os.path.join(prive, "thread", "outils", "controles.py"),
+               FAUX_CONTROLE_STDERR % {"comptes": "7 fichiers, 0 defaut", "code": 0})
+        r = self.lancer(*self.fichiers(), env={"ANONYMISATION_PRIVE": prive})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertRegex(r.stdout, r"controle thread : code 0, comptes 7 0")
+        self.assertNotIn("aucun", r.stdout.split("controle zigbee")[0])
+        self.assertNotIn("secret", r.stdout + r.stderr)
+
+    def test_controle_qui_plante(self):
+        """Un controle qui plante (trace sur stderr, code non nul) : code 1, la cause dite, jamais de contenu de fichier
+        ni de message de la trace ; l'autre controle tourne quand meme."""
+        prive = self.privee()
+        ecrire(os.path.join(prive, "thread", "outils", "controles.py"), FAUX_CONTROLE_PLANTE)
+        r = self.lancer(*self.fichiers(), env={"ANONYMISATION_PRIVE": prive})
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertRegex(r.stdout, r"controle thread : code 1, plante \(KeyError\)")
+        self.assertNotIn("secret", r.stdout + r.stderr)
+        self.assertNotIn("12345", r.stdout + r.stderr)
+        self.assertEqual([a["nom"] for a in self.appels()], ["zigbee"])
+
+    def test_controle_impossible_a_lancer(self):
+        """Un OSError au lancement d'un controle (liste de fichiers trop longue...) : echec dit en une ligne, pas de trace."""
+        import importlib.util
+        from unittest import mock
+        spec = importlib.util.spec_from_file_location("anonymisation_double_essai", self.script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        prive = self.privee()
+        script = os.path.join(prive, "thread", "outils", "controles.py")
+        table = os.path.join(prive, "thread", "table.json")
+        with mock.patch.object(module.subprocess, "run", side_effect=OSError(7, "Argument list too long")):
+            with mock.patch("builtins.print") as imprimer:
+                self.assertFalse(module.lancer("thread", script, table, [self.fichier]))
+        texte = " ".join(str(a) for appel in imprimer.call_args_list for a in appel.args)
+        self.assertIn("thread", texte)
+        self.assertIn("OSError", texte)
+        self.assertNotIn(self.fichier, texte)
 
     def test_usage_incorrect(self):
         prive = self.privee()

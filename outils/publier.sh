@@ -17,14 +17,16 @@
 # djoko-notarisation (le profil que notarytool store-credentials a range dans le trousseau) par defaut.
 # Avant toute construction, trois gardes : jamais l'identite de repetition (outils/refuser_repetition.py, sur l'identifiant
 # de la cible MaillageIoT lu dans project.yml), l'icone presente, un clone complet.
-# PYTHON : l'interpreteur de la garde et de publication.py (/usr/bin/python3 par defaut ; les tests y mettent un
-# enregistreur).
-# CONTROLE_ANONYMISATION est toujours impose ici (une valeur de l'appelant ne remplace jamais la double garde) ; ses
-# dossiers prives se reglent dans outils/anonymisation_double.py.
+# PUBLIER_PYTHON_ESSAI : reserve aux tests de ce script (l'interpreteur de la garde et de publication.py, un
+# enregistreur) ; /usr/bin/python3 sinon. Un PYTHON de l'environnement n'a aucun effet.
+# CONTROLE_ANONYMISATION est toujours impose ici (une valeur de l'appelant ne remplace jamais la double garde) ; les
+# surcharges reservees aux tests (CONTROLE_THREAD, TABLE_THREAD, CONTROLE_ZIGBEE, TABLE_ZIGBEE, PUBLIER_PYTHON_ESSAI) sont
+# retirees de l'environnement avant l'exec ; les dossiers prives se reglent par ANONYMISATION_PRIVE (voir
+# outils/anonymisation_double.py).
 # Produits : build/publication/X.Y.Z/ ; compilation dans DD (par defaut DerivedData/maillage-iot-publication).
 set -eu
 cd "$(dirname "$0")/.."
-PYTHON=${PYTHON:-/usr/bin/python3}
+PYTHON=${PUBLIER_PYTHON_ESSAI:-/usr/bin/python3}
 case ${1:-} in
   --aide|-h|--help) exec "$PYTHON" outils/publication.py publier -h;;
 esac
@@ -36,10 +38,28 @@ PROFIL_NOTARISATION=${PROFIL_NOTARISATION:-djoko-notarisation}
 export NOTARISER PROFIL_NOTARISATION
 # Le cliquet du Developer ID : une version publiee n'est jamais signee autrement (une signature autre ramenerait
 # l'alerte « l'app differe » de macOS et le blocage de Gatekeeper). La repetition seule peut signer autrement.
+# Seule une valeur NON VIDE compte (publication.py traite une valeur vide en publication reelle) : une valeur vide,
+# ou absente, est refusee. Les deux formes : --repetition DOSSIER et --repetition=DOSSIER.
 repetition=0
+vide=0
+attente=0
 for x in "$@"; do
-  case $x in --repetition|--repetition=*) repetition=1;; esac
+  if [ $attente = 1 ]; then
+    attente=0
+    if [ -n "$x" ]; then repetition=1; else vide=1; fi
+    continue
+  fi
+  case $x in
+    --repetition) attente=1;;
+    --repetition=?*) repetition=1;;
+    --repetition=) vide=1;;
+  esac
 done
+if [ $attente = 1 ]; then vide=1; fi
+if [ $vide = 1 ]; then
+  echo "publier.sh : --repetition demande un dossier non vide (une valeur vide ne saute pas le cliquet)" >&2
+  exit 1
+fi
 if [ $repetition = 0 ] && { [ "$IDENTITE_SIGNATURE" != "Developer ID Application" ] || [ "$NOTARISER" != 1 ]; }; then
   echo "publier.sh : une version publiee est signee par le Developer ID et notarisee (IDENTITE_SIGNATURE, NOTARISER)" >&2
   exit 1
@@ -51,9 +71,9 @@ if [ "$(git rev-parse --is-shallow-repository)" != false ]; then
   echo "publier.sh : clone superficiel (ou hors git) ; publier depuis un clone complet" >&2
   exit 1
 fi
-# Pas d'app sans icone.
-if [ ! -e MaillageIoT/Ressources/AppIcon.icon ]; then
-  echo "publier.sh : MaillageIoT/Ressources/AppIcon.icon absent ; pas de version sans icone" >&2
+# Pas d'app sans icone : le contenu compte (icon.json non vide), pas l'existence du dossier.
+if [ ! -s MaillageIoT/Ressources/AppIcon.icon/icon.json ]; then
+  echo "publier.sh : MaillageIoT/Ressources/AppIcon.icon/icon.json absent ou vide ; pas de version sans icone" >&2
   exit 1
 fi
 # L'identifiant de bundle de la cible MaillageIoT, lu dans le seul bloc « targets: / MaillageIoT: » de project.yml
@@ -75,14 +95,23 @@ if [ -z "$identifiants" ]; then
   exit 1
 fi
 # La repetition n'est jamais publiee : la garde passe sur chaque identifiant de la cible, avant tout le reste.
+# Un identifiant par ligne, sans decoupage sur les espaces ni expansion de jokers.
+set -f
+IFS='
+'
 for identifiant in $identifiants; do
   "$PYTHON" -I outils/refuser_repetition.py "$identifiant" || exit 1
 done
+set +f
+unset IFS
 # Les deux controles prives (Thread, Zigbee) par une seule enveloppe ; la table n'y sert pas (elle existe pour que
 # publication.py trouve le controle). Une valeur de l'appelant ne remplace pas la double garde.
 export CONTROLE_ANONYMISATION=outils/anonymisation_double.py
 export TABLE_ANONYMISATION=outils/anonymisation_double.py
 export DD
+# Les surcharges reservees aux tests ne passent jamais a un vrai lancement : une valeur ambiante ne remplace pas un
+# vrai controle.
+unset CONTROLE_THREAD TABLE_THREAD CONTROLE_ZIGBEE TABLE_ZIGBEE PUBLIER_PYTHON_ESSAI
 exec "$PYTHON" outils/publication.py publier "$@" --identite "$IDENTITE_SIGNATURE" \
   --auteur Djoko-cli --etiquette v --flux appcast.xml --licence outils/Sparkle-LICENSE.txt \
   --nom-app "Maillage IoT" --fichier Maillage-IoT --depot-github Djoko-cli/maillage-iot \

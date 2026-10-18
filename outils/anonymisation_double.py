@@ -15,8 +15,9 @@ PRIVE : la variable ANONYMISATION_PRIVE, sinon `.superpowers/anonymisation` du d
 Surcharges pour les tests seulement : CONTROLE_THREAD, TABLE_THREAD, CONTROLE_ZIGBEE, TABLE_ZIGBEE (le chemin du script
 ou de la table de chaque controle). Elles ne servent qu'aux tests de ce script, avec de faux controles.
 
-Sortie : seulement les comptes de chaque controle (les entiers de la derniere ligne qu'il imprime) et son code, jamais
-une ligne de fichier controle ni la sortie d'erreur d'un controle.
+Sortie : seulement les comptes de chaque controle (les entiers de la derniere ligne qu'il imprime, sortie d'erreur
+comprise : comme outils/pre-push, `2>&1`, derniere ligne) et son code, jamais une ligne de fichier controle. Un controle
+qui plante (trace Python) est dit « plante » avec le seul nom de l'exception, sans comptes ni message.
 """
 import os
 import re
@@ -59,14 +60,35 @@ def comptes(sortie):
     return re.findall(r"\d+", lignes[-1]) if lignes else []
 
 
+def plantage(sortie):
+    """Le nom de l'exception si la sortie se termine par une trace Python ('?' si illisible), sinon None. Jamais le
+    message de l'exception (il peut porter du contenu de fichier)."""
+    lignes = [l for l in sortie.splitlines() if l.strip()]
+    if not any(l.startswith("Traceback (most recent call last)") for l in lignes):
+        return None
+    m = re.match(r"^([A-Za-z_][\w.]*)(?::|$)", lignes[-1])
+    return m.group(1) if m else "?"
+
+
 def lancer(nom, script, table, fichiers):
-    """Rend True si le controle `nom` reussit ; imprime ses comptes."""
+    """Rend True si le controle `nom` reussit ; imprime ses comptes (ou la cause d'un plantage)."""
     if not os.path.isfile(script) or not os.path.isfile(table):
         print("controle %s : absent (script ou table introuvable) : echec" % nom)
         return False
-    r = subprocess.run([sys.executable, script, "fichiers", "--table", table] + fichiers,
-                       stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, errors="replace")
-    print("controle %s : code %d, comptes %s" % (nom, r.returncode, " ".join(comptes(r.stdout)) or "aucun"))
+    # stderr rejoint stdout (comme `2>&1 | tail -1` de pre-push) ; sans tampon pour que la derniere ligne soit la
+    # derniere ecrite.
+    env = dict(os.environ, PYTHONUNBUFFERED="1")
+    try:
+        r = subprocess.run([sys.executable, script, "fichiers", "--table", table] + fichiers, env=env,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace")
+    except OSError as e:
+        print("controle %s : impossible a lancer (%s) : echec" % (nom, type(e).__name__))
+        return False
+    cause = plantage(r.stdout) if r.returncode != 0 else None
+    if cause:
+        print("controle %s : code %d, plante (%s) : echec" % (nom, r.returncode, cause))
+    else:
+        print("controle %s : code %d, comptes %s" % (nom, r.returncode, " ".join(comptes(r.stdout)) or "aucun"))
     return r.returncode == 0
 
 
