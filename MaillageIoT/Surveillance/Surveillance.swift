@@ -231,7 +231,8 @@ final class Surveillance {
         let s = surnom?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         surnomsCommuns[id] = s.isEmpty ? nil : s
         modele(pour: id.protocole)?.appliquerSurnom(s.isEmpty ? nil : s, cle: id.cle)
-        guard let fichierSurnoms else { return }
+        // Arretee (reprise de donnees) : le fichier est celui de l'import, jamais recrit depuis la memoire d'avant.
+        guard !arretee, let fichierSurnoms else { return }
         do {
             try Surnoms.ecrire(surnomsCommuns, dans: fichierSurnoms)
         } catch {

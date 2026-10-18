@@ -27,6 +27,8 @@ final class PiecesChoisies {
 
     private(set) var choix: PiecesRouteurs
     @ObservationIgnored private let fichier: URL?
+    /// La coque dont l'arret (reprise de donnees) coupe les ecritures.
+    @ObservationIgnored weak var coque: Surveillance?
 
     /// `fichier` : `pieces-noeuds.json` (`fichier(demo:sousTests:)`) ; nil : ni lu ni ecrit. Tant qu'il n'existe pas, le
     /// `pieces-routeurs.json` d'avant (meme dossier, version 1) est relu, ses cles etant celles de Thread.
@@ -59,7 +61,8 @@ final class PiecesChoisies {
         case .routeur(let id): choix.choisir(piece, routeur: id, domicile: domicile)
         case .appareil(let id): choix.choisir(piece, appareil: id, domicile: domicile)
         }
-        guard let fichier else { return }
+        // Arrete pour une reprise de donnees : le fichier est celui de l'import, jamais recrit depuis la memoire d'avant.
+        guard coque?.arretee != true, let fichier else { return }
         do {
             try choix.ecrire(dans: fichier)
         } catch {

@@ -152,6 +152,8 @@ final class MoteurPieces {
     // MARK: Etat non observe
 
     @ObservationIgnored let fichierPlaces: URL?
+    /// La coque dont l'arret (reprise de donnees) coupe les ecritures.
+    @ObservationIgnored weak var coque: Surveillance?
     /// Scene affichee, posee sur sa disposition.
     @ObservationIgnored var entree: EntreeScene? {
         didSet { versionScene &+= 1 }

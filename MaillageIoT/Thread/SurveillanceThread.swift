@@ -248,8 +248,8 @@ final class SurveillanceThread: ModeleProtocole {
     /// Integre un releve : evenements, journal, notifications. Un releve vide ne
     /// change pas l'instantane (voir `Suivi`) : il est seulement note (`rienVuDepuis`).
     func integrer(_ a: Annonces) {
-        // Eteint : un releve en vol a l'arret n'est pas integre.
-        guard actif else { return }
+        // Eteint, ou arrete pour une reprise de donnees : un releve en vol a l'arret n'est pas integre.
+        guard actif, !coqueArretee else { return }
         dernierReleve = a
         routesLisibles = mode == .demo ? true : recenseur?.routesLisibles
         if !a.estVide {
@@ -383,8 +383,9 @@ final class SurveillanceThread: ModeleProtocole {
     /// dans le journal du Mac ; le releve reste en memoire. Le maillage est aussi garde sur disque, pour le prochain
     /// lancement.
     func recevoir(_ m: Maillage, a date: Date) {
-        // Eteint : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde, ni suivi.
-        guard actif else { return }
+        // Eteint, ou arrete pour une reprise de donnees : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde,
+        // ni suivi.
+        guard actif, !coqueArretee else { return }
         maillage = m
         maillageRecu = date
         maillageRelu = false
@@ -569,8 +570,11 @@ final class SurveillanceThread: ModeleProtocole {
         ecrireAssociations()
     }
 
+    /// La coque est arretee (reprise de donnees) : aucun fichier n'est recrit depuis la memoire, ni aucun releve integre.
+    private var coqueArretee: Bool { coque?.arretee ?? false }
+
     private func ecrireAssociations() {
-        guard let fichierAssociations else { return }
+        guard !coqueArretee, let fichierAssociations else { return }
         do {
             try Associations.ecrire(noms.associations, dans: fichierAssociations)
         } catch {
