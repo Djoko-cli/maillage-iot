@@ -7,6 +7,21 @@ Mac menu bar. It merges two earlier apps,
 [Maillage Thread](https://github.com/Djoko-cli/maillage-thread) and
 [Maillage Zigbee](https://github.com/Djoko-cli/maillage-zigbee), which it replaces.
 
+<p align="center"><img src="docs/images/vue-3d.png" alt="The room view in 3D: Thread and Zigbee together, with the house, its floors, rooms, routers and radio links" width="100%"></p>
+
+<p align="center">
+  <img src="docs/images/vue-2d-3d.gif" alt="From 2D to 3D" width="49%">
+  <img src="docs/images/zoom.gif" alt="Zooming in on a floor and a room, then back" width="49%">
+</p>
+
+<p align="center">
+  <img src="docs/images/vue-2d.png" alt="The room view in 2D" width="32%">
+  <img src="docs/images/etage-isole.png" alt="An isolated floor, with a Zigbee router's card" width="32%">
+  <img src="docs/images/piece-isolee.png" alt="An isolated room, with a Thread device's card" width="32%">
+</p>
+
+The images come from the demo mode (`-demo`): every name and identifier in them is made up.
+
 ## What it does
 
 - Thread and Zigbee nodes on the same room view: round for Thread, hexagonal for Zigbee, link colors for the
