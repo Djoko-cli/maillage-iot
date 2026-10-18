@@ -84,6 +84,26 @@ struct ReferenceRejeuTests {
         return try e.encode(r) + Data("\n".utf8)
     }
 
+    /// Les references sont en francais (langue de developpement : les cles des catalogues sont les textes francais), relues
+    /// telles quelles et jamais regenerees. Deux libelles de leur scene viennent du catalogue : la sonde de Zigbee et un
+    /// routeur de Thread que seule la sonde connait. Dans une autre langue de test, la scene calculee les porte dans cette
+    /// langue : la reference est alors relue avec ces deux libelles ramenes, par le catalogue, a la langue du test (rien
+    /// d'autre ne change, ni l'ordre ni la mise en forme). En francais, ce sont les octets du fichier, sans y toucher.
+    static func dansLaLangueDuTest(_ reference: Data) -> Data {
+        // Chaque libelle de la reference (francais), et le meme dans la langue du test. Ni guillemet ni barre oblique
+        // inverse dans ces textes : rien a echapper en JSON.
+        let libelles = [(francais: "Sonde", traduit: String(localized: "Sonde")),
+                        (francais: "Non identifié · 041F", traduit: String(localized: "Non identifié · \("041F")"))]
+        let traduits = libelles.filter { $0.francais != $0.traduit }
+        guard !traduits.isEmpty else { return reference }
+        var texte = String(decoding: reference, as: UTF8.self)
+        for l in traduits {
+            texte = texte.replacingOccurrences(of: "\"libelle\" : \"\(l.francais)\"",
+                                               with: "\"libelle\" : \"\(l.traduit)\"")
+        }
+        return Data(texte.utf8)
+    }
+
     /// Deux constructions de suite donnent le meme JSON : la reference ne depend ni de l'heure ni d'un ordre de hasard.
     @Test func stable() throws {
         #expect(try Self.json(Self.reference()) == Self.json(Self.reference()))
@@ -99,6 +119,7 @@ struct ReferenceRejeuTests {
             Issue.record("reference absente : ecrite dans \(ecrite.path) ; la copier dans docs/rejeu/, puis relancer")
             return
         }
-        #expect(calcule == garde, "la scene de la demo a change : comparer avec docs/rejeu/thread-demo.json")
+        #expect(calcule == Self.dansLaLangueDuTest(garde),
+                "la scene de la demo a change : comparer avec docs/rejeu/thread-demo.json")
     }
 }

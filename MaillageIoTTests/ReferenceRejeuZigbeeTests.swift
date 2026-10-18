@@ -111,6 +111,7 @@ struct ReferenceRejeuZigbeeTests {
             Issue.record("reference absente : ecrite dans \(ecrite.path) ; la copier dans docs/rejeu/, puis relancer")
             return
         }
-        #expect(calcule == garde, "la scene de la demo a change : comparer avec docs/rejeu/zigbee-demo.json")
+        #expect(calcule == ReferenceRejeuTests.dansLaLangueDuTest(garde),
+                "la scene de la demo a change : comparer avec docs/rejeu/zigbee-demo.json")
     }
 }
