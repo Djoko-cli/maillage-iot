@@ -79,10 +79,10 @@
 **Files:**
 - Modify: `MaillageIoTTests/FenetrePiecesZigbeeTests.swift` (test `recadrageDeLaLegendeApresUnClic`, ~l.552) et, s'il porte la même mesure, son jumeau Thread.
 
-- [ ] **Step 1: Reproduire** — lancer la suite cinq fois pendant que `bash outils/tester-coeur.sh` tourne en parallèle ; noter les échecs (il a échoué une fois le 18/10 sous `tester.sh` : `abs(repli - Apparition.dureeLegende) < 0.07`).
-- [ ] **Step 2: Corriger le test, pas le code** : mesurer la durée de l'animation déclarée (valeur et courbe passées à l'animation), ou une tolérance fondée sur l'horloge de l'animation, au lieu d'un chronométrage réel ; l'assertion doit toujours échouer si `dureeLegende` change.
-- [ ] **Step 3: Vérifier** — cinq passes sous charge vertes ; une mutation de `dureeLegende` fait échouer le test ; porte de la tâche.
-- [ ] **Step 4: Commit** — « Tests : duree de la legende verifiee sans chronometre, insensible a la charge ».
+- [x] **Step 1: Reproduire** — lancer la suite cinq fois pendant que `bash outils/tester-coeur.sh` tourne en parallèle ; noter les échecs (il a échoué une fois le 18/10 sous `tester.sh` : `abs(repli - Apparition.dureeLegende) < 0.07`).
+- [x] **Step 2: Corriger le test, pas le code** : mesurer la durée de l'animation déclarée (valeur et courbe passées à l'animation), ou une tolérance fondée sur l'horloge de l'animation, au lieu d'un chronométrage réel ; l'assertion doit toujours échouer si `dureeLegende` change.
+- [x] **Step 3: Vérifier** — cinq passes sous charge vertes ; une mutation de `dureeLegende` fait échouer le test ; porte de la tâche.
+- [x] **Step 4: Commit** — « Tests : duree de la legende verifiee sans chronometre, insensible a la charge ».
 
 ---
 

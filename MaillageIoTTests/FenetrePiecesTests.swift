@@ -79,28 +79,23 @@ struct FenetrePiecesTests {
         }
     }
 
-    /// Ce que la mesure peut lire de la duree de la legende (0,45 s) et de celle de la fiche (0,3 s). L'horloge est la
-    /// vraie et l'echantillonnage de 3 ms : sous charge, un retard ne fait que rallonger la duree lue, jamais la
-    /// raccourcir. La borne basse reste serree (le recadrage ne doit pas etre plus court que sa duree), la haute laisse
-    /// 0,25 s de retard a la legende ; celle de la fiche reste sous 0,45 s, pour qu'on ne la prenne pas pour la legende.
-    static let dureeLegendeMesuree = (Apparition.dureeLegende - 0.07) ... (Apparition.dureeLegende + 0.25)
-    static let dureeFicheMesuree = (Apparition.duree - 0.07) ... 0.42
-
-    /// Duree du recadrage de la vue (les marges en route, `margesEnRoute`) : du premier echantillon ou elles le sont au
-    /// premier ou elles ne le sont plus ; nil si elles ne partent pas, ou ne s'arretent pas, en 2 s.
-    static func dureeDuRecadrage(_ moteur: MoteurPieces) async throws -> Double? {
+    /// Le recadrage de la vue que le clic (ou la selection) vient de demander : le glissement des marges
+    /// (`MoteurPieces.glissement`), lu des qu'il parait, avec la duree et le mode (fondu ou glissement) que la vue lui a
+    /// donnes. C'est la duree declaree, pas une duree chronometree : la charge de la machine ne la change pas. Rend
+    /// nil si le recadrage ne part pas en 2 s (le clic n'anime plus rien). Attend ensuite sa fin (10 s au plus), pour
+    /// que l'essai suivant parte d'une vue au repos.
+    static func recadrageDemande(_ moteur: MoteurPieces) async throws -> MoteurPieces.GlissementMarges? {
         let t0 = ProcessInfo.processInfo.systemUptime
-        var debut: Double?
-        while ProcessInfo.processInfo.systemUptime - t0 < 2 {
-            let t = ProcessInfo.processInfo.systemUptime - t0
-            if moteur.margesEnRoute {
-                if debut == nil { debut = t }
-            } else if let debut {
-                return t - debut
-            }
+        var demande: MoteurPieces.GlissementMarges?
+        while demande == nil, ProcessInfo.processInfo.systemUptime - t0 < 2 {
+            demande = moteur.glissement
+            if demande == nil { try await Task.sleep(for: .milliseconds(3)) }
+        }
+        let t1 = ProcessInfo.processInfo.systemUptime
+        while moteur.margesEnRoute, ProcessInfo.processInfo.systemUptime - t1 < 10 {
             try await Task.sleep(for: .milliseconds(3))
         }
-        return nil
+        return demande
     }
 
     /// Le premier clic sur une piece agit aussi dans une fenetre inactive (verification du 02/10) : sans
@@ -594,7 +589,7 @@ struct FenetrePiecesTests {
     /// trouvait l'ouverture « un poil trop fugace ») : 0,45 s au lieu de 0,3 s, sur la meme courbe, pour la legende
     /// et sa rangee ; avec « Reduire les animations », un fondu de 0,45 s, et rien ne glisse. La fiche et les bandeaux restent a 0,3 s. Le recadrage qui accompagne la
     /// legende prend sa duree (`MoteurPiecesTests.margesQuiGlissentAvecLaLegende`) ; apres un vrai clic dans la
-    /// vraie fenetre, `recadrageDeLaLegendeApresUnClic` le mesure.
+    /// vraie fenetre, `recadrageDeLaLegendeApresUnClic` le lit.
     @Test func dureeDeLaLegende() {
         let courbe = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.45)
         #expect(Apparition.dureeLegende == 0.45)
@@ -615,7 +610,9 @@ struct FenetrePiecesTests {
     /// duree) comme sans ; la fiche, elle, la recadre en 0,3 s. `dureeDeLaLegende` ne garde que les fonctions : ici,
     /// le clic passe par la legende (`LigneDuBas`), qui annonce sa duree au moteur (`legendeBasculee`), puis par le
     /// recadrage lui-meme. La transition de la legende (`Apparition.transitionLegende`) ne s'observe pas par la
-    /// geometrie : ce test ne la garde pas.
+    /// geometrie : ce test ne la garde pas. La duree lue est celle que le moteur declare au recadrage (`glissement`),
+    /// pas un chronometrage : la charge de la machine ne la change pas, et un clic qui n'anime plus, ou une autre
+    /// duree, la fait echouer (les durees sont ecrites en dur, 0,45 s et 0,3 s).
     @Test(.timeLimit(.minutes(2)), arguments: [false, true])
     func recadrageDeLaLegendeApresUnClic(reduire: Bool) async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
@@ -631,19 +628,21 @@ struct FenetrePiecesTests {
         // Ouverte : un clic sur son en-tete la replie.
         var legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.minX + 40, y: legende.minY + 16))
-        let repli = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(Self.dureeLegendeMesuree.contains(repli), "repli par clic : \(repli) s")
+        let repli = try #require(try await Self.recadrageDemande(moteur), "repli par clic : aucun recadrage")
+        #expect(repli.duree == 0.45 && repli.fondu == reduire,
+                "repli par clic : \(repli.duree) s, fondu \(repli.fondu)")
         try await Task.sleep(for: .milliseconds(600))
         // Repliee : un clic sur son etiquette l'ouvre.
         legende = try #require(moteur.cadresInterface["legende"])
         try await Self.cliquer(fenetre, en: CGPoint(x: legende.midX, y: legende.midY))
-        let ouverture = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(Self.dureeLegendeMesuree.contains(ouverture), "ouverture par clic : \(ouverture) s")
+        let ouverture = try #require(try await Self.recadrageDemande(moteur), "ouverture par clic : aucun recadrage")
+        #expect(ouverture.duree == 0.45 && ouverture.fondu == reduire,
+                "ouverture par clic : \(ouverture.duree) s, fondu \(ouverture.fondu)")
         try await Task.sleep(for: .milliseconds(600))
         // La fiche, elle, garde ses 0,3 s.
         moteur.selection = idt("Apple TV 4K")
-        let fiche = try #require(try await Self.dureeDuRecadrage(moteur))
-        #expect(Self.dureeFicheMesuree.contains(fiche), "fiche : \(fiche) s")
+        let fiche = try #require(try await Self.recadrageDemande(moteur), "fiche : aucun recadrage")
+        #expect(fiche.duree == 0.3 && fiche.fondu == reduire, "fiche : \(fiche.duree) s, fondu \(fiche.fondu)")
     }
 
     /// Avec « Reduire les animations », rien ne glisse ni ne s'attarde en haut non plus (spec de B, sections 1 et 3 :
