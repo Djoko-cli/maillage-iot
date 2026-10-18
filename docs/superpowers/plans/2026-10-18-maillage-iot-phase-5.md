@@ -131,8 +131,8 @@ Selon la fiche de passation d'Amaran (§5 et §6), dans un clone complet à part
 
 ### Task 8: Anciennes apps, bandeaux et archivage (sessions Thread et Zigbee)
 
-- [ ] **Step 1: Thread 1.4.0** — message à la session Thread : 1.0.0 en ligne (lien de la version), publier la 1.4.0 avec son `publier.sh`, sur l'accord de Djoko donné dans sa session ; vérifier le flux de Thread (tête 1.4.0) et que son lien vers Maillage IoT ouvre la 1.0.0.
-- [ ] **Step 2: Zigbee 1.2.0** — même chose pour la session Zigbee (sa 1.2.0 compilée APRÈS le contrat final `0ba3833` : `sondeJournalPages` y est transitoire).
-- [ ] **Step 3: Bandeaux** — chaque session ajoute en tête de ses README (EN et FR) « This project continues as Maillage IoT » / « Ce projet continue sous le nom de Maillage IoT », avec le lien, et pousse avec l'accord de Djoko.
+- [x] **Step 1: Thread 1.4.0** — message à la session Thread : 1.0.0 en ligne (lien de la version), publier la 1.4.0 avec son `publier.sh`, sur l'accord de Djoko donné dans sa session ; vérifier le flux de Thread (tête 1.4.0) et que son lien vers Maillage IoT ouvre la 1.0.0.
+- [x] **Step 2: Zigbee 1.2.0** — même chose pour la session Zigbee (sa 1.2.0 compilée APRÈS le contrat final `0ba3833` : `sondeJournalPages` y est transitoire).
+- [x] **Step 3: Bandeaux** — chaque session ajoute en tête de ses README (EN et FR) « This project continues as Maillage IoT » / « Ce projet continue sous le nom de Maillage IoT », avec le lien, et pousse avec l'accord de Djoko.
 - [x] **Step 4: Archivage** — demandé à Djoko le 18/10 : il décide de **garder les deux anciens dépôts en l'état**, sans archivage (leurs flux restent servis par `main`).
-- [ ] **Step 5: Feuille de route** — registre ; cocher « Phase 5 » dans la §6.1 de la spec ; commit et push avec l'accord de Djoko.
+- [x] **Step 5: Feuille de route** — registre ; cocher « Phase 5 » dans la §6.1 de la spec ; commit et push avec l'accord de Djoko.
