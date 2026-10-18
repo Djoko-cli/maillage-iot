@@ -3,22 +3,47 @@
 # Maillage IoT
 
 Maillage IoT shows the radio meshes of a home on its rooms, in 2D and 3D: Thread and Zigbee together, from the
-Mac menu bar.
+Mac menu bar. It merges two earlier apps,
+[Maillage Thread](https://github.com/Djoko-cli/maillage-thread) and
+[Maillage Zigbee](https://github.com/Djoko-cli/maillage-zigbee), which it replaces.
 
-> **Status: under construction.** Maillage IoT merges two apps into one:
-> [Maillage Thread](https://github.com/Djoko-cli/maillage-thread) and
-> [Maillage Zigbee](https://github.com/Djoko-cli/maillage-zigbee). Until its first version is published, use
-> them; each will point here once Maillage IoT 1.0 is out.
-
-## What it will do
+## What it does
 
 - Thread and Zigbee nodes on the same room view: round for Thread, hexagonal for Zigbee, link colors for the
   quality, and two switches to show or hide each network.
 - Both probes at once (an ESP32-C6 for Thread, another for Zigbee), over USB or the network.
-- Names, rooms and floors from the Home app, through the Passeur Noms helper.
-- One log, one set of notifications, automatic updates.
-- Settings, names and history carried over from Maillage Thread and Maillage Zigbee, from an export made by
-  their last version.
+- Names, rooms and floors from the Home app, through the optional Passeur Noms helper.
+- One log, one set of notifications.
+- Settings, names and history carried over from Maillage Thread and Maillage Zigbee (see below).
+
+## Install
+
+1. Download the `.dmg` of the [latest version](https://github.com/Djoko-cli/maillage-iot/releases/latest) and drag
+   Maillage IoT to Applications. It needs macOS 26 or later.
+2. The app is signed with an Apple Developer ID and notarized by Apple: it opens without going through System
+   Settings, Privacy & Security.
+3. At the first launch, macOS asks for the local network and for notifications. Allow both.
+
+Updates are automatic: Maillage IoT checks for a new version at launch and every 24 hours, then downloads and
+installs it.
+
+## Coming from Maillage Thread or Maillage Zigbee
+
+1. Update the old app to its last version (Maillage Thread 1.4.0 or Maillage Zigbee 1.2.0), and choose
+   "Export for Maillage IoT…". It writes a folder, and the old app keeps working as before.
+2. In Maillage IoT, the first-launch assistant offers to import it. The same entry stays in Settings › General, under
+   "Import data…", for the second app.
+3. The nicknames, rooms, history (90 days at most), log and settings are brought over. Nothing is imported until the
+   export has been verified, and if anything fails nothing is changed.
+4. macOS may ask for the keychain, to copy the keys of the old apps (the old items are not modified), and for
+   Automation, only to quit the old app before the import. Refusing the keychain means pairing the Hue bridge again
+   and plugging each probe in over USB.
+
+## Passeur Noms (optional)
+
+Passeur Noms is a background helper that reads the names, rooms and floors of the Home app. It is not in the
+download: it is built on your Mac, with an Apple Developer Program team, by running `outils/passeur.sh` from a clone
+of this repository. Maillage IoT works without it.
 
 ## Design
 

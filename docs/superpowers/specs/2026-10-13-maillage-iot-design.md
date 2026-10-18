@@ -403,8 +403,8 @@ Zigbee/
   cliquet de signature et les contrôles d'anonymisation. (Le `publication.py` de Zigbee diffère sur trois lignes :
   il n'est pas repris.)
 - **Le numéro de compilation** est le nombre de commits de `main`. L'identifiant est neuf, donc il n'y a aucun
-  conflit avec les anciens flux. Une compilation locale porte un numéro plus grand que la version publiée, sinon
-  Sparkle la remplace (piège vu chez Zigbee).
+  conflit avec les anciens flux. ~~Une compilation locale porte un numéro plus grand que la version publiée, sinon
+  Sparkle la remplace (piège vu chez Zigbee).~~ (Remplacé le 18/10 : voir l'amendement à la fin de cette section.)
 - **Sparkle** : nouvel `appcast.xml` à la racine de `main` de `maillage-iot`. Il est signé avec la **paire EdDSA
   commune** aux apps de Djoko (clé publique dans `project.yml`, clé privée dans le trousseau). Recherche au
   démarrage puis toutes les 24 h.
@@ -418,6 +418,22 @@ Zigbee/
   `.xcstrings` ; chez Zigbee, `traductions/interface.json` est la source de `traduire.py`, et son `CataloguesTests`
   l'exige. Le plan de l'étape 1 compare les deux et en garde un, en migrant `CataloguesTests` en conséquence. Le
   test reste obligatoire : chaque texte en français et en anglais.
+
+**Amendement du 18/10/2026 (phase 5, publication).** Il précise 5.2 et remplace la phrase barrée ci-dessus ainsi que la
+ligne « Une compilation locale remplacée par Sparkle » de la section 7 :
+- **Compilation de travail** : elle garde `CURRENT_PROJECT_VERSION "1"`, et Sparkle ne démarre pas à ce numéro
+  (`MisesAJour.doitDemarrer`). Il n'y a plus de « numéro plus grand » à tenir pour une compilation locale : seule
+  une version publiée porte le nombre de commits de `main`, posé par `publication.py`.
+- **Étiquettes git** : `v` suivi du numéro de version (`v1.0.0`).
+- **Enveloppe des contrôles d'anonymisation** : `outils/anonymisation_double.py` lance, l'un après l'autre et tous les
+  deux, le contrôle privé de Maillage Thread et celui de Maillage Zigbee (mêmes chemins que `outils/pre-push`). Un seul
+  en défaut, ou un contrôle ou une table introuvable, fait échouer la publication ; sa sortie ne montre que des comptes.
+- **Répétition** : `outils/publier.sh` refuse, avant toute compilation, de publier l'identité de répétition (identifiant de
+  la cible publiée terminé par `.repetition`). La signature Developer ID et la notarisation y sont imposées ; seule
+  l'option `--repetition`, sans GitHub ni Bureau, peut signer autrement.
+- **Droit d'Automatisation** : limité aux deux anciennes apps, par l'exception `apple-events` de `Droits.entitlements`
+  (`fr.djoko.maillage` et `fr.djoko.maillage.zigbee`). Il ne sert qu'à les quitter avant la reprise (4.3) ; l'app ne
+  peut piloter aucune autre app. `NSAppleEventsUsageDescription` le dit à l'utilisateur.
 
 ### 5.3 Le reste du système
 
@@ -697,3 +713,8 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   l'interface à deux protocoles (banc de l'étape 1, 14/10).
 - Fiche d'un nœud Zigbee : renommer le bouton « Identifier » (clignotement par le pont Hue) en « Identifier par
   Hue », pour faire la paire avec « Identifier par Maison » ; « Identification… » suit (banc de l'étape 2, 14/10).
+- **Contrôle de taille avant lecture dans le contrat d'export** (mineur m1 de la relecture finale de la phase 4,
+  18/10) : `manifeste.json` et `reglages.json` sont lus en entier avant tout contrôle de taille, si bien qu'un export
+  abîmé ou trafiqué de plusieurs Go ferait tomber l'app au lieu de donner une cause lisible (rien n'est écrit). À faire :
+  comparer la taille du fichier à celle du manifeste avant lecture, et borner `manifeste.json`. À grouper avec le prochain
+  changement du contrat, qui doit rester identique à l'octet dans les trois dépôts.
