@@ -689,7 +689,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 ## 8. Backlog
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
-- Vue de santé par pièce, tous protocoles confondus (option C du 13/10).
 - **Pièce proposée aux HomePod et à l'Apple TV** (demande de Djoko, banc de l'étape 3b, 16/10) : HomeKit ne les donne pas à
   une app tierce, donc leur pièce n'est connue que par un choix manuel. Ils s'annoncent aussi par AirPlay (mDNS) sous le
   nom qu'on leur donne dans Maison, souvent celui de la pièce : écouter ce service (ajout à `NSBonjourServices`), le
@@ -701,7 +700,9 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 - **Panneau de santé dans la vue par pièces** (demande de Djoko, banc de l'étape 3a, 15/10) : un panneau en verre liquide
   (Liquid Glass), dans le même style que la légende, en haut à gauche de la vue. Il reprend les informations du journal
   que montre le menu de la barre (alertes de l'heure, pertes, changements récents, par protocole). Un clic sur une entrée
-  montre l'appareil en cause dans la scène : sélection, focus et fiche, comme un clic sur le nœud.
+  montre l'appareil en cause dans la scène : sélection, focus et fiche, comme un clic sur le nœud. Il donne aussi un
+  résumé de santé par pièce, tous protocoles confondus (par exemple « Salon : 2 appareils perdus ») : c'est l'ancienne
+  « vue de santé par pièce » (option C du 13/10), fondue ici le 18/10.
 - Catégories de notification propres à Zigbee (parent perdu, pont injoignable).
 - Clés `rloc:` de Thread qualifiées par leur partition : deux partitions peuvent avoir le même RLOC16. Le
   comportement actuel est gardé à l'étape 1 ; à corriger ensuite, sous le rejeu.
