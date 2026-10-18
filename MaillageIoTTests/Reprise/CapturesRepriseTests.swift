@@ -38,12 +38,32 @@ struct CapturesRepriseTests {
         #expect(a > s + 60, "la section Reprise (un bouton et sa note) s'ajoute a la page : \(a) contre \(s)")
     }
 
+    /// La fenetre s'ajuste a son contenu (banc du 18/10 : l'accueil gardait la hauteur du resume, vide en bas), sans depasser
+    /// `hauteurMax`, au-dela de laquelle le formulaire defile.
+    @Test func laFenetreSAjusteASonContenu() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let hote = NSHostingView(rootView: FenetreReprise(assistant: b.assistant))
+        let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: FenetreReprise.largeur, height: FenetreReprise.hauteurMax),
+                               styleMask: [.titled], backing: .buffered, defer: false)
+        fenetre.animationBehavior = .none
+        fenetre.contentView = hote
+        fenetre.alphaValue = 0
+        fenetre.setFrameOrigin(NSPoint(x: -6000, y: -6000))
+        fenetre.orderFrontRegardless()
+        defer { fenetre.close() }
+        try await Task.sleep(for: .milliseconds(500))
+        hote.layoutSubtreeIfNeeded()
+        let h = hote.fittingSize.height
+        #expect(h > 150 && h < FenetreReprise.hauteurMax - 200, "l'accueil tient en \(h) points, pas en \(FenetreReprise.hauteurMax)")
+    }
+
     // MARK: Captures
 
     /// Rend la vue de l'assistant hors ecran (comme les tests des Reglages) et la garde en PNG.
     static func capturer(_ nom: String, _ assistant: AssistantReprise, dans dossier: URL) async throws {
         let hote = NSHostingView(rootView: FenetreReprise(assistant: assistant))
-        let taille = NSSize(width: FenetreReprise.largeur, height: FenetreReprise.hauteur)
+        let taille = NSSize(width: FenetreReprise.largeur, height: FenetreReprise.hauteurMax)
         let fenetre = NSWindow(contentRect: NSRect(origin: .zero, size: taille), styleMask: [.titled], backing: .buffered, defer: false)
         fenetre.animationBehavior = .none
         fenetre.contentView = hote

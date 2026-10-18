@@ -10,9 +10,14 @@ struct FenetreReprise: View {
     /// Ferme la fenetre (`ControleurReprise`).
     var fermer: () -> Void = {}
     @Environment(\.locale) private var locale
+    /// Hauteur du contenu du formulaire, lue sur sa vue defilante : la fenetre la suit, jusqu'a `hauteurMax`.
+    @State private var hauteurFormulaire: CGFloat = 0
 
     static let largeur: CGFloat = 540
-    static let hauteur: CGFloat = 640
+    /// Hauteur au-dela de laquelle le formulaire defile ; en deca, la fenetre prend la hauteur de son contenu.
+    static let hauteurMax: CGFloat = 640
+    /// Hauteur de la barre des boutons et de son separateur.
+    static let hauteurBarre: CGFloat = 57
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +31,8 @@ struct FenetreReprise: View {
                 contenu
             }
             .formStyle(.grouped)
+            .onScrollGeometryChange(for: CGFloat.self, of: { $0.contentSize.height }) { _, h in hauteurFormulaire = h }
+            .frame(height: hauteurFormulaire > 0 ? min(hauteurFormulaire, Self.hauteurMax - Self.hauteurBarre) : nil)
             Divider()
             HStack(spacing: 12) {
                 boutons
@@ -33,7 +40,8 @@ struct FenetreReprise: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
         }
-        .frame(width: Self.largeur, height: Self.hauteur)
+        .frame(width: Self.largeur)
+        .frame(maxHeight: Self.hauteurMax)
         // L'ancienne app qui tourne se reverifie ; le resume relit « À refaire » sur l'etat reel (les reponses de macOS aux
         // notifications et a la cle, l'issue de Bonjour arrivent apres coup), et de nouveau quand l'app ou la fenetre revient
         // au premier plan (l'utilisateur sort de Reglages Systeme).

@@ -27,11 +27,14 @@ final class ControleurReprise: NSObject, NSWindowDelegate {
 
     func creerFenetre() -> NSWindow {
         let vue = FenetreReprise(assistant: assistant, fermer: { [weak self] in self?.fermer() })
-        let f = NSWindow(contentViewController: NSHostingController(rootView: vue))
+        let hote = NSHostingController(rootView: vue)
+        // La fenetre suit la hauteur de son contenu (accueil court, resume long).
+        hote.sizingOptions = [.preferredContentSize]
+        let f = NSWindow(contentViewController: hote)
         f.title = String(localized: "Reprendre des données")
         f.styleMask = [.titled, .closable, .miniaturizable]
         f.isReleasedWhenClosed = false
-        f.setContentSize(NSSize(width: FenetreReprise.largeur, height: FenetreReprise.hauteur))
+        f.setContentSize(NSSize(width: FenetreReprise.largeur, height: FenetreReprise.hauteurMax))
         f.delegate = self
         f.center()
         return f
