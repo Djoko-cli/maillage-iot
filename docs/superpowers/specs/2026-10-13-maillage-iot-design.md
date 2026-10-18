@@ -399,8 +399,9 @@ Zigbee/
 - **Maillage IoT 1.0.0** est signée Developer ID et notarisée avec le profil `djoko-notarisation`. L'identité est
   choisie par le préfixe « Developer ID Application ». Le titulaire et l'équipe sont masqués dans tout ce que les
   outils affichent. La méthode est celle de la fiche de passation d'Amaran, répétition de mise à jour comprise.
-- `outils/publier.sh` et `publication.py` sont ceux de Thread, **identiques à l'octet** à ceux d'Amaran, avec le
-  cliquet de signature et les contrôles d'anonymisation. (Le `publication.py` de Zigbee diffère sur trois lignes :
+- `publication.py`, ses tests et la licence de Sparkle sont ceux de Thread, **identiques à l'octet** à ceux d'Amaran
+  (un test le vérifie) ; `outils/publier.sh` est propre à Maillage IoT, avec le même cliquet de signature et les deux
+  contrôles d'anonymisation (amendement du 18/10). (Le `publication.py` de Zigbee diffère sur trois lignes :
   il n'est pas repris.)
 - **Le numéro de compilation** est le nombre de commits de `main`. L'identifiant est neuf, donc il n'y a aucun
   conflit avec les anciens flux. ~~Une compilation locale porte un numéro plus grand que la version publiée, sinon
