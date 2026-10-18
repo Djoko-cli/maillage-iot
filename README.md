@@ -24,7 +24,7 @@ Mac menu bar. It merges two earlier apps,
    Settings, Privacy & Security.
 3. At the first launch, macOS asks for the local network and for notifications. Allow both.
 
-Updates are automatic: Maillage IoT checks for a new version at launch and every 24 hours, then downloads and
+Updates are automatic: Maillage IoT checks for a new version every 24 hours, then downloads and
 installs it.
 
 ## Coming from Maillage Thread or Maillage Zigbee

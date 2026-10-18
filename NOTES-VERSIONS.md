@@ -28,7 +28,7 @@ de la version publiée sur GitHub et celles de la fenêtre de mise à jour.
   only have one owner. No other app is concerned.
 - **Local network and notifications prompts**: the first one lets Maillage IoT find border routers, bridges and
   probes on the network, the second one lets it warn you when a router drops.
-- **Automatic updates**: Maillage IoT checks for a new version at launch and every 24 hours, then downloads and
+- **Automatic updates**: Maillage IoT checks for a new version every 24 hours, then downloads and
   installs it.
 - **Passeur Noms, the helper that reads names, rooms and floors from the Home app, stays optional and is not in the
   download.** It is built on your Mac with `outils/passeur.sh` from the repository.
@@ -54,7 +54,7 @@ de la version publiée sur GitHub et celles de la fenêtre de mise à jour.
   sonde USB ne peut avoir qu'un seul maître. Aucune autre app n'est concernée.
 - **Invites du réseau local et des notifications** : la première laisse Maillage IoT trouver les routeurs de
   bordure, les ponts et les sondes sur le réseau, la seconde le laisse prévenir quand un routeur disparaît.
-- **Mises à jour automatiques** : Maillage IoT cherche une nouvelle version au lancement puis toutes les 24 heures,
+- **Mises à jour automatiques** : Maillage IoT cherche une nouvelle version toutes les 24 heures,
   la télécharge et l'installe.
 - **Passeur Noms, l'assistant qui lit les noms, les pièces et les étages de l'app Maison, reste facultatif et ne
   figure pas dans le téléchargement.** Il se compile sur le Mac avec `outils/passeur.sh`, depuis le dépôt.

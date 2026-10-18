@@ -24,8 +24,8 @@ ensemble, depuis la barre des menus du Mac. Elle réunit deux apps plus ancienne
    Système, Confidentialité et sécurité.
 3. Au premier lancement, macOS demande l'accès au réseau local et aux notifications. Autoriser les deux.
 
-Les mises à jour sont automatiques : Maillage IoT cherche une nouvelle version au lancement puis toutes les
-24 heures, la télécharge et l'installe.
+Les mises à jour sont automatiques : Maillage IoT cherche une nouvelle version toutes les 24 heures,
+la télécharge et l'installe.
 
 ## Venir de Maillage Thread ou de Maillage Zigbee
 
