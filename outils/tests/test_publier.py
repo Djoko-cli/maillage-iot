@@ -9,6 +9,7 @@ trousseau, ni compilation, ni controle prive reel, ni publication.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -47,7 +48,7 @@ ENREGISTREUR = r'''import json, os, sys
 with open(os.environ["ENREGISTREUR"], "w") as f:
     json.dump({"argv": sys.argv[1:], "env": {k: os.environ.get(k) for k in (
         "DD", "CONTROLE_ANONYMISATION", "TABLE_ANONYMISATION", "NOTARISER", "PROFIL_NOTARISATION", "SPARKLE_BIN",
-        "CONTROLE_THREAD", "TABLE_THREAD", "CONTROLE_ZIGBEE", "TABLE_ZIGBEE", "PUBLIER_PYTHON_ESSAI", "PYTHON")}}, f)
+        "CONTROLE_THREAD", "TABLE_THREAD", "CONTROLE_ZIGBEE", "TABLE_ZIGBEE", "PUBLIER_PYTHON_ESSAI", "PUBLIER_ESSAI", "PYTHON")}}, f)
 '''
 
 FAUX_OUTIL = '#!/bin/sh\necho "$0 $*" >> "$ALERTE"\nexit 99\n'
@@ -278,14 +279,15 @@ class TestPublier(unittest.TestCase):
         self.assertEqual(env["DD"], "/essai/dd")
 
     def test_interpreteur_substituable(self):
-        """PUBLIER_PYTHON_ESSAI remplace /usr/bin/python3 pour la garde et pour publication.py (les tests y mettent un
-        enregistreur) ; la variable n'arrive pas dans l'environnement de publication.py."""
+        """PUBLIER_PYTHON_ESSAI (avec le marqueur de test PUBLIER_ESSAI=1) remplace /usr/bin/python3 pour la garde et pour
+        publication.py (les tests y mettent un enregistreur) ; ni l'une ni l'autre n'arrive dans l'environnement de
+        publication.py."""
         b = Banc(self)
         enregistreur = os.path.join(b.dossier, "faux-python")
         ecrire(enregistreur, '#!/bin/sh\necho "$@" >> "$DOSSIER_APPELS"\nenv >> "$DOSSIER_ENV"\nexit 0\n', 0o755)
         appels = os.path.join(b.dossier, "appels.txt")
         environnement = os.path.join(b.dossier, "env.txt")
-        r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels,
+        r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "PUBLIER_ESSAI": "1", "DOSSIER_APPELS": appels,
                                    "DOSSIER_ENV": environnement})
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         with open(appels) as f:
@@ -297,6 +299,31 @@ class TestPublier(unittest.TestCase):
             appels_env = [x for x in f.read().split("_=/usr/bin/env\n") if x.strip()]
         self.assertEqual(len(appels_env), 2)
         self.assertNotIn("PUBLIER_PYTHON_ESSAI", appels_env[1])  # l'appel de publication.py
+        self.assertNotIn("PUBLIER_ESSAI", appels_env[1])
+
+    def test_interpreteur_ignore_sans_marqueur_de_test(self):
+        """PUBLIER_PYTHON_ESSAI sans le marqueur PUBLIER_ESSAI=1 (ou avec une autre valeur) est ignoree : le vrai
+        interpreteur lance la garde et publication.py ; le faux n'est jamais appele."""
+        b = Banc(self)
+        enregistreur = os.path.join(b.dossier, "faux-python")
+        appels = os.path.join(b.dossier, "appels.txt")
+        ecrire(enregistreur, '#!/bin/sh\necho "$@" >> "$DOSSIER_APPELS"\nexit 0\n', 0o755)
+        for marqueur in ({}, {"PUBLIER_ESSAI": ""}, {"PUBLIER_ESSAI": "0"}, {"PUBLIER_ESSAI": "oui"}):
+            with self.subTest(marqueur=marqueur):
+                if os.path.exists(b.appel):
+                    os.remove(b.appel)
+                env = {"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels}
+                env.update(marqueur)
+                r = b.lancer("1.0.0", env=env)
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertTrue(b.appele(), "publication.py doit tourner avec le vrai interpreteur")
+                self.assertFalse(os.path.exists(appels), "le faux interpreteur ne doit jamais etre appele")
+                e = b.appel_json()["env"]
+                self.assertIsNone(e["PUBLIER_PYTHON_ESSAI"])
+                self.assertIsNone(e["PUBLIER_ESSAI"])
+        # l'aide ignore aussi la variable
+        r = b.lancer("--aide", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels})
+        self.assertFalse(os.path.exists(appels), "le faux interpreteur ne doit jamais etre appele (aide)")
 
     def test_python_ambiant_sans_effet(self):
         """Un PYTHON de l'environnement (venv, pyenv...) ne change jamais l'interpreteur de la garde ni de publication.py."""
@@ -317,6 +344,7 @@ class TestPublier(unittest.TestCase):
         b = Banc(self)
         ambiant = {"CONTROLE_THREAD": "/bin/true", "TABLE_THREAD": "/dev/null", "CONTROLE_ZIGBEE": "/bin/true",
                    "TABLE_ZIGBEE": "/dev/null"}
+        ambiant["PUBLIER_ESSAI"] = "1"
         r = b.lancer("1.0.0", env=ambiant)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         env = b.appel_json()["env"]
@@ -329,6 +357,7 @@ class TestPublier(unittest.TestCase):
         cause, avant tout appel, meme avec le Developer ID et meme avec une autre identite."""
         b = Banc(self)
         for args in (("1.0.0", "--repetition", ""), ("1.0.0", "--repetition="), ("1.0.0", "--repetition"),
+                     ("1.0.0", "--repetition", "  "), ("1.0.0", "--repetition=   "), ("1.0.0", "--repetition", "\t"),
                      ("1.0.0", "--repetition", "", "--url-base", "http://localhost:1")):
             for env in ({}, {"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"}):
                 with self.subTest(args=args, env=env):
@@ -352,13 +381,49 @@ class TestPublier(unittest.TestCase):
                 self.assertTrue(b.appele())
                 self.assertEqual(b.appel_json()["env"]["NOTARISER"], "0")
 
-    def test_abreviation_de_repetition_ne_saute_pas_le_cliquet(self):
-        """argparse accepte --repet : ici, une abreviation n'est pas reconnue, le cliquet s'applique (cote sur)."""
+    def test_abreviations_de_repetition_refusees(self):
+        """argparse accepte toute abreviation de --repetition (--r, --rep, --repet=...) et garde la derniere occurrence :
+        un argument en --r qui n'est ni exactement --repetition ni --repetition=VALEUR est refuse (code 1, avec une cause),
+        seul, apres un vrai --repetition, ou avec une valeur vide, avant tout appel."""
         b = Banc(self)
-        r = b.lancer("1.0.0", "--repet", "/tmp/x", env={"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"})
-        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertIn("Developer ID", r.stderr)
-        self.assertFalse(b.appele())
+        formes = ("--r", "--re", "--rep", "--repe", "--repet", "--repeti", "--repetit", "--repetiti", "--repetitio",
+                  "--repetitionx", "--rx")
+        suites = []
+        for f in formes:
+            suites += [(f, "/tmp/x"), (f + "=/tmp/x",), (f, ""), (f + "=",), (f,),
+                       ("--repetition", "/tmp/x", f, ""), ("--repetition", "/tmp/x", f + "="),
+                       ("--repetition=/tmp/x", f, ""), ("--repetition=/tmp/x", f + "=")]
+        for env in ({}, {"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"}):
+            for suite in suites:
+                with self.subTest(suite=suite, env=env):
+                    r = b.lancer("1.0.0", *suite, env=env)
+                    self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                    self.assertIn("--repetition", r.stderr)
+                    self.assertFalse(b.appele())
+        self.assertFalse(b.outil_lance())
+
+    def test_repetition_donnee_deux_fois_refusee(self):
+        """--repetition present plus d'une fois (meme valeurs ou non, deux formes) : code 1 avec une cause, avant tout appel."""
+        b = Banc(self)
+        autre = {"IDENTITE_SIGNATURE": "Djoko-cli Code Signing", "NOTARISER": "0"}
+        for args in (("--repetition", "/tmp/x", "--repetition", ""), ("--repetition", "/tmp/x", "--repetition", "/tmp/y"),
+                     ("--repetition", "/tmp/x", "--repetition=/tmp/y"), ("--repetition=/tmp/x", "--repetition=/tmp/y"),
+                     ("--repetition=/tmp/x", "--repetition="), ("--repetition=/tmp/x", "--repetition", ""),
+                     ("--repetition=/tmp/x", "--repetition", "/tmp/y"), ("--repetition", "/tmp/x", "--repetition=")):
+            for env in ({}, autre):
+                with self.subTest(args=args, env=env):
+                    r = b.lancer("1.0.0", *args, env=env)
+                    self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                    self.assertIn("--repetition", r.stderr)
+                    self.assertFalse(b.appele())
+
+    def test_aucune_autre_option_de_publication_ne_commence_par_r(self):
+        """La regle de publier.sh (tout argument en --r est --repetition ou refuse) suppose que --repetition est la seule
+        option de publication.py qui commence par --r : sinon il faudrait l'autoriser nommement."""
+        with open(os.path.join(OUTILS, "publication.py"), encoding="utf-8") as f:
+            options = set(re.findall(r"""add_argument\(\s*['"](--[\w-]+)['"]""", f.read()))
+        self.assertIn("--repetition", options)
+        self.assertEqual(sorted(o for o in options if o.startswith("--r")), ["--repetition"])
 
     def test_aide_hors_premiere_position(self):
         """-h ailleurs qu'en premier passe par toutes les gardes puis par publication.py (jamais d'exemption)."""
@@ -381,7 +446,7 @@ class TestPublier(unittest.TestCase):
                 ecrire(enregistreur, '#!/bin/sh\nprintf "[%s]" "$@" >> "$DOSSIER_APPELS"\necho >> "$DOSSIER_APPELS"\n'
                        'exit 1\n', 0o755)
                 appels = os.path.join(b.dossier, "appels.txt")
-                r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "DOSSIER_APPELS": appels})
+                r = b.lancer("1.0.0", env={"PUBLIER_PYTHON_ESSAI": enregistreur, "PUBLIER_ESSAI": "1", "DOSSIER_APPELS": appels})
                 self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
                 with open(appels) as f:
                     self.assertEqual(f.read(), "[-I][outils/refuser_repetition.py][%s]\n" % valeur)
@@ -547,7 +612,8 @@ class TestAnonymisationDouble(unittest.TestCase):
         ecrire(os.path.join(prive, "thread", "outils", "controles.py"), FAUX_CONTROLE_PLANTE)
         r = self.lancer(*self.fichiers(), env={"ANONYMISATION_PRIVE": prive})
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertRegex(r.stdout, r"controle thread : code 1, plante \(KeyError\)")
+        self.assertRegex(r.stdout, r"controle thread : code 1, plante : echec")
+        self.assertNotIn("KeyError", r.stdout + r.stderr)  # aucun mot de la sortie du controle, pas meme le nom
         self.assertNotIn("secret", r.stdout + r.stderr)
         self.assertNotIn("12345", r.stdout + r.stderr)
         self.assertEqual([a["nom"] for a in self.appels()], ["zigbee"])

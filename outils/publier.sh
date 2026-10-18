@@ -18,15 +18,18 @@
 # Avant toute construction, trois gardes : jamais l'identite de repetition (outils/refuser_repetition.py, sur l'identifiant
 # de la cible MaillageIoT lu dans project.yml), l'icone presente, un clone complet.
 # PUBLIER_PYTHON_ESSAI : reserve aux tests de ce script (l'interpreteur de la garde et de publication.py, un
-# enregistreur) ; /usr/bin/python3 sinon. Un PYTHON de l'environnement n'a aucun effet.
+# enregistreur), honoree seulement avec le marqueur PUBLIER_ESSAI=1 que les tests posent ; /usr/bin/python3 sinon. Un
+# PYTHON de l'environnement n'a aucun effet.
 # CONTROLE_ANONYMISATION est toujours impose ici (une valeur de l'appelant ne remplace jamais la double garde) ; les
-# surcharges reservees aux tests (CONTROLE_THREAD, TABLE_THREAD, CONTROLE_ZIGBEE, TABLE_ZIGBEE, PUBLIER_PYTHON_ESSAI) sont
+# surcharges reservees aux tests (CONTROLE_THREAD, TABLE_THREAD, CONTROLE_ZIGBEE, TABLE_ZIGBEE, PUBLIER_PYTHON_ESSAI, PUBLIER_ESSAI) sont
 # retirees de l'environnement avant l'exec ; les dossiers prives se reglent par ANONYMISATION_PRIVE (voir
 # outils/anonymisation_double.py).
 # Produits : build/publication/X.Y.Z/ ; compilation dans DD (par defaut DerivedData/maillage-iot-publication).
 set -eu
 cd "$(dirname "$0")/.."
-PYTHON=${PUBLIER_PYTHON_ESSAI:-/usr/bin/python3}
+# L'interpreteur d'essai n'est honore qu'avec le marqueur de test PUBLIER_ESSAI=1 (pose par les tests seulement).
+PYTHON=/usr/bin/python3
+if [ "${PUBLIER_ESSAI:-}" = 1 ] && [ -n "${PUBLIER_PYTHON_ESSAI:-}" ]; then PYTHON=$PUBLIER_PYTHON_ESSAI; fi
 case ${1:-} in
   --aide|-h|--help) exec "$PYTHON" outils/publication.py publier -h;;
 esac
@@ -38,26 +41,39 @@ PROFIL_NOTARISATION=${PROFIL_NOTARISATION:-djoko-notarisation}
 export NOTARISER PROFIL_NOTARISATION
 # Le cliquet du Developer ID : une version publiee n'est jamais signee autrement (une signature autre ramenerait
 # l'alerte « l'app differe » de macOS et le blocage de Gatekeeper). La repetition seule peut signer autrement.
-# Seule une valeur NON VIDE compte (publication.py traite une valeur vide en publication reelle) : une valeur vide,
-# ou absente, est refusee. Les deux formes : --repetition DOSSIER et --repetition=DOSSIER.
+# Seule une valeur NON VIDE compte (publication.py traite une valeur vide en publication reelle). Le contrat, applique
+# avant toute autre garde : --repetition DOSSIER ou --repetition=DOSSIER, une seule fois ; tout autre argument qui
+# commence par --r est refuse (argparse accepte les abreviations --r, --rep, --repet=... et garde la DERNIERE occurrence :
+# une abreviation vide apres une vraie valeur la viderait sans que ce script le voie). --repetition est la seule option de
+# publication.py qui commence par --r (verifie par un test). Une valeur vide ou faite d'espaces est refusee.
 repetition=0
-vide=0
+nombre=0
 attente=0
+refus=
 for x in "$@"; do
   if [ $attente = 1 ]; then
     attente=0
-    if [ -n "$x" ]; then repetition=1; else vide=1; fi
+    case $x in
+      *[![:space:]]*) repetition=1;;
+      *) refus="valeur vide ou faite d'espaces (une valeur vide ne saute pas le cliquet)";;
+    esac
     continue
   fi
   case $x in
-    --repetition) attente=1;;
-    --repetition=?*) repetition=1;;
-    --repetition=) vide=1;;
+    --repetition) attente=1; nombre=$((nombre + 1));;
+    --repetition=*)
+      nombre=$((nombre + 1))
+      case ${x#--repetition=} in
+        *[![:space:]]*) repetition=1;;
+        *) refus="valeur vide ou faite d'espaces (une valeur vide ne saute pas le cliquet)";;
+      esac;;
+    --r*) refus="argument $x refuse (seuls --repetition DOSSIER et --repetition=DOSSIER sont admis ; pas d'abreviation)";;
   esac
 done
-if [ $attente = 1 ]; then vide=1; fi
-if [ $vide = 1 ]; then
-  echo "publier.sh : --repetition demande un dossier non vide (une valeur vide ne saute pas le cliquet)" >&2
+if [ $attente = 1 ]; then refus="valeur absente (une valeur vide ne saute pas le cliquet)"; fi
+if [ $nombre -gt 1 ]; then refus="--repetition donne plus d'une fois"; fi
+if [ -n "$refus" ]; then
+  echo "publier.sh : --repetition : $refus" >&2
   exit 1
 fi
 if [ $repetition = 0 ] && { [ "$IDENTITE_SIGNATURE" != "Developer ID Application" ] || [ "$NOTARISER" != 1 ]; }; then
@@ -111,7 +127,7 @@ export TABLE_ANONYMISATION=outils/anonymisation_double.py
 export DD
 # Les surcharges reservees aux tests ne passent jamais a un vrai lancement : une valeur ambiante ne remplace pas un
 # vrai controle.
-unset CONTROLE_THREAD TABLE_THREAD CONTROLE_ZIGBEE TABLE_ZIGBEE PUBLIER_PYTHON_ESSAI
+unset CONTROLE_THREAD TABLE_THREAD CONTROLE_ZIGBEE TABLE_ZIGBEE PUBLIER_PYTHON_ESSAI PUBLIER_ESSAI
 exec "$PYTHON" outils/publication.py publier "$@" --identite "$IDENTITE_SIGNATURE" \
   --auteur Djoko-cli --etiquette v --flux appcast.xml --licence outils/Sparkle-LICENSE.txt \
   --nom-app "Maillage IoT" --fichier Maillage-IoT --depot-github Djoko-cli/maillage-iot \

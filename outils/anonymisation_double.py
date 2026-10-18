@@ -17,7 +17,8 @@ ou de la table de chaque controle). Elles ne servent qu'aux tests de ce script, 
 
 Sortie : seulement les comptes de chaque controle (les entiers de la derniere ligne qu'il imprime, sortie d'erreur
 comprise : comme outils/pre-push, `2>&1`, derniere ligne) et son code, jamais une ligne de fichier controle. Un controle
-qui plante (trace Python) est dit « plante » avec le seul nom de l'exception, sans comptes ni message.
+qui plante (trace Python) est dit « plante », avec son nom et son code seulement : aucun mot de sa sortie (ni exception,
+ni message), sans comptes.
 """
 import os
 import re
@@ -61,13 +62,9 @@ def comptes(sortie):
 
 
 def plantage(sortie):
-    """Le nom de l'exception si la sortie se termine par une trace Python ('?' si illisible), sinon None. Jamais le
-    message de l'exception (il peut porter du contenu de fichier)."""
-    lignes = [l for l in sortie.splitlines() if l.strip()]
-    if not any(l.startswith("Traceback (most recent call last)") for l in lignes):
-        return None
-    m = re.match(r"^([A-Za-z_][\w.]*)(?::|$)", lignes[-1])
-    return m.group(1) if m else "?"
+    """True si la sortie contient une trace Python (Traceback). Rien de la trace n'est relaye : ni le nom de
+    l'exception ni son message (ils peuvent porter du contenu de fichier)."""
+    return any(l.startswith("Traceback (most recent call last)") for l in sortie.splitlines())
 
 
 def lancer(nom, script, table, fichiers):
@@ -84,9 +81,8 @@ def lancer(nom, script, table, fichiers):
     except OSError as e:
         print("controle %s : impossible a lancer (%s) : echec" % (nom, type(e).__name__))
         return False
-    cause = plantage(r.stdout) if r.returncode != 0 else None
-    if cause:
-        print("controle %s : code %d, plante (%s) : echec" % (nom, r.returncode, cause))
+    if r.returncode != 0 and plantage(r.stdout):
+        print("controle %s : code %d, plante : echec" % (nom, r.returncode))
     else:
         print("controle %s : code %d, comptes %s" % (nom, r.returncode, " ".join(comptes(r.stdout)) or "aucun"))
     return r.returncode == 0
