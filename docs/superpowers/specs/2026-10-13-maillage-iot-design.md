@@ -680,7 +680,7 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 | L'ancienne app perd sa sonde après la reprise | Le résumé de l'import le dit (4.4) |
 | La vue surchargée avec deux maillages | Interrupteurs de vue ; silhouette par protocole ; mesure au banc (étape 3) |
 | La vue ralentie | Cœur et modules en `-O` même en Debug ; mesure avec `mesurer.sh` contre la référence de l'étape 1 |
-| Une compilation locale remplacée par Sparkle | Numéro de compilation local plus grand que la version publiée |
+| Une compilation locale remplacée par Sparkle | Compilation de travail au numéro 1, où Sparkle ne démarre pas (amendement du 18/10, 5.2) |
 | Une donnée réelle dans le dépôt | Garde dès le premier commit, prénom réel compris ; recopie fichier par fichier ; anonymisation des clés autant que des valeurs ; `garde.local.txt` commun |
 | L'annonce qui pointe dans le vide | Ordre de publication de 5.4 |
 
