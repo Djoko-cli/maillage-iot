@@ -182,6 +182,19 @@ struct SantePiecesTests {
         #expect(Self.lignes(Self.lire([Self.coordinateur("Z-pont", etat: nil)])).isEmpty)
     }
 
+    /// Le pont (le coordinateur de Zigbee) disparu, comme injoignable, est un pont : « pont disparu », jamais « routeur disparu »,
+    /// meme si le coordinateur route ; la date du journal s'y lit comme pour un autre noeud.
+    @Test func perduPontDisparu() {
+        let l = Self.lire([Self.coordinateur("Z-pont", etat: .disparu), Self.appareil("Z-rout", .zigbee, etat: .disparu, routeur: true)],
+                          disparitions: [idt("Z-pont", .zigbee): Disparition(depuis: Self.t0, routeur: true)])
+        #expect(Self.ligne(l, idt("Z-pont", .zigbee))?.cause == .pontDisparu(depuis: Self.t0))
+        #expect(Self.ligne(l, idt("Z-rout", .zigbee))?.cause == .routeurDisparu(depuis: nil), "un routeur du pont reste un routeur")
+        let sansDate = Self.lire([Self.coordinateur("Z-pont", etat: .disparu)])
+        #expect(Self.ligne(sansDate, idt("Z-pont", .zigbee))?.cause == .pontDisparu(depuis: nil))
+        #expect(Self.ligne(sansDate, idt("Z-pont", .zigbee))?.famille == .perdu)
+        #expect(sansDate.capsule.entrees == [Self.entree(.zigbee, Comptes(perdus: 1))])
+    }
+
     /// A surveiller, pile faible : le niveau si l'on a, sinon « faible » ; au plus 20 %, ou l'alerte de l'accessoire. Un appareil
     /// et un routeur des deux protocoles ; l'etat inconnu d'un appareil ne cache pas sa pile.
     @Test func aSurveillerPile() {
@@ -526,6 +539,26 @@ struct SantePiecesTests {
         #expect(Disparition.plusRecente(parmi: []) == nil)
     }
 
+    /// La disparition en cours est celle qu'aucun retour n'a suivie : un retour (`appareilRevenu`, `routeurApparu`) plus recent que
+    /// la derniere disparition l'efface, le noeud est « disparu » sans heure ; une nouvelle disparition apres le retour redonne une
+    /// date. Un retour plus ancien que la disparition n'y change rien.
+    @Test func disparitionSuivieDUnRetour() {
+        func e(_ type: TypeEvenement, _ decalage: TimeInterval) -> Evenement { Self.evenement(type, "x", decalage) }
+        #expect(Disparition.plusRecente(parmi: [e(.appareilDisparu, 100), e(.appareilRevenu, 200)]) == nil)
+        #expect(Disparition.plusRecente(parmi: [e(.appareilRevenu, 200), e(.appareilDisparu, 100)]) == nil, "dans n'importe quel ordre")
+        #expect(Disparition.plusRecente(parmi: [e(.routeurDisparu, 100), e(.routeurApparu, 150)]) == nil)
+        #expect(Disparition.plusRecente(parmi: [e(.appareilDisparu, 100), e(.appareilRevenu, 200), e(.appareilDisparu, 300)])
+                == Disparition(depuis: Self.t0.addingTimeInterval(300), routeur: false))
+        #expect(Disparition.plusRecente(parmi: [e(.appareilRevenu, 50), e(.routeurDisparu, 300)])
+                == Disparition(depuis: Self.t0.addingTimeInterval(300), routeur: true))
+        // Par la lecture des noeuds disparus : retour plus recent, pas d'entree (« disparu » seul).
+        let entree = Monde(faux: [Self.appareil("a", etat: .disparu), Self.appareil("b", etat: .disparu)]).entree()
+        let d = SantePieces.disparitions(entree: entree) { id in
+            id.cle == "a" ? [e(.appareilRevenu, 90), e(.appareilDisparu, 10)] : [e(.appareilDisparu, 10)]
+        }
+        #expect(d == [idt("b"): Disparition(depuis: Self.t0.addingTimeInterval(10), routeur: false)])
+    }
+
     /// Le journal n'est lu que pour les noeuds disparus ; un noeud disparu sans evenement n'a pas de date.
     @Test func disparitionsDesNoeudsDisparus() {
         let entree = Monde(faux: [Self.appareil("a", etat: .disparu), Self.appareil("b"), Self.appareil("c", .zigbee, etat: .disparu),
@@ -572,6 +605,40 @@ struct SantePiecesTests {
         #expect(SantePieces.routeursDisparus(journal: journal, releves: [.zigbee]) == [disparu("Z1", .zigbee, 40)])
         #expect(SantePieces.routeursDisparus(journal: journal, releves: [.thread]).map(\.id.protocole) == [.thread, .thread])
         #expect(SantePieces.routeursDisparus(journal: journal, releves: []).isEmpty)
+    }
+
+    /// Un routeur de Thread que seule la sonde voit (ni bordure, ni identite de Maison ou de Bonjour) et qui quitte la liste des
+    /// routeurs (`routeurThreadDisparu`) est un routeur disparu comme un autre : le panneau ne fait aucune difference de nature
+    /// entre les noeuds. Son retour (`routeurThreadApparu`) l'efface, comme un nouveau depart de Thread.
+    @Test func routeurThreadDisparuDeLaSonde() {
+        func disparu(_ cle: String, _ decalage: TimeInterval) -> RouteurDisparu {
+            RouteurDisparu(id: idt(cle), nom: "Nom de " + cle, depuis: Self.t0.addingTimeInterval(decalage))
+        }
+        let journal = [Self.evenement(.routeurThreadDisparu, "rloc:0800", 10), Self.evenement(.routeurThreadDisparu, "rloc:0C00", 20),
+                       Self.evenement(.routeurThreadApparu, "rloc:0C00", 30)]
+        #expect(SantePieces.routeursDisparus(journal: journal) == [disparu("rloc:0800", 10)])
+        let relance = journal + [Self.evenement(.surveillanceDemarree, nil, 100, .thread)]
+        #expect(SantePieces.routeursDisparus(journal: relance).isEmpty)
+        let deNouveau = journal + [Self.evenement(.routeurThreadDisparu, "rloc:0C00", 40)]
+        #expect(SantePieces.routeursDisparus(journal: deNouveau) == [disparu("rloc:0800", 10), disparu("rloc:0C00", 40)])
+        // Dans la lecture : une ligne perdue, sans place, avec le nom du journal.
+        let l = Self.lire([], routeursDisparus: SantePieces.routeursDisparus(journal: journal))
+        #expect(Self.lignes(l) == [Ligne(id: idt("rloc:0800"), nom: "Nom de rloc:0800", piece: nil,
+                                         cause: .routeurDisparu(depuis: Self.t0.addingTimeInterval(10)), cliquable: false)])
+    }
+
+    /// Le meme routeur, par la coque : le journal de la session le dit disparu apres le premier releve de Thread ; il revient.
+    @Test func routeurThreadDisparuParLaCoque() throws {
+        let s = Surveillance(mode: .direct, dossier: nil)
+        s.thread.integrer(ScenarioPanne.annonces(a: ScenarioPanne.fin))
+        s.ajouter([Self.evenement(.routeurThreadDisparu, "rloc:0800", 10)], de: .thread)
+        func lecture() -> Lecture {
+            SantePieces.lire(entree: EntreeScene(surveillance: s, places: PlacesGardees()), isolement: .maison, surveillance: s)
+        }
+        let ligne = try #require(Self.ligne(lecture(), idt("rloc:0800")))
+        #expect(ligne.cause == .routeurDisparu(depuis: Self.t0.addingTimeInterval(10)) && ligne.famille == .perdu && !ligne.cliquable)
+        s.ajouter([Self.evenement(.routeurThreadApparu, "rloc:0800", 20)], de: .thread)
+        #expect(Self.ligne(lecture(), idt("rloc:0800")) == nil, "revenu : plus perdu")
     }
 
     /// Un routeur disparu du journal (il a quitte la scene) est une ligne perdue : le nom du journal, « routeur disparu depuis »,
@@ -679,6 +746,55 @@ struct SantePiecesTests {
         // Elle revient avec le maillage qui la reprend.
         zigbee.zigbee.recevoir(MaillageDemoZigbee.maillageAvant, a: Date())
         #expect(Self.ligne(lecture(zigbee), prise) == nil, "revenue dans le maillage : plus perdue")
+    }
+
+    // MARK: - « … » de Zigbee : la donnee du pont compte
+
+    /// Un pont (sans sonde) qui donne une lampe, dans l'etat de connexion `connexion` (nil : le pont ne le dit pas).
+    private static func pontSeul(_ connexion: ConnexionZigbee?, lampes: Int = 1) -> NomsZigbee {
+        NomsZigbee(date: t0, accessoires: (1...lampes).map {
+            AppareilPont(nom: "Lampe \($0)", piece: "Salon", ieee: String(format: "A%015X", $0), connexion: connexion)
+        })
+    }
+
+    private static func lecture(_ s: Surveillance) -> Lecture {
+        SantePieces.lire(entree: EntreeScene(surveillance: s, places: PlacesGardees()), isolement: .maison, surveillance: s)
+    }
+
+    /// Un pont seul, sans sonde, qui donne l'etat de ses appareils est de la donnee : pas de « … ». Ses appareils sains font
+    /// « Tout va bien » ; un appareil perdu se compte ; un pont qui ne dit aucun etat (tous inconnus) n'a encore rien dit.
+    @Test func pontSeulSansSonde() {
+        let s = Surveillance(mode: .direct, dossier: nil)
+        s.thread.actif = false
+        s.zigbee.nomsPont = Self.pontSeul(.connecte)
+        #expect(s.zigbee.maillageAffiche == nil && !s.zigbee.appareilsAffiches.isEmpty)
+        #expect(SantePieces.sansReleve(s) == [.thread], "le pont dit l'etat de ses appareils : Zigbee a un releve")
+        let sain = Self.lecture(s)
+        #expect(sain.capsule.entrees == [Self.entree(.zigbee, Comptes())] && sain.capsule.toutVaBien)
+        #expect(sain.sections.map(\.enAttente) == [false])
+        // Un appareil que le pont dit deconnecte : perdu.
+        s.zigbee.nomsPont = Self.pontSeul(.deconnecte, lampes: 2)
+        let perdu = Self.lecture(s)
+        #expect(perdu.capsule.entrees == [Self.entree(.zigbee, Comptes(perdus: 2))] && !perdu.capsule.toutVaBien)
+        // Le pont ne dit aucun etat et la sonde n'a rien vu : toujours en attente d'un releve.
+        s.zigbee.nomsPont = Self.pontSeul(nil)
+        #expect(SantePieces.sansReleve(s) == [.thread, .zigbee])
+        let muet = Self.lecture(s)
+        #expect(muet.capsule.entrees == [Self.entree(.zigbee, nil)] && !muet.capsule.toutVaBien)
+    }
+
+    /// Zigbee actif sans pont ni sonde : « … », jamais « Tout va bien ». Eteint, il est absent de la capsule : un utilisateur de
+    /// Thread seul ne voit que Thread.
+    @Test func zigbeeSansPontNiSondeOuEteint() {
+        let s = Surveillance(mode: .direct, dossier: nil)
+        s.thread.actif = false
+        let rien = Self.lecture(s)
+        #expect(rien.capsule.entrees == [Self.entree(.zigbee, nil)] && !rien.capsule.toutVaBien && !rien.estVide)
+        s.thread.actif = true
+        s.zigbee.actif = false
+        let threadSeul = Self.lecture(s)
+        #expect(threadSeul.capsule.entrees.map(\.protocole) == [.thread] && threadSeul.sections.map(\.protocole) == [.thread])
+        #expect(threadSeul.ailleurs == nil)
     }
 
     // MARK: - La demo combinee

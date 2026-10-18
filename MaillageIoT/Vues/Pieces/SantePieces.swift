@@ -9,8 +9,9 @@ import MaillageCoeur
 ///
 /// Tous les noeuds, sans distinction de nature (spec 2.1) : appareils finaux, routeurs de Thread, routeurs de bordure, routeurs
 /// de Zigbee, coordinateur (le pont). Deux familles, d'apres l'etat du noeud :
-/// - **Perdu** : disparu (Thread et Zigbee), injoignable (le pont le dit tel) ; le coordinateur injoignable est « pont
-///   injoignable », un routeur disparu « routeur disparu ».
+/// - **Perdu** : disparu (Thread et Zigbee), injoignable (le pont le dit tel) ; le coordinateur disparu ou injoignable est
+///   « pont disparu » ou « pont injoignable », un routeur disparu « routeur disparu » (aussi un routeur de Thread que seule la
+///   sonde voit : aucune difference de nature entre les noeuds).
 /// - **A surveiller** : pile faible, joignable mais adresse plus annoncee (anneau verifie), adresse non annoncee, autre partition
 ///   (un appareil en partition coupee, un routeur de bordure d'une partition qui n'est pas la principale).
 /// Un noeud n'est dans le panneau qu'une fois : dans Perdu s'il y est, sinon avec la premiere cause a surveiller du tableau. Un
@@ -36,6 +37,7 @@ enum SantePieces {
         case disparu(depuis: Date?)
         case routeurDisparu(depuis: Date?)
         case injoignable
+        case pontDisparu(depuis: Date?)
         case pontInjoignable
         case pile(niveau: Int?)
         case adressePlusAnnoncee
@@ -44,7 +46,7 @@ enum SantePieces {
 
         var famille: Famille {
             switch self {
-            case .disparu, .routeurDisparu, .injoignable, .pontInjoignable: .perdu
+            case .disparu, .routeurDisparu, .pontDisparu, .injoignable, .pontInjoignable: .perdu
             case .pile, .adressePlusAnnoncee, .adresseNonAnnoncee, .autrePartition: .aSurveiller
             }
         }
@@ -128,12 +130,15 @@ enum SantePieces {
         var depuis: Date
         var routeur: Bool
 
-        /// La plus recente des disparitions (appareil ou routeur) d'une liste d'evenements d'un noeud, dans n'importe quel ordre ;
-        /// nil s'il n'y en a pas (le noeud est disparu avant le lancement, ou l'evenement est trop ancien).
+        /// La disparition en cours d'apres une liste d'evenements d'un noeud, dans n'importe quel ordre : la plus recente des
+        /// disparitions (appareil ou routeur), si aucun retour (`appareilRevenu`, `routeurApparu`) ne l'a suivie. nil sinon : le
+        /// noeud est disparu avant le lancement, l'evenement est trop ancien, ou un retour plus recent dit que cette disparition
+        /// est finie (« disparu » seul, sans heure).
         static func plusRecente(parmi evenements: [Evenement]) -> Disparition? {
-            evenements.filter { $0.type == .appareilDisparu || $0.type == .routeurDisparu }
-                .max { $0.date < $1.date }
-                .map { Disparition(depuis: $0.date, routeur: $0.type == .routeurDisparu) }
+            guard let derniere = evenements.filter({ $0.type == .appareilDisparu || $0.type == .routeurDisparu })
+                .max(by: { $0.date < $1.date }) else { return nil }
+            let suivie = evenements.contains { ($0.type == .appareilRevenu || $0.type == .routeurApparu) && $0.date > derniere.date }
+            return suivie ? nil : Disparition(depuis: derniere.date, routeur: derniere.type == .routeurDisparu)
         }
     }
 
@@ -278,6 +283,8 @@ enum SantePieces {
             switch a.etat {
             case .disparu:
                 let depuis = disparition?.depuis
+                // Le pont lui-meme : le coordinateur, le centre de Zigbee, meme quand il route.
+                if id.protocole == .zigbee && n?.genre == .centre { return .pontDisparu(depuis: depuis) }
                 return n?.routeur == true || disparition?.routeur == true ? .routeurDisparu(depuis: depuis) : .disparu(depuis: depuis)
             case .injoignable:
                 // Le pont lui-meme : le coordinateur, le centre de Zigbee.
@@ -329,8 +336,9 @@ enum SantePieces {
         return r
     }
 
-    /// Les routeurs que le journal dit disparus (`routeurDisparu`, d'un routeur de bordure de Thread ou d'un routeur de Zigbee) et
-    /// que rien n'a suivi : ni son retour (`routeurApparu`), ni un nouveau depart de son protocole (`surveillanceDemarree`, le
+    /// Les routeurs que le journal dit disparus (`routeurDisparu`, d'un routeur de bordure de Thread ou d'un routeur de Zigbee ;
+    /// `routeurThreadDisparu`, d'un routeur de Thread que seule la sonde voit) et que rien n'a suivi : ni son retour
+    /// (`routeurApparu`, `routeurThreadApparu`), ni un nouveau depart de son protocole (`surveillanceDemarree`, le
     /// premier releve d'une session : comme un appareil disparu, un routeur disparu ne se garde pas d'un lancement a l'autre). Un
     /// depart d'un reseau vu pour la premiere fois (`reseau` donne) n'efface rien. Le journal est lu dans l'ordre ou l'app a
     /// appris les choses. Un evenement sans sujet est ignore ; une ligne sans protocole est de Thread. Triee par identifiant.
@@ -341,11 +349,11 @@ enum SantePieces {
         for e in journal {
             let protocole = e.protocole ?? .thread
             switch e.type {
-            case .routeurDisparu:
+            case .routeurDisparu, .routeurThreadDisparu:
                 guard let s = e.sujet else { continue }
                 let id = IdNoeud(protocole, s.id)
                 disparus[id] = RouteurDisparu(id: id, nom: s.nom, depuis: e.date)
-            case .routeurApparu:
+            case .routeurApparu, .routeurThreadApparu:
                 guard let s = e.sujet else { continue }
                 disparus[IdNoeud(protocole, s.id)] = nil
             case .surveillanceDemarree where e.reseau == nil:
@@ -359,15 +367,16 @@ enum SantePieces {
 
     // MARK: - D'apres la coque
 
-    /// Les protocoles qui n'ont encore aucun releve : Thread tant qu'il n'a pas d'instantane, Zigbee tant qu'il n'a pas de maillage
-    /// a montrer (spec 5 : un releve ancien n'est pas « … » ; le bandeau « ancien » de la vue le dit deja). Un protocole sans
+    /// Les protocoles qui n'ont encore aucune donnee : Thread tant qu'il n'a pas d'instantane, Zigbee tant qu'il n'a ni maillage a
+    /// montrer ni appareil du pont dont l'etat est connu (un pont seul, sans sonde, qui dit l'etat de ses appareils EST de la
+    /// donnee ; un pont qui n'en dit aucun n'a encore rien dit) (spec 5 : un releve ancien n'est pas « … » ; le bandeau « ancien » de la vue le dit deja). Un protocole sans
     /// `switch` ici ne compile pas.
     @MainActor
     static func sansReleve(_ s: Surveillance) -> Set<Protocole> {
         Set(Protocole.allCases.filter { p in
             switch p {
             case .thread: s.thread.instantane == nil
-            case .zigbee: s.zigbee.maillageAffiche == nil
+            case .zigbee: s.zigbee.maillageAffiche == nil && !s.zigbee.appareilsAffiches.contains { $0.etat != .inconnu }
             }
         })
     }
