@@ -8,7 +8,7 @@ Mise a jour : `bash outils/recopier-exports-anciennes-apps.sh` (recopie et verif
 | Dossier | Depot d'origine | Version | Commit d'origine | Chemin d'origine |
 |---|---|---|---|---|
 | `thread-1.4.0-export/` | maillage-thread | 1.4.0 | `80db469` | `docs/export-exemple/` |
-| `zigbee-1.2.0-export/` | maillage-zigbee | 1.2.0 | `412de0b` | `docs/export-exemple/` |
+| `zigbee-1.2.0-export/` | maillage-zigbee | 1.2.0 | `6166946` | `docs/export-exemple/` |
 
 Le commit est le dernier de l'ancien depot qui touche `docs/export-exemple/`. Ces dossiers ne se modifient jamais a la main :
 une difference avec l'ancien depot est un ecart a signaler a la session de cette app.
