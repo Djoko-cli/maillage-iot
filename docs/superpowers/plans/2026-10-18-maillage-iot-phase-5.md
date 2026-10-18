@@ -104,12 +104,12 @@
 
 Selon la fiche de passation d'Amaran (§5 et §6), dans un clone complet à part, hors du dépôt (`~/Dev/maillage-iot-repetition-maj/`, jamais poussé) ; script et journaux dans `.superpowers/publication/` (ignoré par git).
 
-- [ ] **Step 1: Préparer** — clone ; identifiant `fr.djoko.maillage.iot.essai-maj` et `MaillageSuffixeServices` non vide (services de trousseau à part) dans le `project.yml` du clone ; `ANONYMISATION_PRIVE` pointe vers celui du dépôt principal ; `git tag -d` des étiquettes ; paire Ed25519 d'essai par `openssl` (rien dans le trousseau) ; `CLE_MISES_A_JOUR` du clone = sa clé publique ; flux servi en local (`127.0.0.1`).
-- [ ] **Step 2: N-1** — `MARKETING_VERSION 1.0.0`, **sans** le type Bonjour `_hue._tcp` ; `publier.sh --repetition … --url-base http://127.0.0.1:<port>/ --cle-privee … --cle-publique …`, signée Developer ID et notarisée.
-- [ ] **Step 3: N** — `1.0.1`, avec `_hue._tcp` ; même commande ; flux à deux entrées.
-- [ ] **Step 4: Attendus automatiques** — `sparkle-cli` : sans nouveauté rien ; un .dmg mal signé refusé (erreur 4005) ; N s'installe sur N-1 ; `spctl` « Notarized Developer ID » sur le .dmg et l'app ; `stapler validate` ; contrôles d'anonymisation : aucun défaut ; droits de l'app signée = ceux de §5.2 plus l'exception Automatisation, sans `cs.*`.
-- [ ] **Step 5: Essai à la main avec Djoko** — N-1 ouverte (lancée et fermée par PID), « Rechercher les mises à jour… », « Installer et relancer » ; une seule alerte macOS au plus ; trousseau d'essai et réglages relus sans demande ; Bonjour : le pont Hue est trouvé par `_hue._tcp` après la mise à jour sans redémarrage (sinon : le noter, et la note de version de toute future version qui ajoute un type Bonjour dira de redémarrer le Mac).
-- [ ] **Step 6: Ranger** — processus par PID, serveur, éléments de trousseau d'essai, conteneur d'essai à la corbeille ; résultats au registre `.superpowers/fusion/registre-phase-5.md` (comptes et verdicts, aucune valeur d'identité).
+- [x] **Step 1: Préparer** — clone ; identifiant `fr.djoko.maillage.iot.essai-maj` et `MaillageSuffixeServices` non vide (services de trousseau à part) dans le `project.yml` du clone ; `ANONYMISATION_PRIVE` pointe vers celui du dépôt principal ; `git tag -d` des étiquettes ; paire Ed25519 d'essai par `openssl` (rien dans le trousseau) ; `CLE_MISES_A_JOUR` du clone = sa clé publique ; flux servi en local (`127.0.0.1`).
+- [x] **Step 2: N-1** — `MARKETING_VERSION 1.0.0`, **sans** le type Bonjour `_hue._tcp` ; `publier.sh --repetition … --url-base http://127.0.0.1:<port>/ --cle-privee … --cle-publique …`, signée Developer ID et notarisée.
+- [x] **Step 3: N** — `1.0.1`, avec `_hue._tcp` ; même commande ; flux à deux entrées.
+- [x] **Step 4: Attendus automatiques** — `sparkle-cli` : sans nouveauté rien ; un .dmg mal signé refusé (erreur 4005) ; N s'installe sur N-1 ; `spctl` « Notarized Developer ID » sur le .dmg et l'app ; `stapler validate` ; contrôles d'anonymisation : aucun défaut ; droits de l'app signée = ceux de §5.2 plus l'exception Automatisation, sans `cs.*`.
+- [x] **Step 5: Essai à la main avec Djoko** — N-1 ouverte (lancée et fermée par PID), « Rechercher les mises à jour… », « Installer et relancer » ; une seule alerte macOS au plus ; trousseau d'essai et réglages relus sans demande ; Bonjour : le pont Hue est trouvé par `_hue._tcp` après la mise à jour sans redémarrage (sinon : le noter, et la note de version de toute future version qui ajoute un type Bonjour dira de redémarrer le Mac).
+- [x] **Step 6: Ranger** — processus par PID, serveur, éléments de trousseau d'essai, conteneur d'essai à la corbeille ; résultats au registre `.superpowers/fusion/registre-phase-5.md` (comptes et verdicts, aucune valeur d'identité).
 
 ---
 
