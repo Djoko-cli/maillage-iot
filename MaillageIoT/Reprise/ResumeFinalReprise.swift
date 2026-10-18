@@ -153,6 +153,11 @@ enum TexteReprise {
         return traduire("Ce que l'app avait écrit entre-temps est resté en place, rien n'a été écrasé : \(liste). Les originaux remplacés sont gardés dans le dossier .reprise-conservee.", locale)
     }
 
+    /// Apres un refus de macOS (Automatisation non accordee) : la quitter soi-meme, et ou reautoriser (macOS ne redemande plus).
+    static func ancienneAppAQuitterSoiMeme(_ nomApp: String, locale: Locale) -> String {
+        traduire("macOS n'a pas laissé Maillage IoT quitter \(nomApp). La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra. Pour autoriser Maillage IoT à la quitter la prochaine fois : Réglages Système › Confidentialité et sécurité › Automatisation.", locale)
+    }
+
     static func etape(_ e: EtapeApplication, locale: Locale) -> String {
         switch e {
         case .preparation: traduire("la préparation", locale)

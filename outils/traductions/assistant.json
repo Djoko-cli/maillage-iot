@@ -86,7 +86,7 @@
   "macOS a refusé le réseau local à Maillage IoT : l'autoriser dans Réglages Système › Confidentialité et sécurité › Réseau local.": "macOS denied Maillage IoT the local network: allow it in System Settings › Privacy & Security › Local Network.",
   "macOS demandera l'accord à la première connexion. La clé est alors recopiée dans Maillage IoT ; l'ancienne app garde la sienne et son accès.": "macOS will ask for approval at the first connection. The key is then copied into Maillage IoT; the old app keeps its own key and its access.",
   "macOS n'a pas encore reçu de réponse : accepter la demande d'autorisation de Maillage IoT.": "macOS has not received an answer yet: accept the Maillage IoT authorization request.",
-  "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra.": "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice.",
+  "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra. Pour autoriser Maillage IoT à la quitter la prochaine fois : Réglages Système › Confidentialité et sécurité › Automatisation.": "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice. To allow Maillage IoT to quit it next time: System Settings › Privacy & Security › Automation.",
   "« Repartir d'un journal vide » renomme le journal des reprises en imports.json.abime, sans rien supprimer, puis vérifie de nouveau l'export.": "“Start from an empty log” renames the import log to imports.json.abime, without deleting anything, then verifies the export again.",
   "À refaire": "Still to do"
 }

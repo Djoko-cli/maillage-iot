@@ -165,7 +165,7 @@ struct FenetreReprise: View {
             }
         case .aQuitterSoiMeme:
             Section {
-                Label("macOS n'a pas laissé Maillage IoT quitter \(app.nomApp). La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra.", systemImage: "exclamationmark.triangle.fill")
+                Label(TexteReprise.ancienneAppAQuitterSoiMeme(app.nomApp, locale: locale), systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
             }
         }

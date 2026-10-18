@@ -150,6 +150,16 @@ struct QuitterAncienneAppTests {
         }
     }
 
+    /// Apres un refus d'Automatisation macOS ne redemande plus : le texte de repli dit ou reautoriser, dans les deux langues.
+    @Test func leRepliDitOuReautoriserLAutomatisation() {
+        let fr = TexteReprise.ancienneAppAQuitterSoiMeme("Maillage Thread", locale: AssistantRepriseTests.fr)
+        #expect(fr.contains("Maillage Thread"))
+        #expect(fr.contains("Réglages Système › Confidentialité et sécurité › Automatisation"), "\(fr)")
+        let en = TexteReprise.ancienneAppAQuitterSoiMeme("Maillage Thread", locale: AssistantRepriseTests.en)
+        #expect(en.contains("Maillage Thread"))
+        #expect(en.contains("System Settings › Privacy & Security › Automation"), "\(en)")
+    }
+
     /// L'invite d'Automatisation peut attendre longtemps : pendant ce temps l'ecran dit qu'on attend (le bouton « Quitter » ne
     /// repart pas), puis, si macOS refuse, l'assistant passe a « la quitter soi-meme ».
     @Test func pendantLInviteLEcranAttendEtUnSecondClicNEnvoieRien() async throws {

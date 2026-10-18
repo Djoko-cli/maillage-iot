@@ -10673,18 +10673,18 @@
         }
       }
     },
-    "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra." : {
+    "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra. Pour autoriser Maillage IoT à la quitter la prochaine fois : Réglages Système › Confidentialité et sécurité › Automatisation." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice."
+            "value" : "macOS did not let Maillage IoT quit %@. Quit it yourself (the app's menu, then Quit): this window will notice. To allow Maillage IoT to quit it next time: System Settings › Privacy & Security › Automation."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra."
+            "value" : "macOS n'a pas laissé Maillage IoT quitter %@. La quitter soi-même (menu de l'app, puis Quitter) : cette fenêtre le verra. Pour autoriser Maillage IoT à la quitter la prochaine fois : Réglages Système › Confidentialité et sécurité › Automatisation."
           }
         }
       }
