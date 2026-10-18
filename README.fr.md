@@ -7,6 +7,21 @@ ensemble, depuis la barre des menus du Mac. Elle réunit deux apps plus ancienne
 [Maillage Thread](https://github.com/Djoko-cli/maillage-thread) et
 [Maillage Zigbee](https://github.com/Djoko-cli/maillage-zigbee), qu'elle remplace.
 
+<p align="center"><img src="docs/images/vue-3d.png" alt="La vue par pièces en 3D : Thread et Zigbee ensemble, avec la maison, ses niveaux, ses pièces, ses routeurs et ses liens radio" width="100%"></p>
+
+<p align="center">
+  <img src="docs/images/vue-2d-3d.gif" alt="De la 2D à la 3D" width="49%">
+  <img src="docs/images/zoom.gif" alt="Zoom sur un niveau et une pièce, puis retour" width="49%">
+</p>
+
+<p align="center">
+  <img src="docs/images/vue-2d.png" alt="La vue par pièces en 2D" width="32%">
+  <img src="docs/images/etage-isole.png" alt="Un niveau isolé, avec la fiche d'un routeur Zigbee" width="32%">
+  <img src="docs/images/piece-isolee.png" alt="Une pièce isolée, avec la fiche d'un appareil Thread" width="32%">
+</p>
+
+Les images viennent du mode démo (`-demo`) : tous les noms et identifiants qu'elles montrent sont inventés.
+
 ## Ce qu'elle fait
 
 - Les nœuds Thread et Zigbee sur la même vue par pièces : ronds pour Thread, hexagonaux pour Zigbee, la
