@@ -45,10 +45,10 @@
   - `ailleurs` : comptes hors portée (nil à la vue d'ensemble ou si zéro).
 - Consumes : `EntreeScene` (`appareils`, `scene.noeuds`, `scene.pieces`, `scene.etages`, `montres`), `Isolement`.
 
-- [ ] **Step 1: Tests RED** — un test par ligne du tableau §2.1 (perdu : disparu Thread et Zigbee, injoignable Zigbee ; à surveiller : pile faible, adresse plus annoncée, adresse non annoncée, partition coupée / autre partition) **pour un appareil et pour un routeur** (et le pont injoignable) ; un nœud des deux familles n'apparaît qu'une fois, en Perdu ; ordre de tri ; portée maison / niveau / pièce par la **pièce placée** (cas d'un nœud placé ailleurs que sa pièce Maison) ; nœud sans pièce placée dans « Ailleurs » ; comptes de la capsule toujours maison ; « … » pour un protocole sans relevé ; protocole masqué ou éteint absent ; date de disparition : la plus récente, et « disparu » sans heure quand elle manque ; démo combinée : la lecture n'est pas vide et ne contient que des nœuds de la démo.
-- [ ] **Step 2: GREEN** — implémenter, en lisant les états des routeurs là où la scène et les suivis les portent (le dire au rapport).
-- [ ] **Step 3: Vérifier** — porte de la tâche.
-- [ ] **Step 4: Commit** — « Sante : modele du panneau (familles, portee, ailleurs) ».
+- [x] **Step 1: Tests RED** — un test par ligne du tableau §2.1 (perdu : disparu Thread et Zigbee, injoignable Zigbee ; à surveiller : pile faible, adresse plus annoncée, adresse non annoncée, partition coupée / autre partition) **pour un appareil et pour un routeur** (et le pont injoignable) ; un nœud des deux familles n'apparaît qu'une fois, en Perdu ; ordre de tri ; portée maison / niveau / pièce par la **pièce placée** (cas d'un nœud placé ailleurs que sa pièce Maison) ; nœud sans pièce placée dans « Ailleurs » ; comptes de la capsule toujours maison ; « … » pour un protocole sans relevé ; protocole masqué ou éteint absent ; date de disparition : la plus récente, et « disparu » sans heure quand elle manque ; démo combinée : la lecture n'est pas vide et ne contient que des nœuds de la démo.
+- [x] **Step 2: GREEN** — implémenter, en lisant les états des routeurs là où la scène et les suivis les portent (le dire au rapport).
+- [x] **Step 3: Vérifier** — porte de la tâche.
+- [x] **Step 4: Commit** — « Sante : modele du panneau (familles, portee, ailleurs) ».
 
 ---
 
