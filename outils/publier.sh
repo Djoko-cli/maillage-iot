@@ -15,15 +15,16 @@
 # SPARKLE_BIN : le dossier bin de l'archive de Sparkle 2.10.0 (sign_update, generate_keys), obligatoire hors repetition.
 # Developer ID et notarisation des la 1.0.0 (decision de Djoko du 12/10/2026) : NOTARISER=1 et PROFIL_NOTARISATION=
 # djoko-notarisation (le profil que notarytool store-credentials a range dans le trousseau) par defaut.
-# Avant toute construction, trois gardes : jamais l'identite de repetition (outils/refuser_repetition.py, sur l'identifiant
-# de la cible MaillageIoT lu dans project.yml), l'icone presente, un clone complet.
+# Avant toute construction, les gardes : jamais l'identite de repetition (outils/refuser_repetition.py sur l'identifiant de
+# la cible MaillageIoT lu dans project.yml, et aucun MaillageSuffixeServices dans son bloc), l'icone presente, un clone
+# complet ; hors repetition, aucune surcharge d'outil dans l'environnement (XCRUN, CODESIGN, GH...).
 # PUBLIER_PYTHON_ESSAI : reserve aux tests de ce script (l'interpreteur de la garde et de publication.py, un
 # enregistreur), honoree seulement avec le marqueur PUBLIER_ESSAI=1 que les tests posent ; /usr/bin/python3 sinon. Un
 # PYTHON de l'environnement n'a aucun effet.
 # CONTROLE_ANONYMISATION est toujours impose ici (une valeur de l'appelant ne remplace jamais la double garde) ; les
 # surcharges reservees aux tests (CONTROLE_THREAD, TABLE_THREAD, CONTROLE_ZIGBEE, TABLE_ZIGBEE, PUBLIER_PYTHON_ESSAI, PUBLIER_ESSAI) sont
 # retirees de l'environnement avant l'exec ; les dossiers prives se reglent par ANONYMISATION_PRIVE (voir
-# outils/anonymisation_double.py).
+# outils/anonymisation_double.py), retire hors repetition.
 # Produits : build/publication/X.Y.Z/ ; compilation dans DD (par defaut DerivedData/maillage-iot-publication).
 set -eu
 cd "$(dirname "$0")/.."
@@ -80,6 +81,20 @@ if [ $repetition = 0 ] && { [ "$IDENTITE_SIGNATURE" != "Developer ID Application
   echo "publier.sh : une version publiee est signee par le Developer ID et notarisee (IDENTITE_SIGNATURE, NOTARISER)" >&2
   exit 1
 fi
+# Hors repetition, aucune surcharge d'outil de l'environnement : publication.py (classe Outils) les lit toutes, et un
+# faux XCRUN, par exemple, sauterait la notarisation sans bruit. Meme vide, une variable posee est refusee. Les noms
+# sont ceux de publication.py (un test compare les deux listes) ; SPARKLE_BIN (le dossier des outils de Sparkle, requis)
+# et CONTROLE_/TABLE_ANONYMISATION (imposes plus bas) n'en font pas partie. ANONYMISATION_PRIVE est retire : seul le
+# dossier prive du depot principal sert. En repetition, rien ne change.
+if [ $repetition = 0 ]; then
+  for nom in XCRUN SPCTL CODESIGN GH GIT SECURITY OPENSSL HDIUTIL DITTO XCODEGEN XCODEBUILD; do
+    if eval "[ \"\${$nom+x}\" = x ]"; then
+      echo "publier.sh : $nom est pose dans l'environnement ; une version publiee n'accepte aucune surcharge d'outil (retirer $nom)" >&2
+      exit 1
+    fi
+  done
+  unset ANONYMISATION_PRIVE
+fi
 DD=${DD:-$HOME/Library/Developer/Xcode/DerivedData/maillage-iot-publication}
 # Le numero de compilation compte les commits : un clone superficiel donnerait 1, que l'app prend pour une
 # compilation de travail (jamais de mise a jour). Il faut un clone complet.
@@ -108,6 +123,25 @@ identifiants=$(awk '
   }' project.yml)
 if [ -z "$identifiants" ]; then
   echo "publier.sh : identifiant de la cible MaillageIoT introuvable dans project.yml ; rien n'est publie" >&2
+  exit 1
+fi
+# Le suffixe des services du trousseau (identite d'essai ou de repetition) : une ligne MaillageSuffixeServices non vide
+# dans le bloc de la cible MaillageIoT, et la garde refuse (les commentaires ne comptent pas).
+suffixe=$(awk '
+  /^targets:[[:space:]]*(#.*)?$/ { cibles = 1; cible = 0; next }
+  /^[^[:space:]#]/ { cibles = 0; cible = 0; next }
+  cibles && /^  [^[:space:]#]/ { cible = ($0 ~ /^  MaillageIoT:[[:space:]]*(#.*)?$/); next }
+  cible && /^[[:space:]]*MaillageSuffixeServices:/ {
+    v = $0
+    sub(/^[^:]*:[[:space:]]*/, "", v)
+    sub(/^#.*$/, "", v)
+    sub(/[[:space:]]+#.*$/, "", v)
+    sub(/[[:space:]]+$/, "", v)
+    gsub(/^["\047]|["\047]$/, "", v)
+    if (v != "") print v
+  }' project.yml)
+if [ -n "$suffixe" ]; then
+  echo "publier.sh : la cible MaillageIoT porte MaillageSuffixeServices ($suffixe) : c'est une identite d'essai ou de repetition, jamais publiee" >&2
   exit 1
 fi
 # La repetition n'est jamais publiee : la garde passe sur chaque identifiant de la cible, avant tout le reste.

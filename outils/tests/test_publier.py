@@ -48,7 +48,8 @@ ENREGISTREUR = r'''import json, os, sys
 with open(os.environ["ENREGISTREUR"], "w") as f:
     json.dump({"argv": sys.argv[1:], "env": {k: os.environ.get(k) for k in (
         "DD", "CONTROLE_ANONYMISATION", "TABLE_ANONYMISATION", "NOTARISER", "PROFIL_NOTARISATION", "SPARKLE_BIN",
-        "CONTROLE_THREAD", "TABLE_THREAD", "CONTROLE_ZIGBEE", "TABLE_ZIGBEE", "PUBLIER_PYTHON_ESSAI", "PUBLIER_ESSAI", "PYTHON")}}, f)
+        "CONTROLE_THREAD", "TABLE_THREAD", "CONTROLE_ZIGBEE", "TABLE_ZIGBEE", "PUBLIER_PYTHON_ESSAI", "PUBLIER_ESSAI", "PYTHON",
+        "ANONYMISATION_PRIVE")}}, f)
 '''
 
 FAUX_OUTIL = '#!/bin/sh\necho "$0 $*" >> "$ALERTE"\nexit 99\n'
@@ -351,6 +352,85 @@ class TestPublier(unittest.TestCase):
         for nom in ambiant:
             self.assertIsNone(env[nom], nom)
         self.assertEqual(env["CONTROLE_ANONYMISATION"], "outils/anonymisation_double.py")
+
+    # Les surcharges d'outils que lit publication.py (classe Outils) : hors repetition, une publication reelle les refuse.
+    SURCHARGES_OUTILS = ("XCRUN", "SPCTL", "CODESIGN", "GH", "GIT", "SECURITY", "OPENSSL", "HDIUTIL", "DITTO",
+                         "XCODEGEN", "XCODEBUILD")
+
+    def test_surcharges_d_outils_refusees_hors_repetition(self):
+        """Hors --repetition, une surcharge d'outil posee dans l'environnement (meme vide) est refusee, cause nommee, rien
+        n'est lance : un faux XCRUN sauterait la notarisation sans bruit."""
+        b = Banc(self)
+        for nom in self.SURCHARGES_OUTILS:
+            for valeur in ("/bin/true", ""):
+                with self.subTest(nom=nom, valeur=valeur):
+                    r = b.lancer("1.0.0", env={nom: valeur})
+                    self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                    self.assertIn(nom, r.stderr)
+                    self.assertFalse(b.appele())
+        self.assertFalse(b.outil_lance())
+
+    def test_liste_des_surcharges_celle_de_publication_py(self):
+        """La liste de publier.sh et la constante du test sont les variables d'outils que lit la classe Outils de
+        publication.py (hors SPARKLE_BIN, requis, et les deux controles, imposes par publier.sh)."""
+        with open(os.path.join(OUTILS, "publication.py"), encoding="utf-8") as f:
+            texte = f.read()
+        classe = texte[texte.index("class Outils:"):texte.index("def lancer(")]
+        lues = set(re.findall(r"e\.get\('([A-Z_]+)'", classe)) - {"SPARKLE_BIN", "CONTROLE_ANONYMISATION", "TABLE_ANONYMISATION"}
+        with open(os.path.join(OUTILS, "publier.sh"), encoding="utf-8") as f:
+            sh = re.search(r"for nom in ([A-Z ]+); do", f.read()).group(1).split()
+        self.assertEqual(set(sh), lues)
+        self.assertEqual(set(self.SURCHARGES_OUTILS), lues)
+
+    def test_surcharges_d_outils_acceptees_en_repetition(self):
+        """En repetition, rien ne change : les surcharges d'outils passent a publication.py (les tests de la repetition)."""
+        b = Banc(self)
+        for nom in self.SURCHARGES_OUTILS:
+            with self.subTest(nom=nom):
+                if b.appele():
+                    os.remove(b.appel)
+                r = b.lancer("1.0.0", "--repetition", "/tmp/x", "--url-base", "http://localhost:1", env={nom: "/bin/true"})
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                self.assertTrue(b.appele())
+
+    def test_dossier_prive_retire_hors_repetition(self):
+        """Hors --repetition, ANONYMISATION_PRIVE n'arrive pas a publication.py : seul le dossier prive du depot principal
+        sert. En repetition, il est conserve."""
+        b = Banc(self)
+        r = b.lancer("1.0.0", env={"ANONYMISATION_PRIVE": "/essai/prive"})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIsNone(b.appel_json()["env"]["ANONYMISATION_PRIVE"])
+        os.remove(b.appel)
+        r = b.lancer("1.0.0", "--repetition", "/tmp/x", "--url-base", "http://localhost:1",
+                     env={"ANONYMISATION_PRIVE": "/essai/prive"})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(b.appel_json()["env"]["ANONYMISATION_PRIVE"], "/essai/prive")
+
+    def test_suffixe_des_services_dans_la_cible_refuse(self):
+        """Une ligne MaillageSuffixeServices non vide dans le bloc de la cible MaillageIoT est une identite d'essai ou de
+        repetition : code 1 avant tout appel, meme en repetition. Vide, en commentaire ou dans une autre cible : sans effet."""
+        def avec(ligne):
+            return PROJECT.replace("        PRODUCT_NAME: Essai\n", "        PRODUCT_NAME: Essai\n" + ligne)
+        refuses = ("        MaillageSuffixeServices: .essai\n", "    MaillageSuffixeServices: '.repetition'  # x\n")
+        for ligne in refuses:
+            b = Banc(self, project=avec(ligne))
+            for args in (("1.0.0",), ("1.0.0", "--repetition", "/tmp/x", "--url-base", "http://localhost:1")):
+                with self.subTest(ligne=ligne, args=args):
+                    r = b.lancer(*args)
+                    self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+                    self.assertIn("MaillageSuffixeServices", r.stderr)
+                    self.assertFalse(b.appele())
+        acceptes = ("        MaillageSuffixeServices:\n", '        MaillageSuffixeServices: ""\n',
+                    "        # MaillageSuffixeServices: .essai\n")
+        for ligne in acceptes:
+            b = Banc(self, project=avec(ligne))
+            with self.subTest(ligne=ligne):
+                r = b.lancer("1.0.0")
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        b = Banc(self, project=PROJECT.replace("fr.exemple.essai.repetition\n  MaillageIoT:",
+                                               "fr.exemple.essai.repetition\n        MaillageSuffixeServices: .repetition\n  MaillageIoT:"))
+        r = b.lancer("1.0.0")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_repetition_valeur_vide_refusee(self):
         """Une valeur vide de --repetition (deux formes, ou valeur absente) ne saute jamais le cliquet : code 1 avec une
