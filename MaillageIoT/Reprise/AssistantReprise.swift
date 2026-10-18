@@ -71,6 +71,8 @@ final class AssistantReprise {
     private(set) var relanceEchouee = false
     /// Une validation ou un import est en cours : rien d'autre ne demarre.
     private(set) var occupe = false
+    /// Le resume a deja ete a l'ecran dans ce processus : le rouvrir (fenetre restee derriere) ouvre l'accueil.
+    @ObservationIgnored private var resumeAffiche = false
 
     @ObservationIgnored private let importeur: any ImporteurExport
     @ObservationIgnored private let dossierDonnees: URL
@@ -196,6 +198,9 @@ final class AssistantReprise {
     func rouvrir() {
         switch etape {
         case .refuse, .impossible, .dejaRepris, .confirmation: recommencer()
+        // Le resume a deja ete vu (la fenetre est restee ouverte derriere, ni « Termine » ni la croix) : il ne revient pas.
+        // Apres une relance echouee il reste (l'app ne tourne pas encore sur les donnees reprises).
+        case .termine where resumeAffiche && !relanceEchouee: terminer()
         default: break
         }
     }
@@ -323,6 +328,7 @@ final class AssistantReprise {
     func terminer() {
         DepotResume(preferences: preferences).effacer()
         proposition = false
+        resumeAffiche = false
         if case .termine = etape { etape = .accueil }
     }
 
@@ -374,6 +380,7 @@ final class AssistantReprise {
     /// Apres une relance qui a echoue, la cle reste aussi : l'app ne tourne pas encore sur les donnees reprises.
     func resumeMontre() {
         guard case .termine = etape, !relanceEchouee else { return }
+        resumeAffiche = true
         DepotResume(preferences: preferences).effacer()
     }
 

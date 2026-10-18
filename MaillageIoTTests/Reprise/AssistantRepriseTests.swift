@@ -1017,4 +1017,46 @@ struct AssistantRepriseTests {
         controleur.montrer()
         #expect(suivant.etape == .accueil, "le second clic ouvre l'accueil")
     }
+
+    @MainActor
+    @Test func leResumeDejaVuNeRevientPasMemeSiLaFenetreResteOuverteDerriere() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        let controleur = ControleurReprise(assistant: suivant)
+        defer { controleur.fermer() }
+        controleur.montrer()
+        guard case .termine = suivant.etape else { throw ApplicationImportTests.Echec("\(suivant.etape)") }
+        // La fenetre passe derriere, sans Termine ni croix : le clic sur « Reprendre des donnees… » ouvre l'accueil.
+        controleur.montrer()
+        #expect(suivant.etape == .accueil, "le resume a deja ete vu : le second montrer() ouvre l'accueil")
+        #expect(DepotResume(preferences: b.preferences).lire() == nil)
+        #expect(!suivant.proposition)
+    }
+
+    @MainActor
+    @Test func apresUneRelanceEchoueeLeSecondMontrerGardeLeResume() async throws {
+        let b = try Banc(relanceEchoue: true)
+        defer { b.nettoyer() }
+        await b.assistant.valider(try ApplicationImportTests.exemple(.maillageThread))
+        await b.assistant.lancer()
+        #expect(b.assistant.relanceEchouee)
+        let controleur = ControleurReprise(assistant: b.assistant)
+        defer { controleur.fermer() }
+        controleur.montrer()
+        controleur.montrer()
+        guard case .termine = b.assistant.etape else { throw ApplicationImportTests.Echec("\(b.assistant.etape)") }
+        #expect(DepotResume(preferences: b.preferences).lire() != nil, "l'app ne tourne pas encore sur les donnees reprises")
+    }
+
+    @MainActor
+    @Test func lePremierMontrerDuLancementGardeSonResume() async throws {
+        let b = try Banc()
+        defer { b.nettoyer() }
+        let suivant = try await apresLaRelance(b)
+        #expect(await suivant.preparerLancement(recuperation: .success(.rienAFaire)))
+        suivant.rouvrir() // avant l'affichage : le resume est encore a montrer
+        guard case .termine = suivant.etape else { throw ApplicationImportTests.Echec("\(suivant.etape)") }
+    }
 }
