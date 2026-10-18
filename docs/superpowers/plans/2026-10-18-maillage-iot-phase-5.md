@@ -115,7 +115,7 @@ Selon la fiche de passation d'Amaran (§5 et §6), dans un clone complet à part
 
 ### Task 6: Relecture finale et fusion de l'outillage
 
-- [ ] **Step 1: Relecture finale** — par Opus, sur toute la branche `phase-5` (outil recopié à l'octet, `publier.sh`, enveloppe d'anonymisation, notes et README, résultats de la répétition).
+- [x] **Step 1: Relecture finale** — par Opus, sur toute la branche `phase-5` (outil recopié à l'octet, `publier.sh`, enveloppe d'anonymisation, notes et README, résultats de la répétition).
 - [ ] **Step 2: Fusion** — correctifs éventuels, puis fusion de `phase-5` dans `main` et push, avec l'accord de Djoko (la publication exige `main` = `origin/main`, arbre propre).
 
 ---
