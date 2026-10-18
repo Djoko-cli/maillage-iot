@@ -215,7 +215,9 @@ struct EntreeSceneTests {
         #expect(PastilleChef.texte(.zigbee).contains("Zigbee") && PastilleChef.texte(.thread).contains("Thread"))
         let heure = Date(timeIntervalSince1970: 1_700_000_000)
         let avecLQI = PointCourbe(date: heure, valeur: 2, troncon: 0, lqi: 182)
-        #expect(GrapheQualite.ligneSurvol("Pont Hue", avecLQI) == String(localized: "\("Pont Hue") : LQI 182"))
+        // Le LQI s'interpole, comme dans l'app : la cle du catalogue est « %@ : LQI %lld ». Un 182 ecrit dans le texte ne la
+        // trouverait pas, et l'attendu resterait francais (« Pont Hue : LQI 182 ») dans une autre langue.
+        #expect(GrapheQualite.ligneSurvol("Pont Hue", avecLQI) == String(localized: "\("Pont Hue") : LQI \(182)"))
         #expect(GrapheQualite.ligneSurvol("X", PointCourbe(date: heure, valeur: 2, troncon: 0))
                 == String(localized: "\("X") : \(CourbesFiche.nomQualite(2))"), "sans LQI, la qualite")
         // L'identite du graphe de la fiche porte le protocole : meme cle, autre noeud.

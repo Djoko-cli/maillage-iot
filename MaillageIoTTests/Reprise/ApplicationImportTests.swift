@@ -33,7 +33,10 @@ struct ApplicationImportTests {
             NSDictionary(dictionary: UserDefaults(suiteName: nom)?.persistentDomain(forName: nom) ?? [:])
         }
 
-        func objet(_ cle: String) -> Any? { UserDefaults(suiteName: nom)?.object(forKey: cle) }
+        /// Ce que l'import a ECRIT dans le domaine de la suite. Jamais `object(forKey:)`, qui lit la liste de recherche : elle
+        /// passe d'abord par le domaine des arguments du lancement (`-AppleLanguages` que xcodebuild pose pour
+        /// `-testLanguage`), puis par les valeurs globales du Mac.
+        func objet(_ cle: String) -> Any? { UserDefaults(suiteName: nom)?.persistentDomain(forName: nom)?[cle] }
 
         deinit { UserDefaults(suiteName: nom)?.removePersistentDomain(forName: nom) }
     }

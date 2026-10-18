@@ -100,12 +100,17 @@ struct BonjourNonDeclareTests {
         #expect(!pont.pont.bonjourNonDeclare && !pont.pont.reseauLocalRefuse)
     }
 
-    /// Le texte des Reglages dit le remede, sans parler du reseau local.
-    @Test func texteEnClair() {
+    /// Le texte des Reglages dit le remede, sans parler du reseau local. Les trois extraits suivent la langue du lancement des
+    /// tests (`-testLanguage fr`, puis `en`) : en francais, ceux d'aujourd'hui, mot pour mot.
+    @Test func texteEnClair() throws {
+        let francais = ThreadRouteTests.langue == "fr"
+        guard francais || ThreadRouteTests.langue == "en" else {
+            throw ThreadRouteTests.ErreurLangue(langue: ThreadRouteTests.langue)
+        }
         let t = ReglagesPont.texteNonDeclare
-        #expect(t.contains("macOS refuse la recherche du pont Hue"))
-        #expect(t.contains("redémarrez le Mac"))
-        #expect(!t.contains("Réseau local"))
+        #expect(t.contains(francais ? "macOS refuse la recherche du pont Hue" : "macOS refuses the app's search for the Hue bridge"))
+        #expect(t.contains(francais ? "redémarrez le Mac" : "restart the Mac"))
+        #expect(!t.contains(francais ? "Réseau local" : "Local Network"))
     }
 
     /// La sonde Zigbee en Wi-Fi (`_maillage-zigbee._tcp`) : meme drapeau, remis a zero a l'arret.
