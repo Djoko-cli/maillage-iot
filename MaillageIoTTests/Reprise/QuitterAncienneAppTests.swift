@@ -76,6 +76,30 @@ struct QuitterAncienneAppTests {
         }
     }
 
+    /// L'envoi bloquant (invite d'Automatisation, jusqu'a 5 s d'attente) ne tient aucun fil du pool cooperatif : il tourne sur
+    /// une file dediee, hors du fil principal.
+    @Test func l_envoiBloquantTourneSurUneFileDediee() async {
+        let vu = OSAllocatedUnfairLock<(file: String, principal: Bool)?>(initialState: nil)
+        let envoyeur = EnvoyeurQuitterSysteme(envoi: { _ in
+            vu.withLock { $0 = (String(cString: __dispatch_queue_get_label(nil)), Thread.isMainThread) }
+            return .envoyee
+        })
+        let issue = await envoyeur.envoyerQuitter(a: App.maillageThread.identifiantBundle)
+        #expect(issue == .envoyee)
+        #expect(vu.withLock { $0?.file } == EnvoyeurQuitterSysteme.etiquetteFile, "file dediee, pas le pool cooperatif")
+        #expect(vu.withLock { $0?.principal } == false)
+    }
+
+    @Test func l_envoyeurRefuseUneAutreAppAvantDeTouchALaFile() async {
+        let appele = OSAllocatedUnfairLock(initialState: false)
+        let envoyeur = EnvoyeurQuitterSysteme(envoi: { _ in
+            appele.withLock { $0 = true }
+            return .envoyee
+        })
+        #expect(await envoyeur.envoyerQuitter(a: "com.apple.finder") == .nonAutorisee)
+        #expect(appele.withLock { $0 } == false)
+    }
+
     @Test func lesCodesDuSystemeDonnentLesIssues() {
         #expect(IssueQuitter(codeErreur: -1712) == .delai)
         #expect(IssueQuitter(codeErreur: -1743) == .refusee(code: -1743))

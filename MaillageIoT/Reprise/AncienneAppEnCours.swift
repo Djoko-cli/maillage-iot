@@ -50,14 +50,28 @@ protocol EnvoyeurQuitter: Sendable {
 struct EnvoyeurQuitterSysteme: EnvoyeurQuitter {
     /// Combien de secondes on attend la reponse de l'ancienne app a l'evenement (une fois l'autorisation donnee).
     nonisolated static let delaiReponse: TimeInterval = 5
+    /// La file dediee de l'envoi bloquant : l'invite d'Automatisation attend Djoko aussi longtemps qu'il hesite, puis la reponse
+    /// de l'app jusqu'a `delaiReponse`. Aucun fil du pool cooperatif n'est immobilise.
+    nonisolated static let etiquetteFile = "fr.djoko.maillage.iot.quitter-ancienne-app"
+    nonisolated private static let file = DispatchQueue(label: etiquetteFile, qos: .userInitiated)
+
+    /// L'envoi bloquant, appele sur la file dediee (une couture : les tests y observent la file, sans rien envoyer).
+    let envoi: @Sendable (String) -> IssueQuitter
+
+    init(envoi: @escaping @Sendable (String) -> IssueQuitter = { EnvoyeurQuitterSysteme.envoyerBloquant($0) }) {
+        self.envoi = envoi
+    }
 
     func envoyerQuitter(a identifiantBundle: String) async -> IssueQuitter {
         // Le droit du bac a sable ne couvre que ces deux apps ; on ne vise rien d'autre, meme par erreur.
         guard AnciennesApps.identifiantsAutorises.contains(identifiantBundle) else { return .nonAutorisee }
-        return await Task.detached(priority: .userInitiated) { Self.envoyerBloquant(identifiantBundle) }.value
+        let envoi = envoi
+        return await withCheckedContinuation { suite in
+            Self.file.async { suite.resume(returning: envoi(identifiantBundle)) }
+        }
     }
 
-    nonisolated private static func envoyerBloquant(_ identifiantBundle: String) -> IssueQuitter {
+    nonisolated static func envoyerBloquant(_ identifiantBundle: String) -> IssueQuitter {
         let cible = NSAppleEventDescriptor(bundleIdentifier: identifiantBundle)
         let classe = AEEventClass(kCoreEventClass)
         let identifiant = AEEventID(kAEQuitApplication)

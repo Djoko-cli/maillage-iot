@@ -30,6 +30,7 @@ ADMIS = {
     "MaillageIoT/Zigbee/Sonde/SondeMaillageZigbee.swift": ("fr.djoko.maillage.iot.sonde-zigbee",),
     "MaillageIoT/Thread/Sonde/SondeMaillageThread.swift": ("fr.djoko.maillage.iot.sonde-thread",),
     "MaillageIoT/Thread/Sonde/Reseau/TransportUDP.swift": ("fr.djoko.maillage.iot.sonde-thread.udp",),
+    "MaillageIoT/Reprise/AncienneAppEnCours.swift": ("fr.djoko.maillage.iot.quitter-ancienne-app",),
     "MaillageCoeur/Systeme/FichiersGardes.swift": ("fr.djoko.maillage.iot",),
     "MaillageIoT/Zigbee/Pont/TrousseauZigbee.swift": ("fr.djoko.maillage.zigbee.pont", "fr.djoko.maillage.zigbee.sonde"),
     "MaillageIoT/Thread/Sonde/Reseau/TrousseauReprisThread.swift": ("fr.djoko.maillage.sonde",),
