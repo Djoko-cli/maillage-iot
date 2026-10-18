@@ -1,0 +1,60 @@
+{
+  "accessoires" : [
+    {
+      "categorie" : "Prise",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000A1",
+      "modele" : "Modele Prise",
+      "noeudMatter" : "00000000000000A1",
+      "nom" : "Prise 1",
+      "piece" : "Pièce 1",
+      "pont" : false
+    },
+    {
+      "batterie" : {
+        "alerte" : false,
+        "charge" : "horsCharge",
+        "niveau" : 18
+      },
+      "categorie" : "Capteur",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000A2",
+      "modele" : "Modele Capteur",
+      "noeudMatter" : "00000000000000A2",
+      "nom" : "Capteur 1",
+      "piece" : "Pièce 2",
+      "pont" : false
+    },
+    {
+      "categorie" : "Enceinte",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000A3",
+      "modele" : "Modele Enceinte",
+      "nom" : "Routeur 1",
+      "piece" : "Pièce 3",
+      "pont" : false
+    }
+  ],
+  "date" : "2026-10-14T08:00:00.000Z",
+  "domicile" : "Maison 1",
+  "statut" : "ok",
+  "version" : 2,
+  "zones" : [
+    {
+      "nom" : "Étage 1",
+      "pieces" : [
+        "Pièce 1",
+        "Pièce 2"
+      ]
+    },
+    {
+      "nom" : "Étage 2",
+      "pieces" : [
+        "Pièce 3"
+      ]
+    }
+  ]
+}

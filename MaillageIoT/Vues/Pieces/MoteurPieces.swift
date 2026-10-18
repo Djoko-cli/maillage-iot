@@ -147,11 +147,13 @@ final class MoteurPieces {
         didSet { reveiller() }
     }
 
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "pieces")
+    nonisolated static let journal = Logger(subsystem: IdentiteApp.courante.identifiant, category: "pieces")
 
     // MARK: Etat non observe
 
     @ObservationIgnored let fichierPlaces: URL?
+    /// La coque dont l'arret (reprise de donnees) coupe les ecritures.
+    @ObservationIgnored weak var coque: Surveillance?
     /// Scene affichee, posee sur sa disposition.
     @ObservationIgnored var entree: EntreeScene? {
         didSet { versionScene &+= 1 }

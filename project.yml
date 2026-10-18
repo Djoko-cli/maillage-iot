@@ -114,6 +114,7 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true
         NSHumanReadableCopyright: ""
+        NSAppleEventsUsageDescription: "Maillage IoT a besoin de contrôler Maillage Thread ou Maillage Zigbee pour les quitter avant de reprendre leurs données."
         NSLocalNetworkUsageDescription: "Maillage IoT écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit, pont Hue) pour dessiner vos réseaux Thread et Zigbee, et se connecte à vos sondes par le réseau local si vous le choisissez."
         NSBonjourServices:
           - _meshcop._udp
@@ -137,6 +138,59 @@ targets:
         FLUX_MISES_A_JOUR: https://raw.githubusercontent.com/Djoko-cli/maillage-iot/main/appcast.xml
         CLE_MISES_A_JOUR: nRIVHOXbEktqGduJ4ukxhjZzlUaiE/yqR3sgbW9Ie6E=
         CODE_SIGN_ENTITLEMENTS: MaillageIoT/Droits.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+  # L'identite de repetition (phase 4, tache 8) : « Maillage IoT Repetition », la meme app sous une autre identite, pour repeter
+  # la reprise des anciennes apps sur une copie des vraies donnees SANS toucher a l'app reelle. Memes sources que MaillageIoT ;
+  # en propre : l'identifiant (donc le conteneur du bac a sable, les preferences, les notifications et l'ouverture de session),
+  # le suffixe `.repetition` des services de trousseau ecrits (MaillageSuffixeServices, lu par IdentiteApp), l'icone, les droits
+  # et l'Info.plist. Sans Sparkle : aucun cadre lie, aucune cle SU* (la condition de compilation REPETITION donne une classe
+  # MisesAJour inerte). JAMAIS publiee : outils/refuser_repetition.py, que la publication appelle. Construite et lancee par
+  # outils/repetition.sh (schema MaillageIoTRepetition).
+  MaillageIoTRepetition:
+    type: application
+    platform: macOS
+    sources:
+      - path: MaillageIoT
+        excludes:
+          # Ce que la repetition a en propre (MaillageIoTRepetition/) : son Info.plist, ses droits, son icone.
+          - Info.plist
+          - Droits.entitlements
+          - "Ressources/AppIcon.icon"
+      - path: MaillageIoTRepetition
+    dependencies:
+      - target: MaillageCoeur
+      - target: ProtocoleThread
+      - target: ProtocoleZigbee
+    info:
+      path: MaillageIoTRepetition/Info.plist
+      properties:
+        CFBundleDisplayName: Maillage IoT Répétition
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        NSHumanReadableCopyright: ""
+        # Le suffixe des services de trousseau ecrits par l'app (IdentiteApp) : ce qui separe ses elements de ceux de l'app reelle.
+        MaillageSuffixeServices: .repetition
+        NSAppleEventsUsageDescription: "Maillage IoT Répétition a besoin de contrôler Maillage Thread ou Maillage Zigbee pour les quitter avant de reprendre leurs données."
+        NSLocalNetworkUsageDescription: "Maillage IoT Répétition écoute les annonces du réseau local (routeurs de bordure Thread, appareils Matter et HomeKit, pont Hue) pour dessiner vos réseaux Thread et Zigbee, et se connecte à vos sondes par le réseau local si vous le choisissez."
+        NSBonjourServices:
+          - _meshcop._udp
+          - _matter._tcp
+          - _hap._udp
+          - _trel._udp
+          - _hue._tcp
+          - _maillage-zigbee._tcp
+    settings:
+      base:
+        PRODUCT_NAME: Maillage IoT Repetition
+        PRODUCT_MODULE_NAME: MaillageIoTRepetition
+        PRODUCT_BUNDLE_IDENTIFIER: fr.djoko.maillage.iot.repetition
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIconRepetition
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) REPETITION"
+        CODE_SIGN_ENTITLEMENTS: MaillageIoTRepetition/Droits.entitlements
         ENABLE_HARDENED_RUNTIME: YES
   # Passeur Noms, demon de Maison (spec 2026-10-12-demon-passeur-design.md) : app Mac Catalyst sans fenetre ni Dock
   # (LSUIElement), signee en developpement par outils/passeur.sh (HomeKit est refuse au Developer ID). Masqueur.bundle
@@ -264,8 +318,17 @@ targets:
     platform: macOS
     sources:
       - path: MaillageIoTTests
+        excludes:
+          - "Ressources/exports/**"
+      # Les exports d'exemple de la reprise (phase 4) : un dossier copie tel quel dans le paquet de test, sous son arbre
+      # (thread-1.3.0, zigbee-1.1.1), jamais aplati en ressources.
+      - path: MaillageIoTTests/Ressources/exports
+        type: folder
       - path: MaillageCoeurTests/VecteursH1.swift
       - path: MaillageCoeurTests/AssistantIdNoeud.swift
+      # Le generateur de ces exports (outils/generer-exports-exemple.sh le compile avec le contrat) : les tests le relancent
+      # et comparent son resultat aux dossiers commites.
+      - path: outils/exports-exemple/Generateur.swift
     dependencies:
       - target: MaillageIoT
       - target: MaillageCoeur
@@ -327,6 +390,16 @@ schemes:
     build:
       targets:
         Passeur: all
+    run:
+      config: Debug
+  # L'identite de repetition (outils/repetition.sh) : l'app seule et ses cadres, sans les tests.
+  MaillageIoTRepetition:
+    build:
+      targets:
+        MaillageIoTRepetition: all
+        MaillageCoeur: all
+        ProtocoleThread: all
+        ProtocoleZigbee: all
     run:
       config: Debug
   # Le coeur seul : les temps de calcul de la vue par pieces, en Release (outils/mesurer.sh).

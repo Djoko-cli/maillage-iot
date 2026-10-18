@@ -308,7 +308,8 @@ extension MoteurPieces {
     // MARK: Places gardees et ordre des etages
 
     private func enregistrer() {
-        guard let fichierPlaces else { return }
+        // Arrete pour une reprise de donnees : le fichier est celui de l'import, jamais recrit depuis la memoire d'avant.
+        guard coque?.arretee != true, let fichierPlaces else { return }
         do {
             try places.ecrire(dans: fichierPlaces)
         } catch {

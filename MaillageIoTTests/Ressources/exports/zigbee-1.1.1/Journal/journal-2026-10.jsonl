@@ -1,0 +1,10 @@
+{"constate":true,"date":"2026-10-08T08:25:00.000Z","details":{"appareils":"3","routeurs":"2"},"gravite":"info","type":"surveillanceDemarree"}
+{"constate":true,"date":"2026-10-08T08:25:01.000Z","details":{"ieee":"00000000000000C1"},"gravite":"info","sujet":{"id":"00000000000000C1","nom":"Routeur 1"},"type":"routeurApparu"}
+{"constate":false,"date":"2026-10-09T11:00:00.000Z","details":{"ieee":"00000000000000F2"},"gravite":"info","sujet":{"id":"00000000000000F2","nom":"Ampoule 1"},"type":"appareilNouveau"}
+{"constate":false,"date":"2026-10-10T07:45:00.000Z","details":{},"gravite":"info","periode":{"duration":300,"start":"2026-10-10T07:40:00.000Z"},"type":"veille"}
+{"apres":"Pont 1","avant":"Routeur 1","constate":false,"date":"2026-10-11T16:20:00.000Z","details":{"ieee":"00000000000000C2"},"gravite":"info","sujet":{"id":"00000000000000C2","nom":"Routeur 2"},"type":"cheminChange"}
+{"apres":"Routeur 2","avant":"Routeur 1","constate":false,"date":"2026-10-12T10:00:00.000Z","details":{"ieee":"00000000000000F1"},"gravite":"info","sujet":{"id":"00000000000000F1","nom":"Capteur 1"},"type":"parentChange"}
+{"avant":"Routeur 2","constate":false,"date":"2026-10-12T10:30:00.000Z","details":{"ieee":"00000000000000F1"},"gravite":"attention","sujet":{"id":"00000000000000F1","nom":"Capteur 1"},"type":"sansParent"}
+{"constate":false,"date":"2026-10-13T13:00:00.000Z","details":{"ieee":"00000000000000F2"},"gravite":"attention","sujet":{"id":"00000000000000F2","nom":"Ampoule 1"},"type":"appareilDisparu"}
+{"constate":false,"date":"2026-10-13T13:20:00.000Z","details":{"ieee":"00000000000000F2"},"gravite":"info","sujet":{"id":"00000000000000F2","nom":"Ampoule 1"},"type":"appareilRevenu"}
+{"constate":false,"date":"2026-10-14T09:00:00.000Z","details":{"ieee":"00000000000000C2"},"gravite":"alerte","sujet":{"id":"00000000000000C2","nom":"Routeur 2"},"type":"routeurDisparu"}

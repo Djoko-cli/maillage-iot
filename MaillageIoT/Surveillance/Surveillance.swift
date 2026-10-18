@@ -38,6 +38,10 @@ final class Surveillance {
     /// Le modele de Zigbee : pont, sonde, suivi des connexions, historique, noms, fichiers sous `Zigbee/`.
     let zigbee: SurveillanceZigbee
 
+    /// La coque a ete arretee (`arreter()`), par exemple pour une reprise de donnees : tant qu'elle l'est, aucun reglage ne
+    /// relance un module (`ModulesApp`), et les pages des protocoles sont grisees. Remise a faux par `demarrer()`.
+    private(set) var arretee = false
+
     /// Les modeles de protocole de l'app.
     var modeles: [any ModeleProtocole] { [thread, zigbee] }
 
@@ -78,7 +82,7 @@ final class Surveillance {
     /// Historique garde en memoire : les courbes de la fiche vont jusqu'a 30 jours.
     static let dureeHistorique: TimeInterval = 30 * 24 * 3600
     /// Journal du Mac (Console, sous-systeme fr.djoko.maillage.iot) : jamais de donnees du reseau.
-    nonisolated static let journalMac = Logger(subsystem: "fr.djoko.maillage.iot", category: "historique")
+    nonisolated static let journalMac = Logger(subsystem: IdentiteApp.courante.identifiant, category: "historique")
 
     /// Lance par les tests (heberges dans l'app) : ne rien ecouter ni ecrire.
     static var sousTests: Bool { ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil }
@@ -143,6 +147,7 @@ final class Surveillance {
     }
 
     func demarrer() {
+        arretee = false
         switch mode {
         case .demo:
             modeles.forEach { $0.demarrer() }
@@ -176,6 +181,7 @@ final class Surveillance {
     }
 
     func arreter() {
+        arretee = true
         modeles.forEach { $0.arreter() }
         observateurs.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         observateurs = []
@@ -225,7 +231,8 @@ final class Surveillance {
         let s = surnom?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         surnomsCommuns[id] = s.isEmpty ? nil : s
         modele(pour: id.protocole)?.appliquerSurnom(s.isEmpty ? nil : s, cle: id.cle)
-        guard let fichierSurnoms else { return }
+        // Arretee (reprise de donnees) : le fichier est celui de l'import, jamais recrit depuis la memoire d'avant.
+        guard !arretee, let fichierSurnoms else { return }
         do {
             try Surnoms.ecrire(surnomsCommuns, dans: fichierSurnoms)
         } catch {

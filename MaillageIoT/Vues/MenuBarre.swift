@@ -13,7 +13,11 @@ struct IconeBarre: View {
     private static var grapheOuvert = false
 
     var body: some View {
-        Image(nsImage: Self.image(alerte: surveillance.alerte))
+        HStack(spacing: 2) {
+            Image(nsImage: Self.image(alerte: surveillance.alerte))
+            // L'app de repetition (a cote de la vraie, dans la meme barre) se reconnait a son « R ».
+            if IdentiteApp.courante.estRepetition { Text(verbatim: "R").font(.system(size: 11, weight: .bold)) }
+        }
             .task {
                 guard ouvrirGraphe, !Self.grapheOuvert else { return }
                 Self.grapheOuvert = true
@@ -73,8 +77,10 @@ struct MenuBarre: View {
                         Text(p).font(.caption).foregroundStyle(.red).padding(.horizontal, 8)
                     }
                 }
-                Button("Rechercher les mises à jour…") { rechercherMisesAJour() }
-                    .disabled(!misesAJour.peutRechercher)
+                if MisesAJour.moteurPresent {
+                    Button("Rechercher les mises à jour…") { rechercherMisesAJour() }
+                        .disabled(!misesAJour.peutRechercher)
+                }
                 Button("Réglages…") { ouvrirReglages() }
                 Button("Quitter Maillage IoT") { NSApp.terminate(nil) }
             }

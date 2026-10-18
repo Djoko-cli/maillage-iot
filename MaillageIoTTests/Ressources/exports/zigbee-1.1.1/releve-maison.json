@@ -1,0 +1,61 @@
+{
+  "accessoires" : [
+    {
+      "categorie" : "Pont",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000B0",
+      "modele" : "Modele Pont",
+      "noeudMatter" : "00000000000000B1",
+      "nom" : "Pont 1",
+      "piece" : "Pièce 3",
+      "pont" : true
+    },
+    {
+      "categorie" : "Prise",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000B1",
+      "modele" : "Modele Prise",
+      "noeudMatter" : "00000000000000B1",
+      "nom" : "Routeur 1",
+      "piece" : "Pièce 1",
+      "pont" : false
+    },
+    {
+      "batterie" : {
+        "alerte" : false,
+        "charge" : "horsCharge",
+        "niveau" : 18
+      },
+      "categorie" : "Capteur",
+      "fabricant" : "Fabricant 1",
+      "firmware" : "1.0.0",
+      "id" : "00000000-0000-4000-8000-0000000000B2",
+      "modele" : "Modele Capteur",
+      "noeudMatter" : "00000000000000B1",
+      "nom" : "Capteur 1",
+      "piece" : "Pièce 2",
+      "pont" : false
+    }
+  ],
+  "date" : "2026-10-14T09:30:00.000Z",
+  "domicile" : "Maison 1",
+  "statut" : "ok",
+  "version" : 2,
+  "zones" : [
+    {
+      "nom" : "Étage 1",
+      "pieces" : [
+        "Pièce 1",
+        "Pièce 2"
+      ]
+    },
+    {
+      "nom" : "Étage 2",
+      "pieces" : [
+        "Pièce 3"
+      ]
+    }
+  ]
+}

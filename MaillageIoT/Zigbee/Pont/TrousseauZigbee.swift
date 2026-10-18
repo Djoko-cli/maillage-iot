@@ -27,8 +27,9 @@ enum ErreurTrousseauZigbee: Error, Equatable, Sendable, LocalizedError {
     }
 }
 
-/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.pont-hue`, compte =
-/// identifiant du pont, libelle « Maillage IoT - pont Hue <identifiant> », valeur = la cle en UTF-8. Accessible apres
+/// Trousseau de session du Mac : mot de passe generique, service `fr.djoko.maillage.iot.pont-hue` (suivi de `.repetition`
+/// dans l'app de repetition : `IdentiteApp`), compte = identifiant du pont, libelle « Maillage IoT - pont Hue
+/// <identifiant> », valeur = la cle en UTF-8. Accessible apres
 /// le premier deverrouillage, sur ce Mac seulement, jamais synchronise par iCloud. (Dans le trousseau de session de
 /// macOS, ou l'app range ses elements, l'accessibilite n'est pas appliquee : l'element suit le verrou du trousseau,
 /// ouvert a la connexion ; elle est donnee pour le jour ou l'element irait au trousseau a protection des donnees.)
@@ -38,11 +39,23 @@ struct TrousseauSystemeZigbee: TrousseauClesZigbee {
 
     let service: String
     let etiquette: Etiquette
+    /// Le service de l'app pour les cles des ponts Hue (celui de son identite).
+    static var servicePontParDefaut: String { IdentiteApp.courante.servicePontHue }
 
-    init(service: String = "fr.djoko.maillage.iot.pont-hue",
-         etiquette: @escaping Etiquette = { identifiant, _ in ("Maillage IoT - pont Hue \(identifiant)", nil) }) {
+    init(service: String = TrousseauSystemeZigbee.servicePontParDefaut,
+         etiquette: @escaping Etiquette = TrousseauSystemeZigbee.etiquettePont(nomApp: IdentiteApp.courante.nom)) {
         self.service = service
         self.etiquette = etiquette
+    }
+
+    /// Le libelle « <app> - pont Hue <identifiant> », sans commentaire.
+    static func etiquettePont(nomApp: String) -> Etiquette {
+        { identifiant, _ in ("\(nomApp) - pont Hue \(identifiant)", nil) }
+    }
+
+    /// Les cles des ponts Hue de cette identite.
+    static func pont(identite: IdentiteApp) -> TrousseauSystemeZigbee {
+        TrousseauSystemeZigbee(service: identite.servicePontHue, etiquette: etiquettePont(nomApp: identite.nom))
     }
 
     /// Ce qui est ecrit avec la cle : la valeur, le libelle, le commentaire s'il y en a un, l'accessibilite. Pur : les

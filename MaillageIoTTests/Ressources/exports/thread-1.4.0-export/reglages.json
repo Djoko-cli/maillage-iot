@@ -1,0 +1,77 @@
+{
+  "app" : "thread",
+  "format" : 1,
+  "nonRepris" : {
+    "NSWindow Frame graphe" : "horsContrat",
+    "SUHasLaunchedBefore" : "horsContrat",
+    "SULastCheckTime" : "horsContrat",
+    "dossierNoms" : "horsContrat",
+    "reglages.onglet" : "horsContrat"
+  },
+  "valeurs" : {
+    "AppleLanguages" : {
+      "type" : "listeTextes",
+      "valeur" : [
+        "fr"
+      ]
+    },
+    "etagesEnGrille" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "grapheDejaOuvert" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "legendeRepliee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.informations" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.pertes" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "notification.routeurDisparu" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.scission" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "ouvertureSessionProposee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "scissionsNotifiees" : {
+      "type" : "listeTextes",
+      "valeur" : [
+        "0000000B"
+      ]
+    },
+    "sondeHote" : {
+      "type" : "texte",
+      "valeur" : "sonde-t1"
+    },
+    "sondeLiaison" : {
+      "type" : "texte",
+      "valeur" : "reseau"
+    },
+    "sondeNom" : {
+      "type" : "texte",
+      "valeur" : "SONDE-T1"
+    },
+    "sondeSerieUSB" : {
+      "type" : "texte",
+      "valeur" : "00:00:00:00:00:01"
+    },
+    "vuePieces3D" : {
+      "type" : "bool",
+      "valeur" : true
+    }
+  }
+}

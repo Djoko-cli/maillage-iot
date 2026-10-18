@@ -167,11 +167,14 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// injoignables, ou revenus, d'apres l'etat de connexion que le pont donne, vont au journal (et aux notifications :
     /// les pertes groupees). La premiere lecture est un etat initial ; le cache relu au lancement n'arrive pas ici.
     func lecturePont(_ n: NomsZigbee) {
-        guard actif else { return }
+        guard actif, !coqueArretee else { return }
         ajouter(suiviConnexions.integrer(n) { [noms, maillage] ieee in
             Self.nom(ieee, noms: noms, sonde: maillage?.sonde)
         })
     }
+
+    /// La coque est arretee (reprise de donnees) : aucun fichier n'est recrit depuis la memoire, ni aucun releve integre.
+    private var coqueArretee: Bool { coque?.arretee ?? false }
 
     /// Les noms du pont, nommes par Maison (`FusionNoms`) : a chaque nouveau releve, de l'un ou de l'autre.
     private func fusionner() {
@@ -180,7 +183,7 @@ final class SurveillanceZigbee: ModeleProtocole {
         bilanFusion = f.bilan
         if f.memoire != appariements {
             appariements = f.memoire
-            if let fichierAppariements { try? appariements.ecrire(dans: fichierAppariements) }
+            if !coqueArretee, let fichierAppariements { try? appariements.ecrire(dans: fichierAppariements) }
         }
     }
 
@@ -270,8 +273,9 @@ final class SurveillanceZigbee: ModeleProtocole {
     /// prochain lancement. `incomplet` : la tournee qui l'a produit a reporte des routes (une passe complementaire les
     /// lira).
     func recevoir(_ recu: MaillageZigbee, a date: Date, incomplet: Bool = false) {
-        // Eteint : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde, ni suivi.
-        guard actif else { return }
+        // Eteint, ou arrete pour une reprise de donnees : le maillage d'une tournee en vol a l'arret n'est ni montre, ni garde,
+        // ni suivi.
+        guard actif, !coqueArretee else { return }
         // Les parents lus d'abord (ils prennent la place de ceux d'avant), puis ceux d'avant pour les appareils finaux que
         // les dernieres tables n'ont plus (mode direct seulement : la demo n'a pas d'avant).
         if mode == .direct { parentsConnus.retenir(recu) }

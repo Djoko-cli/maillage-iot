@@ -21,11 +21,12 @@ struct PageProtocole<Contenu: View>: View {
 }
 
 extension Surveillance {
-    /// Les reglages d'un protocole sont-ils utilisables : son module est actif. Toujours vrai en demo (aucun module n'y est
-    /// branche : rien n'est grise). Sert aux pages des protocoles et aux sections de l'onglet Notifications.
+    /// Les reglages d'un protocole sont-ils utilisables : son module est actif, et l'app n'est pas arretee pour une reprise de
+    /// donnees (rien ne se relance avant la relance de l'app). Toujours vrai en demo (aucun module n'y est branche : rien n'est
+    /// grise). Sert aux pages des protocoles et aux sections de l'onglet Notifications.
     func protocoleReglable(_ protocole: Protocole) -> Bool {
         guard mode == .direct, let m = modele(pour: protocole) else { return true }
-        return m.actif
+        return m.actif && !arretee
     }
 }
 
@@ -42,6 +43,8 @@ struct ActivationProtocole: View {
         if surveillance.mode == .direct, let m = surveillance.modele(pour: protocole) {
             Section {
                 Toggle("Activer ce protocole", isOn: Binding(get: { m.actif }, set: { m.actif = $0 }))
+                    // Pendant une reprise de donnees, ou apres elle tant que l'app ne s'est pas relancee, rien ne se rallume.
+                    .disabled(surveillance.arretee)
                 if let texte = Self.texteRienTrouve(protocole, rienTrouve: rienTrouve) {
                     Text(texte).font(.caption).foregroundStyle(.secondary)
                 }

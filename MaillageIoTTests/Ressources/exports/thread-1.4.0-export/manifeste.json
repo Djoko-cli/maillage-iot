@@ -1,0 +1,88 @@
+{
+  "app" : "thread",
+  "date" : "2026-10-17T12:00:00Z",
+  "fichiers" : [
+    {
+      "chemin" : "Journal/journal-2026-04.jsonl",
+      "sha256" : "70c23af4d467fec1cf52b04501dec6107b399646bf106eee9ceef763970ffbd5",
+      "taille" : 112
+    },
+    {
+      "chemin" : "Journal/journal-2026-10.jsonl",
+      "sha256" : "d7a9d5c0ce551f7709a12e36715a4e35cc40b680303c01c129e4a8d7cb936241",
+      "taille" : 502
+    },
+    {
+      "chemin" : "associations.json",
+      "sha256" : "b716e3b72b5dbcd7d299a2b3cc0487b2c3494fb5f343d9faddb25839bc6a5d2d",
+      "taille" : 45
+    },
+    {
+      "chemin" : "dernier-maillage.json",
+      "sha256" : "83ad722a635d7366ae201edcb4bb07fb5a330abc4d9627099a28fd2a85458a60",
+      "taille" : 952
+    },
+    {
+      "chemin" : "dernieres-adresses.json",
+      "sha256" : "ba4692d95370dafd73e1e6f3065f2f31ac1aea76ce6e031e369d30a7bcb1bcb3",
+      "taille" : 122
+    },
+    {
+      "chemin" : "identites-routeurs.json",
+      "sha256" : "7741f245ac4b7877681ac2b336ead73d4284c8dadf49d32d0e595033aeeee17b",
+      "taille" : 117
+    },
+    {
+      "chemin" : "maillage-2026-04.jsonl",
+      "sha256" : "d9af72249655005c7b452185b0569c4c5f5e5170f5631270a00daf8f6bbe8cf3",
+      "taille" : 316
+    },
+    {
+      "chemin" : "maillage-2026-10.jsonl",
+      "sha256" : "e89d76ac6821cf8c80e4746c35232eb965458d3afd1f0fbb76b9ccc5c16608b6",
+      "taille" : 632
+    },
+    {
+      "chemin" : "noms.json",
+      "sha256" : "6b33a714c1e524521c07a959e6b477dd0a8d21dea8c8e830487263baf85115a3",
+      "taille" : 942
+    },
+    {
+      "chemin" : "pieces-routeurs.json",
+      "sha256" : "2c499fa85caeac58be6a0038683c8f0a2d92a27a94d8f14a1cffd974948ffd8c",
+      "taille" : 182
+    },
+    {
+      "chemin" : "positions-pieces.json",
+      "sha256" : "7130f7c6354de943100f41c23970974c8cfd7f465fc5054bbe3979aef1c33217",
+      "taille" : 511
+    },
+    {
+      "chemin" : "surnoms.json",
+      "sha256" : "9a00ad67c7c94e76c089830292e769361e6cc8698ed933822aa066e25e5212e0",
+      "taille" : 132
+    },
+    {
+      "chemin" : "reglages.json",
+      "sha256" : "fa246ce95d2a4ca1e54dc1e1c2f06bd8fe97c375e8f3cfb66da8bb32a6a67d04",
+      "taille" : 1565
+    }
+  ],
+  "fichiersNonRepris" : [
+    {
+      "chemin" : ".DS_Store",
+      "raison" : "exclu"
+    },
+    {
+      "chemin" : "inconnu.json",
+      "raison" : "horsContrat"
+    },
+    {
+      "chemin" : "noms.illisible-20261001-120000.json",
+      "raison" : "exclu"
+    }
+  ],
+  "format" : 1,
+  "identifiant" : "00000000-0000-4000-8000-000000000001",
+  "versionApp" : "1.4.0"
+}

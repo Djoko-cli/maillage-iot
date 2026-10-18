@@ -479,7 +479,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 1 : cœur neutre et Thread à l'identique
 - [x] Phase 2 : Zigbee branché
 - [x] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
-- [ ] Phase 4 : reprise
+- [x] Phase 4 : reprise
 - [ ] Phase 5 : publication
 
 ### 6.2 Les tests
@@ -631,14 +631,14 @@ Décisions du plan 3b (proposées par l'orchestrateur avec le plan) :
 ### 6.8 Ajustements du 17/10 pour la phase 4 (reprise)
 
 D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`), proposés avec le plan de la phase 4 :
-1. **`ContratExport.swift` vit dans le cœur**, autonome comme `ProtocolePasseur.swift` (Foundation seul), recopié à
+1. **`ContratExport.swift` vit dans le cœur**, autonome comme `ProtocolePasseur.swift` (Foundation et CryptoKit seulement), recopié à
    l'octet dans les deux anciennes apps ; un script de contrôle le compare par `cmp` quand les autres dépôts sont là.
 2. **Les lignes JSONL ne changent pas** (journal et historiques) : le manifeste porte la version du format ; seule
    exception, chaque ligne du journal de Zigbee 1.1.1 reçoit `"protocole":"zigbee"` (sans quoi elle serait lue comme
    Thread).
 3. **`noms.json` de Thread devient `releve-maison.json` sans préfixe** (précise 4.3 : le relevé ne contient aucun
-   identifiant de nœud du graphe). Le relevé est un cache du démon : celui déjà présent est gardé, sinon le plus
-   récent des imports.
+   identifiant de nœud du graphe). Le relevé est un cache du démon : le plus récent l'emporte (celui déjà présent
+   ou celui de l'import).
 4. **Fichiers communs** : `surnoms.json` (version 1) et `pieces-noeuds.json` (version 2) sont écrits par l'import
    avec leurs clés préfixées, jamais déposés tels quels ; `positions-pieces.json` se fusionne en profondeur (maison,
    étage, pièce) ; le premier import l'emporte, le second ajoute ce qui manque.

@@ -32,7 +32,7 @@ final class NavigateurBonjour: EcouteBonjour {
         case erreur(String)
     }
 
-    nonisolated static let journal = Logger(subsystem: "fr.djoko.maillage.iot", category: "bonjour")
+    nonisolated static let journal = Logger(subsystem: IdentiteApp.courante.identifiant, category: "bonjour")
 
     let type: String
     /// Instance -> TXT brut (vide si le navigateur n'en a pas donne).

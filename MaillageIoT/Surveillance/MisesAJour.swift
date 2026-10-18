@@ -1,3 +1,4 @@
+#if !REPETITION
 import Combine
 import Foundation
 import Observation
@@ -19,6 +20,8 @@ final class MisesAJour {
     /// test, par exemple) ne la remplace.
     static private(set) weak var deLApp: MisesAJour?
 
+    /// Le moteur de mises a jour est-il dans cette app ? (Non dans l'app de repetition.)
+    nonisolated static let moteurPresent = true
     /// Le moteur est-il demarre ?
     let demarre: Bool
     /// « Rechercher les mises a jour… » est possible : le moteur tourne, et aucune recherche n'est en cours.
@@ -73,3 +76,37 @@ final class MisesAJour {
         controleur.checkForUpdates(nil)
     }
 }
+#else
+import Foundation
+import Observation
+
+/// Dans l'app de repetition (cible `MaillageIoTRepetition`, condition de compilation `REPETITION`), il n'y a pas de mises a jour :
+/// aucun cadre Sparkle n'y est lie, aucun flux ni aucune cle dans son Info.plist, et la repetition n'est jamais publiee.
+/// Meme interface que celle de l'app, mais inerte : le moteur n'est jamais demarre, les reglages et les boutons de mise a jour
+/// n'apparaissent pas (`moteurPresent`).
+@MainActor
+@Observable
+final class MisesAJour {
+    static private(set) weak var deLApp: MisesAJour?
+
+    nonisolated static let moteurPresent = false
+    let demarre = false
+    private(set) var peutRechercher = false
+    var rechercheAuto = false
+    var installationAuto = false
+
+    init(demarrer: Bool) {}
+
+    static func pourLApp(demo: Bool) -> MisesAJour {
+        let m = MisesAJour(demarrer: false)
+        deLApp = m
+        return m
+    }
+
+    static func demarrerAuLancement(demo: Bool) -> Bool { false }
+
+    nonisolated static func doitDemarrer(demo: Bool, numero: String?, environnement: [String: String]) -> Bool { false }
+
+    func rechercher() {}
+}
+#endif

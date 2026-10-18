@@ -5,6 +5,12 @@ import Synchronization
 
 /// Les identifiants dont la reprise a deja ete tentee.
 struct MemoireReprises: Sendable {
+    /// Les cles de preferences ou chaque reprise note ses tentatives (une liste d'identifiants) ; l'assistant de reprise les lit
+    /// pour dire si une cle a ete reprise, refusee ou pas encore demandee.
+    static let cleSondeThread = "thread.repriseTrousseauSonde"
+    static let cleSondeZigbee = "zigbee.repriseTrousseauSonde"
+    static let clePontZigbee = "zigbee.repriseTrousseauPont"
+
     let tentee: @Sendable (String) -> Bool
     let noter: @Sendable (String) -> Void
 

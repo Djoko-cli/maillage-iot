@@ -1,0 +1,97 @@
+{
+  "app" : "zigbee",
+  "format" : 1,
+  "nonRepris" : {
+    "NSNavPanelExpandedStateForSaveMode" : "horsContrat",
+    "NSOSPLastRootDirectory" : "horsContrat",
+    "NSWindow Frame SUUpdateAlert2" : "horsContrat",
+    "NSWindow Frame com_apple_SwiftUI_Settings_window" : "horsContrat",
+    "NSWindow Frame graphe" : "horsContrat",
+    "NSWindow Frame journal" : "horsContrat",
+    "SUAutomaticallyUpdate" : "horsContrat",
+    "SUEnableAutomaticChecks" : "horsContrat",
+    "SUHasLaunchedBefore" : "horsContrat",
+    "SULastCheckTime" : "horsContrat",
+    "SUSkippedVersion" : "horsContrat",
+    "SUUpdateGroupIdentifier" : "horsContrat",
+    "reglages.onglet" : "horsContrat",
+    "sondeJournalPages" : "transitoire"
+  },
+  "valeurs" : {
+    "AppleLanguages" : {
+      "type" : "listeTextes",
+      "valeur" : [
+        "fr",
+        "en"
+      ]
+    },
+    "etagesEnGrille" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "grapheDejaOuvert" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "legendeRepliee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "liensMontres" : {
+      "type" : "texte",
+      "valeur" : "chemins"
+    },
+    "notification.informations" : {
+      "type" : "bool",
+      "valeur" : false
+    },
+    "notification.pertes" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "notification.routeurDisparu" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "ouvertureSessionProposee" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "pont.hue" : {
+      "type" : "donnees",
+      "valeur" : "eyJhZHJlc3NlIjoiMTkyLjAuMi4xMCIsImlkZW50aWZpYW50IjoiMDAwMDAwMDAwMDAwMEIwMSIsIm1hbnVlbCI6ZmFsc2UsIm1vZGVsZSI6IkJTQjAwMiJ9"
+    },
+    "sondeChemin" : {
+      "type" : "texte",
+      "valeur" : "automatique"
+    },
+    "sondeIeee" : {
+      "type" : "texte",
+      "valeur" : "00000000000000E1"
+    },
+    "sondeNom" : {
+      "type" : "texte",
+      "valeur" : "SONDE-Z1"
+    },
+    "sondeNomWifi" : {
+      "type" : "texte",
+      "valeur" : "Wifi 1"
+    },
+    "sondePagesTables" : {
+      "type" : "entier",
+      "valeur" : 4
+    },
+    "sondeSerieUSB" : {
+      "type" : "texte",
+      "valeur" : "SERIE-Z1"
+    },
+    "voisinsALaSelection" : {
+      "type" : "bool",
+      "valeur" : true
+    },
+    "vuePieces3D" : {
+      "type" : "bool",
+      "valeur" : true
+    }
+  }
+}

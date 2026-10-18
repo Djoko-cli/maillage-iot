@@ -1,0 +1,29 @@
+{
+  "maisons" : {
+    "Maison 1" : {
+      "aCote" : {
+        "zone:Jardin" : {
+          "dehors" : true,
+          "etage" : "zone:Étage 1"
+        }
+      },
+      "etages" : {
+        "zone:Étage 1" : {
+          "piece:Pièce 1" : {
+            "x" : 1.5,
+            "z" : -2
+          },
+          "piece:Pièce 2" : {
+            "x" : -3,
+            "z" : 0.5
+          }
+        }
+      },
+      "ordreEtages" : [
+        "zone:Étage 1",
+        "zone:Jardin"
+      ]
+    }
+  },
+  "version" : 1
+}

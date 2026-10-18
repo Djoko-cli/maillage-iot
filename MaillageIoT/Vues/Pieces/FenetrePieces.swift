@@ -290,6 +290,11 @@ struct FenetrePieces: View {
         .onChange(of: moteur.selection == nil) { _, _ in
             legendeRouverte = false
         }
+        // Les ecrivains des pieces savent si la coque est arretee (reprise de donnees) : ils n'ecrivent plus alors.
+        .onAppear {
+            moteur.coque = surveillance
+            piecesChoisies.coque = surveillance
+        }
         .fenetreDeLApp()
     }
 }
