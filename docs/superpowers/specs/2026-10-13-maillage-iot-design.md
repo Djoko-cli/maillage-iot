@@ -720,3 +720,20 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   abîmé ou trafiqué de plusieurs Go ferait tomber l'app au lieu de donner une cause lisible (rien n'est écrit). À faire :
   comparer la taille du fichier à celle du manifeste avant lecture, et borner `manifeste.json`. À grouper avec le prochain
   changement du contrat, qui doit rester identique à l'octet dans les trois dépôts.
+- **Repris du backlog de Maillage Zigbee** (transmis par sa session le 18/10, sans valeur réelle) :
+  - **Chiffrement des échanges réseau de la sonde Zigbee**, aujourd'hui signés (H1) mais non chiffrés : approche B,
+    TLS-PSK, décidée le 11/10 pour Zigbee, Thread, Halo et Amaran.
+  - **Dossiers temporaires « pont-… » laissés par les tests** dans le conteneur de l'app (l'app sert d'hôte de tests) :
+    les nettoyer dans les tests.
+  - **Bancs jamais faits** : reconnexion après une veille du Mac de plus de 10 min (session H1 oubliée par la carte) ;
+    export vers un autre volume (clé USB) ; renommage de la sonde par la commande `nom` (l'annonce Bonjour doit suivre) ;
+    « 5e client servi après environ 25 s », à remesurer.
+  - **App, sonde Zigbee** : « Régénérer la clé » grisé sans raison visible quand la sonde est en Wi-Fi ; reconnexion sans
+    délai si la sonde coupe juste après la poignée de main ; branche réseau de `reevaluer` sans la garde
+    `!versUnAutrePort` ; adresse longue gardée si l'annonce Bonjour d'une autre sonde n'en a pas.
+  - **Firmware de la sonde Zigbee** : le nom DHCP ne suit pas un renommage ; `suspendre` par l'USB pendant l'attente du
+    Wi-Fi répond « occupee » alors que la suspension est enregistrée ; `CleSonde.cle` en clair dans un struct `Hashable`
+    (la masquer dans `description`).
+  - **Export (code des anciennes apps, si un jour il est repris dans Maillage IoT)** : « Quitter » reste actif pendant un
+    export (dans un cas rare, l'ancien export reste caché dans le dossier temporaire) ; quand un ancien dossier n'est pas
+    restauré, l'alerte donne le chemin sans bouton « Afficher dans le Finder ».
