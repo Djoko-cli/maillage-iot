@@ -152,8 +152,8 @@ Fait dans leurs dépôts par les sessions Thread (`maillage-thread`, version 1.4
 
 - [x] **Step 1: Envoyer** — à chaque session : la spec 4.1-4.2, le contrat, l'inventaire de son app (sans valeur réelle), les règles d'anonymat ; chacune écrit l'export (menu et bandeau « … devient Maillage IoT », « Exporter pour Maillage IoT… », dossier choisi par un panneau, « Ne plus ouvrir à l'ouverture de session ») et produit dans ses tests un export d'exemple anonymisé.
 - [x] **Step 2: Intégrer** — ajouter leurs exports à côté des exports provisoires de la tâche 2, qui restent (décision du 17/10 : les tests des tâches 3 à 6 comptent sur leur contenu ; `outils/recopier-exports-anciennes-apps.sh`, `ExportsAnciennesAppsTests`) ; les tests des tâches 3 à 6 passent sans changer d'attente (sinon : écart entre le format écrit et le format lu, à corriger côté export ou côté import).
-- [ ] **Step 3: Contrôler** — `outils/verifier-contrats.sh` : `ContratExport.swift` identique dans les trois dépôts.
-- [ ] **Step 4: Commit** — « Reprise : exports d'exemple des anciennes apps, contrat identique dans les trois depots ».
+- [x] **Step 3: Contrôler** — `outils/verifier-contrats.sh` : `ContratExport.swift` identique dans les trois dépôts.
+- [x] **Step 4: Commit** — « Reprise : exports d'exemple des anciennes apps, contrat identique dans les trois depots ».
 
 ---
 
@@ -161,10 +161,10 @@ Fait dans leurs dépôts par les sessions Thread (`maillage-thread`, version 1.4
 
 Avec Djoko. Rien de réel n'entre dans le dépôt.
 
-- [ ] **Step 1: Exporter** — avec les compilations de travail de Thread 1.4.0 et de Zigbee 1.2.0, exporter les vraies données dans un dossier local hors du dépôt.
-- [ ] **Step 2: Importer** — dans « Maillage IoT Répétition » : Thread puis Zigbee ; vérifier le résumé, les comptes (fichiers, lignes de journal, relevés, surnoms, pièces) contre l'inventaire, la vue réunie, le journal (protocoles justes), les réglages repris, la reprise des clés (invites du trousseau).
-- [ ] **Step 3: Réimporter** — le même export : rien ne change.
-- [ ] **Step 4: Noter** — résultats au registre (comptes seulement).
+- [x] **Step 1: Exporter** — avec les compilations de travail de Thread 1.4.0 et de Zigbee 1.2.0, exporter les vraies données dans un dossier local hors du dépôt.
+- [x] **Step 2: Importer** — dans « Maillage IoT Répétition » : Thread puis Zigbee ; vérifier le résumé, les comptes (fichiers, lignes de journal, relevés, surnoms, pièces) contre l'inventaire, la vue réunie, le journal (protocoles justes), les réglages repris, la reprise des clés (invites du trousseau).
+- [x] **Step 3: Réimporter** — le même export : rien ne change.
+- [x] **Step 4: Noter** — résultats au registre (comptes seulement).
 
 ---
 
