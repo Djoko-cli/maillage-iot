@@ -740,3 +740,11 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   l'ouverture de session », macOS montre « Élément d'arrière-plan ajouté », puis fermeture et réouverture de session : le
   démon doit tourner. Jamais fait jusqu'au bout (Réglages › Maison affichait « connecté »). À faire au prochain
   redémarrage du Mac, avec le démon 2.1 installé le 18/10.
+- **Pièce isolée avec un appareil sélectionné : les repères « ailleurs » des autres appareils restent affichés** (demande
+  de Djoko, 19/10) : les étiquettes « ↗ / ↓ nom · pièce » des liens qui partent vers un autre niveau ou une autre pièce
+  restent visibles pour les appareils non sélectionnés. Avec une sélection, ne garder que les repères des liens du nœud
+  sélectionné (ou estomper les autres), comme les étiquettes des nœuds.
+- **Lien en pointillé vert superposé au lien gris « vers son parent »** (constat de Djoko, 19/10, vu sur des appareils
+  Zigbee ET Thread, à confirmer) : sans doute un chemin supposé ou un rattachement supposé (déduit, non lu) qui suit la
+  même arête que le lien enfant -> parent. Vérifier sur une scène où les deux se recouvrent ; si c'est le cas, ne tracer qu'un seul des deux, ou
+  décaler l'un, pour qu'un même lien ne soit pas dessiné deux fois.
