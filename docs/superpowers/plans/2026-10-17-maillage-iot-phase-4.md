@@ -170,6 +170,6 @@ Avec Djoko. Rien de réel n'entre dans le dépôt.
 
 ### Task 11: Relecture finale et banc
 
-- [ ] **Step 1: Relecture finale** — par Opus, sur toute la branche.
+- [x] **Step 1: Relecture finale** — par Opus, sur toute la branche.
 - [ ] **Step 2: Banc** — avec Djoko : l'assistant de reprise de bout en bout dans l'app de répétition, puis la décision de la vraie reprise (elle peut attendre la publication, phase 5).
 - [ ] **Step 3: Verdict** — noté au registre ; cocher « Phase 4 » dans la §6.1 de la spec ; fusion dans `main` et push avec l'accord de Djoko.
