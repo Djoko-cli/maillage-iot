@@ -6,8 +6,10 @@
 CIBLE : une app (.app), un Info.plist, ou un identifiant de bundle NU (forme d'identifiant : segments de lettres, chiffres
 et tirets separes par des points, sans « / » ni espace, et ne finissant pas par « .app » ou « .plist »). La garde n'echoue
 jamais ouvert : une cible qui n'existe pas, qu'on ne lit pas, ou dont l'Info.plist n'a pas d'identifiant sort en code 2, avec sa
-cause (jamais « publiable »). La publication (outils/publier.sh, phase 5) l'appelle sur
-l'app a publier, AVANT toute signature, notarisation ou ecriture du flux : une repetition qui y passerait installerait chez
+cause (jamais « publiable »). La publication (outils/publier.sh, phase 5) l'appelle, avant toute construction, signature,
+notarisation ou ecriture du flux, sur l'identifiant de bundle NU de la cible MaillageIoT qu'elle lit dans project.yml
+(la garde ne voit donc ni Info.plist ni nom : ce que publier.sh controle en plus, c'est qu'aucune ligne
+`MaillageSuffixeServices` non vide ne figure dans le bloc de cette cible). Une repetition qui y passerait installerait chez
 les utilisateurs une app sans mise a jour, aux services de trousseau a part.
 
 Une cible est la repetition si l'un de ces signes y est : identifiant de bundle qui se termine par `.repetition`, cle
