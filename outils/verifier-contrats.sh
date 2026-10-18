@@ -12,8 +12,8 @@
 # (le contrat d'export est recopie dans les anciennes apps apres ce depot). Une copie presente mais differente est un
 # defaut. Code 0 : aucune difference ; code 1 : au moins une copie differente, ou fichier de reference absent.
 # Mode avertissement : CONTRATS_AVERTIR_SEULEMENT=1 affiche les defauts comme des "avertissement(s)" et sort avec le
-# code 0 (a retirer quand les deux anciennes apps auront recopie le contrat). outils/tester.sh l'appelle en etape
-# informative, en mode avertissement par defaut ; CONTRATS_AVERTIR_SEULEMENT=0 outils/tester.sh le rend bloquant.
+# code 0. outils/tester.sh l'appelle en mode bloquant par defaut (les deux anciennes apps ont recopie le contrat) ;
+# CONTRATS_AVERTIR_SEULEMENT=1 outils/tester.sh le ramene a un avertissement.
 # Ne modifie rien.
 set -u
 cd "$(dirname "$0")/.." || exit 1

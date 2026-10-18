@@ -6,10 +6,9 @@
 # Chaque cible donnee doit lancer au moins un test, sinon echec : un nom faux ne lance rien, et
 # xcodebuild repond pourtant TEST SUCCEEDED. Un test de Swift Testing se nomme avec ses
 # parentheses (ProtocoleThreadTests/GrapheReseauTests/stable()).
-# Apres les tests, etape informative : outils/verifier-contrats.sh compare les contrats partages (ContratExport.swift et
-# ses tests, ProtocolePasseur.swift) avec les depots Thread et Zigbee. Tant que les anciennes apps n'ont pas recopie le
-# contrat, il tourne en mode avertissement (CONTRATS_AVERTIR_SEULEMENT=1 par defaut : une copie differente est affichee
-# mais ne change pas le code) ; CONTRATS_AVERTIR_SEULEMENT=0 outils/tester.sh le rend bloquant (copie differente = code 1).
+# Apres les tests, outils/verifier-contrats.sh compare les contrats partages (ContratExport.swift et ses tests,
+# ProtocolePasseur.swift) avec les depots Thread et Zigbee : une copie differente donne le code 1 (les deux anciennes apps
+# ont recopie le contrat final). CONTRATS_AVERTIR_SEULEMENT=1 outils/tester.sh le ramene a un simple avertissement.
 # Avant de compiler, lance la garde des deux sondes (outils/verifier-sondes.sh) : etat de sonde ecrit hors de son pilote, port
 # ouvert hors du fichier +USB ; un defaut arrete la porte (code 1) avant toute compilation.
 # Puis la garde d'identite (outils/verifier_identite.py) : aucun litteral de service de trousseau ou d'identifiant de l'app
@@ -70,6 +69,6 @@ fi
 # Etape informative (apres le bilan des tests, pour rester lisible) ; seule une copie DIFFERENTE peut la faire echouer,
 # et seulement hors du mode avertissement.
 echo "--- contrats partages (outils/verifier-contrats.sh) ---"
-CONTRATS_AVERTIR_SEULEMENT=${CONTRATS_AVERTIR_SEULEMENT-1} bash outils/verifier-contrats.sh || CODE=1
+CONTRATS_AVERTIR_SEULEMENT=${CONTRATS_AVERTIR_SEULEMENT-0} bash outils/verifier-contrats.sh || CODE=1
 echo "journal complet : $JOURNAL (code $CODE)"
 exit $CODE
