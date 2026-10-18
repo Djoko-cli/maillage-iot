@@ -657,7 +657,7 @@ struct ContratExportTests {
     /// en `[Double]` (instant, pages, instant, pages...) : sans sens apres un export pris plus tot, elle n'est jamais
     /// reprise, quel que soit son type, et jamais citee `typeInattendu`. Seule sa cle est citee, sans valeur.
     @Test func budgetDeTourneeEstTransitoire() throws {
-        for brut: Any in [[1_760_000_000.5, 12.0, 1_760_000_100.25, 7.0] as [Double], [1, 2, 300] as [Int],
+        for brut: Any in [[1_760_000_000.5, 12.0, 1_760_000_060.75, 7.0] as [Double], [1, 2, 300] as [Int],
                           [Double](), "texte", true] {
             let r = C.reglages(depuis: ["sondeJournalPages": brut], app: .maillageZigbee)
             #expect(r.valeurs.isEmpty, "aucune valeur gardee : \(brut)")
