@@ -499,6 +499,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
 - [x] Phase 4 : reprise
 - [x] Phase 5 : publication
+- [ ] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
 
 ### 6.2 Les tests
 
