@@ -382,7 +382,7 @@ struct HautPieces: View {
                     .fixedSize()
                 BandeFenetre()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                CommandesVue(moteur: moteur, troisD: $troisD, montres: montres)
+                CommandesVue(moteur: moteur, troisD: $troisD, protocoles: protocoles, montres: montres)
                     .capsuleDeVerre()
                     .fixedSize()
             }

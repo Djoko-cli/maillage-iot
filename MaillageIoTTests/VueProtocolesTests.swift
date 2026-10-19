@@ -330,10 +330,10 @@ struct VueProtocolesTests {
         }
         // Les commandes des liens se lisent sur la scene du moteur et les protocoles montres.
         let reunie = EntreeSceneTests.deuxReseaux()
-        let m = MoteurPiecesTests.moteur(Self.scene(reunie))
-        #expect(CommandesVue.montreLiens(scene: m.scene, montres: Self.tous))
-        #expect(!CommandesVue.montreLiens(scene: m.scene, montres: [.thread]), "Zigbee masque : ni liens ni voisins")
-        #expect(!CommandesVue.montreLiens(scene: nil, montres: Self.tous))
+        let protocoles = Self.scene(reunie).protocoles
+        #expect(CommandesVue.montreLiens(protocoles: protocoles, montres: Self.tous))
+        #expect(!CommandesVue.montreLiens(protocoles: protocoles, montres: [.thread]), "Zigbee masque : ni liens ni voisins")
+        #expect(!CommandesVue.montreLiens(protocoles: [], montres: Self.tous))
     }
 
     // MARK: Nom de la maison et menu des reseaux
@@ -516,7 +516,7 @@ struct VueProtocolesTests {
             NSHostingView(rootView: AnyView(vue.environment(s).environment(sonde).environment(NomsPasseur())))
         }
         let gauche = hote(BarreOutils().capsuleDeVerre()).fittingSize.width
-        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(true)).capsuleDeVerre()).fittingSize.width
+        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(true), protocoles: Self.tous).capsuleDeVerre()).fittingSize.width
         let largeur = FenetrePieces.tailleMinimale.width
         let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: largeur, height: 200),
                                styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,

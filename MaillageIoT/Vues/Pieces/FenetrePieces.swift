@@ -462,6 +462,11 @@ struct MenuPieces: View {
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les protocoles qui ont des noeuds dans la scene A MONTRER (`EntreeScene.protocoles`, refaite a chaque rendu), et non dans
+    /// la scene posee sur le moteur (`MoteurPieces.scene`) : celle-ci est animee, posee apres coup (calcul de la disposition,
+    /// fin d'un mouvement) et SwiftUI ne l'observe pas. Le selecteur des liens en dependait : il manquait, au hasard, apres
+    /// avoir remontre Zigbee ou avant la premiere composition (banc 4 de la phase 6). Meme etat, meme affichage.
+    let protocoles: Set<Protocole>
     /// Les protocoles montres (`EntreeScene.montres`) : les commandes de Zigbee n'y sont que s'il l'est ; tous par defaut.
     var montres = Set(Protocole.allCases)
     /// Les liens montres, gardes d'un lancement a l'autre.
@@ -471,13 +476,13 @@ struct CommandesVue: View {
 
     /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene et que Zigbee est montre
     /// (`ContenuHaut.liens`), seul ou avec Thread.
-    static func montreLiens(scene: ScenePieces?, montres: Set<Protocole>) -> Bool {
-        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? []), montres: montres).liens
+    static func montreLiens(protocoles: Set<Protocole>, montres: Set<Protocole>) -> Bool {
+        ContenuHaut(protocoles: protocoles, montres: montres).liens
     }
 
     var body: some View {
         HStack(spacing: 5) {
-            if Self.montreLiens(scene: moteur.scene, montres: montres) {
+            if Self.montreLiens(protocoles: protocoles, montres: montres) {
                 SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
                     moteur.liens = v
                     liensGardes = v.rawValue

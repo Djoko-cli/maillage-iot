@@ -1,6 +1,8 @@
+import AppKit
 import Foundation
 import MaillageCoeur
 import ProtocoleZigbee
+import SwiftUI
 import Testing
 @testable import MaillageIoT
 
@@ -32,11 +34,10 @@ struct BarreDuHautTests {
         let reunie = EntreeScene(surveillance: EntreeSceneTests.deuxReseaux(), places: PlacesGardees())
         let c = ContenuHaut(protocoles: reunie.protocoles)
         #expect(c.tournees == [.thread, .zigbee] && c.liens)
-        let m = MoteurPiecesTests.moteur(reunie)
-        #expect(CommandesVue.montreLiens(scene: m.scene, montres: reunie.montres), "les liens de Zigbee, avec ceux de Thread")
-        let seulThread = MoteurPiecesTests.moteur(EntreeScene(surveillance: SurveillanceTests.demo(), places: PlacesGardees()))
-        #expect(!CommandesVue.montreLiens(scene: seulThread.scene, montres: reunie.montres), "Thread seul : pas de liens")
-        #expect(!CommandesVue.montreLiens(scene: nil, montres: reunie.montres))
+        #expect(CommandesVue.montreLiens(protocoles: reunie.protocoles, montres: reunie.montres), "les liens de Zigbee, avec ceux de Thread")
+        let seulThread = EntreeScene(surveillance: SurveillanceTests.demo(), places: PlacesGardees())
+        #expect(!CommandesVue.montreLiens(protocoles: seulThread.protocoles, montres: reunie.montres), "Thread seul : pas de liens")
+        #expect(!CommandesVue.montreLiens(protocoles: [], montres: reunie.montres))
     }
 
     /// L'ecran d'attente dit l'etat de chaque protocole actif : « Ecoute du reseau local… » n'est pas dit quand Thread est
@@ -57,5 +58,74 @@ struct BarreDuHautTests {
     @Test func enDemoSeulLeProtocoleRejoueParle() {
         #expect(EtatVide.etats(Surveillance(mode: .demo, dossier: nil)) == [.ecouteThread])
         #expect(EtatVide.etats(Surveillance(mode: .demo, dossier: nil, demo: .zigbee)) == [.attenteZigbee])
+    }
+
+    // MARK: Le selecteur « Liens » suit la scene a montrer, pas la scene animee du moteur
+
+    /// Le haut de la fenetre est dessine d'apres la scene a montrer (`EntreeScene`, refaite a chaque rendu) : `moteur.scene`,
+    /// elle, est la scene animee, posee apres coup (calcul de la disposition, fin d'un mouvement) et que SwiftUI n'observe pas.
+    /// Banc 4 de la phase 6 : le selecteur « Liens : chemins | tous » et le bouton des voisins manquaient, au hasard, alors que
+    /// Thread et Zigbee etaient montres.
+    @Test func liensSelonLaSceneAMontrer() {
+        let tous: Set<Protocole> = [.thread, .zigbee]
+        #expect(CommandesVue.montreLiens(protocoles: tous, montres: tous), "les deux, tous montres")
+        #expect(CommandesVue.montreLiens(protocoles: [.zigbee], montres: tous), "Zigbee seul")
+        #expect(!CommandesVue.montreLiens(protocoles: [.thread], montres: tous), "Thread seul : pas de liens")
+        #expect(!CommandesVue.montreLiens(protocoles: [], montres: tous), "rien a montrer")
+        #expect(!CommandesVue.montreLiens(protocoles: tous, montres: [.thread]), "Zigbee masque")
+        #expect(CommandesVue.montreLiens(protocoles: tous, montres: [.zigbee]), "Thread masque : Zigbee garde ses liens")
+    }
+
+    /// La largeur de la capsule de droite pour une scene a montrer (ses protocoles et ceux qui sont montres), posee sur un moteur
+    /// qui garde la scene `posee` (nil : aucune scene encore, avant la premiere composition). Le selecteur et le bouton des
+    /// voisins l'elargissent : c'est ce qui les distingue, quelle que soit la langue.
+    private static func largeurDesCommandes(posee: EntreeScene?, protocoles: Set<Protocole>, montres: Set<Protocole>) -> CGFloat {
+        let moteur = posee.map { MoteurPiecesTests.moteur($0) } ?? MoteurPieces()
+        let vue = CommandesVue(moteur: moteur, troisD: .constant(false), protocoles: protocoles, montres: montres)
+        return NSHostingView(rootView: vue.capsuleDeVerre()).fittingSize.width
+    }
+
+    /// Premier affichage : aucune scene n'est encore posee sur le moteur (le calcul de la disposition n'est pas fini), et la
+    /// scene a montrer a Thread et Zigbee : le selecteur est la, comme avec une scene posee.
+    @Test func selecteurAuPremierAffichage() {
+        let tous = VueProtocolesTests.tous
+        let reunie = VueProtocolesTests.scene(EntreeSceneTests.deuxReseaux())
+        let sans = Self.largeurDesCommandes(posee: nil, protocoles: [.thread], montres: tous)
+        let premier = Self.largeurDesCommandes(posee: nil, protocoles: reunie.protocoles, montres: reunie.montres)
+        let pose = Self.largeurDesCommandes(posee: reunie, protocoles: reunie.protocoles, montres: reunie.montres)
+        #expect(premier > sans, "le selecteur parait sans scene posee : \(premier) pt contre \(sans) pt sans lui")
+        #expect(premier == pose, "meme etat, meme affichage : \(premier) pt, \(pose) pt")
+    }
+
+    /// Zigbee masque, puis remontre : le moteur garde la scene de Thread seul (la nouvelle attend la fin du mouvement), la
+    /// scene a montrer a de nouveau Zigbee : le selecteur revient. Et a l'inverse, Zigbee masque alors que le moteur garde encore
+    /// la scene des deux : le selecteur part tout de suite.
+    @Test func selecteurQuandZigbeeEstMasquePuisRemontre() {
+        let s = EntreeSceneTests.deuxReseaux()
+        let reunie = VueProtocolesTests.scene(s)
+        let thread = VueProtocolesTests.scene(s, montres: [.thread])
+        #expect(thread.protocoles == [.thread] && reunie.protocoles == VueProtocolesTests.tous)
+        let avec = Self.largeurDesCommandes(posee: reunie, protocoles: reunie.protocoles, montres: reunie.montres)
+        let sans = Self.largeurDesCommandes(posee: thread, protocoles: thread.protocoles, montres: thread.montres)
+        #expect(avec > sans)
+        // Zigbee remontre : le moteur a encore la scene de Thread seul.
+        let remontre = Self.largeurDesCommandes(posee: thread, protocoles: reunie.protocoles, montres: reunie.montres)
+        #expect(remontre == avec, "Zigbee remontre, scene du moteur en retard : \(remontre) pt, attendu \(avec) pt")
+        // Zigbee masque : le moteur a encore la scene des deux.
+        let masque = Self.largeurDesCommandes(posee: reunie, protocoles: thread.protocoles, montres: thread.montres)
+        #expect(masque == sans, "Zigbee masque, scene du moteur en retard : \(masque) pt, attendu \(sans) pt")
+    }
+
+    /// Thread seul, et Zigbee montre mais sans noeud : pas de selecteur, meme si le moteur garde une scene qui en avait un.
+    @Test func pasDeSelecteurSansNoeudZigbee() {
+        let tous = VueProtocolesTests.tous
+        let reunie = VueProtocolesTests.scene(EntreeSceneTests.deuxReseaux())
+        let thread = EntreeScene(surveillance: SurveillanceTests.demo(), places: PlacesGardees())
+        #expect(thread.protocoles == [.thread])
+        let attendu = Self.largeurDesCommandes(posee: thread, protocoles: thread.protocoles, montres: thread.montres)
+        let seul = Self.largeurDesCommandes(posee: reunie, protocoles: thread.protocoles, montres: tous)
+        #expect(seul == attendu, "Thread seul, Zigbee montre sans noeud : \(seul) pt, attendu \(attendu) pt")
+        let vide = Self.largeurDesCommandes(posee: reunie, protocoles: [], montres: tous)
+        #expect(vide == attendu, "rien a montrer : \(vide) pt, attendu \(attendu) pt")
     }
 }
