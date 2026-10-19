@@ -121,6 +121,7 @@ targets:
           - _matter._tcp
           - _hap._udp
           - _trel._udp
+          - _airplay._tcp
           - _hue._tcp
           - _maillage-zigbee._tcp
     settings:
@@ -179,6 +180,7 @@ targets:
           - _matter._tcp
           - _hap._udp
           - _trel._udp
+          - _airplay._tcp
           - _hue._tcp
           - _maillage-zigbee._tcp
     settings:

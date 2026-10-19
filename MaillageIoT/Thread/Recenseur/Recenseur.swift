@@ -17,7 +17,9 @@ final class Recenseur {
         case erreur(String)
     }
 
-    nonisolated static let types = ["_meshcop._udp", "_matter._tcp", "_hap._udp", "_trel._udp"]
+    /// Les appareils AirPlay (HomePod, Apple TV...) : leur nom et leur hote servent a proposer une piece (`PieceAirPlay`).
+    nonisolated static let typeAirPlay = "_airplay._tcp"
+    nonisolated static let types = ["_meshcop._udp", "_matter._tcp", "_hap._udp", "_trel._udp", typeAirPlay]
     nonisolated static let miseEnRoute: Duration = .seconds(10)
     nonisolated static let attenteMax: Duration = .seconds(60)
     nonisolated static let calme: Duration = .seconds(2)
@@ -225,7 +227,7 @@ final class Recenseur {
         cibles = Self.retenir(cibles: cibles, resolues: resolues, listees: Set(vues.map { Self.cle($0.type, $0.instance) }))
 
         // 2. Adresses de chaque hote, a chaque releve.
-        let hotes = Set(cibles.values.map(\.hote))
+        let hotes = Self.hotesAResoudre(cibles)
         let adresses = await withTaskGroup(of: (String, [String]).self) { groupe in
             for hote in hotes {
                 groupe.addTask { (hote, await ResolveurDNSSD.adresses(hote: hote)) }

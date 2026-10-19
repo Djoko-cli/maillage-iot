@@ -38,10 +38,10 @@
 **Interfaces:**
 - Produces : `PieceAirPlay.propositions(airplay: [ServiceAirPlay], bordures: [(id: IdNoeud, hote: String)], piecesMaison: [String], piecesConnues: [IdNoeud: String]) -> [IdNoeud: Proposition]` (indicatif : ajuster aux types réels et le dire au rapport), `Proposition(piece: String, nomAirPlay: String)`.
 
-- [ ] **Step 1: Tests RED** — rattachement par hôte (casse, point final) ; aucune proposition sans hôte commun ; mot entier (« Salon » oui, « Salonnière » non), accents et casse, la plus longue de deux pièces ; nœud déjà placé : rien ; le service AirPlay résolu par le recenseur (hôte, TXT `model`) avec un faux navigateur.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — porte.
-- [ ] **Step 4: Commit** — « AirPlay : ecoute et proposition de piece pour les routeurs de bordure ».
+- [x] **Step 1: Tests RED** — rattachement par hôte (casse, point final) ; aucune proposition sans hôte commun ; mot entier (« Salon » oui, « Salonnière » non), accents et casse, la plus longue de deux pièces ; nœud déjà placé : rien ; le service AirPlay résolu par le recenseur (hôte, TXT `model`) avec un faux navigateur.
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — porte.
+- [x] **Step 4: Commit** — « AirPlay : ecoute et proposition de piece pour les routeurs de bordure ».
 
 ---
 

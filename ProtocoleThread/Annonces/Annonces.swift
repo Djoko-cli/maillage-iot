@@ -46,6 +46,10 @@ public struct Annonces: Codable, Equatable, Sendable {
     public var hap: [AnnonceService]
     /// `_trel._udp` : routeurs Thread qui passent aussi par le reseau local (TREL) ; vide dans une capture d'avant.
     public var trel: [AnnonceService]
+    /// `_airplay._tcp` : HomePod, Apple TV et autres appareils AirPlay (instance : leur nom, TXT `model`) ; sert seulement
+    /// a proposer la piece d'un routeur de bordure (`PieceAirPlay`). Absent d'une capture d'avant, et pas ecrit quand il est
+    /// vide (les captures gardent leurs octets).
+    public var airplay: [AnnonceService]
     /// Adresses resolues de chaque hote (cle : `AnnonceService.hote`), en texte.
     public var adresses: [String: [String]]
     /// Routes IPv6 /64 du Mac par un routeur lien-local (vide si illisibles).
@@ -56,13 +60,14 @@ public struct Annonces: Codable, Equatable, Sendable {
     public var note: String?
 
     public init(date: Date, routeurs: [AnnonceService] = [], matter: [AnnonceService] = [],
-                hap: [AnnonceService] = [], trel: [AnnonceService] = [], adresses: [String: [String]] = [:],
-                routes: [RouteIPv6] = [], prefixesLocaux: [String] = [], note: String? = nil) {
+                hap: [AnnonceService] = [], trel: [AnnonceService] = [], airplay: [AnnonceService] = [],
+                adresses: [String: [String]] = [:], routes: [RouteIPv6] = [], prefixesLocaux: [String] = [], note: String? = nil) {
         self.date = date
         self.routeurs = routeurs
         self.matter = matter
         self.hap = hap
         self.trel = trel
+        self.airplay = airplay
         self.adresses = adresses
         self.routes = routes
         self.prefixesLocaux = prefixesLocaux
@@ -70,7 +75,7 @@ public struct Annonces: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case date, routeurs, matter, hap, trel, adresses, routes, prefixesLocaux, note
+        case date, routeurs, matter, hap, trel, airplay, adresses, routes, prefixesLocaux, note
     }
 
     /// Une capture d'avant TREL n'a pas `trel` : vide.
@@ -81,10 +86,25 @@ public struct Annonces: Codable, Equatable, Sendable {
         matter = try c.decode([AnnonceService].self, forKey: .matter)
         hap = try c.decode([AnnonceService].self, forKey: .hap)
         trel = try c.decodeIfPresent([AnnonceService].self, forKey: .trel) ?? []
+        airplay = try c.decodeIfPresent([AnnonceService].self, forKey: .airplay) ?? []
         adresses = try c.decode([String: [String]].self, forKey: .adresses)
         routes = try c.decode([RouteIPv6].self, forKey: .routes)
         prefixesLocaux = try c.decode([String].self, forKey: .prefixesLocaux)
         note = try c.decodeIfPresent(String.self, forKey: .note)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(date, forKey: .date)
+        try c.encode(routeurs, forKey: .routeurs)
+        try c.encode(matter, forKey: .matter)
+        try c.encode(hap, forKey: .hap)
+        try c.encode(trel, forKey: .trel)
+        if !airplay.isEmpty { try c.encode(airplay, forKey: .airplay) }
+        try c.encode(adresses, forKey: .adresses)
+        try c.encode(routes, forKey: .routes)
+        try c.encode(prefixesLocaux, forKey: .prefixesLocaux)
+        try c.encodeIfPresent(note, forKey: .note)
     }
 
     /// Adresses d'un hote (vide si inconnu).

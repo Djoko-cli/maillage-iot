@@ -12,6 +12,12 @@ extension Recenseur {
         let txt: Data
     }
 
+    /// Hotes dont on cherche les adresses a chaque releve : ceux des cibles, sauf ceux des appareils AirPlay seuls (leur hote
+    /// ne sert qu'a les rattacher a un routeur de bordure, par son nom : aucune adresse, ni requete, ni entree au releve).
+    nonisolated static func hotesAResoudre(_ cibles: [String: ResolveurDNSSD.Cible]) -> Set<String> {
+        Set(cibles.filter { !$0.key.hasPrefix(typeAirPlay + "|") }.values.map(\.hote))
+    }
+
     /// Cle d'une instance dans les cibles : "type|instance".
     nonisolated static func cle(_ type: String, _ instance: String) -> String {
         "\(type)|\(instance)"
@@ -37,7 +43,8 @@ extension Recenseur {
             }.sorted { $0.instance < $1.instance }
         }
         return Annonces(date: date, routeurs: services("_meshcop._udp"), matter: services("_matter._tcp"),
-                        hap: services("_hap._udp"), trel: services("_trel._udp"), adresses: adresses, routes: routes, prefixesLocaux: prefixesLocaux)
+                        hap: services("_hap._udp"), trel: services("_trel._udp"),
+                        airplay: services(Self.typeAirPlay), adresses: adresses, routes: routes, prefixesLocaux: prefixesLocaux)
     }
 
     /// Cibles apres un releve : une resolution reussie remplace la cible de son
