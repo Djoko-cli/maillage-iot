@@ -5,9 +5,9 @@ import SwiftUI
 /// Fenetre de la vue par pieces (spec de la vue par pieces, sections 1 et 7 ; polissage B, section 1) :
 /// sans barre de titre (le style de sa scene, `.hiddenTitleBar`, dans `MaillageIoTApp`), la scene occupe
 /// toute la fenetre, jusque sous ses trois boutons ; en haut, les deux capsules du bandeau, la bande qui
-/// deplace la fenetre, la ligne de la tournee, les bandeaux, le fil et la ligne de niveau (`HautPieces`) ; en bas,
-/// la pile : la legende, puis la fiche. Elle reste sombre, comme la maquette, meme quand le Mac est en
-/// clair (precision 15 du plan 4b).
+/// deplace la fenetre, la ligne de la tournee, les bandeaux, le fil et la ligne de niveau (`HautPieces`), puis, dessous, le
+/// panneau de sante (`PanneauSante`) ; en bas, la pile : la legende, puis la fiche. Elle reste sombre, comme la maquette,
+/// meme quand le Mac est en clair (precision 15 du plan 4b).
 struct FenetrePieces: View {
     @Environment(Surveillance.self) private var surveillance
     /// La sonde de Zigbee : « Maillage incomplet » et sa passe complementaire. nil dans les vues de test sans elle.
@@ -226,6 +226,18 @@ struct FenetrePieces: View {
                            protocoles: entree?.protocoles ?? [], montres: montres,
                            feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                // Le panneau de sante : en haut a gauche, sous le haut de la vue (sa marge mesuree), en verre comme la legende. Il
+                // ne descend jamais plus bas que la moitie de l'espace libre entre le haut et la pile du bas (la legende, la
+                // fiche) : la liste defile dans le panneau. Un bandeau qui parait en haut le pousse avec lui, sur le meme mouvement.
+                PanneauSanteDeLaFenetre(moteur: moteur, entree: entree, instant: contexte.date,
+                                        hauteurMax: hauteurVue.map {
+                                            PanneauSante.hauteurMax(vue: $0, margeHaut: margeHautMesuree,
+                                                                    margeBas: Self.margeBas(pile: hauteurPile ?? hauteurLegende))
+                                        })
+                    .padding(.top, margeHautMesuree)
+                    .padding(.leading, Self.bord)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: margeHautMesuree)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
                     // La pile du bas, de haut en bas : la legende, puis la fiche ; la legende reste au-dessus d'une

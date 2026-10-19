@@ -1025,6 +1025,22 @@
         }
       }
     },
+    "%lld perdus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld lost"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld perdus"
+          }
+        }
+      }
+    },
     "%lld rattachements échoués" : {
       "localizations" : {
         "en" : {
@@ -1217,6 +1233,22 @@
         }
       }
     },
+    "%lld à surveiller" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld to watch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld à surveiller"
+          }
+        }
+      }
+    },
     "%lld/%lld routes" : {
       "localizations" : {
         "en" : {
@@ -1373,6 +1405,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 nom masqué faute de place : rapprochez-vous (molette)"
+          }
+        }
+      }
+    },
+    "1 perdu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 lost"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 perdu"
           }
         }
       }
@@ -1805,6 +1853,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher le journal dans le Finder"
+          }
+        }
+      }
+    },
+    "Ailleurs : %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elsewhere: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ailleurs : %@"
           }
         }
       }
@@ -2573,6 +2637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce n'est pas le pont attendu (certificat du pont %@)."
+          }
+        }
+      }
+    },
+    "Ce nœud n'est pas dans la scène" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This node is not in the scene"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce nœud n'est pas dans la scène"
           }
         }
       }
@@ -7281,6 +7361,22 @@
         }
       }
     },
+    "Rien à signaler" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nothing to report"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à signaler"
+          }
+        }
+      }
+    },
     "Rotation lente" : {
       "localizations" : {
         "en" : {
@@ -8033,6 +8129,38 @@
         }
       }
     },
+    "Santé" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé"
+          }
+        }
+      }
+    },
+    "Santé · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Health · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Santé · %@"
+          }
+        }
+      }
+    },
     "Service Bonjour" : {
       "localizations" : {
         "en" : {
@@ -8605,6 +8733,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tout"
+          }
+        }
+      }
+    },
+    "Tout va bien" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All good"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout va bien"
           }
         }
       }
@@ -9233,6 +9377,22 @@
         }
       }
     },
+    "adresse plus annoncée" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "address no longer advertised"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "adresse plus annoncée"
+          }
+        }
+      }
+    },
     "appareil final" : {
       "localizations" : {
         "en" : {
@@ -9389,6 +9549,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "autorisé · clé %@"
+          }
+        }
+      }
+    },
+    "autre partition" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "other partition"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "autre partition"
           }
         }
       }
@@ -9773,6 +9949,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "disparu"
+          }
+        }
+      }
+    },
+    "disparu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disappeared %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disparu %@"
           }
         }
       }
@@ -11153,6 +11345,86 @@
         }
       }
     },
+    "pile %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "battery %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pile %@"
+          }
+        }
+      }
+    },
+    "pile faible" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "low battery"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pile faible"
+          }
+        }
+      }
+    },
+    "pont disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bridge disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pont disparu"
+          }
+        }
+      }
+    },
+    "pont disparu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bridge disappeared %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pont disparu %@"
+          }
+        }
+      }
+    },
+    "pont injoignable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bridge unreachable"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pont injoignable"
+          }
+        }
+      }
+    },
     "port fermé (EOF) : la sonde a peut-être redémarré" : {
       "localizations" : {
         "en" : {
@@ -11197,6 +11469,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "port inconnu"
+          }
+        }
+      }
+    },
+    "premier relevé en attente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "first survey pending"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "premier relevé en attente"
           }
         }
       }
@@ -11453,6 +11741,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "routeur de bordure d'une autre partition"
+          }
+        }
+      }
+    },
+    "routeur disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "router disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur disparu"
+          }
+        }
+      }
+    },
+    "routeur disparu %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "router disappeared %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur disparu %@"
           }
         }
       }

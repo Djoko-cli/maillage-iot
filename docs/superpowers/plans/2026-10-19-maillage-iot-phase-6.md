@@ -63,10 +63,10 @@
 - Consumes : `SantePieces.Lecture` (Task 1) ; `MoteurPieces.isoler(_:)`, `selection`, `versMaison(enFondu:)`, `isolement`.
 - Produces : `PanneauSante(lecture:moteur:)` ; préférence `PanneauSante.cleRepliee = "santeRepliee"`.
 
-- [ ] **Step 1: Tests RED** — repli par défaut et mémorisé ; capsule : pastilles à zéro cachées, « Tout va bien », « … » ; ouvert : titre de portée, sections, ligne « Ailleurs » ; clic sur une ligne : depuis la maison, depuis un autre niveau, depuis une autre pièce → la pièce du nœud est isolée et le nœud sélectionné ; clic sur « Ailleurs » → vue d'ensemble ; ligne d'un nœud absent de la scène non cliquable ; hauteur bornée à la moitié de l'espace libre avec défilement ; obstacle enregistré pour les noms.
-- [ ] **Step 2: GREEN** — implémenter (verre et animation de la légende, ancrés en haut à gauche ; textes fr et en).
-- [ ] **Step 3: Vérifier** — porte de la tâche, passe anglaise comprise ; captures temporaires de la démo combinée (repliée et ouverte) au rapport.
-- [ ] **Step 4: Commit** — « Sante : panneau en verre dans la vue par pieces ».
+- [x] **Step 1: Tests RED** — repli par défaut et mémorisé ; capsule : pastilles à zéro cachées, « Tout va bien », « … » ; ouvert : titre de portée, sections, ligne « Ailleurs » ; clic sur une ligne : depuis la maison, depuis un autre niveau, depuis une autre pièce → la pièce du nœud est isolée et le nœud sélectionné ; clic sur « Ailleurs » → vue d'ensemble ; ligne d'un nœud absent de la scène non cliquable ; hauteur bornée à la moitié de l'espace libre avec défilement ; obstacle enregistré pour les noms.
+- [x] **Step 2: GREEN** — implémenter (verre et animation de la légende, ancrés en haut à gauche ; textes fr et en).
+- [x] **Step 3: Vérifier** — porte de la tâche, passe anglaise comprise ; captures temporaires de la démo combinée (repliée et ouverte) au rapport.
+- [x] **Step 4: Commit** — « Sante : panneau en verre dans la vue par pieces ».
 
 ---
 

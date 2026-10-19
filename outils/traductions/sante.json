@@ -1,0 +1,22 @@
+{
+  "%lld perdus": "%lld lost",
+  "%lld à surveiller": "%lld to watch",
+  "1 perdu": "1 lost",
+  "Ailleurs : %@": "Elsewhere: %@",
+  "Ce nœud n'est pas dans la scène": "This node is not in the scene",
+  "Rien à signaler": "Nothing to report",
+  "Santé": "Health",
+  "Santé · %@": "Health · %@",
+  "Tout va bien": "All good",
+  "adresse plus annoncée": "address no longer advertised",
+  "autre partition": "other partition",
+  "disparu %@": "disappeared %@",
+  "pile %@": "battery %@",
+  "pile faible": "low battery",
+  "pont disparu": "bridge disappeared",
+  "pont disparu %@": "bridge disappeared %@",
+  "pont injoignable": "bridge unreachable",
+  "premier relevé en attente": "first survey pending",
+  "routeur disparu": "router disappeared",
+  "routeur disparu %@": "router disappeared %@"
+}

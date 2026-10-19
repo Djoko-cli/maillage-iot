@@ -394,12 +394,19 @@ enum SantePieces {
         })
     }
 
+    /// Les protocoles que le panneau montre : ceux de la scene que la coque montre (en demo, seulement ceux dont la demo est
+    /// rejouee).
+    @MainActor
+    static func montres(entree: EntreeScene, surveillance s: Surveillance) -> Set<Protocole> {
+        entree.montres.intersection(s.modelesMontres.map(\.protocole))
+    }
+
     /// La lecture d'une fenetre : la scene `entree` au focus `isolement`, avec ce que sait la coque `s` (le journal, les releves).
     /// Les protocoles montres sont ceux de la scene que la coque montre : en demo, seulement ceux dont la demo est rejouee (l'autre,
     /// muet, n'attend rien).
     @MainActor
     static func lire(entree: EntreeScene, isolement: Isolement, surveillance s: Surveillance) -> Lecture {
-        let montres = entree.montres.intersection(s.modelesMontres.map(\.protocole))
+        let montres = montres(entree: entree, surveillance: s)
         let dates = disparitions(entree: entree) { s.evenements(de: $0) }
         let disparus = routeursDisparus(journal: s.evenements, releves: releveDeLaSession(s))
         return lire(entree: entree, isolement: isolement, montres: montres, disparitions: dates, routeursDisparus: disparus,
