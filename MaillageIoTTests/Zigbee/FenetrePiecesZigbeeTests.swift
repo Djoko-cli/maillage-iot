@@ -41,7 +41,7 @@ struct FenetrePiecesZigbeeTests {
     /// (sinon une sonde inactive, sans sonde retenue). A retirer par `fermer`.
     static func fenetre(_ s: Surveillance, taille: CGSize, preferences p: UserDefaults,
                         reduire: Bool = false, sonde: SondeMaillageZigbee? = nil) throws -> (NSWindow, MoteurPieces) {
-        let vue = FenetrePieces(fichierPlaces: nil)
+        let vue = FenetrePieces(fichierPlaces: nil, preferences: p)
         let etat = try #require(Mirror(reflecting: vue).children.first { $0.label == "_moteur" }?.value)
         let moteur = try #require(Mirror(reflecting: etat).descendant("_value") as? MoteurPieces)
         let fenetre = NSWindow(contentRect: NSRect(x: -6000, y: -6000, width: taille.width, height: taille.height),

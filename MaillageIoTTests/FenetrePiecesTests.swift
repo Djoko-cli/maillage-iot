@@ -41,7 +41,7 @@ struct FenetrePiecesTests {
     /// (sinon une sonde inactive, sans sonde retenue). A retirer par `fermer`.
     static func fenetre(_ s: Surveillance, taille: CGSize, preferences p: UserDefaults,
                         reduire: Bool = false, sonde: SondeMaillageThread? = nil) throws -> (NSWindow, MoteurPieces) {
-        let vue = FenetrePieces(fichierPlaces: nil)
+        let vue = FenetrePieces(fichierPlaces: nil, preferences: p)
         let etat = try #require(Mirror(reflecting: vue).children.first { $0.label == "_moteur" }?.value)
         let moteur = try #require(Mirror(reflecting: etat).descendant("_value") as? MoteurPieces)
         let fenetre = NSWindow(contentRect: NSRect(x: -6000, y: -6000, width: taille.width, height: taille.height),
@@ -378,6 +378,24 @@ struct FenetrePiecesTests {
         p.set(true, forKey: LegendePieces.cleRepliee)
         try await MoteurPiecesTests.attendre { moteur.basGrille == 30 }
         #expect(moteur.basGrille == 30, "repli garde par Djoko, sous la fiche : 30 pt")
+    }
+
+    /// La vue lit ses reglages de depart (liens, voisins montres) dans les preferences qu'on lui donne, jamais dans celles de la
+    /// machine : un bouton « Voisins » coupe a la main dans l'app ne change pas la legende d'un test (328 pt au lieu de 345 sous la demo
+    /// combinee, le 19/10).
+    @Test func reglagesDeDepartDesPreferencesDonnees() throws {
+        let (p, domaine) = try SondeMaillageTests.preferences()
+        defer { p.removePersistentDomain(forName: domaine) }
+        let s = Surveillance(mode: .direct, dossier: nil)
+        let taille = CGSize(width: 1100, height: 880)
+        let (f1, m1) = try Self.fenetre(s, taille: taille, preferences: p)
+        defer { Self.fermer(f1) }
+        #expect(m1.voisins && m1.liens == .chemins, "sans preference : voisins montres, liens en chemins")
+        p.set(false, forKey: FenetrePieces.cleVoisins)
+        p.set(ModeLiens.tous.rawValue, forKey: FenetrePieces.cleLiens)
+        let (f2, m2) = try Self.fenetre(s, taille: taille, preferences: p)
+        defer { Self.fermer(f2) }
+        #expect(!m2.voisins && m2.liens == .tous, "les preferences donnees")
     }
 
     /// Taille minimale du contenu de la fenetre : 1000 x 680 pt, sous la barre de titre cachee (la fenetre, elle, fait

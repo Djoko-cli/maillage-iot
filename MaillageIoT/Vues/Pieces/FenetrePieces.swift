@@ -107,13 +107,16 @@ struct FenetrePieces: View {
         return IdNoeud(texte: argument) ?? IdNoeud(.thread, argument)
     }
 
-    init(fichierPlaces: URL?, fichierPieces: URL? = nil, places: PlacesGardees? = nil) {
-        _moteur = State(initialValue: MoteurPieces(troisD: UserDefaults.standard.bool(forKey: Self.cleMode),
+    /// `preferences` : celles ou la vue lit, au depart, son mode 2D / 3D, ses liens et ses voisins montres, et l'argument de
+    /// selection (celles de l'app ; les tests passent les leurs, pour que le reglage de la machine ne change pas la fenetre).
+    init(fichierPlaces: URL?, fichierPieces: URL? = nil, places: PlacesGardees? = nil,
+         preferences: UserDefaults = .standard) {
+        _moteur = State(initialValue: MoteurPieces(troisD: preferences.bool(forKey: Self.cleMode),
                                                    fichierPlaces: fichierPlaces,
-                                                   selection: Self.selection(argument: UserDefaults.standard.string(forKey: "selection")),
+                                                   selection: Self.selection(argument: preferences.string(forKey: "selection")),
                                                    places: places,
-                                                   liens: Self.modeLiens(UserDefaults.standard.string(forKey: Self.cleLiens)),
-                                                   voisins: Self.voisinsMontres(UserDefaults.standard.object(forKey: Self.cleVoisins))))
+                                                   liens: Self.modeLiens(preferences.string(forKey: Self.cleLiens)),
+                                                   voisins: Self.voisinsMontres(preferences.object(forKey: Self.cleVoisins))))
         _piecesChoisies = State(initialValue: PiecesChoisies(fichier: fichierPieces))
     }
 
