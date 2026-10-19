@@ -363,7 +363,8 @@ struct FenetrePiecesZigbeeTests {
         let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
         defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
         let s = Surveillance(mode: .direct, dossier: nil)
-        let vue = FenetrePieces(fichierPlaces: nil)
+        let vue = FenetrePieces(fichierPlaces: nil, preferences: p)
+            .defaultAppStorage(p)
             .environment(s)
             .environment(NomsPont())
             .environment(NomsPasseur())

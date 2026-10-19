@@ -404,7 +404,8 @@ struct FenetrePiecesTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let s = Surveillance(mode: .direct, dossier: nil)
-        let vue = FenetrePieces(fichierPlaces: nil)
+        let vue = FenetrePieces(fichierPlaces: nil, preferences: p)
+            .defaultAppStorage(p)
             .environment(s)
             .environment(NomsPasseur())
             .environment(SondeMaillageThread(preferences: p, actif: false))
