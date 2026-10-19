@@ -413,5 +413,8 @@
   "Zigbee est masqué": "Zigbee is hidden",
   "Masquer %@ dans le journal": "Hide %@ in the journal",
   "Montrer %@ dans le journal": "Show %@ in the journal",
-  "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau ».": "“Thread Network” is available once network access is allowed: plug the probe in over USB, then “Allow Network Access”."
+  "« Réseau Thread » est disponible une fois l'accès réseau autorisé : sonde branchée en USB, puis « Autoriser l'accès réseau ».": "“Thread Network” is available once network access is allowed: plug the probe in over USB, then “Allow Network Access”.",
+  "Pièce proposée : %@ (d'après AirPlay)": "Suggested room: %@ (from AirPlay)",
+  "Placer ici": "Place here",
+  "Ignorer": "Ignore"
 }

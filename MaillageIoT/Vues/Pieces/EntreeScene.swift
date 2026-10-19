@@ -31,6 +31,9 @@ struct EntreeScene: Equatable {
     var chefs: Set<IdNoeud>
     /// Appareils affiches, par id.
     var appareils: [IdNoeud: AppareilAffiche]
+    /// Piece de chaque noeud qui en a une, par id, celle dont la scene le range (Maison, le choix de Djoko, ou la regle du nom) :
+    /// un routeur de bordure qui n'y est pas est « Sans piece », et AirPlay peut lui en proposer une (`PropositionPiece`).
+    var piecesNoeuds: [IdNoeud: String]
     /// Les modeles de protocole de la coque : leur mise en avant et le choix de leurs voisins, par protocole du noeud.
     let modeles: [any ModeleProtocole]
     /// Les protocoles montres : ceux dont l'interrupteur de vue est allume (`vue.thread`, `vue.zigbee`) et qui sont actifs
@@ -130,6 +133,7 @@ struct EntreeScene: Equatable {
         self.montres = montres
         self.cachees = cachees
         self.appareils = appareils
+        piecesNoeuds = pieces.filter { !$0.value.isEmpty }
         apparences = Dictionary(scene.noeuds.map { n in
             let a = appareils[n.id]
             let apparence: DessinNoeud.Apparence = switch n.id.protocole {

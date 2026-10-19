@@ -31,7 +31,9 @@ struct ModulesApp {
         let inerte = demo != nil || sousTests
         // Ni fichier en demo (rien sur disque) ni sous les tests (jamais ceux de l'app).
         let dossier: URL? = inerte ? nil : Surveillance.dossierParDefaut
-        surveillance = Surveillance(mode: demo != nil ? .demo : .direct, dossier: dossier, demo: demo ?? .thread)
+        // L'app en demo montre la proposition AirPlay ; les references de rejeu, construites sans cette option, restent celles d'avant.
+        surveillance = Surveillance(mode: demo != nil ? .demo : .direct, dossier: dossier, demo: demo ?? .thread,
+                                    demoAirPlay: demo != nil)
         ouverture = OuvertureSession()
         // La demo de Zigbee rejouee (la sienne, ou celle de la combinee : recalee, ses homonymes renommes), la meme que celle
         // du modele.

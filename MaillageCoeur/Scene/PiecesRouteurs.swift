@@ -33,11 +33,15 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
     /// Par domicile : autre noeud (son protocole et son adresse longue en 16 hexa majuscules) -> piece choisie
     /// (precision 27).
     public var appareils: [String: [IdNoeud: String]] = [:]
+    /// Par domicile : routeur de bordure (`thread:<instance de l'annonce>`) -> le nom AirPlay dont la piece proposee a ete
+    /// ignoree (« Ignorer », dans sa fiche). La proposition revient quand son nom AirPlay n'est plus celui-la. Le champ n'est
+    /// ecrit que s'il y en a un : un fichier sans ignore garde les octets d'avant.
+    public var airPlayIgnores: [String: [IdNoeud: String]] = [:]
 
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case version, maisons, appareils
+        case version, maisons, appareils, ignoreAirPlay
     }
 
     /// `appareils` et `maisons` peuvent manquer : aucun choix. `appareils` mal forme est ignore : un champ facultatif ne
@@ -51,6 +55,8 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
         }
         maisons = try Self.cles(try c.decodeIfPresent([String: [String: String]].self, forKey: .maisons) ?? [:])
         appareils = try Self.cles((try? c.decodeIfPresent([String: [String: String]].self, forKey: .appareils)) ?? [:])
+        // Facultatif comme `appareils` : mal forme, il est ignore sans faire perdre les choix.
+        airPlayIgnores = (try? Self.cles((try? c.decodeIfPresent([String: [String: String]].self, forKey: .ignoreAirPlay)) ?? [:])) ?? [:]
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -58,6 +64,7 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
         try c.encode(version, forKey: .version)
         try c.encode(Self.textes(maisons), forKey: .maisons)
         try c.encode(Self.textes(appareils), forKey: .appareils)
+        if !airPlayIgnores.isEmpty { try c.encode(Self.textes(airPlayIgnores), forKey: .ignoreAirPlay) }
     }
 
     private static func cles(_ brut: [String: [String: String]]) throws -> [String: [IdNoeud: String]] {
@@ -156,6 +163,17 @@ public struct PiecesRouteurs: Hashable, Sendable, Codable {
     public mutating func choisir(_ piece: String?, routeur: IdNoeud, domicile: String) {
         maisons[domicile, default: [:]][routeur] = piece
         if maisons[domicile]?.isEmpty == true { maisons[domicile] = nil }
+    }
+
+    /// Le nom AirPlay dont la piece proposee a ete ignoree pour un routeur de bordure (`thread:<instance>`) ; nil : aucun.
+    public func airPlayIgnore(routeur: IdNoeud, domicile: String) -> String? {
+        airPlayIgnores[domicile]?[routeur]
+    }
+
+    /// Retient « Ignorer » pour un routeur de bordure : le nom AirPlay dont la piece proposee est ignoree ; nil l'oublie.
+    public mutating func ignorerAirPlay(_ nomAirPlay: String?, routeur: IdNoeud, domicile: String) {
+        airPlayIgnores[domicile, default: [:]][routeur] = nomAirPlay
+        if airPlayIgnores[domicile]?.isEmpty == true { airPlayIgnores[domicile] = nil }
     }
 
     /// La cle d'un autre noeud : son protocole et son adresse longue en majuscules.

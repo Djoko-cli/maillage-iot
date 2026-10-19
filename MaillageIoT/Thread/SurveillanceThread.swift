@@ -49,6 +49,9 @@ final class SurveillanceThread: ModeleProtocole {
     let mode: Surveillance.Mode
     /// Ce modele rejoue la panne du 27/09 ; faux : en demo, un modele muet (`-demo-zigbee`).
     let rejoueLaDemo: Bool
+    /// En demo : la demo d'AirPlay (phase 7), l'Apple TV et un HomePod que Maison ne place pas, et leur annonce AirPlay, dont le
+    /// nom donne la piece que la fiche propose. Faux pour les references de rejeu, qui attestent la demo d'avant.
+    let demoAirPlay: Bool
     /// « Activer ce protocole » (spec 3.3) : faux, Thread est vraiment arrete (Bonjour, sonde, tournees) et ne montre ni
     /// n'ecrit plus rien ; l'activer le relance comme au lancement. Garde sous `thread.actif`, vrai par defaut ; la demo ne
     /// le lit ni ne l'ecrit.
@@ -138,12 +141,13 @@ final class SurveillanceThread: ModeleProtocole {
     /// `dossier` : la racine des donnees de l'app ; les fichiers de Thread (associations, dernier maillage, adresses
     /// gardees, historique de la sonde) vont sous `Thread/` (nil : nulle part) ; `surnoms` : ceux de `surnoms.json`, de
     /// tous les protocoles (le resolveur de noms ne garde que ceux de Thread) ; `preferences` : les scissions deja
-    /// notifiees et `actif` (mode direct) ; `rejoueLaDemo` : en demo, la panne du 27/09 ; `recenseur` : l'ecoute Bonjour
+    /// notifiees et `actif` (mode direct) ; `rejoueLaDemo` : en demo, la panne du 27/09 ; `demoAirPlay` : en demo, avec l'Apple TV et un HomePod sans piece de Maison et leur annonce AirPlay ; `recenseur` : l'ecoute Bonjour
     /// (mode direct ; les tests en donnent une a navigateurs factices).
     init(mode: Surveillance.Mode, dossier: URL?, surnoms: [IdNoeud: String], preferences: UserDefaults,
-         rejoueLaDemo: Bool = true, recenseur: Recenseur? = nil) {
+         rejoueLaDemo: Bool = true, demoAirPlay: Bool = false, recenseur: Recenseur? = nil) {
         self.mode = mode
         self.rejoueLaDemo = rejoueLaDemo
+        self.demoAirPlay = demoAirPlay
         self.preferences = preferences
         persisteActif = mode == .direct && Surveillance.activationPersistee(preferences)
         let actifAuDepart = persisteActif ? (preferences.object(forKey: Self.cleActif) as? Bool ?? true) : true
@@ -164,7 +168,7 @@ final class SurveillanceThread: ModeleProtocole {
             fichierAssociations = nil
             fichierMaillage = nil
             fichierAdresses = nil
-            noms = rejoueLaDemo ? ResolveurNoms(maison: NomsDemo.maison) : ResolveurNoms()
+            noms = rejoueLaDemo ? ResolveurNoms(maison: demoAirPlay ? NomsDemo.maisonAirPlay : NomsDemo.maison) : ResolveurNoms()
             fichiersHistorique = nil
         }
     }
@@ -173,7 +177,10 @@ final class SurveillanceThread: ModeleProtocole {
         switch mode {
         case .demo:
             guard rejoueLaDemo else { return }
-            for a in ScenarioPanne.releves { integrer(a) }
+            for var a in ScenarioPanne.releves {
+                if demoAirPlay { a.airplay = NomsDemo.annoncesAirPlay }
+                integrer(a)
+            }
             if let m = instantane.flatMap({ MaillageDemo.maillage($0, date: maintenant) }) {
                 recevoir(m, a: maintenant)
             }

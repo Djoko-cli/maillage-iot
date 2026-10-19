@@ -51,10 +51,10 @@
 - Modify: `MaillageIoT/Vues/Pieces/FicheNoeud.swift`, `PiecesChoisies.swift` (mémoire « ignorée »), catalogue ; démo (HomePod et Apple TV sans pièce, service AirPlay inventé)
 - Test: `MaillageIoTTests/FichePieceAirPlayTests.swift`
 
-- [ ] **Step 1: Tests RED** — la ligne paraît pour un routeur de bordure sans pièce avec proposition ; « Placer ici » place le nœud comme « Placer dans une pièce… » ; « Ignorer » cache et persiste ; un nom AirPlay changé fait revenir la proposition ; démo : la proposition paraît ; références de rejeu inchangées.
-- [ ] **Step 2: GREEN** — implémenter (fr et en).
-- [ ] **Step 3: Vérifier** — porte, passe anglaise.
-- [ ] **Step 4: Commit** — « AirPlay : piece proposee dans la fiche, placer ou ignorer ».
+- [x] **Step 1: Tests RED** — la ligne paraît pour un routeur de bordure sans pièce avec proposition ; « Placer ici » place le nœud comme « Placer dans une pièce… » ; « Ignorer » cache et persiste ; un nom AirPlay changé fait revenir la proposition ; démo : la proposition paraît ; références de rejeu inchangées.
+- [x] **Step 2: GREEN** — implémenter (fr et en).
+- [x] **Step 3: Vérifier** — porte, passe anglaise.
+- [x] **Step 4: Commit** — « AirPlay : piece proposee dans la fiche, placer ou ignorer ».
 
 ---
 

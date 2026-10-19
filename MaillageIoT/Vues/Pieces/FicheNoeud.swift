@@ -8,7 +8,8 @@ import SwiftUI
 /// (`id.protocole`), jamais celui d'un autre :
 /// - Thread (ci-dessous) :
 ///   1. identite : le nom, la description, la pastille du chef, l'etat, la pile, les adresses IPv6, et les boutons
-///      « Renommer… » et « Placer dans une pièce… » ;
+///      « Renommer… » et « Placer dans une pièce… » ; pour un routeur de bordure que Maison ne place pas, la pièce
+///      qu'AirPlay propose, avec « Placer ici » et « Ignorer » (`PropositionPiece`) ;
 ///   2. role et parent : le role (routeur de bordure) ou le genre (appareil), ce que la sonde en sait (son parent et la
 ///      qualite du lien, avec sa source et son age), la partition et le prefixe ; puis le journal du noeud ;
 ///   3. enfants : en pastilles, ceux dont il est le parent ;
@@ -125,10 +126,26 @@ struct FicheNoeud: View {
             } else if let m = sonde, let n = m.noeud(cle) {
                 identiteSonde(n)
             }
+            ligneProposition
             boutonsIdentite
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// La piece qu'AirPlay propose pour un routeur de bordure que Maison ne place pas, avec « Placer ici » et « Ignorer »
+    /// (`PropositionPiece`) ; rien sans proposition.
+    @ViewBuilder
+    private var ligneProposition: some View {
+        if let piecesChoisies, let entree,
+           let p = PropositionPiece.pour(id, dans: surveillance, entree: entree, choisies: piecesChoisies) {
+            let domicile = PropositionPiece.domicile(surveillance)
+            LignePropositionPiece(
+                proposition: p,
+                placer: { PropositionPiece.placer(p, pour: id, domicile: domicile, choisies: piecesChoisies) },
+                ignorer: { PropositionPiece.ignorer(p, pour: id, domicile: domicile, choisies: piecesChoisies) })
+                .padding(.top, 4)
+        }
     }
 
     /// « Renommer… », « Placer dans une pièce… », et pour un appareil Thread que Maison ne nomme pas « Associer à un
