@@ -83,6 +83,6 @@
 
 ### Task 4: Relecture finale et banc
 
-- [ ] **Step 1: Relecture finale** — par Opus, sur toute la branche.
-- [ ] **Step 2: Banc** — avec Djoko, sur l'app réelle (compilation de travail) et la démo : coup d'œil, focus, clics, ailleurs.
-- [ ] **Step 3: Verdict** — cocher « Phase 6 » dans la §6.1 de la spec ; fusion dans `main` et push avec l'accord de Djoko.
+- [x] **Step 1: Relecture finale** — par Opus, sur toute la branche.
+- [x] **Step 2: Banc** — avec Djoko, sur l'app réelle (compilation de travail) et la démo : coup d'œil, focus, clics, ailleurs.
+- [x] **Step 3: Verdict** — cocher « Phase 6 » dans la §6.1 de la spec ; fusion dans `main` et push avec l'accord de Djoko.
