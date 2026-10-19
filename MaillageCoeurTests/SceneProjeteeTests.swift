@@ -52,6 +52,26 @@ struct SceneProjeteeTests {
         #expect(p.blocs.allSatisfy { abs($0.opaciteVerre - 0.13) < 1e-12 && abs($0.opaciteAretes - 0.75) < 1e-12 })
     }
 
+    /// Une scene vide (tout est masque) ne dessine ni plateau, ni bloc, ni nom d'etage ou de piece, en 2D comme en 3D : la
+    /// bulle de la maison (sphere, equateur, nom « Maison ») reste seule en 3D (banc de la phase 6). La geometrie est celle que
+    /// le moteur pose pour elle (`GeometrieMaison(rayons: [])`, un plateau de repli pour dimensionner la sphere).
+    @Test func sceneVideNeDessineAucuneZone() {
+        let s = ScenePieces(graphe: GrapheReseau(noeuds: []), libelles: [:], piecesNoeuds: [:], zones: nil, chefs: [],
+                            piecesMaison: false, classement: FixturesScene.classement)
+        let g = GeometrieMaison(rayons: [], plateaux: s.etages.map {
+            GeometrieMaison.Plateau(niveau: $0.niveau, principal: $0.principal, dehors: $0.dehors)
+        })
+        for t in [0.0, 1.0] {
+            let o = CameraScene.canonique(g, aspect: 1.5, u: t)
+            let p = SceneProjetee(scene: s, cartes: [], positions: [], geometrie: g,
+                                  etat: EtatAnime(t: t, fk: [], ek: []), orbite: o, cadre: Self.cadre)
+            #expect(p.plateaux.isEmpty && p.blocs.isEmpty && p.disques.isEmpty, "t = \(t)")
+            #expect(p.ancresEtages.isEmpty && p.ancresPieces.isEmpty && p.ancresNoeuds.isEmpty, "aucun nom, t = \(t)")
+            #expect(p.ancreMaison != nil, "le nom « Maison » de la bulle reste, t = \(t)")
+            #expect((p.sphere != nil && p.equateur != nil) == (t == 1), "la bulle en 3D seulement, t = \(t)")
+        }
+    }
+
     /// En 3D : la sphere et son equateur ; plusieurs faces par bloc ; les blocs du plus loin au plus proche.
     @Test func vueEn3D() throws {
         let (_, p) = try Self.projeter(t: 1)
