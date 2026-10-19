@@ -93,6 +93,7 @@ struct PanneauSante: View {
             .foregroundStyle(Palette.texteLegende)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
+            .flouDeCapture(capture)
             .verreDeLegende()
             .contentShape(RoundedRectangle(cornerRadius: 10))
         }
@@ -167,6 +168,7 @@ struct PanneauSante: View {
         .foregroundStyle(Palette.texteLegende)
         .frame(width: Self.largeur - Self.marges.leading - Self.marges.trailing)
         .padding(Self.marges)
+        .flouDeCapture(capture)
         .verreDeLegende()
         // Le contenu qui change (le focus, un noeud qui entre ou sort) : le cadre en verre et les lignes suivent le mouvement.
         .animation(Apparition.animationDuContenuLegende(reduire: reduire), value: lecture)
@@ -262,6 +264,16 @@ struct PanneauSante: View {
         switch f {
         case .perdu: Palette(sombre: true).appareil(.disparu)
         case .aSurveiller: Palette(sombre: true).appareil(.partitionCoupee)
+        }
+    }
+}
+
+extension View {
+    /// Le flou du vrai verre, que la capture ne rend pas : sous le verre de repli (translucide, comme celui de la legende), un fond
+    /// presque opaque, pour que la scene et les etiquettes de niveau, dessinees dessous, ne traversent pas la liste.
+    fileprivate func flouDeCapture(_ capture: Bool) -> some View {
+        background {
+            if capture { RoundedRectangle(cornerRadius: 10).fill(fondVerreCapture.opacity(0.9)) }
         }
     }
 }
@@ -512,12 +524,14 @@ struct PanneauSanteDeLaFenetre: View {
     let entree: EntreeScene?
     let instant: Date
     let hauteurMax: CGFloat?
+    /// Replie ou ouvert, impose (captures) ; nil : le repli garde.
+    var forcee: Bool?
     @State private var memo = MemoSante()
 
     var body: some View {
         if let entree {
             PanneauSante(lecture: memo.lire(entree: entree, isolement: moteur.isolement, surveillance: surveillance),
-                         moteur: moteur, instant: instant, hauteurMax: hauteurMax)
+                         moteur: moteur, instant: instant, hauteurMax: hauteurMax, forcee: forcee)
         }
     }
 }

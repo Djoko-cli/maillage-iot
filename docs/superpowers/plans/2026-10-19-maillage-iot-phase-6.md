@@ -75,9 +75,9 @@
 **Files:**
 - Modify: `MaillageIoT/Vues/Pieces/CapturesPieces.swift` (cas de la démo combinée : panneau replié, ouvert à la maison, ouvert sur une pièce isolée), tests qui comptent les cas.
 
-- [ ] **Step 1: Ajouter les cas** et mettre à jour les tests qui comptent les cas.
-- [ ] **Step 2: Vérifier** — porte ; `-demo -captures <dossier>` produit les trois images (chemins au rapport).
-- [ ] **Step 3: Commit** — « Sante : captures du panneau ».
+- [x] **Step 1: Ajouter les cas** et mettre à jour les tests qui comptent les cas.
+- [x] **Step 2: Vérifier** — porte ; `-demo -captures <dossier>` produit les trois images (chemins au rapport).
+- [x] **Step 3: Commit** — « Sante : captures du panneau ».
 
 ---
 
