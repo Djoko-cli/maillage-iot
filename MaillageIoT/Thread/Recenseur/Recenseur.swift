@@ -19,6 +19,8 @@ final class Recenseur {
 
     /// Les appareils AirPlay (HomePod, Apple TV...) : leur nom et leur hote servent a proposer une piece (`PieceAirPlay`).
     nonisolated static let typeAirPlay = "_airplay._tcp"
+    /// Tentatives de resolution d'une instance AirPlay qui ne repond pas, avant d'attendre qu'elle disparaisse puis revienne.
+    nonisolated static let plafondTentativesAirPlay = 3
     nonisolated static let types = ["_meshcop._udp", "_matter._tcp", "_hap._udp", "_trel._udp", typeAirPlay]
     nonisolated static let miseEnRoute: Duration = .seconds(10)
     nonisolated static let attenteMax: Duration = .seconds(60)
@@ -40,8 +42,15 @@ final class Recenseur {
     /// Temps ajoute a celui ecoule depuis le demarrage pour decider du premier releve (les tests l'avancent : `miseEnRoute`
     /// et `attenteMax` sont de 10 et 60 s). Zero dans l'app.
     private let avance: Duration
+    /// Resolution d'une instance (type, instance) -> cible ; nil sans reponse. Les tests en donnent une factice (aucun reseau).
+    private let resolveur: @Sendable (String, String) async -> ResolveurDNSSD.Cible?
+    /// Calme avant un releve declenche par un changement des navigateurs (`calme` dans l'app ; les tests le raccourcissent).
+    private let delaiCalme: Duration
     /// "type|instance" -> derniere cible resolue, gardee tant que l'instance est listee.
     private var cibles: [String: ResolveurDNSSD.Cible] = [:]
+    /// "type|instance" -> resolutions sans reponse d'une instance AirPlay listee (au plus `plafondTentativesAirPlay` ensuite) ;
+    /// oubliee quand l'instance repond ou disparait.
+    private var echecs: [String: Int] = [:]
     private var demarre = false
     private var enRoute = false
     private var releveEnCours = false
@@ -54,9 +63,14 @@ final class Recenseur {
     private var toutResoudre = false
 
     init(fabrique: @escaping @MainActor (String) -> any EcouteBonjour = { NavigateurBonjour(type: $0) },
-         avance: Duration = .zero) {
+         avance: Duration = .zero, delaiCalme: Duration = Recenseur.calme,
+         resolveur: @escaping @Sendable (String, String) async -> ResolveurDNSSD.Cible? = {
+             await ResolveurDNSSD.resoudre(instance: $1, type: $0)
+         }) {
         self.fabrique = fabrique
         self.avance = avance
+        self.delaiCalme = delaiCalme
+        self.resolveur = resolveur
     }
 
     /// Des taches de fond sont encore planifiees : le releve periodique, un releve en attente de calme (lu par les tests de
@@ -131,6 +145,7 @@ final class Recenseur {
         toutResoudre = false
         dernierChangement = nil
         cibles = [:]
+        echecs = [:]
         etat = .demarrage
     }
 
@@ -150,11 +165,14 @@ final class Recenseur {
     /// ensuite, un releve 2 s apres le dernier changement.
     private func changement() {
         dernierChangement = .now
+        // Une instance AirPlay qui disparait perd ses echecs, meme si elle revient avant le prochain releve : elle sera cherchee.
+        let listees = Set(navigateurs.flatMap { n in n.instances.keys.map { Self.cle(n.type, $0) } })
+        echecs = echecs.filter { listees.contains($0.key) }
         mettreAJourEtat()
         guard enRoute else { return }
         tacheCalme?.cancel()
         tacheCalme = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: Self.calme)
+            try? await Task.sleep(for: self?.delaiCalme ?? Self.calme)
             guard !Task.isCancelled else { return }
             await self?.releve()
         }
@@ -213,18 +231,22 @@ final class Recenseur {
         }
         let tout = toutResoudre
         toutResoudre = false
-        let aResoudre = vues.filter { tout || cibles[Self.cle($0.type, $0.instance)] == nil }
+        if tout { echecs = [:] }
+        let aResoudre = Self.aResoudre(vues: vues, cibles: cibles, echecs: echecs, tout: tout)
+        let resolveur = self.resolveur
         let resolues = await withTaskGroup(of: (String, ResolveurDNSSD.Cible?).self) { groupe in
             for v in aResoudre {
                 let cle = Self.cle(v.type, v.instance)
-                groupe.addTask { (cle, await ResolveurDNSSD.resoudre(instance: v.instance, type: v.type)) }
+                groupe.addTask { (cle, await resolveur(v.type, v.instance)) }
             }
             var r: [String: ResolveurDNSSD.Cible] = [:]
             for await (cle, cible) in groupe { if let cible { r[cle] = cible } }
             return r
         }
         guard e == epoque else { return nil }
-        cibles = Self.retenir(cibles: cibles, resolues: resolues, listees: Set(vues.map { Self.cle($0.type, $0.instance) }))
+        let listees = Set(vues.map { Self.cle($0.type, $0.instance) })
+        cibles = Self.retenir(cibles: cibles, resolues: resolues, listees: listees)
+        echecs = Self.compterEchecs(echecs: echecs, tentees: aResoudre, resolues: resolues, listees: listees)
 
         // 2. Adresses de chaque hote, a chaque releve.
         let hotes = Self.hotesAResoudre(cibles)

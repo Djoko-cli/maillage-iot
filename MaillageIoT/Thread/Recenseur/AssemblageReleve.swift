@@ -18,6 +18,31 @@ extension Recenseur {
         Set(cibles.filter { !$0.key.hasPrefix(typeAirPlay + "|") }.values.map(\.hote))
     }
 
+    /// Instances a resoudre a ce releve : `tout` (rafraichir) les prend toutes ; sinon celles sans cible. Une instance AirPlay
+    /// qui n'a pas repondu `plafondTentativesAirPlay` fois n'est plus cherchee (un appareil en veille, parti : 2 s de plus a
+    /// chaque releve) avant qu'elle disparaisse puis revienne ; les autres types sont cherches tant qu'ils ne repondent pas.
+    nonisolated static func aResoudre(vues: [InstanceListee], cibles: [String: ResolveurDNSSD.Cible], echecs: [String: Int],
+                                      tout: Bool) -> [InstanceListee] {
+        vues.filter { v in
+            if tout { return true }
+            let cle = cle(v.type, v.instance)
+            guard cibles[cle] == nil else { return false }
+            return v.type != typeAirPlay || (echecs[cle] ?? 0) < plafondTentativesAirPlay
+        }
+    }
+
+    /// Echecs de resolution des instances AirPlay apres un releve : une de plus pour chaque instance cherchee sans reponse, aucune
+    /// pour celles qui ont repondu, et celles qui ne sont plus listees sont oubliees.
+    nonisolated static func compterEchecs(echecs: [String: Int], tentees: [InstanceListee],
+                                          resolues: [String: ResolveurDNSSD.Cible], listees: Set<String>) -> [String: Int] {
+        var r = echecs.filter { listees.contains($0.key) }
+        for v in tentees where v.type == typeAirPlay {
+            let cle = cle(v.type, v.instance)
+            if resolues[cle] != nil { r[cle] = nil } else { r[cle, default: 0] += 1 }
+        }
+        return r
+    }
+
     /// Cle d'une instance dans les cibles : "type|instance".
     nonisolated static func cle(_ type: String, _ instance: String) -> String {
         "\(type)|\(instance)"
