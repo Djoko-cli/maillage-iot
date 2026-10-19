@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import MaillageCoeur
+import SwiftUI
 import Testing
 @testable import MaillageIoT
 
@@ -130,18 +131,55 @@ struct ReperesAilleursTests {
         #expect(Self.vus(m) == Set(reperes.map(\.enfant)))
     }
 
-    /// Le signe « parent dans une autre piece » de la legende suit les reperes qui restent : un noeud sans lien vers ailleurs
-    /// selectionne, il n'y en a plus, et la legende n'en montre plus le signe.
-    @Test func legendeSuitLesReperes() throws {
+    /// La legende ne change pas avec la selection (comme pour les voisins entendus) : le signe « parent dans une autre piece » est
+    /// la des que la piece isolee a des reperes, quel que soit le noeud selectionne, y compris un noeud sans lien vers ailleurs ;
+    /// et rien d'autre ne change : les rubriques sont les memes, noeud par noeud, dans les deux modes de liens et avec ou sans les
+    /// voisins.
+    @Test func legendeNeChangePasAvecLaSelection() throws {
         let (m, e, piece, reperes) = try Self.pieceIsolee()
-        #expect(m.aDesReperesAilleurs)
-        m.selection = reperes[0].enfant
-        #expect(m.aDesReperesAilleurs, "le repere du noeud selectionne reste")
+        func rubriques() -> [LegendePieces.Rubrique] { LegendePieces.rubriques(m.lectureLegende(e)) }
+        func signe(_ r: [LegendePieces.Rubrique]) -> Bool { r.contains { $0.entrees.contains(.ailleurs) } }
         let ailleurs = Set(reperes.map(\.enfant))
         let sans = try #require(e.scene.pieces[piece].noeuds.first { !ailleurs.contains($0) }, "un noeud sans repere")
+        let sansSelection = rubriques()
+        #expect(m.aDesReperesAilleurs && signe(sansSelection))
+        for mode in ModeLiens.allCases {
+            for voisins in [true, false] {
+                m.liens = mode
+                m.voisins = voisins
+                m.selection = nil
+                let reference = rubriques()
+                for id in [reperes[0].enfant, sans] + e.scene.pieces[piece].noeuds {
+                    m.selection = id
+                    #expect(rubriques() == reference, "\(mode) voisins \(voisins), \(id.texte) : la legende change avec la selection")
+                    #expect(signe(rubriques()), "\(id.texte) : le parent dans une autre piece reste")
+                }
+            }
+        }
         m.selection = sans
-        #expect(!m.aDesReperesAilleurs, "plus de repere")
+        #expect(m.aDesReperesAilleurs, "un noeud sans repere selectionne : la piece en a toujours")
         m.selection = nil
-        #expect(m.aDesReperesAilleurs)
+        #expect(rubriques() == sansSelection)
+    }
+
+    /// La hauteur de la legende ouverte (la rangee du bas) est la meme avec et sans selection, dans une piece isolee qui a des
+    /// reperes : un noeud sans lien vers ailleurs selectionne ne lui retire pas une ligne.
+    @Test func hauteurDeLaLegendeSousUneSelection() throws {
+        let (m, e, piece, reperes) = try Self.pieceIsolee()
+        let s = DemoCombineeTests.combinee()
+        func hauteur() -> CGFloat {
+            NSHostingView(rootView: LigneDuBas(moteur: m, entree: e, legendeForcee: false)
+                .environment(s).environment(PiecesChoisies(fichier: nil))).fittingSize.height
+        }
+        let ailleurs = Set(reperes.map(\.enfant))
+        let sans = try #require(e.scene.pieces[piece].noeuds.first { !ailleurs.contains($0) }, "un noeud sans repere")
+        let sansSelection = hauteur()
+        #expect(sansSelection > 250)
+        for id in [reperes[0].enfant, sans] {
+            m.selection = id
+            #expect(hauteur() == sansSelection, "\(id.texte) : la legende change de hauteur a la selection")
+        }
+        m.selection = nil
+        #expect(hauteur() == sansSelection)
     }
 }

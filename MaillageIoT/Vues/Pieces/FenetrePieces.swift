@@ -591,11 +591,7 @@ struct LigneDuBas: View {
     @AppStorage(LegendePieces.cleRepliee) private var repliee = false
 
     var body: some View {
-        // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
-        let ailleurs = moteur.isolee != nil && moteur.aDesReperesAilleurs
-        let lecture = entree.map {
-            LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens, voisins: moteur.voisins)
-        }
+        let lecture = entree.map(moteur.lectureLegende)
         let rubriques = lecture.map(LegendePieces.rubriques) ?? []
         // La ligne « Thread / Zigbee » : seulement quand la scene a des noeuds des deux protocoles.
         let deuxProtocoles = lecture.map(LegendePieces.montreLesProtocoles) ?? false
