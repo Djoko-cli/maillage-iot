@@ -63,7 +63,29 @@ public extension NomsDemo {
         "Aqara HubM100 #DFEB": ("Buanderie", "Aqara", "Hub M100"),
     ]
 
-    static let maison: NomsMaison = {
+    static let maison: NomsMaison = construire(sansPiece: [])
+
+    /// Routeurs de bordure que la demo d'AirPlay laisse sans piece (phase 7), comme chez Djoko : Maison ne place ni les
+    /// HomePod ni l'Apple TV. Leur annonce AirPlay (`annoncesAirPlay`) porte la piece que l'app leur propose. Les deux autres
+    /// demos restent telles quelles (leurs references de rejeu).
+    static let routeursSansPiece: Set<String> = ["Apple TV 4K", "HomePod Avant"]
+
+    /// La maison de la demo d'AirPlay : `maison`, sans l'accessoire de l'Apple TV ni celui d'un des HomePod.
+    static let maisonAirPlay: NomsMaison = construire(sansPiece: routeursSansPiece)
+
+    /// Annonces `_airplay._tcp` inventees de la demo d'AirPlay : l'hote est celui du routeur de bordure (releve du 28/09), le nom
+    /// est celui que Maison donnerait a l'appareil, avec une piece de la demo. Un troisieme, sans piece dans son nom (un
+    /// televiseur du reseau, sans routeur de bordure), ne propose rien.
+    static let annoncesAirPlay: [AnnonceService] = [
+        AnnonceService(instance: "Apple TV Salon", hote: "Apple-TV-4K.local", port: 7000,
+                       txt: ChampsTXT(["model": Data("AppleTV14,1".utf8)])),
+        AnnonceService(instance: "HomePod Cuisine", hote: "HomePod-Avant.local", port: 7000,
+                       txt: ChampsTXT(["model": Data("AudioAccessory5,1".utf8)])),
+        AnnonceService(instance: "Télévision du couloir", hote: "Television-couloir.local", port: 7000,
+                       txt: ChampsTXT(["model": Data("UE55AU8000".utf8)])),
+    ]
+
+    private static func construire(sansPiece: Set<String>) -> NomsMaison {
         var accessoires: [AccessoireMaison] = []
         for s in Releve20260928.annonces.matter {
             guard let i = InstanceMatter(instance: s.instance), i.fabrique == fabrique, let hote = s.hote else { continue }
@@ -72,11 +94,11 @@ public extension NomsDemo {
             accessoires.append(AccessoireMaison(nom: e.0, piece: e.1, fabricant: e.2, modele: e.3,
                                                 categorie: e.4, noeudMatter: i.noeud, batterie: batteries[id]))
         }
-        for (nom, r) in routeurs {
+        for (nom, r) in routeurs where !sansPiece.contains(nom) {
             accessoires.append(AccessoireMaison(nom: nom, piece: r.0, fabricant: r.1, modele: r.2, categorie: "Concentrateur"))
         }
         // Dans le temps de la demo (la fin de la panne rejouee) : « releve il y a 5 minutes ».
         return NomsMaison(date: ScenarioPanne.fin.addingTimeInterval(-5 * 60), domicile: domicile,
                           accessoires: accessoires.sorted { $0.nom < $1.nom }, zones: zones)
-    }()
+    }
 }

@@ -91,9 +91,18 @@ final class NavigateurBonjour: EcouteBonjour {
             if case let .bonjour(enregistrement) = r.metadata { txt = enregistrement.data }
             if vus[nom]?.isEmpty ?? true { vus[nom] = txt }
         }
+        appliquer(vus)
+    }
+
+    /// Les instances vues par le navigateur (instance -> TXT) : garde la liste, et previent si elle a change.
+    ///
+    /// AirPlay : le TXT (lecture en cours, etat de l'appareil...) change sans cesse et ne sert pas au releve ; son seul
+    /// changement est garde (le releve suivant le lit) mais ne previent pas : il n'arme aucun releve complet.
+    func appliquer(_ vus: [String: Data]) {
         guard vus != instances else { return }
+        let memeInstances = type == Recenseur.typeAirPlay && Set(vus.keys) == Set(instances.keys)
         instances = vus
-        surChangement?()
+        if !memeInstances { surChangement?() }
     }
 
     private func changerEtat(_ e: NWBrowser.State) {

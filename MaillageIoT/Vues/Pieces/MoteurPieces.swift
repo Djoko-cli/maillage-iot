@@ -405,11 +405,14 @@ final class MoteurPieces {
         noeudsEstompes != ciblesFocus.noeuds || liensEstompes != ciblesFocus.liens || ailleursEstompes != ciblesAilleurs
     }
 
-    /// Des reperes « ailleurs » de la piece isolee restent poses sous la selection (leur cible n'est pas l'effacement) : la
-    /// legende n'en montre le signe que s'il en reste un. Lit `selection`, que la vue observe.
-    var aDesReperesAilleurs: Bool {
-        let sel = selection
-        return textes.ailleurs.keys.contains { sel == nil || ciblesAilleurs[$0] == nil }
+    /// La piece isolee a des reperes « ailleurs » : la legende en montre le signe, selection ou non. Elle ne change pas avec la
+    /// selection (comme pour les voisins entendus) : sous une selection, des reperes s'effacent (`ciblesAilleurs`), le signe reste.
+    var aDesReperesAilleurs: Bool { !textes.ailleurs.isEmpty }
+
+    /// Ce que la legende lit de la scene `e` : les liens et les voisins montres, et des reperes « ailleurs » s'il y en a dans la
+    /// piece isolee (`isolee`).
+    func lectureLegende(_ e: EntreeScene) -> LegendePieces.Lecture {
+        LegendePieces.Lecture(e, ailleurs: isolee != nil && aDesReperesAilleurs, mode: liens, voisins: voisins)
     }
 
     static func maintenant() -> Double { CACurrentMediaTime() }

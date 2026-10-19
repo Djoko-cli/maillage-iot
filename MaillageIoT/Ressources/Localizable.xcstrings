@@ -4145,6 +4145,22 @@
         }
       }
     },
+    "Ignorer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        }
+      }
+    },
     "Ignoré" : {
       "localizations" : {
         "en" : {
@@ -6401,6 +6417,22 @@
         }
       }
     },
+    "Pièce proposée : %@ (d'après AirPlay)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suggested room: %@ (from AirPlay)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pièce proposée : %@ (d'après AirPlay)"
+          }
+        }
+      }
+    },
     "Pièces et dispositions" : {
       "localizations" : {
         "en" : {
@@ -6429,6 +6461,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Placer dans une pièce…"
+          }
+        }
+      }
+    },
+    "Placer ici" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Place here"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer ici"
           }
         }
       }

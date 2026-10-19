@@ -19,7 +19,7 @@ struct ArretRecenseurTests {
         var releves = 0
         r.surReleve = { _ in releves += 1 }
         r.demarrer()
-        #expect(fab.types == Recenseur.types && fab.enMarche == 4, "un navigateur par type de service")
+        #expect(fab.types == Recenseur.types && fab.enMarche == Recenseur.types.count, "un navigateur par type de service")
         #expect(await attendreActivation { releves == 1 }, "le premier releve")
 
         // Un changement des navigateurs arme un releve dans 2 s.
@@ -27,15 +27,15 @@ struct ArretRecenseurTests {
         #expect(r.tachesPlanifiees == 2, "releve periodique et releve apres calme")
         r.arreter()
         #expect(r.tachesPlanifiees == 0, "taches annulees, pas seulement rendues sans effet")
-        #expect(fab.enMarche == 0 && fab.arrets == 4 && fab.crees.allSatisfy { $0.surChangement == nil })
+        #expect(fab.enMarche == 0 && fab.arrets == Recenseur.types.count && fab.crees.allSatisfy { $0.surChangement == nil })
         r.rafraichir()
         fab.crees[0].voir("Instance 2")
         try await Task.sleep(for: .milliseconds(2500))
         #expect(releves == 1, "le releve en attente de calme n'a pas eu lieu")
-        #expect(r.tachesPlanifiees == 0 && r.etat == .demarrage && fab.crees.count == 4)
+        #expect(r.tachesPlanifiees == 0 && r.etat == .demarrage && fab.crees.count == Recenseur.types.count)
 
         r.demarrer()
-        #expect(fab.crees.count == 8 && fab.enMarche == 4 && r.tachesPlanifiees == 1, "repart comme au lancement")
+        #expect(fab.crees.count == 2 * Recenseur.types.count && fab.enMarche == Recenseur.types.count && r.tachesPlanifiees == 1, "repart comme au lancement")
         #expect(await attendreActivation { releves == 2 }, "et fait son premier releve")
         r.arreter()
         #expect(fab.enMarche == 0 && r.tachesPlanifiees == 0)
@@ -51,7 +51,7 @@ struct ArretRecenseurTests {
         r.arreter()
         r.demarrer()
         r.arreter()
-        #expect(fab.enMarche == 0 && fab.demarrages == fab.arrets && fab.crees.count == 8)
+        #expect(fab.enMarche == 0 && fab.demarrages == fab.arrets && fab.crees.count == 2 * Recenseur.types.count)
         #expect(r.tachesPlanifiees == 0)
         try await Task.sleep(for: .milliseconds(300))
         #expect(releves == 0 && r.tachesPlanifiees == 0, "aucun releve ne vient d'une ecoute eteinte")

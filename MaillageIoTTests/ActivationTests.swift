@@ -122,7 +122,7 @@ struct ActivationTests {
         #expect(b.bonjour.crees.isEmpty && b.recenseur.tachesPlanifiees == 0, "aucun navigateur Bonjour")
         #expect(b.s.thread.etatEcoute == .eteint)
         b.s.thread.actif = true
-        #expect(b.bonjour.types == Recenseur.types && b.bonjour.enMarche == 4)
+        #expect(b.bonjour.types == Recenseur.types && b.bonjour.enMarche == Recenseur.types.count)
         #expect(b.s.thread.etatEcoute == .demarrage)
         #expect(b.preferences.object(forKey: "thread.actif") as? Bool == true)
         b.s.thread.arreter()
@@ -136,18 +136,18 @@ struct ActivationTests {
         let b = try BancActivation()
         defer { b.nettoyer() }
         b.s.thread.demarrer()
-        #expect(b.bonjour.enMarche == 4 && b.recenseur.tachesPlanifiees >= 1)
+        #expect(b.bonjour.enMarche == Recenseur.types.count && b.recenseur.tachesPlanifiees >= 1)
         b.s.thread.actif = false
-        #expect(b.bonjour.enMarche == 0 && b.bonjour.arrets == 4)
+        #expect(b.bonjour.enMarche == 0 && b.bonjour.arrets == Recenseur.types.count)
         #expect(b.recenseur.tachesPlanifiees == 0, "aucune tache de releve")
         #expect(b.s.thread.etatEcoute == .eteint)
         b.s.thread.auReveil()
         b.s.thread.rafraichir()
         try await Task.sleep(for: .milliseconds(100))
-        #expect(b.bonjour.enMarche == 0 && b.bonjour.crees.count == 4 && b.s.thread.dernierReleve == nil)
+        #expect(b.bonjour.enMarche == 0 && b.bonjour.crees.count == Recenseur.types.count && b.s.thread.dernierReleve == nil)
 
         b.s.thread.actif = true
-        #expect(b.bonjour.crees.count == 8 && b.bonjour.enMarche == 4)
+        #expect(b.bonjour.crees.count == 2 * Recenseur.types.count && b.bonjour.enMarche == Recenseur.types.count)
         b.s.thread.actif = false
         #expect(b.bonjour.enMarche == 0 && b.recenseur.tachesPlanifiees == 0)
     }
@@ -160,7 +160,7 @@ struct ActivationTests {
         b.s.thread.actif = false
         b.s.thread.actif = true
         b.s.thread.actif = false
-        #expect(b.bonjour.enMarche == 0 && b.bonjour.demarrages == b.bonjour.arrets && b.bonjour.crees.count == 8)
+        #expect(b.bonjour.enMarche == 0 && b.bonjour.demarrages == b.bonjour.arrets && b.bonjour.crees.count == 2 * Recenseur.types.count)
         #expect(b.recenseur.tachesPlanifiees == 0)
         try await Task.sleep(for: .milliseconds(300))
         #expect(b.bonjour.enMarche == 0 && b.recenseur.tachesPlanifiees == 0 && b.s.thread.dernierReleve == nil)
@@ -317,7 +317,7 @@ struct ActivationTests {
         b.s.thread.actif = false
         b.s.thread.actif = true
         #expect(b.s.thread.instantane == nil && b.s.thread.maillage == nil && b.s.thread.dernierReleve == nil)
-        #expect(b.bonjour.enMarche == 4)
+        #expect(b.bonjour.enMarche == Recenseur.types.count)
         b.s.thread.integrer(ScenarioPanne.releves[0])
         #expect(b.s.thread.instantane != nil)
         #expect(b.s.evenements.dropFirst(avant).map(\.type) == [.surveillanceDemarree], "point de depart : aucun evenement rejoue")
@@ -426,7 +426,7 @@ struct ActivationTests {
         ModulesApp.relierThread(b.s, sonde: sonde)
         b.s.thread.demarrer()
         #expect(await attendreActivation { SondeMaillageTests.connectee(sonde) })
-        #expect(b.bonjour.enMarche == 4 && sonde.tachesPlanifiees == 1 && registre.ouverts == 1)
+        #expect(b.bonjour.enMarche == Recenseur.types.count && sonde.tachesPlanifiees == 1 && registre.ouverts == 1)
 
         b.s.thread.actif = false
         #expect(!sonde.actif && sonde.tachesPlanifiees == 0 && ports.enMarche == 0 && b.bonjour.enMarche == 0)
@@ -440,7 +440,7 @@ struct ActivationTests {
         #expect(await attendreActivation { SondeMaillageTests.connectee(sonde) })
         #expect(registre.ouvertures == 2 && Set(registre.chemins) == [SondeMaillageTests.port.chemin],
                 "rouvert, et seule la sonde retenue : \(registre.chemins)")
-        #expect(b.bonjour.enMarche == 4)
+        #expect(b.bonjour.enMarche == Recenseur.types.count)
 
         // Bascules rapides : rien ne reste.
         b.s.thread.actif = false
@@ -492,7 +492,7 @@ struct ActivationTests {
 
         b.s.thread.actif = true
         #expect(await attendreActivation { SondeMaillageTests.connectee(sonde) })
-        #expect(sonde.actif && b.bonjour.enMarche == 4)
+        #expect(sonde.actif && b.bonjour.enMarche == Recenseur.types.count)
         b.s.thread.actif = false
         #expect(await attendreActivation { registre.ouverts == 0 })
     }

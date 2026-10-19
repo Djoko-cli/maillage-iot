@@ -61,7 +61,25 @@ final class PiecesChoisies {
         case .routeur(let id): choix.choisir(piece, routeur: id, domicile: domicile)
         case .appareil(let id): choix.choisir(piece, appareil: id, domicile: domicile)
         }
-        // Arrete pour une reprise de donnees : le fichier est celui de l'import, jamais recrit depuis la memoire d'avant.
+        sauver()
+    }
+
+    /// Le nom AirPlay dont la piece proposee a ete ignoree pour un routeur de bordure (« Ignorer », dans sa fiche) ; nil :
+    /// aucun.
+    func airPlayIgnore(_ id: IdNoeud, domicile: String) -> String? {
+        choix.airPlayIgnore(routeur: id, domicile: domicile)
+    }
+
+    /// Retient « Ignorer » pour un routeur de bordure : la proposition ne revient pas tant que son nom AirPlay est `nom` ;
+    /// nil l'oublie. Garde au meme endroit que les pieces choisies.
+    func ignorerAirPlay(_ nom: String?, _ id: IdNoeud, domicile: String) {
+        choix.ignorerAirPlay(nom, routeur: id, domicile: domicile)
+        sauver()
+    }
+
+    /// Ecrit `pieces-noeuds.json`. Arrete pour une reprise de donnees : le fichier est celui de l'import, jamais recrit depuis
+    /// la memoire d'avant.
+    private func sauver() {
         guard coque?.arretee != true, let fichier else { return }
         do {
             try choix.ecrire(dans: fichier)

@@ -13,7 +13,7 @@ struct DemarrageTests {
         // Les trois sources des types ecoutes : le recenseur de Thread, le pont Hue, les sondes Zigbee.
         let attendus = Recenseur.types + [DecouvertePont.type, TransportTCP.typeBonjour]
         #expect(services == attendus, "chaque type ecoute est declare (sinon le reseau local peut etre refuse)")
-        #expect(Set(attendus).count == 6, "six types, aucun en double")
+        #expect(Set(attendus).count == 7, "sept types, aucun en double")
     }
 
     /// Les arguments de lancement des demos : `-demo` lance la combinee (Thread et Zigbee ensemble), `-demo-thread` et

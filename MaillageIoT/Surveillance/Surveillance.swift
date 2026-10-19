@@ -120,9 +120,11 @@ final class Surveillance {
     /// c'est elle que rejoue la reference de Thread ; Zigbee seule ; ou la combinee, les deux a la fois, l'horloge de Zigbee
     /// recalee sur celle de Thread) ; `demoZigbee` : la demo de Zigbee a la place de celle que `demo` donne (pour les tests,
     /// deux horloges qui different) ; `recenseur` : l'ecoute Bonjour de Thread (mode direct ; les tests en donnent une a
-    /// navigateurs factices).
+    /// navigateurs factices) ; `demoAirPlay` : en demo, celle d'AirPlay (l'Apple TV et un HomePod de Thread sans piece de Maison,
+    /// avec leur annonce AirPlay : la fiche leur propose une piece). Faux par defaut : les references de rejeu attestent la
+    /// demo d'avant ; l'app le pose en demo (`ModulesApp`).
     init(mode: Mode, dossier: URL?, preferences: UserDefaults = .standard, demo: DemoLancee = .thread,
-         demoZigbee: DemoZigbee? = nil, recenseur: Recenseur? = nil) {
+         demoZigbee: DemoZigbee? = nil, demoAirPlay: Bool = false, recenseur: Recenseur? = nil) {
         self.mode = mode
         var surnoms: [IdNoeud: String] = [:]
         switch mode {
@@ -139,7 +141,7 @@ final class Surveillance {
             fichierSurnoms = nil
         }
         thread = SurveillanceThread(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
-                                    rejoueLaDemo: demo.rejoue(.thread), recenseur: recenseur)
+                                    rejoueLaDemo: demo.rejoue(.thread), demoAirPlay: demoAirPlay, recenseur: recenseur)
         zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
                                     rejoueLaDemo: demo.rejoue(.zigbee), demo: demoZigbee ?? demo.zigbeeRejouee)
         thread.coque = self

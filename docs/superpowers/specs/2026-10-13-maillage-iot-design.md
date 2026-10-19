@@ -500,6 +500,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 4 : reprise
 - [x] Phase 5 : publication
 - [x] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
+- [x] Phase 7 : pièce proposée aux HomePod et à l'Apple TV par leur annonce AirPlay (conception du 19/10 : `2026-10-19-piece-airplay-design.md`)
 
 ### 6.2 Les tests
 
@@ -690,11 +691,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 ## 8. Backlog
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
-- **Pièce proposée aux HomePod et à l'Apple TV** (demande de Djoko, banc de l'étape 3b, 16/10) : HomeKit ne les donne pas à
-  une app tierce, donc leur pièce n'est connue que par un choix manuel. Ils s'annoncent aussi par AirPlay (mDNS) sous le
-  nom qu'on leur donne dans Maison, souvent celui de la pièce : écouter ce service (ajout à `NSBonjourServices`), le
-  relier au routeur de bordure par son hôte (à vérifier sur le réseau réel), puis **proposer** la pièce à confirmer, sans
-  l'imposer (un nom sans pièce ou un rattachement erroné restent possibles).
 - **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
   naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
   dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.
