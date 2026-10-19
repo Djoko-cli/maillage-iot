@@ -84,11 +84,14 @@ public struct ReleveMaillage: Hashable, Sendable {
     /// attribue).
     static let identifiantsRouteur = 0...62
 
-    /// Cle d'un routeur du releve : son ExtMac, sinon "rloc:XXXX" (valable dans sa partition) ;
-    /// "rloc:?" pour un identifiant hors plage (fonction totale : jamais d'arret du programme).
+    /// Cle d'un routeur du releve seul : son ExtMac, sinon "rloc:XXXX" (valable dans sa partition) ;
+    /// "rloc:?" pour un identifiant hors plage (fonction totale : jamais d'arret du programme). Hors de toute liste,
+    /// pas de collision : la cle de repli est simple (dans l'historique, `ClesHistorique` la qualifie pendant une
+    /// collision).
     public func cle(routeur id: Int) -> String {
-        guard Self.identifiantsRouteur.contains(id) else { return "rloc:?" }
-        return routeurs.first { $0.id == id }?.extMac ?? String(format: "rloc:%04X", UInt16(id) << 10)
+        guard Self.identifiantsRouteur.contains(id) else { return CleRloc.horsPlage }
+        return routeurs.first { $0.id == id }?.extMac
+            ?? CleRloc.cle(UInt16(id) << 10, partition: partition, collisions: [])
     }
 }
 

@@ -160,8 +160,8 @@ struct LegendePieces: View {
     static var exemplePile: String { String(localized: "\(12)\u{202F}%") }
     static var exempleAilleurs: String { String(localized: "→ Salon") }
     static var exempleCandidats: String {
-        LibellesNoeuds.inconnu(NoeudSonde(id: "rloc:0400", rloc16: 0x0400, genre: .routeur, reconnu: false,
-                                          bordure: true, candidats: ["A", "B"]))
+        LibellesNoeuds.inconnu(NoeudSonde(id: CleRloc.cle(0x0400, partition: "", collisions: []), rloc16: 0x0400,
+                                          genre: .routeur, reconnu: false, bordure: true, candidats: ["A", "B"]))
     }
 }
 

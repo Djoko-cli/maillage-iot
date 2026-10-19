@@ -3,14 +3,17 @@ import MaillageCoeur
 
 /// Noeuds d'un maillage tels que le journal les nomme (id du noeud dans le graphe et nom
 /// affiche), donnes par l'app a chaque tournee : les routeurs par identifiant, les enfants par
-/// RLOC16.
+/// RLOC16 ; et les collisions du maillage (`CollisionsRloc`), pour la cle de repli d'un noeud absent.
 public struct SujetsMaillage: Sendable {
     public var routeurs: [Int: Sujet]
     public var enfants: [UInt16: Sujet]
+    /// Identifiants de routeur du maillage dont une autre partition tient la cle simple (`CollisionsRloc`).
+    public var collisions: Set<Int>
 
-    public init(routeurs: [Int: Sujet] = [:], enfants: [UInt16: Sujet] = [:]) {
+    public init(routeurs: [Int: Sujet] = [:], enfants: [UInt16: Sujet] = [:], collisions: Set<Int> = []) {
         self.routeurs = routeurs
         self.enfants = enfants
+        self.collisions = collisions
     }
 }
 
@@ -34,6 +37,9 @@ public struct SujetsMaillage: Sendable {
 /// - un routeur hors routeurs de bordure qui entre dans la liste des routeurs, ou en sort.
 /// Le premier maillage, et le premier d'une autre partition (les identifiants de routeur y sont
 /// redistribues), sont un point de depart : aucun evenement.
+/// Les routeurs se comparent par identifiant, dans une meme partition, et non par cle : une cle qui change (debut ou
+/// fin d'une collision, `CollisionsRloc`) ne fait ni apparition ni disparition ; le debut d'une collision est toujours
+/// un changement de partition de la sonde, donc un point de depart.
 public struct SuiviMaillage: Sendable {
     /// Absences sures avant « n'a plus de parent ».
     public static let absencesAvantPerte = 2
@@ -65,8 +71,10 @@ public struct SuiviMaillage: Sendable {
     /// Evenements du maillage d'une tournee, dates du debut de la tournee (`Maillage.date`).
     public mutating func integrer(_ m: Maillage, sujets: SujetsMaillage) -> [Evenement] {
         func sujet(routeur id: Int) -> Sujet {
-            let rloc = String(format: "%04X", UInt16(id) << 10)
-            return sujets.routeurs[id] ?? Sujet(id: "rloc:" + rloc, nom: rloc)
+            let rloc16 = UInt16(id) << 10
+            return sujets.routeurs[id]
+                ?? Sujet(id: CleRloc.cle(rloc16, partition: m.partition, collisions: sujets.collisions),
+                         nom: String(format: "%04X", rloc16))
         }
         var ev: [Evenement] = []
         if partition == m.partition {
@@ -84,7 +92,8 @@ public struct SuiviMaillage: Sendable {
         let presents = m.enfantsIdentifies
         for (ext, e) in presents.sorted(by: { $0.key < $1.key }) {
             let parent = sujet(routeur: e.parent)
-            let s = sujets.enfants[e.rloc16] ?? Sujet(id: String(format: "rloc:%04X", e.rloc16), nom: ext)
+            let s = sujets.enfants[e.rloc16]
+                ?? Sujet(id: CleRloc.cle(e.rloc16, partition: m.partition, collisions: sujets.collisions), nom: ext)
             if let avant = enfants[ext], avant.parent != e.parent {
                 ev.append(Evenement(date: m.date, type: .parentChange, sujet: s, avant: avant.nomParent, apres: parent.nom,
                                     details: ["extMac": ext]))

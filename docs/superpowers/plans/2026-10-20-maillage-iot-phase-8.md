@@ -28,11 +28,11 @@
 
 ### Task 1: Clés qualifiées en cas de collision
 
-- [ ] **Step 1: Repérer** — toutes les fabriques et lectures de clés `rloc:` ; le dire au rapport.
-- [ ] **Step 2: Tests RED** — collision dans un instantané (deux partitions, même RLOC16) : deux nœuds distincts dans la scène, l'historique, le suivi ; départage (relevé précédent, puis taille, puis identifiant) ; collision stable sur trois relevés : mêmes clés ; fin de collision ; relevé sans collision : clés identiques à avant ; rejeu exact.
-- [ ] **Step 3: GREEN** — une seule fonction de clé, utilisée partout.
-- [ ] **Step 4: Vérifier** — porte, passe anglaise, rejeu.
-- [ ] **Step 5: Commit** — « Thread : cles rloc qualifiees par la partition en cas de collision ».
+- [x] **Step 1: Repérer** — toutes les fabriques et lectures de clés `rloc:` ; le dire au rapport.
+- [x] **Step 2: Tests RED** — collision dans un instantané (deux partitions, même RLOC16) : deux nœuds distincts dans la scène, l'historique, le suivi ; départage (relevé précédent, puis taille, puis identifiant) ; collision stable sur trois relevés : mêmes clés ; fin de collision ; relevé sans collision : clés identiques à avant ; rejeu exact.
+- [x] **Step 3: GREEN** — une seule fonction de clé, utilisée partout.
+- [x] **Step 4: Vérifier** — porte, passe anglaise, rejeu.
+- [x] **Step 5: Commit** — « Thread : cles rloc qualifiees par la partition en cas de collision ».
 
 ---
 

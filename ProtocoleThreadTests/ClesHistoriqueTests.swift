@@ -161,14 +161,16 @@ struct ClesHistoriqueTests {
 
     /// La regle ecrite a la lettre, sans index ni dichotomie : le releve lui-meme, puis le suivant, puis le precedent
     /// (meme partition, 7 jours au plus, en parcourant la liste) ; une ExtMac que tient ou que prend un autre
-    /// identifiant du releve (de sa liste ou cite) est refusee. Rend aussi le cas rencontre.
+    /// identifiant du releve (de sa liste ou cite) est refusee. Rend aussi le cas rencontre. Sans ExtMac, "rloc:XXXX",
+    /// qualifie par la partition si l'identifiant est dans `collisions`, celles du releve (`naiveCollisions`).
     enum Cas: Hashable { case horsPlage, jamais, directe, suivant, precedent, refusee, horsBorne }
 
-    static func naive(_ releves: [ReleveMaillage], _ i: Int, _ id: Int) -> (cle: String, cas: Cas) {
+    static func naive(_ releves: [ReleveMaillage], _ i: Int, _ id: Int, collisions: [Set<Int>]) -> (cle: String, cas: Cas) {
         guard (0...62).contains(id) else { return ("rloc:?", .horsPlage) }
-        let rloc = String(format: "rloc:%04X", id << 10)
-        guard releves.indices.contains(i) else { return (rloc, .jamais) }
+        let simple = String(format: "%04X", id << 10)
+        guard releves.indices.contains(i) else { return ("rloc:" + simple, .jamais) }
         let r = releves[i]
+        let rloc = collisions[i].contains(id) ? "rloc:\(r.partition):" + simple : "rloc:" + simple
         func ext(_ k: Int, _ id: Int) -> String? {
             releves[k].partition == r.partition ? releves[k].routeurs.first { $0.id == id }?.extMac : nil
         }
@@ -189,6 +191,41 @@ struct ClesHistoriqueTests {
         let ids = Set(r.routeurs.map(\.id) + r.liens.flatMap { [$0.a, $0.b] } + r.enfants.map(\.parent) + r.signaux.map(\.routeur)
                       + (r.parentSonde.map { [$0] } ?? [])).filter { (0...62).contains($0) && $0 != id }
         return ids.contains { proche($0, borne: true)?.0 == e } ? (rloc, .refusee) : (e, cas)
+    }
+
+    /// Les collisions de RLOC16 a la lettre (phase 8), en rejouant les releves 0 a `i` : a chaque releve, une partition
+    /// a un identifiant si l'un de ses releves jusque-la l'a dans sa liste, a 30 jours au plus ; la tenante de la cle
+    /// simple reste tant qu'elle l'a, sinon la plus grande (le nombre de routeurs de son dernier releve), puis le plus
+    /// petit identifiant de partition. Rend les identifiants du releve `i` dont une autre partition est la tenante.
+    static func naiveCollisions(_ releves: [ReleveMaillage], _ i: Int) -> Set<Int> {
+        var tenantes: [Int: String] = [:]
+        var resultat: Set<Int> = []
+        for k in 0...i {
+            let r = releves[k]
+            resultat = []
+            for id in 0...62 {
+                var derniers: [String: Int] = [:]
+                for j in 0...k where releves[j].routeurs.contains(where: { $0.id == id })
+                    && r.date.timeIntervalSince(releves[j].date) <= 30 * 24 * 3600 {
+                    derniers[releves[j].partition] = j
+                }
+                guard !derniers.isEmpty else {
+                    tenantes[id] = nil
+                    continue
+                }
+                if tenantes[id].flatMap({ derniers[$0] }) == nil {
+                    func taille(_ p: String) -> Int {
+                        let dernier = (0...k).last { releves[$0].partition == p }!
+                        return Set(releves[dernier].routeurs.map(\.id).filter { (0...62).contains($0) }).count
+                    }
+                    tenantes[id] = derniers.keys.sorted {
+                        (taille($0), UInt64($1, radix: 16)!) > (taille($1), UInt64($0, radix: 16)!)
+                    }.first
+                }
+                if tenantes[id] != r.partition { resultat.insert(id) }
+            }
+        }
+        return resultat
     }
 
     /// `cle` contre la version naive (relecture, Mineur 4) : 50 releves sur pres de deux mois, trois partitions, des
@@ -217,14 +254,19 @@ struct ClesHistoriqueTests {
             jours += pas[n % pas.count]
         }
         let cles = ClesHistorique(releves: releves)
+        let collisions = releves.indices.map { Self.naiveCollisions(releves, $0) }
         var vus: Set<Cas> = []
+        var qualifiees = 0
         for i in -1...50 {
             for id in [-1, 0, 1, 2, 3, 4, 5, 6, 7, 62, 63] {
-                let n = Self.naive(releves, i, id)
+                let n = Self.naive(releves, i, id, collisions: collisions)
                 vus.insert(n.cas)
+                if n.cle.filter({ $0 == ":" }).count == 2 { qualifiees += 1 }
                 #expect(cles.cle(releve: i, routeur: id) == n.cle, "releve \(i), routeur \(id)")
             }
         }
         #expect(vus == [.horsPlage, .jamais, .directe, .suivant, .precedent, .refusee, .horsBorne], "\(vus)")
+        #expect(qualifiees > 0, "des cles qualifiees (trois partitions)")
+        #expect(releves.indices.allSatisfy { cles.collisions.collisions(releve: $0) == collisions[$0] })
     }
 }
