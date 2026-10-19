@@ -407,12 +407,10 @@ struct HautPieces: View {
                             }
                             .transition(apparition.transitionAnimee)
                         }
-                        if let r = surveillance.thread.reseau, r.estScinde {
-                            // Thread masque : le bandeau n'est pas dessine, mais garde sa place (la vue ne se recadre pas).
+                        if bandeauScission, let r = surveillance.thread.reseau {
+                            // Thread masque ou eteint : pas de bandeau, et aucune place reservee (banc 2) : « Maison » remonte sous
+                            // la barre, et redescend avec le bandeau quand il revient.
                             BandeauScission(reseau: r)
-                                .opacity(montres.contains(.thread) ? 1 : 0)
-                                .allowsHitTesting(montres.contains(.thread))
-                                .accessibilityHidden(!montres.contains(.thread))
                                 .transition(apparition.transitionAnimee)
                         }
                         if let texteIncomplet, montres.contains(.zigbee) {
@@ -436,7 +434,7 @@ struct HautPieces: View {
                 }
                 if let apres { apres }
             }
-            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.thread.reseau?.estScinde == true)
+            .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: bandeauScission)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: sansPieces)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: texteIncomplet != nil)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: places.map { $0.place == .montree })
@@ -455,6 +453,9 @@ struct HautPieces: View {
         }
         .padding(.trailing, Self.bordDroit)
     }
+
+    /// Le bandeau du reseau scinde est montre : Thread est montre (ni masque par son interrupteur, ni eteint) et son reseau est scinde.
+    private var bandeauScission: Bool { montres.contains(.thread) && surveillance.thread.reseau?.estScinde == true }
 
     private var apparition: Apparition { Apparition.pour(.top, reduire: reduire) }
 }

@@ -108,6 +108,27 @@ struct PanneauSanteTests {
         #expect(Set(attendu.map { PanneauSante.texte($0.0, reference: Self.t0) }).count == attendu.count, "toutes differentes")
     }
 
+    /// Banc 2 (phase 6) : une disparition de moins d'une minute se lit « a l'instant », pas « maintenant » (« disparu maintenant »
+    /// n'etait pas du francais) ; a partir d'une minute, la date relative de la fiche. Aussi pour le routeur et le pont, et pour
+    /// une date que l'heure du modele n'a pas encore rattrapee (jamais dans le futur).
+    @Test func disparitionDeMoinsDUneMinute() {
+        for age in [-5.0, 0, 12, 59] {
+            let depuis = Self.t0.addingTimeInterval(-age)
+            let cas: [(Cause, String, String)] = [
+                (.disparu(depuis: depuis), "disparu à l'instant", "disappeared just now"),
+                (.routeurDisparu(depuis: depuis), "routeur disparu à l'instant", "router disappeared just now"),
+                (.pontDisparu(depuis: depuis), "pont disparu à l'instant", "bridge disappeared just now"),
+            ]
+            for (cause, fr, en) in cas {
+                #expect(PanneauSante.texte(cause, reference: Self.t0) == Self.texte(fr: fr, en: en), "\(cause), \(age) s")
+            }
+        }
+        let uneMinute = Self.t0.addingTimeInterval(-60)
+        let relatif = FicheNoeud.relatif(uneMinute, Self.t0, unites: .short)
+        #expect(PanneauSante.texte(.disparu(depuis: uneMinute), reference: Self.t0)
+                == Self.texte(fr: "disparu \(relatif)", en: "disappeared \(relatif)"), "une minute : la date relative")
+    }
+
     /// Le titre du panneau ouvert : « Sante · » puis la portee, la maison ou le nom du niveau ou de la piece isoles.
     @Test func titreDeLaPortee() {
         let maison = String(localized: "Maison")
@@ -547,6 +568,89 @@ struct PanneauSanteTests {
         sonde.debuterTournee()
         try await stable()
         try verifier("pendant la tournee")
+        await sonde.oublier()
+    }
+
+
+    // MARK: - Aucune place reservee a une ligne absente (banc 2)
+
+    /// La colonne de gauche du haut (`HautPieces`) dans la vraie fenetre : son haut est a l'ecart sous la barre d'outils, et sa
+    /// hauteur dit ce qu'elle contient. Une ligne absente (le bandeau de scission d'un Thread masque, « Maillage incomplet », la
+    /// tournee) ne laisse aucun vide : « Maison » (le fil) est la premiere ligne, juste sous la barre.
+    static func colonne(_ moteur: MoteurPieces) -> (haut: CGFloat, hauteur: CGFloat)? {
+        guard let colonne = moteur.cadresInterface["colonne"], let barre = moteur.cadresInterface["ligne"] else { return nil }
+        return (colonne.minY - barre.maxY, colonne.height)
+    }
+
+    /// Le fil seul : une ligne de 13 pt (une quinzaine de points) ; le bandeau de scission y ajoute sa hauteur et l'espacement.
+    static let hauteurMaxDuFilSeul: CGFloat = 24
+
+    /// La colonne du haut de la demo combinee (reseau de Thread scinde), Thread montre ou masque par son interrupteur, dans une vraie
+    /// fenetre posee au repos.
+    static func colonneDeLaDemo(threadMontre: Bool) async throws -> (haut: CGFloat, hauteur: CGFloat) {
+        let (p, domaine) = try SondeMaillageTests.preferences()
+        defer { p.removePersistentDomain(forName: domaine) }
+        p.set(threadMontre, forKey: InterrupteursVue.cle(.thread))
+        let s = DemoCombineeTests.combinee()
+        #expect(s.thread.reseau?.estScinde == true, "la demo : le reseau est scinde, le bandeau existe")
+        let (fenetre, moteur) = try FenetrePiecesTests.fenetre(s, taille: CGSize(width: 1100, height: 900), preferences: p)
+        defer { FenetrePiecesTests.fermer(fenetre) }
+        try await MoteurPiecesTests.attendre { moteur.pret && Self.colonne(moteur) != nil && !moteur.margesEnRoute }
+        try await Task.sleep(for: .milliseconds(800))
+        return try #require(Self.colonne(moteur))
+    }
+
+    /// Thread masque par son interrupteur (le reseau reste scinde) : le bandeau n'est pas dessine et ne garde pas sa place,
+    /// « Maison » est la premiere ligne, juste sous la barre ; Thread montre, le bandeau est la, avec son ecart, et « Maison »
+    /// dessous (a la hauteur du bandeau pres, la meme barre au-dessus).
+    @Test(.timeLimit(.minutes(2))) func aucunePlaceReserveeAuBandeauDeScission() async throws {
+        let masque = try await Self.colonneDeLaDemo(threadMontre: false)
+        #expect(abs(masque.haut - FenetrePieces.espacement) < 0.5, "la colonne est a l'ecart sous la barre : \(masque.haut)")
+        #expect(masque.hauteur < Self.hauteurMaxDuFilSeul, "Thread masque : seul « Maison », sans place pour le bandeau : \(masque.hauteur) pt")
+        let montre = try await Self.colonneDeLaDemo(threadMontre: true)
+        #expect(abs(montre.haut - FenetrePieces.espacement) < 0.5, "toujours a l'ecart sous la barre : \(montre.haut)")
+        #expect(montre.hauteur > masque.hauteur + 20, "le bandeau est la, avec son ecart : \(montre.hauteur) pt contre \(masque.hauteur)")
+    }
+
+    /// Zigbee seul, aucune ligne optionnelle (ni tournee, ni « Maillage incomplet », ni bandeau) : « Maison » est la premiere ligne,
+    /// juste sous la barre, meme avec une sonde retenue (sa place gardee ne compte que pour la marge de la scene) ; quand
+    /// « Maillage incomplet » parait, « Maison » descend de sa ligne, et remonte quand il repart.
+    @Test(.timeLimit(.minutes(2))) func aucuneLigneAbsenteSansPlaceZigbee() async throws {
+        let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
+        defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
+        let canal = CanalRejoueZigbee { CanalRejoueZigbee.sondeMinimale($0) }
+        let sonde = SondeMaillageZigbee(preferences: p, actif: true, trousseau: TrousseauMemoireZigbee(), ouvrirCanal: { _ in canal })
+        let demo = NomsSceneZigbeeTests.surveillanceDemo()
+        let (fenetre, moteur) = try FenetrePiecesZigbeeTests.fenetre(demo, taille: CGSize(width: 1100, height: 900), preferences: p,
+                                                                     sonde: sonde)
+        defer { FenetrePiecesTests.fermer(fenetre) }
+        func stable() async throws {
+            try await MoteurPiecesTests.attendre { moteur.pret && Self.colonne(moteur) != nil && !moteur.margesEnRoute }
+            try await Task.sleep(for: .milliseconds(800))
+        }
+        func seul(_ cas: String) throws {
+            let c = try #require(Self.colonne(moteur), Comment(rawValue: cas))
+            #expect(abs(c.haut - FenetrePieces.espacement) < 0.5, "\(cas) : a l'ecart sous la barre : \(c.haut)")
+            #expect(c.hauteur < Self.hauteurMaxDuFilSeul, "\(cas) : seul « Maison », aucune place reservee : \(c.hauteur) pt")
+        }
+        try await stable()
+        try seul("sans sonde")
+        // Une sonde retenue, hors tournee : la scene garde la place de la ligne, la colonne ne la garde pas.
+        await sonde.connecter(SondeMaillageZigbeeTests.port, choisi: true)
+        sonde.debuterTournee()
+        sonde.finirTournee(nil)
+        try await stable()
+        try seul("sonde retenue, hors tournee")
+        // « Maillage incomplet » parait : une ligne de plus ; puis repart : la place est rendue.
+        demo.zigbee.recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin, incomplet: true)
+        try await MoteurPiecesZigbeeTests.attendre { (Self.colonne(moteur)?.hauteur ?? 0) > Self.hauteurMaxDuFilSeul }
+        try await stable()
+        let incomplet = try #require(Self.colonne(moteur))
+        #expect(incomplet.hauteur > Self.hauteurMaxDuFilSeul + 10, "l'indicateur est la : \(incomplet.hauteur) pt")
+        demo.zigbee.recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin, incomplet: false)
+        try await MoteurPiecesZigbeeTests.attendre { (Self.colonne(moteur)?.hauteur ?? 99) < Self.hauteurMaxDuFilSeul }
+        try await stable()
+        try seul("indicateur reparti")
         await sonde.oublier()
     }
 

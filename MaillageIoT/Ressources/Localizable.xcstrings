@@ -9969,6 +9969,22 @@
         }
       }
     },
+    "disparu à l'instant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disappeared just now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "disparu à l'instant"
+          }
+        }
+      }
+    },
     "donné par la sonde" : {
       "localizations" : {
         "en" : {
@@ -11409,6 +11425,22 @@
         }
       }
     },
+    "pont disparu à l'instant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "bridge disappeared just now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pont disparu à l'instant"
+          }
+        }
+      }
+    },
     "pont injoignable" : {
       "localizations" : {
         "en" : {
@@ -11773,6 +11805,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "routeur disparu %@"
+          }
+        }
+      }
+    },
+    "routeur disparu à l'instant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "router disappeared just now"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "routeur disparu à l'instant"
           }
         }
       }

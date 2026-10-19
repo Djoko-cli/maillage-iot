@@ -371,12 +371,17 @@ extension PanneauSante {
     /// Le texte de la cause d'une ligne. `reference` : l'heure du modele du protocole du noeud ; la date de la disparition est
     /// relative a elle, en unites courtes, comme dans la fiche (« disparu il y a 5 min »), ou absente (« disparu » seul).
     static func texte(_ cause: SantePieces.Cause, reference: Date) -> String {
+        // Moins d'une minute (ou une date que l'heure du modele n'a pas encore rattrapee) : « a l'instant », pas « maintenant ».
         func relatif(_ d: Date) -> String { FicheNoeud.relatif(d, reference, unites: .short) }
+        func recent(_ d: Date) -> Bool { reference.timeIntervalSince(d) < 60 }
         switch cause {
+        case .disparu(let depuis?) where recent(depuis): return String(localized: "disparu à l'instant")
         case .disparu(let depuis?): return String(localized: "disparu \(relatif(depuis))")
         case .disparu(nil): return String(localized: "disparu")
+        case .routeurDisparu(let depuis?) where recent(depuis): return String(localized: "routeur disparu à l'instant")
         case .routeurDisparu(let depuis?): return String(localized: "routeur disparu \(relatif(depuis))")
         case .routeurDisparu(nil): return String(localized: "routeur disparu")
+        case .pontDisparu(let depuis?) where recent(depuis): return String(localized: "pont disparu à l'instant")
         case .pontDisparu(let depuis?): return String(localized: "pont disparu \(relatif(depuis))")
         case .pontDisparu(nil): return String(localized: "pont disparu")
         case .injoignable: return String(localized: "injoignable")
