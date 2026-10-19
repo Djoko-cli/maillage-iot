@@ -58,9 +58,15 @@ enum Apparition: Equatable {
     /// Le panneau parait depuis l'etiquette « Legende », en bas a gauche, et s'y replie : un fondu et un leger
     /// grossissement depuis ce coin ; l'etiquette fait de meme. Avec « Reduire les animations », un fondu seul.
     /// L'animation est portee par la transition : elle se joue meme quand le conteneur n'en a pas.
-    static func transitionLegende(reduire: Bool) -> AnyTransition {
-        let t: AnyTransition = reduire ? .opacity : .opacity.combined(with: .scale(scale: 0.92, anchor: .bottomLeading))
+    static func transitionLegende(reduire: Bool, ancre: UnitPoint = .bottomLeading) -> AnyTransition {
+        let t: AnyTransition = reduire ? .opacity : .opacity.combined(with: .scale(scale: 0.92, anchor: ancre))
         return t.animation(animationLegende(reduire: reduire))
+    }
+
+    /// Le panneau de sante parait depuis sa capsule, en haut a gauche, et s'y replie : la meme transition que la legende
+    /// (duree, courbe, fondu seul avec « Reduire les animations »), ancree en haut a gauche.
+    static func transitionSante(reduire: Bool) -> AnyTransition {
+        transitionLegende(reduire: reduire, ancre: .topLeading)
     }
 
     /// La rangee du bas, qui ne garde que la legende : son contenu glisse avec elle quand elle s'ouvre ou se replie ;

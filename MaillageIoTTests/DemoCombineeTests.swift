@@ -120,6 +120,81 @@ struct DemoCombineeTests {
             if let id = m.selection ?? m.survol { #expect(e.graphe.noeuds.contains { $0.id == id }, "\(c.nom) : \(id.texte)") }
         }
     }
+
+    /// Le panneau de sante (phase 6) a trois images dans la demo combinee, a la suite des autres : replie (toute la maison),
+    /// ouvert a la vue d'ensemble, ouvert sur une piece isolee. Les autres images n'ont pas de panneau.
+    @Test func capturesDuPanneauDeSante() {
+        let cas = CapturesPieces.casCombinee
+        #expect(cas.count == 19)
+        #expect(cas.suffix(3).map(\.nom) == ["17-2d-sante-repliee", "18-2d-sante-ouverte-maison", "19-2d-sante-ouverte-salon"])
+        #expect(cas.suffix(3).map(\.sante) == [.replie, .ouvert, .ouvert])
+        #expect(cas.prefix(16).allSatisfy { $0.sante == nil }, "les images d'avant le panneau restent telles quelles")
+        #expect(CapturesPieces.cas.allSatisfy { $0.sante == nil } && CapturesPieces.casZigbee.allSatisfy { $0.sante == nil })
+        let s = Self.combinee()
+        s.zigbee.noms.maison = s.zigbee.demo.maisonFusionnee
+        guard let r = s.thread.reseau else { Issue.record("la demo combinee n'a pas de reseau"); return }
+        let (m, _) = CapturesPieces.preparer(cas[18], surveillance: s, reseau: r, marges: (139, 30))
+        #expect(m.isolee != nil && m.isolement != .maison, "le cas ouvert sur une piece : la piece est isolee")
+    }
+
+    /// Rendue comme les images (`ImageRenderer`, deux passages), `VueCapture` pose le panneau a sa place : sous le haut de la
+    /// vue, au bord gauche, replie petit, ouvert plus haut mais jamais au-dela de la moitie de l'espace libre ; sans cas de
+    /// panneau, il n'y en a pas. Il est un obstacle pour les noms (son cadre est lu dans le moteur) et la scene se dessine
+    /// dessous.
+    @Test func lePanneauSeDessineDansLaCapture() throws {
+        let (p, domaine) = try SondeMaillageTests.preferences()
+        defer { p.removePersistentDomain(forName: domaine) }
+        let s = Self.combinee()
+        s.zigbee.noms.maison = s.zigbee.demo.maisonFusionnee
+        let r = try #require(s.thread.reseau)
+        let sonde = SondeMaillageThread(preferences: p, actif: false)
+        let taille = CapturesPieces.taille
+        let marges = (haut: CGFloat(139), bas: CGFloat(30 + 345 + 26))
+        /// Le cadre du panneau pour le cas `nom`, et son image rendue (a `sante` pres : nil, la meme image sans panneau).
+        func cadre(_ nom: String, sante avecSante: CapturesPieces.Cas.EtatSante?? = .none) throws -> (CGRect?, CGImage?) {
+            let c = try #require(CapturesPieces.casCombinee.first { $0.nom == nom })
+            let (m, _) = CapturesPieces.preparer(c, surveillance: s, reseau: r, marges: marges)
+            func environnement(_ v: some View) -> some View {
+                v.environment(\.capturePieces, true)
+                    .environment(\.colorScheme, .dark)
+                    .environment(s)
+                    .environment(sonde)
+                    .environment(NomsPasseur())
+            }
+            let sante = CapturesPieces.mesurerSante(c, moteur: m, taille: taille) { forcee, max in
+                NSHostingView(rootView: environnement(PanneauSanteDeLaFenetre(moteur: m, entree: m.entree, instant: Date(),
+                                                                              hauteurMax: max, forcee: forcee))).fittingSize
+            }
+            var image: CGImage?
+            for _ in 0..<2 {
+                m.cadresInterface["sante"] = sante?.cadre
+                let rendu = ImageRenderer(content: environnement(VueCapture(moteur: m, palette: Palette(sombre: true),
+                                                                            sante: avecSante ?? c.sante, hauteurMaxSante: sante?.hauteurMax))
+                    .frame(width: taille.width, height: taille.height))
+                rendu.scale = 1
+                image = rendu.cgImage
+            }
+            return (sante?.cadre, image)
+        }
+        #expect(try cadre("01-2d").0 == nil, "sans cas de panneau : pas de panneau")
+        let (cadreReplie, avec) = try cadre("17-2d-sante-repliee")
+        let (_, sans) = try cadre("17-2d-sante-repliee", sante: .some(nil))
+        let replie = try #require(cadreReplie)
+        let ouvert = try #require(try cadre("18-2d-sante-ouverte-maison").0)
+        let salon = try #require(try cadre("19-2d-sante-ouverte-salon").0)
+        // Le panneau est dessine dans son cadre, et la scene seule ailleurs : l'image ne change que la ou il est.
+        let avecImage = try #require(avec), sansImage = try #require(sans)
+        func pixels(_ i: CGImage, _ r: CGRect) -> Data? { i.cropping(to: r)?.dataProvider?.data as Data? }
+        #expect(pixels(avecImage, replie) != pixels(sansImage, replie), "le panneau replie est dessine dans son cadre")
+        let loin = CGRect(x: taille.width / 2, y: marges.haut, width: taille.width / 2 - 20, height: 100)
+        #expect(pixels(avecImage, loin) == pixels(sansImage, loin), "rien d'autre ne change")
+        for c in [replie, ouvert, salon] {
+            #expect(c.minX == FenetrePieces.bord && c.minY == marges.haut, "en haut a gauche, sous le haut de la vue : \(c)")
+        }
+        #expect(replie.height < 40 && replie.height < ouvert.height)
+        let borne = PanneauSante.hauteurMax(vue: taille.height, margeHaut: marges.haut, margeBas: marges.bas)
+        #expect(ouvert.height <= borne + 0.5 && salon.height <= borne + 0.5, "au plus la moitie de l'espace libre (\(borne))")
+    }
 }
 
 /// La legende et la fenetre de la demo combinee : la premiere scene des deux protocoles, avec la ligne « ● Thread ⬢ Zigbee » et

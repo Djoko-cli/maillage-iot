@@ -295,7 +295,8 @@ struct CameraSceneTests {
 
     /// Zones hors de la maison : a la hauteur de leur niveau, autour de l'axe de la sphere, vers +x, -x, +z, -z,
     /// puis de nouveau +x, plus loin ; hors de la sphere ; le cadrage les couvre (`rayonCadre`), et la vue
-    /// d'ensemble 3D les garde dans le cadre sur un tour de rotation lente.
+    /// d'ensemble 3D les garde dans le cadre a l'arrivee (la pose canonique ; banc 5 de la phase 6 : plus sur un tour
+    /// de rotation lente, qui ramenait la sphere a 40 % de la hauteur libre).
     @Test func zonesHorsDeLaMaison() throws {
         let g = GeometrieMaison(rayons: Self.rayonsC, plateaux: Self.plateauxC)
         let esp = DispositionPieces.esp, c = g.centreSphere, rs = g.rayonSphere
@@ -309,17 +310,58 @@ struct CameraSceneTests {
             #expect(hypot(p.x - c.x, p.z) - Self.rayonsC[e] > rs, "plateau \(e) hors de la sphere")
         }
         #expect(abs(g.rayonCadre - (rs + esp + 6 + 6 + esp + 2 + 2)) < 1e-9)
-        for k in 0..<24 {
-            var o = CameraScene.canonique(g, aspect: Self.aspect, u: 1)
-            o.azimut += Double(k) / 24 * 2 * .pi
-            let proj = ProjectionScene(o, cadre: Self.cadre)
-            for e in Self.rayonsC.indices {
-                for a in stride(from: 0.0, to: 2 * .pi, by: .pi / 8) {
-                    let p = g.centres3D[e] + SIMD3(Self.rayonsC[e] * cos(a), 0, Self.rayonsC[e] * sin(a))
+        let proj = ProjectionScene(CameraScene.canonique(g, aspect: Self.aspect, u: 1), cadre: Self.cadre)
+        for e in Self.rayonsC.indices {
+            for a in stride(from: 0.0, to: 2 * .pi, by: .pi / 8) {
+                for h in [0.0, GeometrieMaison.hauteurBloc3D] {
+                    let p = g.centres3D[e] + SIMD3(Self.rayonsC[e] * cos(a), h, Self.rayonsC[e] * sin(a))
                     let q = try #require(proj.ecran(p))
-                    #expect(Self.cadre.contains(q), "plateau \(e), azimut \(k)")
+                    #expect(Self.cadre.contains(q), "plateau \(e), a l'arrivee")
                 }
             }
+        }
+    }
+
+    /// Banc 5 de la phase 6 : la vue d'ensemble 3D ne cadrait plus la sphere qu'a 40 % de la hauteur libre, parce que le
+    /// rayon des zones hors de la maison (`rayonCadre`, plus de deux fois celui de la sphere) comptait pour la hauteur
+    /// comme pour la largeur, alors qu'elles s'etendent a plat. La hauteur de vue est celle de la sphere (2,4 rayons)
+    /// tant que les zones tiennent dans le cadre, comme sans zones ; elle ne grandit que pour les garder entieres
+    /// (cadre etroit), avec 5 % de marge ; et la molette recule toujours jusqu'a 2,5 fois l'ancienne vue large.
+    @Test func vueDEnsemble3DAvecDesZonesDehors() throws {
+        let g = GeometrieMaison(rayons: Self.rayonsC, plateaux: Self.plateauxC)
+        #expect(g.rayonCadre > 1.5 * g.rayonSphere, "des zones bien plus loin que la sphere")
+        #expect(CameraScene.vue3D(g, aspect: Self.aspect) == 2.4 * g.rayonSphere * max(1, 1 / Self.aspect),
+                "le cadre est large : la sphere seule fixe la vue")
+        // Un cadre etroit : les zones tiennent dans le cadre ; si elles fixent la vue, elles le remplissent a 5 % de marge pres.
+        var fixees = 0
+        for aspect in [0.2, 0.3, 0.45, 0.6, 0.8] {
+            let sphere = 2.4 * g.rayonSphere / aspect, zones = CameraScene.vueZonesDehors(g, aspect: aspect)
+            let vue = CameraScene.vue3D(g, aspect: aspect)
+            #expect(vue == max(sphere, zones), "aspect \(aspect)")
+            let cadre = CGRect(x: 0, y: 0, width: 1000 * aspect, height: 1000)
+            let proj = ProjectionScene(CameraScene.canonique(g, aspect: aspect, u: 1), cadre: cadre)
+            var pire = 0.0
+            for e in Self.rayonsC.indices where Self.plateauxC[e].dehors {
+                for a in stride(from: 0.0, to: 2 * .pi, by: .pi / 12) {
+                    for h in [0.0, GeometrieMaison.hauteurBloc3D] {
+                        let p = g.centres3D[e] + SIMD3(Self.rayonsC[e] * cos(a), h, Self.rayonsC[e] * sin(a))
+                        let q = try #require(proj.ecran(p))
+                        #expect(cadre.contains(q), "aspect \(aspect) : zone \(e)")
+                        pire = max(pire, abs(Double(q.x) - cadre.midX) / (cadre.width / 2),
+                                   abs(Double(q.y) - cadre.midY) / (cadre.height / 2))
+                    }
+                }
+            }
+            if zones > sphere {
+                fixees += 1
+                #expect(pire > 0.9, "aspect \(aspect) : les zones remplissent le cadre (\(pire))")
+            }
+        }
+        #expect(fixees > 0, "un cadre assez etroit pour que les zones fixent la vue")
+        for aspect in [0.45, Self.aspect, 3.0] {
+            let bornes = CameraScene.bornes(g, aspect: aspect, troisD: true, champ: CameraScene.champ3D)
+            #expect(abs(bornes.upperBound - Orbite.distance(pourHauteur: 2.4 * g.rayonCadre * max(1, 1 / aspect) * 2.5,
+                                                              champ: CameraScene.champ3D)) < 1e-9, "molette, aspect \(aspect)")
         }
     }
 

@@ -330,10 +330,10 @@ struct VueProtocolesTests {
         }
         // Les commandes des liens se lisent sur la scene du moteur et les protocoles montres.
         let reunie = EntreeSceneTests.deuxReseaux()
-        let m = MoteurPiecesTests.moteur(Self.scene(reunie))
-        #expect(CommandesVue.montreLiens(scene: m.scene, montres: Self.tous))
-        #expect(!CommandesVue.montreLiens(scene: m.scene, montres: [.thread]), "Zigbee masque : ni liens ni voisins")
-        #expect(!CommandesVue.montreLiens(scene: nil, montres: Self.tous))
+        let protocoles = Self.scene(reunie).protocoles
+        #expect(CommandesVue.montreLiens(protocoles: protocoles, montres: Self.tous))
+        #expect(!CommandesVue.montreLiens(protocoles: protocoles, montres: [.thread]), "Zigbee masque : ni liens ni voisins")
+        #expect(!CommandesVue.montreLiens(protocoles: [], montres: Self.tous))
     }
 
     // MARK: Nom de la maison et menu des reseaux
@@ -433,6 +433,50 @@ struct VueProtocolesTests {
         #expect(!vide.toutMasque)
     }
 
+    /// Tout masque, la vue ne dessine aucune zone : ni plateau « Maison » artificiel (le niveau par defaut d'une scene vide), ni
+    /// etage, ni piece, ni nom, en 2D comme en 3D ; la bulle de la maison, son nom et le message restent. Un protocole qui revient
+    /// rend les etages et les pieces d'avant, a l'identique.
+    @Test func toutMasqueNeDessineAucuneZone() throws {
+        let s = EntreeSceneTests.deuxReseaux()
+        let tout = Self.scene(s), rien = Self.scene(s, montres: []), thread = Self.scene(s, montres: [.thread])
+        try #require(rien.toutMasque)
+        #expect(rien.scene.etages.isEmpty && rien.scene.pieces.isEmpty && rien.scene.noeuds.isEmpty)
+        #expect(!tout.scene.etages.isEmpty && !tout.scene.pieces.isEmpty && !thread.scene.etages.isEmpty)
+        for troisD in [false, true] {
+            let m = MoteurPieces(troisD: troisD)
+            m.marges = (84, 50)
+            m.poserTaille(MoteurPiecesTests.taille)
+            m.installerMaintenant(tout)
+            MoteurPiecesTests.dessiner(m)
+            m.reduire = true
+            let avant = Releve(m)
+            let plateaux = try #require(m.projetee).plateaux.count
+            try #require(plateaux == tout.scene.etages.count && avant.blocs == tout.scene.pieces.count && plateaux > 0)
+            Self.poser(m, rien)
+            let p = try #require(m.projetee)
+            #expect(p.plateaux.isEmpty && p.blocs.isEmpty && p.disques.isEmpty, "troisD \(troisD) : aucune zone dessinee")
+            #expect(p.ancresEtages.isEmpty && p.ancresPieces.isEmpty && p.ancresNoeuds.isEmpty)
+            #expect(m.etiquettes.allSatisfy { if case .maison = $0.genre { true } else { false } }, "seul le nom de la maison reste")
+            #expect(p.ancreMaison != nil && (p.sphere != nil) == troisD, "la bulle de la maison reste, en 3D")
+            Self.poser(m, thread)
+            #expect(m.projetee?.plateaux.count == thread.scene.etages.count && !(m.projetee?.blocs.isEmpty ?? true),
+                    "un protocole montre : ses etages et ses pieces")
+            Self.poser(m, tout)
+            #expect(Releve(m) == avant && m.projetee?.plateaux.count == plateaux, "le protocole remis, la vue d'avant")
+            // Une vue ouverte sur tout masque : rien de dessine, puis les etages et les pieces quand un protocole revient.
+            let ouverte = MoteurPieces(troisD: troisD)
+            ouverte.marges = (84, 50)
+            ouverte.poserTaille(MoteurPiecesTests.taille)
+            ouverte.installerMaintenant(rien)
+            MoteurPiecesTests.dessiner(ouverte)
+            ouverte.reduire = true
+            #expect(ouverte.projetee?.plateaux.isEmpty == true && ouverte.projetee?.blocs.isEmpty == true)
+            Self.poser(ouverte, tout)
+            #expect(ouverte.projetee?.plateaux.count == plateaux && ouverte.projetee?.blocs.count == avant.blocs,
+                    "troisD \(troisD) : les etages et les pieces reviennent")
+        }
+    }
+
     /// La legende suit les protocoles montres : sans Zigbee, ni la ligne « Thread · Zigbee » ni les entrees propres a Zigbee ;
     /// la legende de la vue sans un protocole est celle de l'autre seul.
     @Test func laLegendeSuitLesProtocolesMontres() {
@@ -472,7 +516,7 @@ struct VueProtocolesTests {
             NSHostingView(rootView: AnyView(vue.environment(s).environment(sonde).environment(NomsPasseur())))
         }
         let gauche = hote(BarreOutils().capsuleDeVerre()).fittingSize.width
-        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(true)).capsuleDeVerre()).fittingSize.width
+        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(true), protocoles: Self.tous).capsuleDeVerre()).fittingSize.width
         let largeur = FenetrePieces.tailleMinimale.width
         let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: largeur, height: 200),
                                styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,

@@ -499,6 +499,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 3 : interface à deux protocoles (3a une seule app, 3b la vue A et l'interface commune, 3c la découpe des deux `SondeMaillage`)
 - [x] Phase 4 : reprise
 - [x] Phase 5 : publication
+- [x] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
 
 ### 6.2 Les tests
 
@@ -697,12 +698,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 - **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
   naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
   dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.
-- **Panneau de santé dans la vue par pièces** (demande de Djoko, banc de l'étape 3a, 15/10) : un panneau en verre liquide
-  (Liquid Glass), dans le même style que la légende, en haut à gauche de la vue. Il reprend les informations du journal
-  que montre le menu de la barre (alertes de l'heure, pertes, changements récents, par protocole). Un clic sur une entrée
-  montre l'appareil en cause dans la scène : sélection, focus et fiche, comme un clic sur le nœud. Il donne aussi un
-  résumé de santé par pièce, tous protocoles confondus (par exemple « Salon : 2 appareils perdus ») : c'est l'ancienne
-  « vue de santé par pièce » (option C du 13/10), fondue ici le 18/10.
 - Catégories de notification propres à Zigbee (parent perdu, pont injoignable).
 - Clés `rloc:` de Thread qualifiées par leur partition : deux partitions peuvent avoir le même RLOC16. Le
   comportement actuel est gardé à l'étape 1 ; à corriger ensuite, sous le rejeu.
@@ -748,3 +743,8 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   Zigbee ET Thread, à confirmer) : sans doute un chemin supposé ou un rattachement supposé (déduit, non lu) qui suit la
   même arête que le lien enfant -> parent. Vérifier sur une scène où les deux se recouvrent ; si c'est le cas, ne tracer qu'un seul des deux, ou
   décaler l'un, pour qu'un même lien ne soit pas dessiné deux fois.
+- **L'app réelle gêne la suite de tests** (constat du 19/10) : `NomsPasseurTests.abonnementEtReleves` dépasse ses 60 s
+  quand Maillage IoT tourne sur le Mac pendant `outils/tester.sh` (verte app fermée). Isoler le faux démon du test du vrai
+  (port, schéma ou nom de service), ou faire refuser la porte tant que l'app tourne.
+- **Charge du processeur de l'app réelle** (constat du 19/10) : Maillage IoT 1.0.0 à environ 70 % d'un cœur en continu,
+  pendant des heures. Mesurer fenêtre de la vue par pièces ouverte et fermée (rendu 3D, rotation lente), puis corriger.

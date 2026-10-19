@@ -44,6 +44,14 @@ enum CapturesPieces {
         var listeVoisins = false
         var changementsDeplies = false
         var periode: PeriodeCourbes?
+        /// Le panneau de sante, replie ou ouvert ; nil : sans panneau (les images d'avant le panneau n'en ont pas).
+        var sante: EtatSante?
+
+        /// Le panneau de sante d'une image : sa capsule, ou sa liste ouverte.
+        enum EtatSante: Equatable {
+            case replie
+            case ouvert
+        }
 
         /// Un cas de la demo de Zigbee : sa maison, nommee par Maison, sur quatre etages, son jardin hors de la maison.
         static func zigbee(_ nom: String, legendeRepliee: Bool = false, taille: CGSize = CapturesPieces.taille,
@@ -193,7 +201,8 @@ enum CapturesPieces {
 
     /// Les images de la demo combinee, dans l'ordre : les vues d'ensemble des deux reseaux ensemble (2D, envol, 3D, zooms,
     /// pieces isolees, survol), les fiches d'un noeud de chaque protocole (le chef de Thread, le pont de Zigbee), puis les deux
-    /// homonymes d'avant le renommage : la lampe de l'arcade de Thread, et celle de Zigbee, « Lampe arcade (Hue) ».
+    /// homonymes d'avant le renommage : la lampe de l'arcade de Thread, et celle de Zigbee, « Lampe arcade (Hue) » ; puis
+    /// le panneau de sante (phase 6) : replie, ouvert a la vue d'ensemble, ouvert sur une piece isolee.
     static let casCombinee: [Cas] = [
         Cas(nom: "01-2d") { _, _ in },
         Cas(nom: "02-envol-30") { m, _ in m.poserBascule(0.3) },
@@ -217,6 +226,11 @@ enum CapturesPieces {
         Cas(nom: "14-2d-legende-repliee", poser: { _, _ in }, legendeRepliee: true),
         Cas(nom: "15-2d-fiche-lampe-arcade-thread") { m, _ in m.selection = IdNoeud(.thread, "AA3D322B8A4500C4") },
         Cas(nom: "16-2d-fiche-lampe-arcade-zigbee") { m, _ in m.selection = IdNoeud(.zigbee, NomsDemo.Ieee.lampeArcade) },
+        // Le panneau de sante (phase 6) : replie (la capsule, toute la maison), ouvert a la vue d'ensemble, ouvert sur une
+        // piece isolee (la liste de la piece, et la ligne « Ailleurs »).
+        Cas(nom: "17-2d-sante-repliee", poser: { _, _ in }, sante: .replie),
+        Cas(nom: "18-2d-sante-ouverte-maison", poser: { _, _ in }, sante: .ouvert),
+        Cas(nom: "19-2d-sante-ouverte-salon", poser: { m, sc in m.poserIsolement(piece(sc, "Salon")) }, sante: .ouvert),
     ]
 
     /// Evenements inventes des captures du journal regroupe de Zigbee : la lampe du bureau hesite entre plusieurs relais,
@@ -311,6 +325,18 @@ enum CapturesPieces {
         return (m, e)
     }
 
+    /// Le panneau de sante d'un cas : la hauteur maximale de sa liste ouverte (la moitie de l'espace libre, comme dans la fenetre),
+    /// et son cadre, a poser dans le moteur comme obstacle des noms avant chaque passage (`ImageRenderer` ne lit pas la geometrie
+    /// des vues, et retire l'obstacle quand le rendu finit : la fenetre, elle, le fait par `obstacle`). `taillePanneau` mesure
+    /// le panneau, de cette hauteur maximale ; nil sans panneau.
+    static func mesurerSante(_ c: Cas, moteur m: MoteurPieces, taille: CGSize,
+                             taillePanneau: (_ forcee: Bool, _ hauteurMax: CGFloat) -> CGSize) -> (hauteurMax: CGFloat, cadre: CGRect)? {
+        guard let etat = c.sante else { return nil }
+        let max = PanneauSante.hauteurMax(vue: taille.height, margeHaut: m.marges.haut, margeBas: m.marges.bas)
+        return (max, CGRect(origin: CGPoint(x: FenetrePieces.bord, y: m.marges.haut),
+                            size: taillePanneau(etat == .replie, max)))
+    }
+
     /// Ecrit les images de la demo `demo` dans `dossier` (celle de Zigbee, seule ou combinee : sa maison nommee par Maison, sur
     /// quatre etages, l'historique et les evenements inventes des captures) ; rend leurs noms.
     @discardableResult
@@ -378,12 +404,20 @@ enum CapturesPieces {
                 m.marges.bas = FenetrePieces.margeBas(pile: pile)
                 m.poserTaille(taille)
             }
+            // Le panneau de sante, s'il y en a un : sa hauteur maximale, et son cadre, que les noms evitent.
+            let sante = mesurerSante(c, moteur: m, taille: taille) { forcee, max in
+                NSHostingView(rootView: PanneauSanteDeLaFenetre(moteur: m, entree: m.entree, instant: Date(), hauteurMax: max,
+                                                                forcee: forcee)
+                    .pourCapture(s, sonde, nomsMaison, sondeZigbee: sondeZigbee, nomsPont: nomsPont)).fittingSize
+            }
             // Deux passages : le premier pose les noms, le second les dessine a leur place.
             var image: CGImage?
             for _ in 0..<2 {
+                m.cadresInterface["sante"] = sante?.cadre
                 let rendu = ImageRenderer(content: VueCapture(moteur: m, palette: palette, legendeRepliee: repliee,
                                                               listeVoisins: c.listeVoisins,
-                                                              changementsDeplies: c.changementsDeplies)
+                                                              changementsDeplies: c.changementsDeplies, sante: c.sante,
+                                                              hauteurMaxSante: sante?.hauteurMax)
                     .environment(\.periodeCapture, c.periode)
                     .frame(width: taille.width, height: taille.height)
                     .pourCapture(s, sonde, nomsMaison, sondeZigbee: sondeZigbee, nomsPont: nomsPont))
@@ -409,7 +443,8 @@ enum CapturesPieces {
 }
 
 /// La vue d'une capture : le fond, la scene, le haut de la fenetre (avec ses trois boutons, et la ligne de niveau
-/// sous le fil), la legende (ouverte, ou repliee), puis, dessous, la fiche du noeud choisi ; sans horloge ni geste.
+/// sous le fil), le panneau de sante (s'il y en a un, au-dessus de la scene et de ses noms), la legende (ouverte, ou repliee),
+/// puis, dessous, la fiche du noeud choisi ; sans horloge ni geste.
 struct VueCapture: View {
     @Environment(Surveillance.self) private var surveillance
     let moteur: MoteurPieces
@@ -417,13 +452,24 @@ struct VueCapture: View {
     var legendeRepliee = false
     var listeVoisins = false
     var changementsDeplies = false
+    /// Le panneau de sante, replie ou ouvert ; nil : sans panneau.
+    var sante: CapturesPieces.Cas.EtatSante?
+    /// La hauteur maximale du panneau ouvert, comme dans la fenetre (la moitie de l'espace libre).
+    var hauteurMaxSante: CGFloat?
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             RadialGradient(gradient: palette.fond, center: UnitPoint(x: 0.3, y: 0.35), startRadius: 0, endRadius: 900)
             Canvas { ctx, taille in moteur.image(&ctx, taille: taille, echelle: 2, palette: palette) }
+            // Le haut de la fenetre, et dans sa colonne, sous la ligne de niveau, le panneau de sante (s'il y en a un), comme dans la
+            // fenetre : apres la scene (ses etiquettes de niveau, dessinees dans le `Canvas`, restent dessous).
             HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), protocoles: moteur.entree?.protocoles ?? [],
-                       montres: moteur.entree?.montres ?? Set(Protocole.allCases))
+                       montres: moteur.entree?.montres ?? Set(Protocole.allCases),
+                       apres: sante.map { etat in
+                           AnyView(PanneauSanteDeLaFenetre(moteur: moteur, entree: moteur.entree, instant: Date(),
+                                                           hauteurMax: hauteurMaxSante, forcee: etat == .replie,
+                                                           ecart: FenetrePieces.espacement))
+                       })
             FeuxDeCapture()
             VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 Spacer()

@@ -121,6 +121,24 @@ struct ScenePiecesTests {
         #expect(try Self.piece(inverse, .sansPiece).etage == 0)
     }
 
+    /// Une scene sans aucun noeud (tout est masque, ou rien a montrer) n'a ni etage, ni piece, ni niveau : le plateau
+    /// « Maison » n'existe que pour porter les cartes des routeurs d'une maison sans pieces, il n'est pas une zone
+    /// artificielle de la scene vide (banc de la phase 6). Avec des noeuds mais sans piece de Maison, il reste.
+    @Test func sceneVideSansEtageNiPiece() throws {
+        let vide = GrapheReseau(noeuds: [])
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"])]
+        for (z, pieces) in [(nil, false), (zones, true), (zones, false)] as [([ZoneMaison]?, Bool)] {
+            let s = ScenePieces(graphe: vide, libelles: [:], piecesNoeuds: [:], zones: z, chefs: [], piecesMaison: pieces,
+                                ordreEtages: ["maison"], classement: FixturesScene.classement)
+            #expect(s.etages.isEmpty && s.pieces.isEmpty && s.noeuds.isEmpty && s.liens.isEmpty, "zones \(z != nil), pieces \(pieces)")
+            #expect(s.niveaux.liste.isEmpty && s.cleDisposition == ScenePieces.CleDisposition())
+        }
+        // Des noeuds, sans piece de Maison : le plateau « Maison » et ses cartes de routeur restent.
+        let sans = ScenePieces(graphe: try Self.graphe(sonde: true), libelles: Self.libelles, piecesNoeuds: [:], zones: nil,
+                               chefs: [], piecesMaison: false, classement: FixturesScene.classement)
+        #expect(sans.etages.map(\.nom) == [.maison] && !sans.pieces.isEmpty && sans.sansPiecesMaison)
+    }
+
     /// Pas encore de pieces de Maison : un plateau « Maison », une carte par routeur avec ses enfants
     /// (vus par la sonde) ; sans parent connu, « Sans piece ». Sans sonde, aucun parent : chaque
     /// routeur seul dans sa carte.

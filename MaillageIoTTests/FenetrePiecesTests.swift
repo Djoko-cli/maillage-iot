@@ -1184,7 +1184,7 @@ struct FenetrePiecesTests {
         }
         // La largeur de chaque capsule seule : celle de son contenu.
         let gauche = hote(BarreOutils().capsuleDeVerre()).fittingSize.width
-        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(troisD)).capsuleDeVerre()).fittingSize.width
+        let droite = hote(CommandesVue(moteur: moteur, troisD: .constant(troisD), protocoles: []).capsuleDeVerre()).fittingSize.width
         // Le haut de la fenetre a sa taille minimale, comme `FenetrePieces` le pose.
         let largeur = FenetrePieces.tailleMinimale.width
         let fenetre = NSWindow(contentRect: NSRect(x: 0, y: 0, width: largeur, height: 200),

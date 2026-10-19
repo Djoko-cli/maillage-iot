@@ -6,7 +6,7 @@ import Foundation
 /// - Etages : les zones de Maison, dans leur ordre (le premier en bas) ; une piece dans plusieurs
 ///   zones va dans la premiere ; deux zones du meme nom n'en font qu'une, a la place de la premiere ;
 ///   les pieces hors zone forment « Autres pieces ». Sans zones (ou fichier d'avant les zones), un seul
-///   plateau « Maison ». Un ordre garde passe avant.
+///   plateau « Maison ». Un ordre garde passe avant. Sans aucun noeud, ni etage ni piece.
 /// - Niveaux (polissage C, section 1) : un plateau est un etage, ou une zone a cote d'un etage, dont elle
 ///   partage le niveau (`Niveaux`, d'apres les choix gardes). Les plateaux sont ranges niveau par niveau,
 ///   du bas vers le haut, et dans un niveau l'etage principal d'abord, puis ses zones a cote : l'ordre des
@@ -184,7 +184,9 @@ public struct ScenePieces: Hashable, Sendable {
                 noms.append(.autresPieces)
             }
         }
-        if noms.isEmpty { noms = [.maison] }
+        // Le plateau « Maison » porte les noeuds d'une maison sans zones ou sans pieces : sans aucun noeud (tout est masque, ou rien
+        // a montrer), la scene n'a ni etage ni piece, et la vue ne dessine aucune zone (banc de la phase 6).
+        if noms.isEmpty, !nomPiece.isEmpty { noms = [.maison] }
         // Ordre garde d'abord ; un etage qu'il ne connait pas garde son rang, au-dessus. Puis les niveaux :
         // chaque zone a cote rejoint son etage principal.
         let rang = Dictionary(ordreEtages.enumerated().map { ($1, $0) }, uniquingKeysWith: { a, _ in a })

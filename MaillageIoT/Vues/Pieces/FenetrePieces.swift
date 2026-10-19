@@ -5,9 +5,9 @@ import SwiftUI
 /// Fenetre de la vue par pieces (spec de la vue par pieces, sections 1 et 7 ; polissage B, section 1) :
 /// sans barre de titre (le style de sa scene, `.hiddenTitleBar`, dans `MaillageIoTApp`), la scene occupe
 /// toute la fenetre, jusque sous ses trois boutons ; en haut, les deux capsules du bandeau, la bande qui
-/// deplace la fenetre, la ligne de la tournee, les bandeaux, le fil et la ligne de niveau (`HautPieces`) ; en bas,
-/// la pile : la legende, puis la fiche. Elle reste sombre, comme la maquette, meme quand le Mac est en
-/// clair (precision 15 du plan 4b).
+/// deplace la fenetre, la ligne de la tournee, les bandeaux, le fil et la ligne de niveau (`HautPieces`), puis, dessous, le
+/// panneau de sante (`PanneauSante`) ; en bas, la pile : la legende, puis la fiche. Elle reste sombre, comme la maquette,
+/// meme quand le Mac est en clair (precision 15 du plan 4b).
 struct FenetrePieces: View {
     @Environment(Surveillance.self) private var surveillance
     /// La sonde de Zigbee : « Maillage incomplet » et sa passe complementaire. nil dans les vues de test sans elle.
@@ -220,11 +220,24 @@ struct FenetrePieces: View {
                     EtatVide()
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
+                // Le panneau de sante est dans la colonne de gauche du haut, sous la ligne de niveau, a l'ecart qui separe ses
+                // lignes entre elles : il suit leurs apparitions et leurs disparitions (la ligne de la tournee, les bandeaux) sur
+                // le meme mouvement, et ne laisse pas de vide au-dessus de lui, ce que la marge de la scene (qui garde la place
+                // d'une ligne de tournee absente) ne peut pas lui donner. En verre comme la legende, il ne descend jamais plus
+                // bas que la moitie de l'espace libre entre le haut et la pile du bas (la legende, la fiche) : la liste defile
+                // dans le panneau.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
                            ancien: surveillance.modeles.contains { montres.contains($0.protocole) && $0.maillageAncien },
                            texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
                            protocoles: entree?.protocoles ?? [], montres: montres,
-                           feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           feux: feux,
+                           apres: AnyView(PanneauSanteDeLaFenetre(
+                               moteur: moteur, entree: entree, instant: contexte.date,
+                               hauteurMax: hauteurVue.map {
+                                   PanneauSante.hauteurMax(vue: $0, margeHaut: margeHautMesuree,
+                                                           margeBas: Self.margeBas(pile: hauteurPile ?? hauteurLegende))
+                               },
+                               ecart: Self.espacement))) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
@@ -449,6 +462,11 @@ struct MenuPieces: View {
 struct CommandesVue: View {
     let moteur: MoteurPieces
     @Binding var troisD: Bool
+    /// Les protocoles qui ont des noeuds dans la scene A MONTRER (`EntreeScene.protocoles`, refaite a chaque rendu), et non dans
+    /// la scene posee sur le moteur (`MoteurPieces.scene`) : celle-ci est animee, posee apres coup (calcul de la disposition,
+    /// fin d'un mouvement) et SwiftUI ne l'observe pas. Le selecteur des liens en dependait : il manquait, au hasard, apres
+    /// avoir remontre Zigbee ou avant la premiere composition (banc 4 de la phase 6). Meme etat, meme affichage.
+    let protocoles: Set<Protocole>
     /// Les protocoles montres (`EntreeScene.montres`) : les commandes de Zigbee n'y sont que s'il l'est ; tous par defaut.
     var montres = Set(Protocole.allCases)
     /// Les liens montres, gardes d'un lancement a l'autre.
@@ -458,13 +476,13 @@ struct CommandesVue: View {
 
     /// Les liens et les voisins sont montres des qu'un noeud de Zigbee est de la scene et que Zigbee est montre
     /// (`ContenuHaut.liens`), seul ou avec Thread.
-    static func montreLiens(scene: ScenePieces?, montres: Set<Protocole>) -> Bool {
-        ContenuHaut(protocoles: Set(scene?.noeuds.map(\.id.protocole) ?? []), montres: montres).liens
+    static func montreLiens(protocoles: Set<Protocole>, montres: Set<Protocole>) -> Bool {
+        ContenuHaut(protocoles: protocoles, montres: montres).liens
     }
 
     var body: some View {
         HStack(spacing: 5) {
-            if Self.montreLiens(scene: moteur.scene, montres: montres) {
+            if Self.montreLiens(protocoles: protocoles, montres: montres) {
                 SelecteurLiens(liens: Binding(get: { moteur.liens }, set: { v in
                     moteur.liens = v
                     liensGardes = v.rawValue

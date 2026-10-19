@@ -305,7 +305,9 @@ public struct SceneProjetee: Sendable {
         voilesEtages = ve
 
         // Plateaux : polygone exact de 128 points ; degrade par l'affine du disque.
-        for e in g.rayons.indices {
+        // Ceux de la scene seuls : la geometrie d'une scene sans etage garde un plateau de repli, qui ne fait que
+        // dimensionner la sphere et ne se dessine pas.
+        for e in g.rayons.indices where e < scene.etages.count {
             let c = g.centrePlateau(e, t), r = g.rayons[e]
             let pts = Self.cercle(c, r, 128)
             guard let poly = proj.polygone(pts) else { continue }
@@ -521,7 +523,7 @@ public struct SceneProjetee: Sendable {
         var hh = orbite.haut
         hh.y = 0
         let hautHorizontal = simd_length_squared(hh) < 1e-8 ? SIMD3<Double>(0, 0, -1) : simd_normalize(hh)
-        for e in g.rayons.indices {
+        for e in g.rayons.indices where e < scene.etages.count {
             if let p = proj.ecran(g.centrePlateau(e, t) + hautHorizontal * g.rayons[e]) {
                 ancresEtages[e] = CGRect(origin: p, size: .zero)
             }
