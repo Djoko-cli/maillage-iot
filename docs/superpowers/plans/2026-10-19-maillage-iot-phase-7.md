@@ -60,6 +60,6 @@
 
 ### Task 3: Relecture et banc
 
-- [ ] **Step 1: Relecture** — par Sonnet (tâches) puis Opus (branche).
-- [ ] **Step 2: Banc** — avec Djoko, sur son réseau réel : les HomePod et l'Apple TV reçoivent-ils une proposition juste ; le rattachement par hôte tient-il.
-- [ ] **Step 3: Verdict** — cocher « Phase 7 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
+- [x] **Step 1: Relecture** — par Sonnet (tâches) puis Opus (branche).
+- [x] **Step 2: Banc** — avec Djoko, sur son réseau réel : les HomePod et l'Apple TV reçoivent-ils une proposition juste ; le rattachement par hôte tient-il.
+- [x] **Step 3: Verdict** — cocher « Phase 7 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
