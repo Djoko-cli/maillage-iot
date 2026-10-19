@@ -257,6 +257,8 @@ final class SurveillanceThread: ModeleProtocole {
     func integrer(_ a: Annonces) {
         // Eteint, ou arrete pour une reprise de donnees : un releve en vol a l'arret n'est pas integre.
         guard actif, !coqueArretee else { return }
+        // Du TXT AirPlay, seul `model` est garde (et donc exporte par « Enregistrer une capture… »).
+        let a = a.airplayReduit
         dernierReleve = a
         routesLisibles = mode == .demo ? true : recenseur?.routesLisibles
         if !a.estVide {

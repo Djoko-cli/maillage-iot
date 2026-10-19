@@ -44,7 +44,8 @@ extension Recenseur {
         }
         return Annonces(date: date, routeurs: services("_meshcop._udp"), matter: services("_matter._tcp"),
                         hap: services("_hap._udp"), trel: services("_trel._udp"),
-                        airplay: services(Self.typeAirPlay), adresses: adresses, routes: routes, prefixesLocaux: prefixesLocaux)
+                        airplay: services(Self.typeAirPlay), adresses: adresses, routes: routes,
+                        prefixesLocaux: prefixesLocaux).airplayReduit
     }
 
     /// Cibles apres un releve : une resolution reussie remplace la cible de son
@@ -53,5 +54,20 @@ extension Recenseur {
     nonisolated static func retenir(cibles: [String: ResolveurDNSSD.Cible], resolues: [String: ResolveurDNSSD.Cible],
                                     listees: Set<String>) -> [String: ResolveurDNSSD.Cible] {
         cibles.merging(resolues) { _, nouvelle in nouvelle }.filter { listees.contains($0.key) }
+    }
+}
+
+extension Annonces {
+    /// Le releve, avec pour chaque service AirPlay le seul `model` de son TXT (rien du reste : `deviceid` est l'adresse MAC de
+    /// l'appareil, `pk` sa cle publique...). La piece proposee n'a besoin que du nom, de l'hote et du modele ; le releve garde et
+    /// la capture exportee ne portent donc rien d'autre d'AirPlay, quel que soit le TXT recu.
+    var airplayReduit: Annonces {
+        var a = self
+        a.airplay = airplay.map { s in
+            var s = s
+            s.txt = s.txt["model"].map { ChampsTXT(["model": $0]) } ?? ChampsTXT()
+            return s
+        }
+        return a
     }
 }
