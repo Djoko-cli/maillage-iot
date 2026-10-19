@@ -404,11 +404,50 @@ public enum CameraScene {
         return max((g.boite.z1 - g.boite.z0) * 1.1, (g.boite.x1 - g.boite.x0) * 1.05 / aspect)
     }
 
-    /// Hauteur de vue de la vue d'ensemble 3D, centree sur la sphere : elle cadre la sphere et les zones hors de
-    /// la maison (polissage C, section 2).
+    /// Hauteur de vue de la vue d'ensemble 3D, centree sur la sphere : elle cadre la sphere (2,4 rayons de haut, plus
+    /// large si le cadre est plus haut que large) et, quand il y en a, les zones hors de la maison, entieres sur un
+    /// tour de rotation lente (polissage C, section 2). Banc 5 de la phase 6 : les zones hors de la maison ne
+    /// comptent plus comme un rayon de plus en hauteur (elles s'etendent a plat, autour de l'axe, et le cadre est
+    /// plus large que haut) : la sphere remplit l'espace libre, et la zone la plus lointaine en fixe seulement la
+    /// largeur (`vueZonesDehors`). Sans zone hors de la maison : 2,4 fois le rayon de la sphere, comme au plan 4b.
     public static func vue3D(_ g: GeometrieMaison, aspect: Double) -> Double {
         let aspect = aspectSur(aspect)
-        return 2.4 * g.rayonCadre * max(1, 1 / aspect)
+        let sphere = 2.4 * g.rayonSphere * max(1, 1 / aspect)
+        guard g.rayonCadre > g.rayonSphere else { return sphere }
+        return max(sphere, vueZonesDehors(g, aspect: aspect))
+    }
+
+    /// Hauteur de vue large de la 3D, celle d'avant le banc 5 (2,4 fois le rayon que cadre la vue d'ensemble, zones
+    /// hors de la maison comprises) : elle borne seulement le recul de la molette (`bornes`), que le banc 5 laisse
+    /// tel quel.
+    static func vueLarge3D(_ g: GeometrieMaison, aspect: Double) -> Double {
+        2.4 * g.rayonCadre * max(1, 1 / aspectSur(aspect))
+    }
+
+    /// Hauteur de vue qui garde entieres, dans le cadre de `aspect` et avec 5 % de marge, les zones hors de la maison
+    /// (celles dont le bord le plus lointain de l'axe de la sphere depasse la sphere), a l'arrivee en 3D : l'azimut,
+    /// l'inclinaison et le champ de la pose canonique. Chaque plateau compte par le contour de son dessus et de son
+    /// pied (24 points chacun). Pour chaque point, la distance de l'oeil a la cible qui le met dans le cadre se
+    /// resout sans iteration : |x| / (profondeur tan(champ / 2) aspect) <= 1 / marge, de meme en y.
+    static func vueZonesDehors(_ g: GeometrieMaison, aspect: Double) -> Double {
+        let tanChamp = tan(champ3D * .pi / 360)
+        let o = Orbite(cible: g.centreSphere, distance: 1, azimut: orbite3D, inclinaison: inclinaison3D + 0.0001, champ: champ3D)
+        let marge = 1.05
+        let kx = marge / (tanChamp * aspect), ky = marge / tanChamp
+        var d = 0.0
+        for e in g.rayons.indices {
+            let c = g.centres3D[e], r = g.rayons[e]
+            guard hypot(c.x - g.centreSphere.x, c.z - g.centreSphere.z) + r > g.rayonSphere else { continue }
+            for h in [0, GeometrieMaison.hauteurBloc3D] {
+                for k in 0..<24 {
+                    let a = Double(k) * .pi / 12
+                    let rel = c + SIMD3(r * cos(a), h, r * sin(a)) - g.centreSphere
+                    d = max(d, simd_dot(rel, o.arriere) + abs(simd_dot(rel, o.droite)) * kx,
+                            simd_dot(rel, o.arriere) + abs(simd_dot(rel, o.haut)) * ky)
+                }
+            }
+        }
+        return 2 * d * tanChamp
     }
 
     public static func vue(_ g: GeometrieMaison, aspect: Double, u: Double) -> Double {
@@ -429,11 +468,11 @@ public enum CameraScene {
     }
 
     /// Bornes de la distance : de 3 unites de hauteur de vue a 3 fois la vue d'ensemble en 2D ; de 5
-    /// unites a 2,5 fois la vue d'ensemble en 3D.
+    /// unites a 2,5 fois la vue large de la 3D (`vueLarge3D`, inchangee par le banc 5).
     public static func bornes(_ g: GeometrieMaison, aspect: Double, troisD: Bool, champ: Double) -> ClosedRange<Double> {
         let aspect = aspectSur(aspect)
         if troisD {
-            return 5...max(5, Orbite.distance(pourHauteur: vue3D(g, aspect: aspect) * 2.5, champ: champ))
+            return 5...max(5, Orbite.distance(pourHauteur: vueLarge3D(g, aspect: aspect) * 2.5, champ: champ))
         }
         let bas = Orbite.distance(pourHauteur: 3, champ: champ)
         return bas...max(bas, Orbite.distance(pourHauteur: vue2D(g, aspect: aspect) * 3, champ: champ))
