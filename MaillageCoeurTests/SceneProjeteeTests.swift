@@ -117,6 +117,39 @@ struct SceneProjeteeTests {
         #expect(p.plateaux.allSatisfy { abs($0.opacite - 0.15) < 1e-12 })
     }
 
+    /// Mode focus des reperes « ailleurs » (point 9) : sans selection, aucun estompement ; sous une selection, tous les
+    /// reperes sont vises a 1 sauf ceux de ses liens, dans les deux sens (son enfant, ou son parent). Un repere estompe a
+    /// moitie garde son ancre et un fil a moitie moins net ; un repere efface n'a plus ni ancre ni fil.
+    @Test func reperesSousUneSelection() throws {
+        let (s0, _) = try Self.projeter(t: 0)
+        let bureau = try Self.indice(s0, "Bureau")
+        #expect(SceneProjetee.reperesEstompes(s0, selection: nil).isEmpty)
+        let reperes = SceneProjetee.reperes(s0, focus: bureau).sorted { $0.enfant < $1.enfant }
+        #expect(reperes.count == 2)
+        let (a, b) = (reperes[0], reperes[1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: a.enfant) == [b.enfant: 1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: b.parent) == [a.enfant: 1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: idt("absent")).count == 2)
+        func projeter(_ estompes: [IdNoeud: Double]) throws -> SceneProjetee {
+            try Self.projeter(t: 0) { e in
+                e.s = 1
+                e.focus = bureau
+                e.fk[bureau] = 1
+                e.ailleursEstompes = estompes
+            }.1
+        }
+        let net = try projeter([:])
+        #expect(net.fils.count == 2 && net.ancresAilleurs.count == 2 && net.facteursAilleurs.isEmpty)
+        let moitie = try projeter([b.enfant: 0.5])
+        #expect(moitie.fils.count == 2 && moitie.ancresAilleurs.count == 2)
+        #expect(moitie.fils.map(\.opacite).sorted().first.map { abs($0 - 0.4) < 1e-12 } == true)
+        #expect(moitie.facteursAilleurs[b.enfant] == 0.5 && moitie.facteursAilleurs[a.enfant] == nil)
+        let efface = try projeter([b.enfant: 1])
+        #expect(efface.fils.count == 1 && Set(efface.ancresAilleurs.keys) == [a.enfant])
+        #expect(efface.fils.allSatisfy { abs($0.opacite - 0.8) < 1e-12 }, "le fil du repere net reste a 0,8")
+        #expect(efface.ailleurs.count == 2, "la liste des reperes est celle de la scene")
+    }
+
     /// Etage isole (polissage C, section 5.1), ici l'etage : les autres plateaux descendent a 15 %, avec leurs pieces,
     /// leurs pastilles et leurs liens ; un lien qui touche l'etage isole reste visible, meme vers un autre etage ; la
     /// sphere et l'equateur s'effacent. Le disque survole s'eclaircit.
@@ -189,7 +222,7 @@ struct SceneProjeteeTests {
     @Test func liensSelonLeMode() throws {
         let (s0, c, d, g) = try Self.scene()
         let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2),
-                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("Apple TV"), genre: .chemin, qualite: 2, suppose: true)]
+                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("HomePod"), genre: .chemin, qualite: 2, suppose: true)]
         let graphe = try ScenePiecesTests.graphe(sonde: true)
         let gc = GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins)
         let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
@@ -208,7 +241,10 @@ struct SceneProjeteeTests {
         let parChemins = projeter(.chemins)
         #expect(parChemins.liensRouteurs.map(\.genre) == [.chemin, .chemin] && parChemins.liensEnfants.count == 3)
         #expect(parChemins.liensRouteurs.map(\.suppose) == [false, true] && parChemins.liensRouteurs.allSatisfy { !$0.voisin })
-        let selection = projeter(.chemins, selection: idt("HomePod"))
+        // Le lien radio HomePod - Apple TV a son chemin (HomePod vers l'Apple TV) : sous le chemin, il n'est pas dessine en voisin
+        // (point 10). Celui de E...04, sans chemin sur sa paire, l'est.
+        #expect(projeter(.chemins, selection: idt("HomePod")).liensRouteurs.filter(\.voisin).isEmpty)
+        let selection = projeter(.chemins, selection: idt("E000000000000004"))
         let voisins = selection.liensRouteurs.filter(\.voisin)
         #expect(voisins.count == 1 && voisins[0].genre == .radio && voisins[0].opacite < parChemins.liensRouteurs[0].opacite)
         #expect(selection.liensRouteurs.filter { $0.genre == .chemin }.count == 2, "les autres chemins restent")
@@ -221,7 +257,7 @@ struct SceneProjeteeTests {
         let (_, c, d, g) = try Self.scene()
         let graphe = try ScenePiecesTests.graphe(sonde: true)
         let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2),
-                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("Apple TV"), genre: .chemin, qualite: 2, suppose: true)]
+                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("HomePod"), genre: .chemin, qualite: 2, suppose: true)]
         let parents = graphe.liens.filter { $0.genre == .parent }
         let premier = try #require(parents.first)
         // Le premier lien vers un parent devient un parent d'avant.
@@ -234,7 +270,7 @@ struct SceneProjeteeTests {
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
                             chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
-        func projeter(_ mode: ModeLiens, voisins: Bool, selection: IdNoeud? = idt("HomePod")) -> SceneProjetee {
+        func projeter(_ mode: ModeLiens, voisins: Bool, selection: IdNoeud? = idt("E000000000000004")) -> SceneProjetee {
             let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode,
                               voisins: voisins)
             return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
@@ -255,6 +291,8 @@ struct SceneProjeteeTests {
         let radio = GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .radio, qualite: 2)
         #expect(SceneProjetee.trace(radio, mode: .chemins, selection: idt("HomePod")) == .voisin)
         #expect(SceneProjetee.trace(radio, mode: .chemins, selection: idt("HomePod"), voisins: false) == nil)
+        let doublee = GrapheReseau.Lien(de: idt("Apple TV"), vers: idt("HomePod"), genre: .radio, qualite: 2)
+        #expect(SceneProjetee.voisinsMasques(gc.liens) == [doublee], "la paire HomePod - Apple TV a un chemin, l'autre non")
         #expect(SceneProjetee.trace(radio, mode: .tous, selection: nil, voisins: false) == .normal)
         // Le parent d'avant : son lien vers le parent est trace en pointilles, les autres non.
         #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])

@@ -327,6 +327,8 @@ extension LegendePieces {
             case .inconnue: r.insert(.inconnue)
             }
         }
+        // Un voisin entendu double le chemin de sa paire : la scene ne le dessine pas, la legende ne le compte pas.
+        let masques = SceneProjetee.voisinsMasques(l.liens)
         for lien in l.liens {
             if lien.de.protocole == .zigbee {
                 switch (lien.genre, l.mode) {
@@ -335,7 +337,7 @@ extension LegendePieces {
                 case (.radio, .chemins):
                     // Les voisins entendus ne paraissent qu'a la selection d'un noeud ; la legende ne change pas avec
                     // elle : leur entree et leurs qualites sont la des qu'il y en a, sauf s'ils sont masques.
-                    guard l.voisins else { break }
+                    guard l.voisins, !masques.contains(lien) else { break }
                     r.insert(.voisinEntendu)
                     qualite(lien.qualite, .zigbee)
                 case (.chemin, .chemins):

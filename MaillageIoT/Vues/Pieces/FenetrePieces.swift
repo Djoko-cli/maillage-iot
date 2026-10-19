@@ -592,7 +592,7 @@ struct LigneDuBas: View {
 
     var body: some View {
         // Des reperes « ailleurs » sont poses dans une piece isolee (lue avec elle : `isolee`).
-        let ailleurs = moteur.isolee != nil && !moteur.textes.ailleurs.isEmpty
+        let ailleurs = moteur.isolee != nil && moteur.aDesReperesAilleurs
         let lecture = entree.map {
             LegendePieces.Lecture($0, ailleurs: ailleurs, mode: moteur.liens, voisins: moteur.voisins)
         }

@@ -144,7 +144,9 @@ enum RenduCanvas {
     }
 
     /// Liens enfant -> parent d'un pixel ; rattachements supposes et parents d'avant en pointilles ; fils « ailleurs »
-    /// en tirets verts.
+    /// en tirets verts (en pointilles fins quand le parent est un parent d'avant ; plus visibles et plus epais eclaires, comme
+    /// le lien qu'ils remplacent). Un fil tient lieu du lien de son enfant
+    /// vers son parent : la scene ne donne pas les deux (point 10).
     private static func dessinerLiensEnfants(_ ctx: inout GraphicsContext, _ image: ImagePieces, _ palette: Palette) {
         let pixel = 1 / image.echelle
         for l in image.projetee.liensEnfants {
@@ -153,7 +155,7 @@ enum RenduCanvas {
         }
         for f in image.projetee.fils {
             ctx.stroke(segment(f.a, f.b), with: .color(palette.filAilleurs.opacity(f.opacite)),
-                       style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                       style: StrokeStyle(lineWidth: f.eclaire ? 1.6 : 1, dash: f.suppose ? [2, 4] : [5, 4]))
         }
     }
 
@@ -313,6 +315,8 @@ enum RenduCanvas {
                 }
             case .ailleurs(let id):
                 guard let texte = image.textes.ailleurs[id] else { continue }
+                // Sous une selection, le repere des autres noeuds s'efface avec la mise en avant (`facteursAilleurs`).
+                g.opacity *= image.projetee.facteursAilleurs[id] ?? 1
                 let resolu = cache.resolu(g, "a|" + texte, echelle: e) { texteAilleurs(texte, palette: palette) }
                 dessinerAilleurs(&g, resolu, dans: r, palette: palette)
             }
