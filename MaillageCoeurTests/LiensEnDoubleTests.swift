@@ -27,7 +27,8 @@ struct LiensEnDoubleTests {
 
     /// Le bureau isole : ses deux enfants ont leur parent dans une autre piece. Le fil du repere et le lien gris vers le
     /// parent partaient du meme enfant, vers le meme parent : deux traces.
-    static func bureauIsole(ailleursEstompes: [IdNoeud: Double] = [:]) throws -> (SceneProjetee, [Ailleurs]) {
+    static func bureauIsole(ailleursEstompes: [IdNoeud: Double] = [:], survol: IdNoeud? = nil,
+                            selection: IdNoeud? = nil) throws -> (SceneProjetee, [Ailleurs]) {
         let (s0, _) = try SceneProjeteeTests.projeter(t: 0)
         let bureau = try SceneProjeteeTests.indice(s0, "Bureau")
         let (s, p) = try SceneProjeteeTests.projeter(t: 0) { e in
@@ -35,6 +36,8 @@ struct LiensEnDoubleTests {
             e.focus = bureau
             e.fk[bureau] = 1
             e.ailleursEstompes = ailleursEstompes
+            e.survol = survol
+            e.selection = selection
         }
         return (p, SceneProjetee.reperes(s, focus: bureau).sorted { $0.enfant < $1.enfant })
     }
@@ -86,6 +89,29 @@ struct LiensEnDoubleTests {
         #expect(abs(lienMoitie.opacite - 0.5 * lienRendu.opacite) < 1e-12, "le lien cede la moitie de son trait au fil")
         let filMoitie = try #require(moitie.fils.first { Self.proche($0.a, (try? Self.centre(moitie, b.enfant)) ?? .zero) })
         #expect(abs(filMoitie.opacite - 0.4) < 1e-12, "et le fil a moitie de ses 0,8")
+    }
+
+    /// Le fil de `enfant` (celui qui part du centre de sa pastille).
+    static func fil(_ p: SceneProjetee, _ enfant: IdNoeud) throws -> SceneProjetee.Fil {
+        let c = try Self.centre(p, enfant)
+        return try #require(p.fils.first { Self.proche($0.a, c) })
+    }
+
+    /// Le fil qui remplace le lien vers le parent s'eclaire exactement quand ce lien s'eclairait : au survol ou a la selection
+    /// de l'enfant ou du parent, et pas pour les autres reperes ; sans survol ni selection, aucun. Plus visible eclaire.
+    @Test func filEclaireCommeLeLien() throws {
+        let (repos, reperes) = try Self.bureauIsole()
+        let (a, b) = (reperes[0], reperes[1])
+        for r in reperes { #expect(try !Self.fil(repos, r.enfant).eclaire, "sans survol ni selection") }
+        let base = try Self.fil(repos, a.enfant).opacite
+        for (nom, e) in [("survol de l'enfant", try Self.bureauIsole(survol: a.enfant)),
+                         ("selection de l'enfant", try Self.bureauIsole(selection: a.enfant)),
+                         ("survol du parent", try Self.bureauIsole(survol: a.parent)),
+                         ("selection du parent", try Self.bureauIsole(selection: a.parent))] {
+            let fa = try Self.fil(e.0, a.enfant)
+            #expect(fa.eclaire && fa.opacite > base, "\(nom) : le fil de la paire est eclaire")
+            #expect(try !Self.fil(e.0, b.enfant).eclaire == (a.parent != b.parent), "\(nom) : seul le fil de la paire (ou du meme parent)")
+        }
     }
 
     /// Hors de la piece isolee, aucun repere : tous les liens vers un parent sont la, comme avant.

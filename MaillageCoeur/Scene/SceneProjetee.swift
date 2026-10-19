@@ -223,11 +223,16 @@ public struct SceneProjetee: Sendable {
         return Set(liens.filter { $0.genre == .radio && chemins.contains(Paire($0)) })
     }
 
+    /// Opacite d'un fil « ailleurs », au repos et eclaire (le dessin l'epaissit aussi : 1,6 point, comme un lien eclaire).
+    public static let opaciteFil = 0.8, opaciteFilEclaire = 1.0
+
     public struct Fil: Sendable {
         public var a, b: CGPoint
         public var opacite: Double
         /// Le lien de l'enfant vers son parent est un parent d'avant : le fil en garde le style (pointilles fins).
         public var suppose = false
+        /// Le fil tient lieu du lien parent, qui s'eclairait au survol ou a la selection de l'enfant ou du parent.
+        public var eclaire = false
     }
 
     public struct Disque: Sendable {
@@ -510,7 +515,10 @@ public struct SceneProjetee: Sendable {
                 if let (pa, pb) = proj.segment(e, m) {
                     // Le parent d'avant (lien suppose) garde son style : ses pointilles passent au fil.
                     let suppose = scene.liens.first { $0.genre == .parent && $0.de == a.enfant }?.suppose ?? false
-                    fils.append(Fil(a: pa, b: pb, opacite: 0.8 * fe * net, suppose: suppose))
+                    // Le fil s'eclaire quand le lien parent s'eclairait : au survol ou a la selection de l'enfant ou du parent.
+                    let eclaire = [a.enfant, a.parent].contains { $0 == etat.survol || $0 == etat.selection }
+                    fils.append(Fil(a: pa, b: pb, opacite: (eclaire ? Self.opaciteFilEclaire : Self.opaciteFil) * fe * net,
+                                    suppose: suppose, eclaire: eclaire))
                     partDuFil[a.enfant] = fe * net
                 }
                 if let q = proj.ecran(m) {

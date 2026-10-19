@@ -57,6 +57,33 @@ struct LiensEnDoubleDemoTests {
         #expect(vus == [.zigbee, .thread], "les deux protocoles ont ete vus")
     }
 
+    /// Le fil qui remplace le lien vers le parent s'eclaire au survol et a la selection de l'enfant, Zigbee comme Thread ;
+    /// sans survol ni selection, aucun fil n'est eclaire.
+    @Test func filEclaireAuSurvolEtALaSelection() throws {
+        let e = EntreeScene(surveillance: DemoCombineeTests.combinee(), places: PlacesGardees())
+        let avecReperes = e.scene.pieces.indices.map { ($0, SceneProjetee.reperes(e.scene, focus: $0)) }.filter { !$0.1.isEmpty }
+        let zigbee = try #require(avecReperes.first { $0.1.contains { $0.enfant.protocole == .zigbee } })
+        let thread = try #require(avecReperes.first { $0.1.contains { $0.enfant.protocole == .thread } })
+        for (piece, reperes) in [zigbee, thread] {
+            let m = MoteurPiecesTests.moteur(e)
+            m.poserZoom(echelle: 1, vers: nil)
+            ReperesAilleursTests.isoler(m, piece)
+            func eclaires() throws -> Int { try #require(m.projetee).fils.filter(\.eclaire).count }
+            let enfant = try #require(reperes.first { $0.enfant.protocole == .zigbee || $0.enfant.protocole == .thread }).enfant
+            #expect(try eclaires() == 0, "\(enfant.protocole) : ni survol ni selection")
+            m.poserSurvol(enfant)
+            MoteurPiecesTests.dessiner(m)
+            #expect(try eclaires() >= 1, "\(enfant.protocole) : survol de l'enfant")
+            m.poserSurvol(nil)
+            m.selection = enfant
+            MoteurPiecesTests.dessiner(m)
+            #expect(try eclaires() >= 1, "\(enfant.protocole) : selection de l'enfant")
+            m.selection = nil
+            MoteurPiecesTests.dessiner(m)
+            #expect(try eclaires() == 0, "\(enfant.protocole) : plus rien")
+        }
+    }
+
     /// Toute la scene, en 3D, sans piece isolee : aucune paire n'a deux traces, dans les deux modes, sans selection et a la
     /// selection d'un routeur de Zigbee (ses voisins) ou d'un noeud de Thread.
     @Test func aucunePaireEnDouble() throws {
