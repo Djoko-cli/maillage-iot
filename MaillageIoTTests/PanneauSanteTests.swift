@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import MaillageCoeur
+import ProtocoleZigbee
 import SwiftUI
 import Testing
 @testable import MaillageIoT
@@ -439,6 +440,114 @@ struct PanneauSanteTests {
         try await FenetrePiecesTests.cliquer(fenetre, en: CGPoint(x: isole.minX + 60, y: isole.maxY - Self.marges.bottom - 6))
         try await Task.sleep(for: .milliseconds(100))
         #expect(moteur.isolement == .maison, "« Ailleurs » : la vue d'ensemble")
+    }
+
+    // MARK: - Sous la derniere ligne du haut
+
+    /// Correctif du banc (phase 6) : l'ecart entre le bas de la derniere ligne du haut de la vue (la ligne de niveau, toujours la)
+    /// et le haut du panneau, replie ou ouvert, dans la vraie fenetre ; nil avant que l'un des deux soit pose.
+    static func ecartSousLeHaut(_ moteur: MoteurPieces) -> CGFloat? {
+        guard let sante = moteur.cadresInterface["sante"], let bas = FenetrePiecesTests.basDuHaut(moteur) else { return nil }
+        return sante.minY - bas
+    }
+
+    /// Le panneau est juste sous la derniere ligne du haut, a l'ecart qui separe les lignes du haut entre elles
+    /// (`FenetrePieces.espacement`), quoi qu'il y ait au-dessus : le reseau scinde (son bandeau), la ligne de la tournee, la place
+    /// que la scene lui garde apres sa fin (la marge du haut ne bouge pas, le panneau suit le texte), la sonde oubliee. Et il
+    /// suit les lignes qui paraissent et disparaissent sans jamais s'en eloigner, a aucun instant du mouvement.
+    @Test(.timeLimit(.minutes(2))) func sousLaDerniereLigneAvecBandeauEtTournee() async throws {
+        let (p, domaine) = try SondeMaillageTests.preferences()
+        defer { p.removePersistentDomain(forName: domaine) }
+        let journal = JournalCanaux()
+        let canal = SondeMaillageTests.canalRetenu(journal)
+        let sonde = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in canal })
+        let s = DemoCombineeTests.combinee()
+        #expect(s.thread.reseau?.estScinde == true, "la demo : le bandeau de scission")
+        let (fenetre, moteur) = try FenetrePiecesTests.fenetre(s, taille: CGSize(width: 1100, height: 900), preferences: p, sonde: sonde)
+        defer { FenetrePiecesTests.fermer(fenetre) }
+        func stable() async throws {
+            try await MoteurPiecesTests.attendre { moteur.pret && Self.ecartSousLeHaut(moteur) != nil && !moteur.margesEnRoute }
+            try await Task.sleep(for: .milliseconds(500))
+        }
+        func verifier(_ cas: String) throws {
+            let ecart = try #require(Self.ecartSousLeHaut(moteur), Comment(rawValue: cas))
+            #expect(abs(ecart - FenetrePieces.espacement) < 0.5, "\(cas) : \(ecart) pt sous la derniere ligne, au lieu de \(FenetrePieces.espacement)")
+        }
+        try await stable()
+        try verifier("bandeau de scission, sans sonde")
+        // Une sonde retenue, en tournee : la ligne de la tournee parait au-dessus du bandeau.
+        await sonde.connecter(SondeMaillageTests.port, choisi: true)
+        await journal.attendre(SondeMaillageTests.listeRetenue)
+        await SondeMaillageTests.attendre { sonde.avancement != nil }
+        try await stable()
+        try verifier("pendant la tournee")
+        let margePendant = moteur.marges.haut
+        // La tournee finit : sa ligne repart, la marge du haut la garde, le panneau remonte avec le texte, et reste a l'ecart a chaque instant.
+        canal.emettre(CanalRejoue.reseauMinimal(SondeMaillageTests.listeRetenue + "\n"))
+        await SondeMaillageTests.attendre { !sonde.tourneeEnCours }
+        var ecarts: [CGFloat] = []
+        let t0 = ProcessInfo.processInfo.systemUptime
+        while ProcessInfo.processInfo.systemUptime - t0 < 0.9 {
+            if let e = Self.ecartSousLeHaut(moteur) { ecarts.append(e) }
+            try await Task.sleep(for: .milliseconds(4))
+        }
+        #expect(moteur.marges.haut == margePendant, "la scene ne bouge pas")
+        #expect(ecarts.count > 20 && ecarts.allSatisfy { abs($0 - FenetrePieces.espacement) < 0.5 },
+                "a chaque instant de la fin de la tournee : \(Set(ecarts.map { ($0 * 10).rounded() / 10 }).sorted())")
+        try await stable()
+        try verifier("apres la tournee, la place gardee")
+        // La sonde oubliee : la marge ne compte plus la ligne, le panneau ne bouge pas.
+        await sonde.oublier()
+        try await MoteurPiecesTests.attendre { moteur.marges.haut < margePendant && !moteur.margesEnRoute }
+        try await stable()
+        try verifier("sonde oubliee")
+        // Ouvert, au meme endroit.
+        p.set(false, forKey: PanneauSante.cleRepliee)
+        try await MoteurPiecesTests.attendre { (moteur.cadresInterface["sante"]?.height ?? 0) > 100 }
+        try await stable()
+        try verifier("panneau ouvert")
+    }
+
+    /// Sans bandeau de partition (Zigbee seul), la meme chose : la place gardee a la ligne de la tournee, la sonde retenue hors
+    /// tournee, ne laisse pas de vide au-dessus du panneau ; « Maillage incomplet » (qui prend la place de la ligne), puis la ligne
+    /// de la tournee, qui le remplace, laissent le panneau a l'ecart.
+    @Test(.timeLimit(.minutes(2))) func sousLaDerniereLigneSansBandeauAvecMaillageIncomplet() async throws {
+        let (p, domaine) = try SondeMaillageZigbeeTests.preferences()
+        defer { SondeMaillageZigbeeTests.nettoyer(p, domaine) }
+        p.set(false, forKey: PanneauSante.cleRepliee)
+        let canal = CanalRejoueZigbee { CanalRejoueZigbee.sondeMinimale($0) }
+        let sonde = SondeMaillageZigbee(preferences: p, actif: true, trousseau: TrousseauMemoireZigbee(), ouvrirCanal: { _ in canal })
+        let demo = NomsSceneZigbeeTests.surveillanceDemo()
+        #expect(demo.thread.reseau == nil, "Zigbee seul : pas de bandeau de partition")
+        let (fenetre, moteur) = try FenetrePiecesZigbeeTests.fenetre(demo, taille: CGSize(width: 1100, height: 900), preferences: p,
+                                                                     sonde: sonde)
+        defer { FenetrePiecesTests.fermer(fenetre) }
+        func stable() async throws {
+            try await MoteurPiecesTests.attendre { moteur.pret && Self.ecartSousLeHaut(moteur) != nil && !moteur.margesEnRoute }
+            try await Task.sleep(for: .milliseconds(500))
+        }
+        func verifier(_ cas: String) throws {
+            let ecart = try #require(Self.ecartSousLeHaut(moteur), Comment(rawValue: cas))
+            #expect(abs(ecart - FenetrePieces.espacement) < 0.5, "\(cas) : \(ecart) pt sous la derniere ligne, au lieu de \(FenetrePieces.espacement)")
+        }
+        try await stable()
+        try verifier("sans sonde")
+        // Une sonde retenue, hors tournee : la scene garde la place de la ligne, le panneau ne la garde pas.
+        await sonde.connecter(SondeMaillageZigbeeTests.port, choisi: true)
+        sonde.debuterTournee()
+        sonde.finirTournee(nil)
+        try await stable()
+        try verifier("sonde retenue, hors tournee")
+        // Le maillage affiche est marque incomplet : l'indicateur prend la place de la ligne.
+        demo.zigbee.recevoir(MaillageDemoZigbee.maillage, a: MaillageDemoZigbee.fin, incomplet: true)
+        try await MoteurPiecesZigbeeTests.attendre { moteur.cadresInterface["colonne"].map { $0.height > 40 } ?? false }
+        try await stable()
+        try verifier("Maillage incomplet")
+        // Une tournee commence : sa ligne prend la place de l'indicateur.
+        sonde.debuterTournee()
+        try await stable()
+        try verifier("pendant la tournee")
+        await sonde.oublier()
     }
 
     static let marges = PanneauSante.marges

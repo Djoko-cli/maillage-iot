@@ -306,6 +306,8 @@ struct ContenuHaut: Equatable {
 /// Djoko du 02/10). Son bas mesure donne la marge du haut de la vue d'ensemble (`surBas`, puis
 /// `FenetrePieces.margeHaut`), avec la place d'une ligne de tournee absente tant qu'une sonde est retenue : la
 /// scene ne bouge pas quand la ligne parait ou disparait, ni quand la ligne de niveau change de texte.
+/// Le panneau de sante (`apres`) est le dernier de cette colonne, a l'ecart des lignes entre elles sous la ligne de niveau :
+/// il suit la derniere ligne visible, avec le mouvement des bandeaux, quelle que soit la place que la scene garde.
 struct HautPieces: View {
     @Environment(Surveillance.self) private var surveillance
     @Environment(SondeMaillageThread.self) private var sonde
@@ -326,6 +328,11 @@ struct HautPieces: View {
     var protocoles: Set<Protocole> = []
     var montres: Set<Protocole> = Set(Protocole.allCases)
     var feux = CadreFeux.defaut
+    /// Ce qui est pose dans la colonne de gauche, sous la ligne de niveau (le panneau de sante), a l'ecart qui separe les
+    /// lignes du haut entre elles : il suit leurs apparitions et leurs disparitions, sur le meme mouvement, sans decalage
+    /// calcule a part. Il ne compte pas dans `surBas` (la scene se cadre sous la ligne de niveau, le panneau est pose sur elle).
+    /// Il se donne l'ecart lui-meme (`PanneauSanteDeLaFenetre`) : vide, il ne laisse aucun espace.
+    var apres: AnyView?
     /// Le bas du haut de la fenetre, dans l'espace de la vue, la place d'une ligne de tournee absente comprise.
     var surBas: (CGFloat) -> Void = { _ in }
     /// Hauteur mesuree de la ligne de la tournee (`LigneTournee.gabarit`).
@@ -387,40 +394,47 @@ struct HautPieces: View {
             // et le fil prend sa place d'un coup : aucune animation de conteneur. La ligne de la tournee fait
             // de meme ; la pastille d'un releve ancien, qui ne change rien a la place de la ligne de niveau, se
             // fond sur la meme animation de conteneur (aucune avec le reglage).
-            VStack(alignment: .leading, spacing: FenetrePieces.espacementNiveau) {
-                VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
-                    // Une ligne par protocole dont une tournee tourne : Thread, puis Zigbee.
-                    ForEach(places.filter { $0.place == .montree && montres.contains($0.protocole) }, id: \.protocole) { p in
-                        Group {
-                            switch p.protocole {
-                            case .thread: LigneTournee()
-                            case .zigbee: LigneTourneeZigbee()
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: FenetrePieces.espacementNiveau) {
+                    VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
+                        // Une ligne par protocole dont une tournee tourne : Thread, puis Zigbee.
+                        ForEach(places.filter { $0.place == .montree && montres.contains($0.protocole) }, id: \.protocole) { p in
+                            Group {
+                                switch p.protocole {
+                                case .thread: LigneTournee()
+                                case .zigbee: LigneTourneeZigbee()
+                                }
                             }
-                        }
-                        .transition(apparition.transitionAnimee)
-                    }
-                    if let r = surveillance.thread.reseau, r.estScinde {
-                        // Thread masque : le bandeau n'est pas dessine, mais garde sa place (la vue ne se recadre pas).
-                        BandeauScission(reseau: r)
-                            .opacity(montres.contains(.thread) ? 1 : 0)
-                            .allowsHitTesting(montres.contains(.thread))
-                            .accessibilityHidden(!montres.contains(.thread))
                             .transition(apparition.transitionAnimee)
-                    }
-                    if let texteIncomplet, montres.contains(.zigbee) {
-                        IndicateurIncomplet(texte: texteIncomplet, hauteur: hauteurTournee)
-                            .transition(apparition.transitionAnimee)
-                    }
-                    if sansPieces {
-                        Group {
-                            if contenu.sansPiecesZigbee { BandeauSansPiecesZigbee() } else { BandeauSansPieces() }
                         }
-                        .transition(apparition.transitionAnimee)
+                        if let r = surveillance.thread.reseau, r.estScinde {
+                            // Thread masque : le bandeau n'est pas dessine, mais garde sa place (la vue ne se recadre pas).
+                            BandeauScission(reseau: r)
+                                .opacity(montres.contains(.thread) ? 1 : 0)
+                                .allowsHitTesting(montres.contains(.thread))
+                                .accessibilityHidden(!montres.contains(.thread))
+                                .transition(apparition.transitionAnimee)
+                        }
+                        if let texteIncomplet, montres.contains(.zigbee) {
+                            IndicateurIncomplet(texte: texteIncomplet, hauteur: hauteurTournee)
+                                .transition(apparition.transitionAnimee)
+                        }
+                        if sansPieces {
+                            Group {
+                                if contenu.sansPiecesZigbee { BandeauSansPiecesZigbee() } else { BandeauSansPieces() }
+                            }
+                            .transition(apparition.transitionAnimee)
+                        }
+                        FilPieces(moteur: moteur)
                     }
-                    FilPieces(moteur: moteur)
+                    .obstacle("colonne", moteur)
+                    RangeeNiveau(moteur: moteur, ancien: ancien)
                 }
-                .obstacle("colonne", moteur)
-                RangeeNiveau(moteur: moteur, ancien: ancien)
+                // Le bas du haut : celui de la ligne de niveau, sans le panneau qui est dessous.
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(VuePieces.espace)).maxY + reserve } action: {
+                    surBas($0)
+                }
+                if let apres { apres }
             }
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: surveillance.thread.reseau?.estScinde == true)
             .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: sansPieces)
@@ -440,9 +454,6 @@ struct HautPieces: View {
             .padding(.leading, FenetrePieces.bord)
         }
         .padding(.trailing, Self.bordDroit)
-        .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(VuePieces.espace)).maxY + reserve } action: {
-            surBas($0)
-        }
     }
 
     private var apparition: Apparition { Apparition.pour(.top, reduire: reduire) }

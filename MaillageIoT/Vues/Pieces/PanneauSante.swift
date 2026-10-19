@@ -526,12 +526,18 @@ struct PanneauSanteDeLaFenetre: View {
     let hauteurMax: CGFloat?
     /// Replie ou ouvert, impose (captures) ; nil : le repli garde.
     var forcee: Bool?
+    /// L'espace au-dessus du panneau (pt), quand il est montre : l'ecart qui le separe de la ligne du haut qui le precede
+    /// (`HautPieces.apres`). Rien de plus quand il n'y a rien a montrer : la colonne du haut ne grandit pas.
+    var ecart: CGFloat = 0
     @State private var memo = MemoSante()
 
     var body: some View {
         if let entree {
-            PanneauSante(lecture: memo.lire(entree: entree, isolement: moteur.isolement, surveillance: surveillance),
-                         moteur: moteur, instant: instant, hauteurMax: hauteurMax, forcee: forcee)
+            let lecture = memo.lire(entree: entree, isolement: moteur.isolement, surveillance: surveillance)
+            if !lecture.estVide {
+                PanneauSante(lecture: lecture, moteur: moteur, instant: instant, hauteurMax: hauteurMax, forcee: forcee)
+                    .padding(.top, ecart)
+            }
         }
     }
 }

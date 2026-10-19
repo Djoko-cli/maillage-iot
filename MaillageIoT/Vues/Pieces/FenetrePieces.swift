@@ -220,24 +220,25 @@ struct FenetrePieces: View {
                     EtatVide()
                 }
                 // « Ancien » ne depend que de l'heure : lu ici, dans la `TimelineView`, il suit l'horloge.
+                // Le panneau de sante est dans la colonne de gauche du haut, sous la ligne de niveau, a l'ecart qui separe ses
+                // lignes entre elles : il suit leurs apparitions et leurs disparitions (la ligne de la tournee, les bandeaux) sur
+                // le meme mouvement, et ne laisse pas de vide au-dessus de lui, ce que la marge de la scene (qui garde la place
+                // d'une ligne de tournee absente) ne peut pas lui donner. En verre comme la legende, il ne descend jamais plus
+                // bas que la moitie de l'espace libre entre le haut et la pile du bas (la legende, la fiche) : la liste defile
+                // dans le panneau.
                 HautPieces(moteur: moteur, troisD: $troisD, sansPieces: entree?.scene.sansPiecesMaison == true,
                            ancien: surveillance.modeles.contains { montres.contains($0.protocole) && $0.maillageAncien },
                            texteIncomplet: Self.texteIncomplet(surveillance.zigbee, sonde: sondeZigbee),
                            protocoles: entree?.protocoles ?? [], montres: montres,
-                           feux: feux) { margeHautMesuree = Self.margeHaut(bas: $0) }
+                           feux: feux,
+                           apres: AnyView(PanneauSanteDeLaFenetre(
+                               moteur: moteur, entree: entree, instant: contexte.date,
+                               hauteurMax: hauteurVue.map {
+                                   PanneauSante.hauteurMax(vue: $0, margeHaut: margeHautMesuree,
+                                                           margeBas: Self.margeBas(pile: hauteurPile ?? hauteurLegende))
+                               },
+                               ecart: Self.espacement))) { margeHautMesuree = Self.margeHaut(bas: $0) }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                // Le panneau de sante : en haut a gauche, sous le haut de la vue (sa marge mesuree), en verre comme la legende. Il
-                // ne descend jamais plus bas que la moitie de l'espace libre entre le haut et la pile du bas (la legende, la
-                // fiche) : la liste defile dans le panneau. Un bandeau qui parait en haut le pousse avec lui, sur le meme mouvement.
-                PanneauSanteDeLaFenetre(moteur: moteur, entree: entree, instant: contexte.date,
-                                        hauteurMax: hauteurVue.map {
-                                            PanneauSante.hauteurMax(vue: $0, margeHaut: margeHautMesuree,
-                                                                    margeBas: Self.margeBas(pile: hauteurPile ?? hauteurLegende))
-                                        })
-                    .padding(.top, margeHautMesuree)
-                    .padding(.leading, Self.bord)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .animation(Apparition.animationDuConteneur(.top, reduire: reduire), value: margeHautMesuree)
                 VStack(alignment: .leading, spacing: Self.espacement) {
                     Spacer()
                     // La pile du bas, de haut en bas : la legende, puis la fiche ; la legende reste au-dessus d'une

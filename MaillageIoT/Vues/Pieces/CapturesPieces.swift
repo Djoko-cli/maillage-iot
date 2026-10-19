@@ -461,18 +461,16 @@ struct VueCapture: View {
         ZStack(alignment: .topLeading) {
             RadialGradient(gradient: palette.fond, center: UnitPoint(x: 0.3, y: 0.35), startRadius: 0, endRadius: 900)
             Canvas { ctx, taille in moteur.image(&ctx, taille: taille, echelle: 2, palette: palette) }
+            // Le haut de la fenetre, et dans sa colonne, sous la ligne de niveau, le panneau de sante (s'il y en a un), comme dans la
+            // fenetre : apres la scene (ses etiquettes de niveau, dessinees dans le `Canvas`, restent dessous).
             HautPieces(moteur: moteur, troisD: .constant(moteur.troisD), protocoles: moteur.entree?.protocoles ?? [],
-                       montres: moteur.entree?.montres ?? Set(Protocole.allCases))
+                       montres: moteur.entree?.montres ?? Set(Protocole.allCases),
+                       apres: sante.map { etat in
+                           AnyView(PanneauSanteDeLaFenetre(moteur: moteur, entree: moteur.entree, instant: Date(),
+                                                           hauteurMax: hauteurMaxSante, forcee: etat == .replie,
+                                                           ecart: FenetrePieces.espacement))
+                       })
             FeuxDeCapture()
-            // Le panneau de sante : sous le haut de la vue, a gauche, apres la scene (ses etiquettes de niveau, dessinees dans
-            // le `Canvas`, restent dessous), comme dans la fenetre.
-            if let sante {
-                PanneauSanteDeLaFenetre(moteur: moteur, entree: moteur.entree, instant: Date(), hauteurMax: hauteurMaxSante,
-                                        forcee: sante == .replie)
-                    .padding(.top, moteur.marges.haut)
-                    .padding(.leading, FenetrePieces.bord)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
             VStack(alignment: .leading, spacing: FenetrePieces.espacement) {
                 Spacer()
                 LigneDuBas(moteur: moteur, entree: moteur.entree, legendeForcee: legendeRepliee)
