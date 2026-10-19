@@ -144,7 +144,8 @@ enum RenduCanvas {
     }
 
     /// Liens enfant -> parent d'un pixel ; rattachements supposes et parents d'avant en pointilles ; fils « ailleurs »
-    /// en tirets verts.
+    /// en tirets verts (en pointilles fins quand le parent est un parent d'avant). Un fil tient lieu du lien de son enfant
+    /// vers son parent : la scene ne donne pas les deux (point 10).
     private static func dessinerLiensEnfants(_ ctx: inout GraphicsContext, _ image: ImagePieces, _ palette: Palette) {
         let pixel = 1 / image.echelle
         for l in image.projetee.liensEnfants {
@@ -153,7 +154,7 @@ enum RenduCanvas {
         }
         for f in image.projetee.fils {
             ctx.stroke(segment(f.a, f.b), with: .color(palette.filAilleurs.opacity(f.opacite)),
-                       style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                       style: StrokeStyle(lineWidth: 1, dash: f.suppose ? [2, 4] : [5, 4]))
         }
     }
 

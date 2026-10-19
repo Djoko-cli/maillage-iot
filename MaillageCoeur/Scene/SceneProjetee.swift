@@ -210,9 +210,24 @@ public struct SceneProjetee: Sendable {
         }
     }
 
+    /// Les liens radio dont la paire de noeuds a aussi un chemin (Zigbee) : montres en voisins, ils doubleraient le chemin,
+    /// qui dit la meme qualite (c'est celle du lien radio entre ses deux bouts) et, en plus, son role et s'il est suppose. Le
+    /// chemin reste seul sur sa paire ; la legende ne compte pas non plus un voisin que rien ne montre.
+    public static func voisinsMasques(_ liens: [GrapheReseau.Lien]) -> Set<GrapheReseau.Lien> {
+        struct Paire: Hashable {
+            var a, b: IdNoeud
+            init(_ l: GrapheReseau.Lien) { (a, b) = l.de < l.vers ? (l.de, l.vers) : (l.vers, l.de) }
+        }
+        let chemins = Set(liens.filter { $0.genre == .chemin }.map(Paire.init))
+        guard !chemins.isEmpty else { return [] }
+        return Set(liens.filter { $0.genre == .radio && chemins.contains(Paire($0)) })
+    }
+
     public struct Fil: Sendable {
         public var a, b: CGPoint
         public var opacite: Double
+        /// Le lien de l'enfant vers son parent est un parent d'avant : le fil en garde le style (pointilles fins).
+        public var suppose = false
     }
 
     public struct Disque: Sendable {
@@ -474,18 +489,59 @@ public struct SceneProjetee: Sendable {
         }
         disques.sort { $0.profondeur > $1.profondeur }
 
+        // Reperes « ailleurs » de la piece isolee : un fil vers le bord de la piece, du cote du parent. Le fil tient lieu du lien
+        // de l'enfant vers son parent (`partDuFil`) : il est le meme lien, deja dit, et nomme par le repere.
+        var partDuFil: [IdNoeud: Double] = [:]
+        if let i = etat.focus, i < scene.pieces.count, i < cartes.count {
+            let fe = CameraScene.rampe(i < etat.fk.count ? etat.fk[i] : 0)
+            ailleurs = Self.reperes(scene, focus: i)
+            for a in ailleurs {
+                guard let e = mondes[a.enfant], let pp = mondes[a.parent] else { continue }
+                var dir = pp - centres[i]
+                dir.y = 0
+                dir = simd_length_squared(dir) < 1e-6 ? SIMD3(1, 0, 0) : simd_normalize(dir)
+                var m = centres[i] + dir * (max(cartes[i].largeur, cartes[i].profondeur) * echelles[i] / 2 + 2.6)
+                m.y = e.y
+                // Sous une selection, le repere des autres noeuds s'efface avec son fil (`ailleursEstompes`) : efface, il n'a
+                // plus d'ancre, donc plus de place dans le placement des noms.
+                let net = 1 - min(1, max(0, etat.ailleursEstompes[a.enfant] ?? 0))
+                guard net > 0 else { continue }
+                if net < 1 { facteursAilleurs[a.enfant] = net }
+                if let (pa, pb) = proj.segment(e, m) {
+                    // Le parent d'avant (lien suppose) garde son style : ses pointilles passent au fil.
+                    let suppose = scene.liens.first { $0.genre == .parent && $0.de == a.enfant }?.suppose ?? false
+                    fils.append(Fil(a: pa, b: pb, opacite: 0.8 * fe * net, suppose: suppose))
+                    partDuFil[a.enfant] = fe * net
+                }
+                if let q = proj.ecran(m) {
+                    ancresAilleurs[a.enfant] = CGRect(x: q.x - 3, y: q.y - 3, width: 6, height: 6)
+                }
+            }
+        }
+
         // Liens : estompes avec leurs pieces ; un lien qui touche l'etage isole reste visible, meme vers un autre
         // etage ; eclaires au survol (ou a la selection) d'un bout ; en mode focus, estompes s'ils ne sont pas mis en
         // avant.
+        // Une meme paire de noeuds n'a qu'une trace : un voisin entendu sous le chemin de sa paire, et le lien d'un enfant sous
+        // le fil de son repere, ne se dessinent pas (point 10).
+        let masques = Self.voisinsMasques(scene.liens)
         for l in scene.liens {
             guard let trace = Self.trace(l, mode: etat.mode(de: l), selection: etat.selection, voisins: etat.voisins),
+                  !(trace == .voisin && masques.contains(l)),
                   let a = mondes[l.de], let b = mondes[l.vers], let (pa, pb) = proj.segment(a, b),
                   let na = scene.noeud(l.de), let nb = scene.noeud(l.vers) else { continue }
+            // Le lien vers le parent d'un enfant qui a son fil : il lui cede la place a mesure que le fil s'etablit (isolement
+            // de la piece, repere efface ou rendu sous une selection), et disparait quand le fil est net.
+            var cede = 0.0
+            if l.genre == .parent, let part = partDuFil[l.de], ailleurs.contains(where: { $0.enfant == l.de && $0.parent == l.vers }) {
+                cede = part
+            }
+            guard cede < 1 else { continue }
             let poids = min(1 - 0.85 * (1 - max(voiles[na.piece], voiles[nb.piece])),
                             max(voileEtage(na.piece), voileEtage(nb.piece)))
             let eclaire = [l.de, l.vers].contains { $0 == etat.survol || $0 == etat.selection }
             // Sans transition, pas de cle de lien a construire (relecture finale, Mineur 5).
-            var fondu = poses.liens.isEmpty ? 1 : poses.liens[PosesScene.cle(l)]?.opacite ?? 1
+            var fondu = (poses.liens.isEmpty ? 1 : poses.liens[PosesScene.cle(l)]?.opacite ?? 1) * (1 - cede)
             if !etat.liensEstompes.isEmpty, let e = etat.liensEstompes[MiseEnAvant.cle(l)] {
                 fondu *= MiseEnAvant.facteur(e)
             }
@@ -508,29 +564,6 @@ public struct SceneProjetee: Sendable {
             let poids = min(1 - 0.85 * (1 - max(va.piece, vb.piece)), max(va.etage, vb.etage))
             let p = Self.lien(l.graphe, trace: trace, a: pa, b: pb, poids: poids, fondu: l.opacite, eclaire: false)
             if p.genre == .parent || p.genre == .rattachement { liensEnfants.append(p) } else { liensRouteurs.append(p) }
-        }
-
-        // Reperes « ailleurs » de la piece isolee : un fil vers le bord de la piece, du cote du parent.
-        if let i = etat.focus, i < scene.pieces.count, i < cartes.count {
-            let fe = CameraScene.rampe(i < etat.fk.count ? etat.fk[i] : 0)
-            ailleurs = Self.reperes(scene, focus: i)
-            for a in ailleurs {
-                guard let e = mondes[a.enfant], let pp = mondes[a.parent] else { continue }
-                var dir = pp - centres[i]
-                dir.y = 0
-                dir = simd_length_squared(dir) < 1e-6 ? SIMD3(1, 0, 0) : simd_normalize(dir)
-                var m = centres[i] + dir * (max(cartes[i].largeur, cartes[i].profondeur) * echelles[i] / 2 + 2.6)
-                m.y = e.y
-                // Sous une selection, le repere des autres noeuds s'efface avec son fil (`ailleursEstompes`) : efface, il n'a
-                // plus d'ancre, donc plus de place dans le placement des noms.
-                let net = 1 - min(1, max(0, etat.ailleursEstompes[a.enfant] ?? 0))
-                guard net > 0 else { continue }
-                if net < 1 { facteursAilleurs[a.enfant] = net }
-                if let (pa, pb) = proj.segment(e, m) { fils.append(Fil(a: pa, b: pb, opacite: 0.8 * fe * net)) }
-                if let q = proj.ecran(m) {
-                    ancresAilleurs[a.enfant] = CGRect(x: q.x - 3, y: q.y - 3, width: 6, height: 6)
-                }
-            }
         }
 
         // Zoom semantique, noms d'etage (au bord du plateau, en haut de l'ecran) et de la maison.

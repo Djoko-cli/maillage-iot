@@ -222,7 +222,7 @@ struct SceneProjeteeTests {
     @Test func liensSelonLeMode() throws {
         let (s0, c, d, g) = try Self.scene()
         let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2),
-                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("Apple TV"), genre: .chemin, qualite: 2, suppose: true)]
+                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("HomePod"), genre: .chemin, qualite: 2, suppose: true)]
         let graphe = try ScenePiecesTests.graphe(sonde: true)
         let gc = GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins)
         let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
@@ -241,7 +241,10 @@ struct SceneProjeteeTests {
         let parChemins = projeter(.chemins)
         #expect(parChemins.liensRouteurs.map(\.genre) == [.chemin, .chemin] && parChemins.liensEnfants.count == 3)
         #expect(parChemins.liensRouteurs.map(\.suppose) == [false, true] && parChemins.liensRouteurs.allSatisfy { !$0.voisin })
-        let selection = projeter(.chemins, selection: idt("HomePod"))
+        // Le lien radio HomePod - Apple TV a son chemin (HomePod vers l'Apple TV) : sous le chemin, il n'est pas dessine en voisin
+        // (point 10). Celui de E...04, sans chemin sur sa paire, l'est.
+        #expect(projeter(.chemins, selection: idt("HomePod")).liensRouteurs.filter(\.voisin).isEmpty)
+        let selection = projeter(.chemins, selection: idt("E000000000000004"))
         let voisins = selection.liensRouteurs.filter(\.voisin)
         #expect(voisins.count == 1 && voisins[0].genre == .radio && voisins[0].opacite < parChemins.liensRouteurs[0].opacite)
         #expect(selection.liensRouteurs.filter { $0.genre == .chemin }.count == 2, "les autres chemins restent")
@@ -254,7 +257,7 @@ struct SceneProjeteeTests {
         let (_, c, d, g) = try Self.scene()
         let graphe = try ScenePiecesTests.graphe(sonde: true)
         let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2),
-                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("Apple TV"), genre: .chemin, qualite: 2, suppose: true)]
+                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("HomePod"), genre: .chemin, qualite: 2, suppose: true)]
         let parents = graphe.liens.filter { $0.genre == .parent }
         let premier = try #require(parents.first)
         // Le premier lien vers un parent devient un parent d'avant.
@@ -267,7 +270,7 @@ struct SceneProjeteeTests {
         let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
         let s = ScenePieces(graphe: gc, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
                             chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
-        func projeter(_ mode: ModeLiens, voisins: Bool, selection: IdNoeud? = idt("HomePod")) -> SceneProjetee {
+        func projeter(_ mode: ModeLiens, voisins: Bool, selection: IdNoeud? = idt("E000000000000004")) -> SceneProjetee {
             let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: mode,
                               voisins: voisins)
             return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
@@ -288,6 +291,8 @@ struct SceneProjeteeTests {
         let radio = GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .radio, qualite: 2)
         #expect(SceneProjetee.trace(radio, mode: .chemins, selection: idt("HomePod")) == .voisin)
         #expect(SceneProjetee.trace(radio, mode: .chemins, selection: idt("HomePod"), voisins: false) == nil)
+        let doublee = GrapheReseau.Lien(de: idt("Apple TV"), vers: idt("HomePod"), genre: .radio, qualite: 2)
+        #expect(SceneProjetee.voisinsMasques(gc.liens) == [doublee], "la paire HomePod - Apple TV a un chemin, l'autre non")
         #expect(SceneProjetee.trace(radio, mode: .tous, selection: nil, voisins: false) == .normal)
         // Le parent d'avant : son lien vers le parent est trace en pointilles, les autres non.
         #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])
