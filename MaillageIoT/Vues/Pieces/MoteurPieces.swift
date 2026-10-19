@@ -298,6 +298,10 @@ final class MoteurPieces {
     @ObservationIgnored var ciblesFocus: (noeuds: [IdNoeud: Double], liens: [String: Double]) = ([:], [:])
     @ObservationIgnored var noeudsEstompes: [IdNoeud: Double] = [:]
     @ObservationIgnored var liensEstompes: [String: Double] = [:]
+    /// Les reperes « ailleurs » sous une selection : l'estompement vise de chacun, par l'identifiant de son enfant (seuls ceux
+    /// des liens du noeud choisi restent), et celui de l'image, qui le rejoint avec le meme pas que les autres.
+    @ObservationIgnored var ciblesAilleurs: [IdNoeud: Double] = [:]
+    @ObservationIgnored var ailleursEstompes: [IdNoeud: Double] = [:]
 
     /// Dernier clic sur le fond (instant, point) : un second, assez pres et assez tot, est un double-clic.
     @ObservationIgnored var clicFond: (instant: Double, point: CGPoint)?
@@ -387,15 +391,26 @@ final class MoteurPieces {
         ciblesFocus = scene.map {
             MiseEnAvant.cibles(m, noeuds: $0.noeuds.map(\.id), liens: $0.liens.map(MiseEnAvant.cle))
         } ?? ([:], [:])
+        ciblesAilleurs = scene.map { SceneProjetee.reperesEstompes($0, selection: m == nil ? nil : selection) } ?? [:]
         if fige {
             noeudsEstompes = ciblesFocus.noeuds
             liensEstompes = ciblesFocus.liens
+            ailleursEstompes = ciblesAilleurs
         }
         reveiller()
     }
 
     /// L'estompement du mode focus est en route vers sa cible.
-    var focusEnRoute: Bool { noeudsEstompes != ciblesFocus.noeuds || liensEstompes != ciblesFocus.liens }
+    var focusEnRoute: Bool {
+        noeudsEstompes != ciblesFocus.noeuds || liensEstompes != ciblesFocus.liens || ailleursEstompes != ciblesAilleurs
+    }
+
+    /// Des reperes « ailleurs » de la piece isolee restent poses sous la selection (leur cible n'est pas l'effacement) : la
+    /// legende n'en montre le signe que s'il en reste un. Lit `selection`, que la vue observe.
+    var aDesReperesAilleurs: Bool {
+        let sel = selection
+        return textes.ailleurs.keys.contains { sel == nil || ciblesAilleurs[$0] == nil }
+    }
 
     static func maintenant() -> Double { CACurrentMediaTime() }
 

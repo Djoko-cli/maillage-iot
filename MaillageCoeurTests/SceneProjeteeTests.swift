@@ -117,6 +117,39 @@ struct SceneProjeteeTests {
         #expect(p.plateaux.allSatisfy { abs($0.opacite - 0.15) < 1e-12 })
     }
 
+    /// Mode focus des reperes « ailleurs » (point 9) : sans selection, aucun estompement ; sous une selection, tous les
+    /// reperes sont vises a 1 sauf ceux de ses liens, dans les deux sens (son enfant, ou son parent). Un repere estompe a
+    /// moitie garde son ancre et un fil a moitie moins net ; un repere efface n'a plus ni ancre ni fil.
+    @Test func reperesSousUneSelection() throws {
+        let (s0, _) = try Self.projeter(t: 0)
+        let bureau = try Self.indice(s0, "Bureau")
+        #expect(SceneProjetee.reperesEstompes(s0, selection: nil).isEmpty)
+        let reperes = SceneProjetee.reperes(s0, focus: bureau).sorted { $0.enfant < $1.enfant }
+        #expect(reperes.count == 2)
+        let (a, b) = (reperes[0], reperes[1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: a.enfant) == [b.enfant: 1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: b.parent) == [a.enfant: 1])
+        #expect(SceneProjetee.reperesEstompes(s0, selection: idt("absent")).count == 2)
+        func projeter(_ estompes: [IdNoeud: Double]) throws -> SceneProjetee {
+            try Self.projeter(t: 0) { e in
+                e.s = 1
+                e.focus = bureau
+                e.fk[bureau] = 1
+                e.ailleursEstompes = estompes
+            }.1
+        }
+        let net = try projeter([:])
+        #expect(net.fils.count == 2 && net.ancresAilleurs.count == 2 && net.facteursAilleurs.isEmpty)
+        let moitie = try projeter([b.enfant: 0.5])
+        #expect(moitie.fils.count == 2 && moitie.ancresAilleurs.count == 2)
+        #expect(moitie.fils.map(\.opacite).sorted().first.map { abs($0 - 0.4) < 1e-12 } == true)
+        #expect(moitie.facteursAilleurs[b.enfant] == 0.5 && moitie.facteursAilleurs[a.enfant] == nil)
+        let efface = try projeter([b.enfant: 1])
+        #expect(efface.fils.count == 1 && Set(efface.ancresAilleurs.keys) == [a.enfant])
+        #expect(efface.fils.allSatisfy { abs($0.opacite - 0.8) < 1e-12 }, "le fil du repere net reste a 0,8")
+        #expect(efface.ailleurs.count == 2, "la liste des reperes est celle de la scene")
+    }
+
     /// Etage isole (polissage C, section 5.1), ici l'etage : les autres plateaux descendent a 15 %, avec leurs pieces,
     /// leurs pastilles et leurs liens ; un lien qui touche l'etage isole reste visible, meme vers un autre etage ; la
     /// sphere et l'equateur s'effacent. Le disque survole s'eclaircit.

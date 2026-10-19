@@ -101,6 +101,7 @@ struct FocusTests {
         for _ in 0..<60 {
             m.noeudsEstompes = MiseEnAvant.tendre(m.noeudsEstompes, vers: m.ciblesFocus.noeuds, k: k)
             m.liensEstompes = MiseEnAvant.tendre(m.liensEstompes, vers: m.ciblesFocus.liens, k: k)
+            m.ailleursEstompes = MiseEnAvant.tendre(m.ailleursEstompes, vers: m.ciblesAilleurs, k: k)
         }
         #expect(!m.focusEnRoute, "arrive en 3 s au plus")
     }

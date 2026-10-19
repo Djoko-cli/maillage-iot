@@ -313,6 +313,8 @@ enum RenduCanvas {
                 }
             case .ailleurs(let id):
                 guard let texte = image.textes.ailleurs[id] else { continue }
+                // Sous une selection, le repere des autres noeuds s'efface avec la mise en avant (`facteursAilleurs`).
+                g.opacity *= image.projetee.facteursAilleurs[id] ?? 1
                 let resolu = cache.resolu(g, "a|" + texte, echelle: e) { texteAilleurs(texte, palette: palette) }
                 dessinerAilleurs(&g, resolu, dans: r, palette: palette)
             }

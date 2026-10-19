@@ -29,7 +29,7 @@ extension MoteurPieces {
         let etat = EtatAnime(t: t, s: s, fk: parts, focus: focus, survol: survol, selection: selection, se: se,
                              ek: scene.etages.map { ek[$0.id] ?? 0 }, survolEtage: survolEtage, liens: liens,
                              voisins: voisins, protocolesSansMode: protocolesSansMode, noeudsEstompes: noeudsEstompes,
-                             liensEstompes: liensEstompes)
+                             liensEstompes: liensEstompes, ailleursEstompes: ailleursEstompes)
         let p = SceneProjetee(scene: scene, cartes: cartes, positions: positions, geometrie: geometrie, etat: etat,
                               orbite: orbite, cadre: cadre, poses: posesAffichees)
         // Le nom d'un noeud qui s'est efface s'en va avec lui : plus de noeud en fondu, plus de nom.
@@ -233,6 +233,7 @@ extension MoteurPieces {
             let k = dt * Self.vitesseFocus
             noeudsEstompes = MiseEnAvant.tendre(noeudsEstompes, vers: ciblesFocus.noeuds, k: k)
             liensEstompes = MiseEnAvant.tendre(liensEstompes, vers: ciblesFocus.liens, k: k)
+            ailleursEstompes = MiseEnAvant.tendre(ailleursEstompes, vers: ciblesAilleurs, k: k)
         }
         // Les plateaux et les pieces glissent ; la vue suit ce qu'elle regarde.
         if glissementPlateaux != nil || transition != nil {
