@@ -38,5 +38,5 @@
 
 ### Task 2: Relecture et verdict
 
-- [ ] **Step 1: Relecture** — Sonnet (tâche), puis Opus (branche) : identité des nœuds.
-- [ ] **Step 2: Verdict** — cocher « Phase 8 » dans la §6.1 de la spec ; retirer le point du backlog ; fusion et push avec l'accord de Djoko.
+- [x] **Step 1: Relecture** — Sonnet (tâche), puis Opus (branche) : identité des nœuds.
+- [x] **Step 2: Verdict** — cocher « Phase 8 » dans la §6.1 de la spec ; retirer le point du backlog ; fusion et push avec l'accord de Djoko.
