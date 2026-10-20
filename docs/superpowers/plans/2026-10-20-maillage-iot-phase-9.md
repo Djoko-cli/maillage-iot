@@ -34,10 +34,10 @@
 
 ### Task 1: Le lexique et la phrase du sujet
 
-- [ ] **Step 1: Tests RED** — lexique (genre, élision, pluriel) ; chaque forme des décisions ci-dessus, avec des noms inventés ; retrait de la pièce en mots entiers, sans casse ni accents ; « Salon de thé » / « Salon » ; repli sans article pour un mot inconnu ; anglais.
-- [ ] **Step 2: GREEN** — `MaillageCoeur` (ou là où vivent les textes d'événements) : le lexique et une fonction pure, signature au rapport.
-- [ ] **Step 3: Vérifier** — porte.
-- [ ] **Step 4: Commit** — « Journal : lexique et phrase du sujet avec la piece ».
+- [x] **Step 1: Tests RED** — lexique (genre, élision, pluriel) ; chaque forme des décisions ci-dessus, avec des noms inventés ; retrait de la pièce en mots entiers, sans casse ni accents ; « Salon de thé » / « Salon » ; repli sans article pour un mot inconnu ; anglais.
+- [x] **Step 2: GREEN** — `MaillageCoeur` (ou là où vivent les textes d'événements) : le lexique et une fonction pure, signature au rapport.
+- [x] **Step 3: Vérifier** — porte.
+- [x] **Step 4: Commit** — « Journal : lexique et phrase du sujet avec la piece ».
 
 ---
 

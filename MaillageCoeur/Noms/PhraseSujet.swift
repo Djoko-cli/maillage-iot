@@ -1,0 +1,147 @@
+import Foundation
+
+/// Langue des textes du journal. Seul le francais accorde ; toute autre langue nomme le noeud sans accord
+/// (« Desk lamp (Office) lost its parent »).
+public enum LangueSujet: Sendable, Equatable {
+    case francais, anglais
+
+    /// Depuis un code de langue (« fr », « fr-FR », « en »...) : le francais, sinon l'anglais (sans accord).
+    public init(code: String?) {
+        self = code?.lowercased().hasPrefix("fr") == true ? .francais : .anglais
+    }
+}
+
+/// Le sujet d'une ligne du journal, d'une notification ou d'une entree du menu : le nom du noeud avec sa piece, en
+/// francais naturel (« La lampe du bureau a perdu son parent »).
+///
+/// Cinq formes en francais (decisions de Djoko, 20/10) :
+/// - **le nom contient la piece, mots connus** : « La lampe du bureau » (du, de la, de l', des ; elision) ;
+/// - **nom sans la piece, piece connue** : « HomePod Avant, dans le salon, » (dans le, la, l', les ; sur, a l'etage) ;
+/// - **mot inconnu** (appareil ou piece) : aucun article invente : « Hue Go (droite) — Zone Z7 : » ;
+/// - **sans piece** : le nom seul, comme avant ;
+/// - **anglais** : « Desk lamp (Office) », sans accord.
+/// Un mot d'appareil connu recoit son article partout (« La lampe chevet, dans le bureau, »). Le mot de la piece n'est
+/// retire du nom que s'il en termine ou en commence le texte, en mots entiers, sans casse ni accents : « Salon de thé »
+/// dans la piece « Salon » ne perd pas son « Salon ».
+public struct PhraseSujet: Hashable, Sendable {
+    /// Le sujet, sans ponctuation finale : « La lampe du bureau », « HomePod Avant, dans le salon ». Il se place tel
+    /// quel au milieu d'une phrase (avec `debutDePhrase: false`, sans majuscule a l'article).
+    public let texte: String
+    /// Ce qui separe le sujet du verbe : vide, « , » (la piece est une incise) ou « : » (precede d'une espace).
+    public let suite: String
+
+    /// Le sujet suivi du reste de la phrase : `suivi(de: "a perdu son parent")`.
+    public func suivi(de predicat: String) -> String { texte + suite + " " + predicat }
+
+    /// Le sujet du noeud `nom` dans la piece `piece` (celle de la scene ; nil ou vide : le nom seul).
+    /// `debutDePhrase` : majuscule a l'article du groupe nominal (un nom propre garde sa casse).
+    public static func de(nom: String, piece: String?, langue: LangueSujet, debutDePhrase: Bool = true) -> PhraseSujet {
+        let piece = piece?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let jn = Texte.jetons(nom)
+        let jp = Texte.jetons(piece)
+        guard !piece.isEmpty, !jp.isEmpty, !jn.isEmpty else { return PhraseSujet(texte: nom, suite: "") }
+        let emplacement = Self.emplacement(de: jp, dans: jn)
+
+        if langue == .anglais {
+            return PhraseSujet(texte: emplacement == .fin ? nom : "\(nom) (\(piece))", suite: "")
+        }
+
+        let salle = LexiqueMaison.piece(dans: jp)
+        func enTete(_ g: Groupe) -> String { debutDePhrase ? Self.majuscule(g.texte) : g.texte }
+
+        // 1. Le nom contient la piece : on la retire, et si ce qui reste commence par un mot d'appareil connu on accorde.
+        if let emplacement, let salle {
+            let reste = emplacement == .fin ? 0..<(jn.count - jp.count) : jp.count..<jn.count
+            if let g = Self.groupe(nom, jn, reste) {
+                let lieu = Self.lieu(piece, jp, salle)
+                let texte = g.texte + " " + lieu.avec(.de)
+                return PhraseSujet(texte: debutDePhrase ? Self.majuscule(texte) : texte, suite: "")
+            }
+        }
+        // Le nom du noeud, avec l'article de son mot d'appareil quand il est connu, sinon tel quel.
+        let nomGroupe = Self.groupe(nom, jn, 0..<jn.count).map(enTete) ?? nom
+        // 2. La piece termine le nom (mais le mot d'appareil est inconnu, ou la piece) : le nom dit deja la piece.
+        if emplacement == .fin { return PhraseSujet(texte: nomGroupe, suite: "") }
+        // 3. Piece connue : en incise.
+        if let salle {
+            let lieu = Self.lieu(piece, jp, salle)
+            return PhraseSujet(texte: nomGroupe + ", " + lieu.dans, suite: ",")
+        }
+        // 4. Piece inconnue : aucun article invente.
+        return PhraseSujet(texte: nomGroupe + " — " + piece, suite: " :")
+    }
+
+    // MARK: Interne
+
+    private enum Emplacement { case debut, fin }
+
+    /// Ou la piece se trouve dans le nom : a la fin (de preference) ou au debut, en mots entiers.
+    private static func emplacement(de jp: [Texte.Jeton], dans jn: [Texte.Jeton]) -> Emplacement? {
+        guard jp.count <= jn.count else { return nil }
+        let mots = jp.map(\.plie)
+        if Array(jn.suffix(jp.count)).map(\.plie) == mots { return .fin }
+        if Array(jn.prefix(jp.count)).map(\.plie) == mots { return .debut }
+        return nil
+    }
+
+    private static func majuscule(_ s: String) -> String {
+        guard let c = s.first else { return s }
+        return c.uppercased() + s.dropFirst()
+    }
+
+    /// Un groupe nominal d'appareil : l'article, le mot du lexique, et le reste du nom tel qu'ecrit.
+    private struct Groupe {
+        let texte: String
+    }
+
+    /// Mots qui lient (articles, prepositions) : retires aux bords du nom restant, jamais au milieu.
+    private static let liaisons: Set<String> = ["de", "du", "des", "d", "la", "le", "les", "l", "dans", "au", "aux", "sur"]
+
+    private static func estLiaison(_ j: Texte.Jeton) -> Bool {
+        liaisons.contains(j.plie) && (j.plie.count > 1 || j.elide)
+    }
+
+    /// Le groupe nominal d'un nom (ou de ce qui en reste une fois la piece retiree) dont le premier mot, hors liaisons,
+    /// est un mot d'appareil connu ; nil sinon.
+    private static func groupe(_ nom: String, _ jetons: [Texte.Jeton], _ plage: Range<Int>) -> Groupe? {
+        var debut = plage.lowerBound
+        var fin = plage.upperBound
+        while debut < fin, estLiaison(jetons[debut]) { debut += 1 }
+        while fin > debut, estLiaison(jetons[fin - 1]) { fin -= 1 }
+        guard debut < fin, let t = LexiqueMaison.appareil(dans: Array(jetons[..<fin]), depuis: debut) else { return nil }
+        let dernierMot = jetons[debut + t.longueur - 1].plage.upperBound
+        var finTexte = jetons[fin - 1].plage.upperBound
+        // Les fermantes qui suivent le dernier mot gardent leurs parentheses : « Lampe (droite) bureau ».
+        while finTexte < nom.endIndex, ")]»".contains(nom[finTexte]) { finTexte = nom.index(after: finTexte) }
+        let complement = dernierMot < finTexte ? String(nom[dernierMot..<finTexte]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
+        let mot = t.mot.defini(pluriel: t.pluriel)
+        return Groupe(texte: complement.isEmpty ? mot : mot + " " + complement)
+    }
+
+    /// Une piece connue, prete a recevoir une preposition : « salle de bain », « combles ».
+    private struct Lieu {
+        let mot: MotMaison
+        let pluriel: Bool
+        /// Ce que le nom de la piece ajoute au mot du lexique, tel qu'ecrit : « de bain ».
+        let complement: String
+
+        private var suite: String { complement.isEmpty ? "" : " " + complement }
+
+        func avec(_ p: MotMaison.Preposition) -> String { mot.avecPreposition(p, pluriel: pluriel) + suite }
+
+        var dans: String {
+            switch mot.locatif {
+            case .dans: avec(.dans)
+            case .sur: avec(.sur)
+            case .a: avec(.a)
+            }
+        }
+    }
+
+    private static func lieu(_ piece: String, _ jp: [Texte.Jeton], _ t: LexiqueMaison.Trouve) -> Lieu {
+        let fin = piece.endIndex
+        let apres = jp[t.longueur - 1].plage.upperBound
+        let complement = apres < fin ? String(piece[apres..<fin]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
+        return Lieu(mot: t.mot, pluriel: t.pluriel, complement: complement)
+    }
+}
