@@ -24,41 +24,49 @@ public enum CleRloc {
 ///
 /// Une collision n'existe que pendant une scission : le releve garde les partitions que Bonjour annoncait ensemble pour
 /// le reseau de la sonde (`ReleveMaillage.actives`, la scission du bandeau « Reseau scinde »), la sienne comprise. La
-/// sonde ne voit qu'une partition a la fois : les identifiants de routeur d'une autre partition active sont ceux de son
-/// dernier releve de la liste (sa liste des routeurs et les identifiants cites : liens, parents des enfants, signaux,
-/// parent de la sonde) ; une partition jamais vue n'en a aucun. Un identifiant qu'ont deux partitions actives ou plus est
-/// en collision ; garde la cle simple :
-/// 1. la tenante, tant qu'elle l'a (pas d'oscillation pendant une collision stable) ;
-/// 2. a defaut, la partition du releve precedent, si elle l'avait sans y etre qualifiee ;
-/// 3. puis la plus grande partition (le nombre de routeurs de son dernier releve) ;
+/// scission en cours est la suite des derniers releves qui en ont ; seuls ses releves comptent (relecture finale,
+/// Important 1) : un releve d'avant la scission, celui d'une ancienne partition comme celui de la partition de la sonde,
+/// ne cree jamais de collision. La moitie de la sonde qui prend un nouvel identifiant de partition en gardant ses
+/// identifiants de routeur, ou la transition de Bonjour d'un simple changement d'identifiant, gardent donc les cles
+/// simples. La sonde ne voit qu'une partition a la fois : les identifiants de routeur d'une autre partition active sont
+/// ceux de son dernier releve de la scission (sa liste des routeurs et les identifiants cites : liens, parents des
+/// enfants, signaux, parent de la sonde) ; une partition pas encore vue pendant la scission n'en a aucun. Un identifiant
+/// qu'ont deux partitions actives ou plus est en collision et recoit une tenante, qui garde la cle simple jusqu'a la fin
+/// de la scission (relecture finale, Critique 1 : un releve sans l'identifiant ne la fait pas oublier, et la cle ne
+/// bascule jamais pendant la scission) :
+/// 1. parmi les partitions qui avaient l'identifiant avant ce releve (le nouveau venu ne passe jamais devant une
+///    partition qui l'avait deja) ;
+/// 2. la partition du releve precedent, si elle l'y avait sans y etre qualifiee ;
+/// 3. a defaut la plus grande partition (le nombre de routeurs de son dernier releve de la scission) ;
 /// 4. puis le plus petit identifiant de partition (en hexadecimal, a defaut en texte).
-/// Les autres sont qualifiees. Une partition qui n'est plus active (ancien identifiant, plus annoncee) ne cree jamais de
-/// collision : un simple changement d'identifiant de partition garde les cles simples. Hors scission, plus de collision
-/// ni de tenante : la partition de la sonde a la cle simple (si c'est l'autre partition qui reste seule, ses routeurs
-/// reprennent "rloc:XXXX" ; sans ExtMac rien ne les distingue, comportement d'avant la phase 8).
+/// Les autres partitions qui ont cet identifiant sont qualifiees, tant que dure la scission. Hors scission, plus de
+/// collision ni de tenante, et rien n'est garde : la partition de la sonde a la cle simple (si c'est l'autre partition
+/// qui reste seule, ses routeurs reprennent "rloc:XXXX" ; sans ExtMac rien ne les distingue, comportement d'avant la
+/// phase 8).
 ///
 /// Deterministe : la meme liste donne les memes collisions. Calcule en un passage : O(1) par releve hors scission,
 /// O(63 x P) pendant une scission de P partitions.
 public struct CollisionsRloc: Sendable {
     /// L'etat apres un releve.
     struct Etat: Sendable {
-        /// Par partition : les identifiants de routeur de son dernier releve, cites compris (masque, 0...62).
+        /// Par partition : les identifiants de routeur de son dernier releve de la scission en cours, cites compris
+        /// (masque, 0...62) ; vide hors scission.
         var identifiants: [String: UInt64] = [:]
-        /// Par partition : le nombre de routeurs de la liste de son dernier releve.
+        /// Par partition : le nombre de routeurs de la liste de son dernier releve de la scission en cours.
         var tailles: [String: Int] = [:]
-        /// Par identifiant de routeur en collision : la partition qui tient la cle simple.
+        /// Par identifiant de routeur en collision : la partition qui tient la cle simple, jusqu'a la fin de la scission.
         var tenantes: [Int: String] = [:]
         /// La partition du releve precedent et ses collisions.
         var precedent: (partition: String, collisions: Set<Int>)?
 
-        /// Integre le releve `r` ; rend les identifiants de routeur qu'il a et dont une autre partition active tient la
-        /// cle simple. Integrer deux fois le meme releve rend la meme chose.
+        /// Integre le releve `r` ; rend les identifiants de routeur qu'il a et dont une autre partition tient la cle
+        /// simple. Integrer deux fois le meme releve rend la meme chose (une tenante ne change pas pendant la scission).
         mutating func integrer(_ r: ReleveMaillage) -> Set<Int> {
             let plage = ReleveMaillage.identifiantsRouteur
             var masque: UInt64 = 0
             func noter(_ id: Int) { if plage.contains(id) { masque |= 1 << UInt64(id) } }
             for x in r.routeurs { noter(x.id) }
-            tailles[r.partition] = masque.nonzeroBitCount
+            let taille = masque.nonzeroBitCount
             for l in r.liens {
                 noter(l.a)
                 noter(l.b)
@@ -66,32 +74,36 @@ public struct CollisionsRloc: Sendable {
             for e in r.enfants { noter(e.parent) }
             for s in r.signaux { noter(s.routeur) }
             if let p = r.parentSonde { noter(p) }
-            identifiants[r.partition] = masque
             var collisions: Set<Int> = []
             defer { precedent = (r.partition, collisions) }
-            // `actives` est vide hors scission (`ReleveMaillage` le normalise) : aucune collision, aucune tenante.
+            // `actives` est vide hors scission (`ReleveMaillage` le normalise) : aucune collision, et rien n'est garde,
+            // ni identifiants ni tenantes (seuls comptent les releves de la scission en cours).
             guard !r.actives.isEmpty else {
+                identifiants = [:]
+                tailles = [:]
                 tenantes = [:]
                 return []
             }
+            // Les identifiants de la partition du releve avant lui, pendant la scission (le nouveau venu, regle 1).
+            let avant = identifiants[r.partition] ?? 0
+            identifiants[r.partition] = masque
+            tailles[r.partition] = taille
             let actives = r.actives.map { (partition: $0, masque: identifiants[$0] ?? 0) }
             for id in plage {
                 let bit: UInt64 = 1 << UInt64(id)
-                let ont = actives.filter { $0.masque & bit != 0 }.map(\.partition)
-                guard ont.count >= 2 else {
-                    tenantes[id] = nil
-                    continue
+                if tenantes[id] == nil {
+                    let ont = actives.filter { $0.masque & bit != 0 }.map(\.partition)
+                    if ont.count >= 2 {
+                        // Les autres partitions l'avaient a leur dernier releve, d'avant celui-ci.
+                        let avaient = ont.filter { $0 != r.partition || avant & bit != 0 }
+                        if let p = precedent, avaient.contains(p.partition), !p.collisions.contains(id) {
+                            tenantes[id] = p.partition
+                        } else {
+                            tenantes[id] = avaient.min(by: precede)
+                        }
+                    }
                 }
-                let tenante: String
-                if let t = tenantes[id], ont.contains(t) {
-                    tenante = t
-                } else if let p = precedent, ont.contains(p.partition), !p.collisions.contains(id) {
-                    tenante = p.partition
-                } else {
-                    tenante = ont.min(by: precede) ?? r.partition
-                }
-                tenantes[id] = tenante
-                if tenante != r.partition && masque & bit != 0 { collisions.insert(id) }
+                if let t = tenantes[id], t != r.partition, masque & bit != 0 { collisions.insert(id) }
             }
             return collisions
         }

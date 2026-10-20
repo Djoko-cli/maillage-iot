@@ -193,47 +193,51 @@ struct ClesHistoriqueTests {
         return ids.contains { proche($0, borne: true)?.0 == e } ? (rloc, .refusee) : (e, cas)
     }
 
-    /// Les collisions de RLOC16 a la lettre (phase 8, correctif du 20/10), en rejouant les releves 0 a `i` : seul un
-    /// releve d'une scission (deux partitions actives ou plus, dont la sienne) en a. Une partition active a un
-    /// identifiant si son dernier releve jusque-la le cite (liste, lien, parent d'un enfant, signal, parent de la sonde).
-    /// Un identifiant qu'ont deux partitions actives ou plus : la tenante reste si elle l'a encore ; sinon la partition du
-    /// releve precedent, s'il l'a sans y etre qualifie ; sinon la plus grande (nombre de routeurs de son dernier releve),
-    /// puis le plus petit identifiant de partition. Hors scission, plus aucune tenante. Rend les identifiants du releve
-    /// `i` qu'il a et dont une autre partition est la tenante.
+    /// Les collisions de RLOC16 a la lettre (phase 8, correctifs du 20/10), ecrites d'apres le texte de la regle et non
+    /// d'apres le code, en rejouant les releves 0 a `i`. La scission en cours : la suite des releves jusqu'a `i` qui ont
+    /// des partitions actives (deux ou plus, dont la sienne) ; hors scission, aucune collision. Seuls comptent les releves
+    /// de la scission en cours : une partition active a un identifiant si son dernier releve de la scission le cite (liste,
+    /// lien, parent d'un enfant, signal, parent de la sonde). Un identifiant qu'ont deux partitions actives ou plus et qui
+    /// n'a pas encore de tenante en recoit une, gardee jusqu'a la fin de la scission : parmi elles, celles qui l'avaient
+    /// avant ce releve (le nouveau venu ne passe jamais devant) ; la partition du releve precedent si elle l'y avait sans
+    /// y etre qualifiee ; sinon la plus grande (nombre de routeurs de son dernier releve de la scission), puis le plus
+    /// petit identifiant de partition. Rend les identifiants du releve `i` qu'il a et dont une autre partition est la
+    /// tenante.
     static func naiveCollisions(_ releves: [ReleveMaillage], _ i: Int) -> Set<Int> {
         func cites(_ r: ReleveMaillage) -> Set<Int> {
             Set(r.routeurs.map(\.id) + r.liens.flatMap { [$0.a, $0.b] } + r.enfants.map(\.parent) + r.signaux.map(\.routeur)
                 + (r.parentSonde.map { [$0] } ?? [])).filter { (0...62).contains($0) }
         }
+        func scinde(_ r: ReleveMaillage) -> Bool { Set(r.actives).count >= 2 && r.actives.contains(r.partition) }
+        guard scinde(releves[i]) else { return [] }
+        let debut = (0...i).last { !scinde(releves[$0]) }.map { $0 + 1 } ?? 0
         var tenantes: [Int: String] = [:]
-        var precedent: Set<Int> = []
         var resultat: Set<Int> = []
-        for k in 0...i {
+        for k in debut...i {
             let r = releves[k]
-            resultat = []
-            defer { precedent = resultat }
-            let actives = Set(r.actives)
-            guard actives.count >= 2, actives.contains(r.partition) else {
-                tenantes = [:]
-                continue
+            /// Le dernier releve de `p` dans la scission, jusqu'a `fin` compris.
+            func dernier(_ p: String, jusqua fin: Int) -> ReleveMaillage? {
+                fin < debut ? nil : (debut...fin).last { releves[$0].partition == p }.map { releves[$0] }
             }
-            func dernier(_ p: String) -> ReleveMaillage? { (0...k).last { releves[$0].partition == p }.map { releves[$0] } }
+            func a(_ p: String, _ id: Int, jusqua fin: Int) -> Bool { dernier(p, jusqua: fin).map { cites($0).contains(id) } ?? false }
+            let precedent = resultat
+            resultat = []
             for id in 0...62 {
-                let ont = actives.filter { dernier($0).map { cites($0).contains(id) } ?? false }
-                guard ont.count >= 2 else {
-                    tenantes[id] = nil
-                    continue
+                let ont = Set(r.actives).filter { a($0, id, jusqua: k) }
+                if tenantes[id] == nil && ont.count >= 2 {
+                    let avant = ont.filter { a($0, id, jusqua: k - 1) }
+                    if k > debut, avant.contains(releves[k - 1].partition), cites(releves[k - 1]).contains(id), !precedent.contains(id) {
+                        tenantes[id] = releves[k - 1].partition
+                    } else {
+                        func taille(_ p: String) -> Int {
+                            Set(dernier(p, jusqua: k)!.routeurs.map(\.id).filter { (0...62).contains($0) }).count
+                        }
+                        tenantes[id] = avant.sorted {
+                            (taille($0), UInt64($1, radix: 16)!) > (taille($1), UInt64($0, radix: 16)!)
+                        }.first
+                    }
                 }
-                if let t = tenantes[id], ont.contains(t) {
-                } else if k > 0, ont.contains(releves[k - 1].partition), !precedent.contains(id) {
-                    tenantes[id] = releves[k - 1].partition
-                } else {
-                    func taille(_ p: String) -> Int { Set(dernier(p)!.routeurs.map(\.id).filter { (0...62).contains($0) }).count }
-                    tenantes[id] = ont.sorted {
-                        (taille($0), UInt64($1, radix: 16)!) > (taille($1), UInt64($0, radix: 16)!)
-                    }.first
-                }
-                if ont.contains(r.partition) && tenantes[id] != r.partition { resultat.insert(id) }
+                if cites(r).contains(id), let t = tenantes[id], t != r.partition { resultat.insert(id) }
             }
         }
         return resultat

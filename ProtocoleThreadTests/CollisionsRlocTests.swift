@@ -6,8 +6,10 @@ import Testing
 /// Cles "rloc:" qualifiees en cas de collision (phase 8, decisions de Djoko du 20/10) : une collision n'existe que
 /// pendant une scission, entre partitions actives en meme temps (celles que Bonjour annonce ensemble pour le reseau de la
 /// sonde, gardees dans le releve). Un RLOC16 qu'ont deux de ces partitions est qualifie "rloc:<partition>:XXXX" pour les
-/// partitions qui ne gardent pas la cle simple : la tenante, sinon la partition du releve precedent, puis la plus grande,
-/// puis le plus petit identifiant. Une partition qui n'est plus active ne cree jamais de collision. Valeurs inventees.
+/// partitions qui ne gardent pas la cle simple : la tenante, gardee toute la scission ; parmi les partitions qui avaient
+/// deja l'identifiant, la partition du releve precedent, puis la plus grande, puis le plus petit identifiant. Seuls
+/// comptent les releves de la scission en cours ; une partition qui n'est plus active ne cree jamais de collision.
+/// Valeurs inventees.
 @Suite("Cles rloc qualifiees en cas de collision")
 struct CollisionsRlocTests {
     static let t0 = Date(timeIntervalSince1970: 1_790_006_400)
@@ -107,25 +109,27 @@ struct CollisionsRlocTests {
         #expect(nB.enfants[0x0402]?.id == "rloc:0000000B:0402" && nB.routeurs[2]?.id == "rloc:0800")
     }
 
-    /// Departage quand ni une tenante ni la partition du releve precedent n'ont l'identifiant : la plus grande partition
-    /// (nombre de routeurs de son dernier releve), puis le plus petit identifiant de partition.
+    /// Departage quand plusieurs partitions qui avaient deja l'identifiant le recoivent ensemble (le jeu des partitions
+    /// actives change pendant la scission) et que la partition du releve precedent ne l'a pas : la plus grande (nombre
+    /// de routeurs de son dernier releve de la scission), puis le plus petit identifiant de partition.
     @Test func departageTaillePuisIdentifiant() {
-        let actives = [Self.a, Self.b, Self.c]
+        let (ac, ab, abc) = ([Self.a, Self.c], [Self.a, Self.b], [Self.a, Self.b, Self.c])
         // C a ete vue d'abord ; B est plus grande : B garde la cle simple, C est qualifiee.
-        let taille = [Self.releve(jours: 0, Self.c, [1, 2]), Self.releve(jours: 1, Self.b, [1, 2, 7]),
-                      Self.releve(jours: 1.5, Self.a, [5]), Self.releve(jours: 2, Self.a, [5], actives: actives),
-                      Self.releve(jours: 2.1, Self.c, [1, 2], actives: actives),
-                      Self.releve(jours: 2.2, Self.b, [1, 2, 7], actives: actives)]
+        let taille = [Self.releve(jours: 0, Self.c, [1, 2], actives: ac), Self.releve(jours: 0.1, Self.b, [1, 2, 7], actives: ab),
+                      Self.releve(jours: 0.2, Self.a, [5], actives: ab), Self.releve(jours: 0.3, Self.a, [5], actives: abc),
+                      Self.releve(jours: 0.4, Self.c, [1, 2], actives: abc),
+                      Self.releve(jours: 0.5, Self.b, [1, 2, 7], actives: abc)]
         #expect(Self.cles(taille) == ["rloc:0400", "rloc:0400", "rloc:0400", "rloc:0400", "rloc:0000000C:0400", "rloc:0400"])
         // A taille egale, le plus petit identifiant : B.
-        let egale = [Self.releve(jours: 0, Self.c, [1, 2]), Self.releve(jours: 1, Self.b, [1, 2]),
-                     Self.releve(jours: 1.5, Self.a, [5]), Self.releve(jours: 2, Self.a, [5], actives: actives),
-                     Self.releve(jours: 2.1, Self.c, [1, 2], actives: actives)]
+        let egale = [Self.releve(jours: 0, Self.c, [1, 2], actives: ac), Self.releve(jours: 0.1, Self.b, [1, 2], actives: ab),
+                     Self.releve(jours: 0.2, Self.a, [5], actives: ab), Self.releve(jours: 0.3, Self.a, [5], actives: abc),
+                     Self.releve(jours: 0.4, Self.c, [1, 2], actives: abc)]
         #expect(Self.cles(egale).last == "rloc:0000000C:0400")
-        // La partition du releve precedent l'emporte sur la taille : C, vue juste avant la scission, garde la cle.
-        let precedent = [Self.releve(jours: 1, Self.b, [1, 2, 7]), Self.releve(jours: 1.5, Self.c, [1, 2]),
-                         Self.releve(jours: 2, Self.b, [1, 2, 7], actives: [Self.b, Self.c])]
-        #expect(Self.cles(precedent) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400"])
+        // La partition du releve precedent, qui l'avait deja, l'emporte sur la taille : C garde la cle.
+        let precedent = [Self.releve(jours: 0, Self.b, [1, 2, 7], actives: ab), Self.releve(jours: 0.1, Self.c, [1, 2], actives: ac),
+                         Self.releve(jours: 0.2, Self.c, [1, 2], actives: abc),
+                         Self.releve(jours: 0.3, Self.b, [1, 2, 7], actives: abc)]
+        #expect(Self.cles(precedent) == ["rloc:0400", "rloc:0400", "rloc:0400", "rloc:0000000B:0400"])
     }
 
     /// Collision stable sur trois releves de chaque partition, en alternance pendant la scission : les memes cles a
@@ -141,6 +145,89 @@ struct CollisionsRlocTests {
                 == ["rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400"])
     }
 
+    /// Les collisions de chaque releve de la liste.
+    static func collisions(_ releves: [ReleveMaillage]) -> [Set<Int>] {
+        let c = CollisionsRloc(releves: releves)
+        return releves.indices.map { c.collisions(releve: $0) }
+    }
+
+    /// Relecture finale, Critique 1 : un routeur de la partition qualifiee (celle de la sonde) absent d'un seul releve
+    /// pendant la scission. La tenante (A) est gardee toute la scission : au retour du routeur 1 de B, sa cle reste
+    /// qualifiee, et celle du routeur 1 de A reste simple.
+    @Test func routeurAbsentDUnReleve() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2, 3], actives: actives),
+                       Self.releve(jours: 0.1, Self.b, [0, 1], actives: actives),
+                       Self.releve(jours: 0.2, Self.b, [0], actives: actives),
+                       Self.releve(jours: 0.3, Self.b, [0, 1], actives: actives),
+                       Self.releve(jours: 0.4, Self.a, [0, 1, 2, 3], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [0, 1], [0], [0, 1], []])
+        let cles = Self.cles(releves)
+        #expect(cles[3] == "rloc:0000000B:0400" && cles[4] == "rloc:0400")
+    }
+
+    /// Relecture finale, Critique 1 : la tenante n'est pas oubliee quand son propre releve n'a plus l'identifiant (un
+    /// routeur de A qui redemarre) ; B, seule a l'avoir a ce moment, reste qualifiee : ses courbes ne rejoignent jamais
+    /// celles du routeur de A.
+    @Test func tenanteGardeeToutLaScission() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2], actives: actives),
+                       Self.releve(jours: 0.1, Self.b, [1, 5], actives: actives),
+                       Self.releve(jours: 0.2, Self.a, [0, 2], actives: actives),
+                       Self.releve(jours: 0.3, Self.b, [1, 5], actives: actives),
+                       Self.releve(jours: 0.4, Self.a, [0, 1, 2], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [1], [], [1], []])
+        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400"])
+    }
+
+    /// Relecture finale, Critique 1 : un nouveau routeur de la partition de la sonde qui prend un identifiant qu'une
+    /// autre partition active a deja ; le nouveau venu ne passe jamais devant elle, meme plus grand.
+    @Test func nouveauVenuSurUnIdentifiantTenu() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2, 3], actives: actives),
+                       Self.releve(jours: 0.1, Self.b, [0, 1], actives: actives),
+                       Self.releve(jours: 0.2, Self.b, [0, 1, 2], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [0, 1], [0, 1, 2]])
+        #expect(Self.cles(releves, routeur: 2) == ["rloc:0800", "rloc:0800", "rloc:0000000B:0800"])
+        let plusGrande = [Self.releve(jours: 0, Self.a, [2], actives: actives),
+                          Self.releve(jours: 0.1, Self.b, [0, 1], actives: actives),
+                          Self.releve(jours: 0.2, Self.b, [0, 1, 2, 3, 4], actives: actives),
+                          Self.releve(jours: 0.3, Self.a, [2], actives: actives)]
+        #expect(Self.collisions(plusGrande) == [[], [], [2], []])
+    }
+
+    /// Relecture finale, Important 1 (decision de Djoko : une collision n'existe qu'entre partitions actives en meme
+    /// temps) : la moitie de la sonde forme une nouvelle partition et garde ses identifiants ; le releve d'avant la
+    /// scission (l'ancienne partition) ne compte pas : aucune qualification, sans vraie collision. Une vraie collision
+    /// pendant la scission (l'autre moitie redistribue le 3, la sonde y passe) est qualifiee, et la tenante reste.
+    @Test func moitieRenommeeSansCollision() {
+        let actives = [Self.a, Self.b]
+        let renommee = [Self.releve(jours: 0, Self.a, [0, 1, 2, 3, 4, 5]),
+                        Self.releve(jours: 0.1, Self.b, [3, 4, 5], actives: actives),
+                        Self.releve(jours: 0.2, Self.b, [3, 4, 5], actives: actives),
+                        Self.releve(jours: 1, Self.b, [3, 4, 5], actives: actives)]
+        #expect(Self.collisions(renommee) == [[], [], [], []])
+        #expect(Self.cles(renommee, routeur: 3) == Array(repeating: "rloc:0C00", count: 4))
+        let vraie = renommee + [Self.releve(jours: 1.1, Self.a, [0, 1, 2, 3], actives: actives),
+                                Self.releve(jours: 1.2, Self.b, [3, 4, 5], actives: actives),
+                                Self.releve(jours: 1.3, Self.a, [0, 1, 2, 3], actives: actives),
+                                Self.releve(jours: 1.4, Self.b, [3, 4, 5], actives: actives)]
+        #expect(Self.collisions(vraie) == [[], [], [], [], [3], [], [3], []])
+        #expect(Self.cles(vraie, routeur: 3).suffix(4) == ["rloc:0000000A:0C00", "rloc:0C00", "rloc:0000000A:0C00", "rloc:0C00"])
+    }
+
+    /// Relecture finale, Important 1 : un simple changement d'identifiant de partition pendant la transition de Bonjour
+    /// (des routeurs de bordure annoncent encore l'ancienne, les deux sont annoncees ensemble) : aucune qualification.
+    @Test func transitionBonjourSansCollision() {
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2]),
+                       Self.releve(jours: 0.01, Self.b, [0, 1, 2], actives: [Self.a, Self.b]),
+                       Self.releve(jours: 0.02, Self.b, [0, 1, 2])]
+        #expect(Self.collisions(releves) == [[], [], []])
+        #expect(Self.cles(releves) == Array(repeating: "rloc:0400", count: 3))
+        let m = Self.maillage(jours: 0.01, Self.b, [0, 1, 2])
+        #expect(CollisionsRloc(releves: Array(releves.prefix(1))).collisions(apres: m, actives: [Self.a, Self.b]).isEmpty)
+    }
+
     /// Fin de la scission : Bonjour n'annonce plus qu'une partition, plus de collision. Le routeur qui tenait la cle
     /// simple la garde (la sonde revenue dans A) ; les releves de B pendant la scission restent qualifies (recalcules de
     /// la liste seule, rien n'est melange). Si c'est B qui reste seule, elle reprend la cle simple : sans ExtMac, rien ne
@@ -154,9 +241,12 @@ struct CollisionsRlocTests {
         #expect(Self.cles(finA) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400", "rloc:0400"])
         let finB = scission + [Self.releve(jours: 0.4, Self.b, [1, 2])]
         #expect(Self.cles(finB) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400"])
-        // Une nouvelle scission plus tard : la partition du releve precedent (A) tient de nouveau la cle simple.
-        let encore = finA + [Self.releve(jours: 2, Self.b, [1, 2], actives: actives)]
+        // Une nouvelle scission plus tard : seuls ses releves comptent. A, vue pendant celle-ci, tient de nouveau la cle
+        // simple ; sans releve de A pendant la nouvelle scission, B garde la cle simple (rien ne montre une collision).
+        let encore = finA + [Self.releve(jours: 2, Self.a, [1], actives: actives), Self.releve(jours: 2.1, Self.b, [1, 2], actives: actives)]
         #expect(Self.cles(encore).last == "rloc:0000000B:0400")
+        let sansA = finA + [Self.releve(jours: 2, Self.b, [1, 2], actives: actives)]
+        #expect(Self.cles(sansA).last == "rloc:0400")
     }
 
     /// Deterministe : la meme liste donne les memes cles ; le maillage du dernier releve, evalue apres la liste avec les
@@ -164,7 +254,8 @@ struct CollisionsRlocTests {
     /// l'ajouter a l'historique). Sans historique (demo), aucune, meme pendant une scission.
     @Test func deterministeEtIdempotent() {
         let actives = [Self.a, Self.b]
-        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 1, Self.b, [0, 1, 2], liens: [(0, 1)], actives: actives)]
+        let releves = [Self.releve(jours: 0, Self.a, [1], actives: actives),
+                       Self.releve(jours: 1, Self.b, [0, 1, 2], liens: [(0, 1)], actives: actives)]
         #expect(Self.cles(releves) == Self.cles(releves))
         let collisions = CollisionsRloc(releves: releves)
         let m = Self.maillage(jours: 1, Self.b, [0, 1, 2])
@@ -197,7 +288,7 @@ struct CollisionsRlocTests {
     @Test func extMacEtCites() {
         let x = "E0000000000000C1"
         let actives = [Self.a, Self.b]
-        let releves = [Self.releve(jours: 0, Self.a, [1, 4]),
+        let releves = [Self.releve(jours: 0, Self.a, [1, 4], actives: actives),
                        Self.releve(jours: 0.1, Self.b, [1, 2], ext: [1: x], liens: [(2, 4)], actives: actives)]
         #expect(Self.cles(releves) == ["rloc:0400", x])
         #expect(Self.cles(releves, routeur: 4) == ["rloc:1000", "rloc:0000000B:1000"])

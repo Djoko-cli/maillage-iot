@@ -42,6 +42,36 @@ struct CollisionsRlocAppTests {
         #expect(courbes.signal.count == 2, "une seule courbe, comme avant la phase 8")
     }
 
+    /// Relecture finale, Important 1 : la sonde, dans une partition avant la scission, se retrouve dans l'autre pendant
+    /// la scission avec les memes identifiants de routeur (la transition de Bonjour, ou la moitie renommee) ; le releve
+    /// d'avant la scission ne compte pas : rien n'est qualifie, ni au journal, ni dans la scene, ni dans l'historique.
+    @Test func releveDAvantLaScissionNeComptePas() async throws {
+        let dossier = JournalMaillageTests.dossier()
+        defer { try? FileManager.default.removeItem(at: dossier) }
+        // Les deux partitions de la panne rejouee, lues sur une surveillance a part.
+        let essai = Surveillance(mode: .direct, dossier: nil)
+        for a in ScenarioPanne.releves { essai.thread.integrer(a) }
+        let principale = try #require(essai.thread.reseau?.principale?.id)
+        let autre = try #require(essai.thread.reseau?.partitions.map(\.id).first { $0 != principale })
+        let s = Surveillance(mode: .direct, dossier: dossier)
+        let t = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) - 900)
+        // Avant la scission (aucune annonce : aucune partition active) : la sonde dans l'autre, memes identifiants.
+        s.thread.recevoir(Self.maillage(t, partition: autre), a: t)
+        #expect(s.thread.historique.last?.actives == [])
+        for a in ScenarioPanne.releves { s.thread.integrer(a) }
+        let r = try #require(s.thread.reseau)
+        #expect(r.estScinde && r.principale?.id == principale)
+        let m = Self.maillage(t.addingTimeInterval(120), partition: principale)
+        #expect(s.thread.sujets(m).routeurs[1]?.id == "rloc:0400")
+        s.thread.recevoir(m, a: t.addingTimeInterval(120))
+        #expect(s.thread.historique.last?.actives.isEmpty == false, "le releve garde la scission")
+        #expect(s.thread.sujets(m).routeurs[1]?.id == "rloc:0400" && s.thread.sujets(m).routeurs[5]?.id == "rloc:1400")
+        let affiche = try #require(s.thread.maillageAffiche(pour: r))
+        #expect(affiche.routeurs[1]?.id == "rloc:0400")
+        let cles = ClesHistorique(releves: s.thread.historique)
+        #expect(s.thread.historique.indices.map { cles.cle(releve: $0, routeur: 1) } == ["rloc:0400", "rloc:0400"])
+    }
+
     /// Reseau scinde (la panne rejouee : 73586B68 et E2E79FFC annonces ensemble) : la sonde dans la principale, puis dans
     /// l'autre partition, ou les memes identifiants sont d'autres routeurs ; ceux de l'autre sont qualifies (sujets du
     /// journal, maillage affiche, cles et courbes de l'historique, noms), sans evenement de routeur ; les releves gardent
