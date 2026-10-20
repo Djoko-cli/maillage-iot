@@ -232,21 +232,95 @@ struct CollisionsRlocTests {
     /// simple la garde (la sonde revenue dans A) ; les releves de B pendant la scission restent qualifies (recalcules de
     /// la liste seule, rien n'est melange). Si c'est B qui reste seule, elle reprend la cle simple : sans ExtMac, rien ne
     /// distingue ses routeurs (comportement d'avant la phase 8, accepte).
+    /// Marge (decision de Djoko du 20/10) : la scission ne finit qu'au troisieme releve de suite sans scission.
     @Test func finDeScission() {
         let actives = [Self.a, Self.b]
         let scission = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 0.1, Self.a, [1], actives: actives),
                         Self.releve(jours: 0.2, Self.b, [1, 2], actives: actives),
                         Self.releve(jours: 0.3, Self.a, [1], actives: actives)]
-        let finA = scission + [Self.releve(jours: 0.4, Self.a, [1]), Self.releve(jours: 0.5, Self.a, [1])]
-        #expect(Self.cles(finA) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400", "rloc:0400"])
-        let finB = scission + [Self.releve(jours: 0.4, Self.b, [1, 2])]
-        #expect(Self.cles(finB) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400"])
+        let finA = scission + [Self.releve(jours: 0.4, Self.a, [1]), Self.releve(jours: 0.5, Self.a, [1]),
+                               Self.releve(jours: 0.6, Self.a, [1])]
+        #expect(Self.cles(finA) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400", "rloc:0400",
+                                    "rloc:0400"])
+        let finB = scission + [Self.releve(jours: 0.4, Self.b, [1, 2]), Self.releve(jours: 0.5, Self.b, [1, 2]),
+                               Self.releve(jours: 0.6, Self.b, [1, 2])]
+        #expect(Self.cles(finB) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400",
+                                    "rloc:0000000B:0400", "rloc:0400"])
         // Une nouvelle scission plus tard : seuls ses releves comptent. A, vue pendant celle-ci, tient de nouveau la cle
         // simple ; sans releve de A pendant la nouvelle scission, B garde la cle simple (rien ne montre une collision).
         let encore = finA + [Self.releve(jours: 2, Self.a, [1], actives: actives), Self.releve(jours: 2.1, Self.b, [1, 2], actives: actives)]
         #expect(Self.cles(encore).last == "rloc:0000000B:0400")
         let sansA = finA + [Self.releve(jours: 2, Self.b, [1, 2], actives: actives)]
         #expect(Self.cles(sansA).last == "rloc:0400")
+    }
+
+    /// Marge, un releve sans scission au milieu (Bonjour qui vacille le temps d'une tournee) : rien ne change. La
+    /// partition qualifiee (B, celle de la sonde) reste qualifiee pendant ce releve, la tenante (A) garde la cle simple.
+    @Test func margeUnReleveSansScission() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2, 3], actives: actives),
+                       Self.releve(jours: 0.1, Self.b, [0, 1], actives: actives),
+                       Self.releve(jours: 0.2, Self.b, [0, 1]),
+                       Self.releve(jours: 0.3, Self.b, [0, 1], actives: actives),
+                       Self.releve(jours: 0.4, Self.a, [0, 1, 2, 3], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [0, 1], [0, 1], [0, 1], []])
+        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400", "rloc:0000000B:0400", "rloc:0000000B:0400",
+                                       "rloc:0400"])
+        // La tenante dans un releve de marge garde la cle simple.
+        let tenante = Array(releves.prefix(2)) + [Self.releve(jours: 0.2, Self.a, [0, 1, 2, 3])]
+        #expect(Self.collisions(tenante) == [[], [0, 1], []])
+    }
+
+    /// Marge, deux releves sans scission puis la scission revient : c'est la meme scission, avec la meme tenante et les
+    /// memes cles. Sans marge, la scission reprise depuis B donnerait la cle simple a B (vue d'abord), et A, tenante de la
+    /// scission, serait qualifiee. Le maillage d'un releve de marge, evalue avant ou apres son entree dans la liste, donne
+    /// les memes collisions (l'app evalue deux fois le maillage recu).
+    @Test func margeDeuxRelevesPuisRetour() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1], actives: actives),
+                       Self.releve(jours: 0.1, Self.b, [1, 2], actives: actives),
+                       Self.releve(jours: 0.2, Self.b, [1, 2]),
+                       Self.releve(jours: 0.3, Self.b, [1, 2]),
+                       Self.releve(jours: 0.4, Self.b, [1, 2], actives: actives),
+                       Self.releve(jours: 0.5, Self.a, [1], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [1], [1], [1], [1], []])
+        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400", "rloc:0000000B:0400", "rloc:0000000B:0400",
+                                       "rloc:0000000B:0400", "rloc:0400"])
+        let m = Self.maillage(jours: 0.3, Self.b, [1, 2])
+        #expect(CollisionsRloc(releves: Array(releves.prefix(3))).collisions(apres: m, actives: []) == [1], "pas encore dedans")
+        #expect(CollisionsRloc(releves: Array(releves.prefix(4))).collisions(apres: m, actives: []) == [1], "deja dedans")
+    }
+
+    /// Marge : au troisieme releve de suite sans scission, la scission est finie ; ce releve a les cles simples, et une
+    /// scission plus tard repart de zero. Un releve d'une partition qui n'etait pas de la scission (C) n'a aucune
+    /// collision pendant la marge, et compte dans la marge.
+    @Test func margeTroisRelevesSansScission() {
+        let actives = [Self.a, Self.b]
+        let scission = [Self.releve(jours: 0, Self.a, [1], actives: actives),
+                        Self.releve(jours: 0.1, Self.b, [1, 2], actives: actives)]
+        let fin = scission + [Self.releve(jours: 0.2, Self.b, [1, 2]), Self.releve(jours: 0.3, Self.b, [1, 2]),
+                              Self.releve(jours: 0.4, Self.b, [1, 2])]
+        #expect(Self.collisions(fin) == [[], [1], [1], [1], []])
+        #expect(Self.cles(fin).last == "rloc:0400")
+        let nouvelle = fin + [Self.releve(jours: 1, Self.b, [1, 2], actives: actives)]
+        #expect(Self.collisions(nouvelle).last == [], "nouvelle scission : A pas encore vue")
+        let avecC = scission + [Self.releve(jours: 0.2, Self.c, [1, 2]), Self.releve(jours: 0.3, Self.b, [1, 2]),
+                                Self.releve(jours: 0.4, Self.b, [1, 2])]
+        #expect(Self.collisions(avecC) == [[], [1], [], [1], []])
+    }
+
+    /// Le debut d'une scission reste immediat : le premier releve qui montre deux partitions actives avec le meme
+    /// identifiant qualifie, sans marge, y compris juste apres la fin d'une scission.
+    @Test func debutImmediat() {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 0.1, Self.a, [1], actives: actives),
+                       Self.releve(jours: 0.2, Self.b, [1], actives: actives)]
+        #expect(Self.collisions(releves) == [[], [], [1]])
+        let apresFin = [Self.releve(jours: 0, Self.a, [1], actives: actives), Self.releve(jours: 0.1, Self.b, [1], actives: actives),
+                        Self.releve(jours: 0.2, Self.b, [1]), Self.releve(jours: 0.3, Self.b, [1]),
+                        Self.releve(jours: 0.4, Self.b, [1]),
+                        Self.releve(jours: 1, Self.b, [1], actives: actives), Self.releve(jours: 1.1, Self.a, [1], actives: actives)]
+        #expect(Self.collisions(apresFin) == [[], [1], [1], [1], [], [], [1]], "B vue d'abord : A qualifiee")
     }
 
     /// Deterministe : la meme liste donne les memes cles ; le maillage du dernier releve, evalue apres la liste avec les

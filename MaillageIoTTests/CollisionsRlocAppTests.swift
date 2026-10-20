@@ -128,4 +128,48 @@ struct CollisionsRlocAppTests {
         #expect(relu.thread.historique.indices.map { cles.cle(releve: $0, routeur: 1) }
                 == ["rloc:0400", "rloc:0400", qualifiee, "rloc:0400"])
     }
+
+    /// Marge avant la fin d'une scission (decision de Djoko du 20/10), a travers un redemarrage de l'app : la sonde dans
+    /// l'autre partition, Bonjour n'annonce plus la scission. Le premier releve sans scission garde les cles qualifiees ;
+    /// relue par un nouveau lancement, la marge continue la ou elle en etait (elle se deduit des releves de l'historique,
+    /// comme la tenante) : le deuxieme releve reste qualifie, le troisieme finit la scission.
+    @Test func margeAPresUnRedemarrage() async throws {
+        let dossier = JournalMaillageTests.dossier()
+        defer { try? FileManager.default.removeItem(at: dossier) }
+        let s = Surveillance(mode: .direct, dossier: dossier)
+        for a in ScenarioPanne.releves { s.thread.integrer(a) }
+        let r = try #require(s.thread.reseau)
+        let principale = try #require(r.principale?.id)
+        let autre = try #require(r.partitions.map(\.id).first { $0 != principale })
+        let qualifiee = "rloc:\(autre):0400"
+        let t = Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down) - 900)
+        s.thread.recevoir(Self.maillage(t, partition: principale), a: t)
+        let b1 = Self.maillage(t.addingTimeInterval(120), partition: autre)
+        s.thread.recevoir(b1, a: t.addingTimeInterval(120))
+        #expect(s.thread.sujets(b1).routeurs[1]?.id == qualifiee)
+        var reunie = ScenarioPanne.annonces(a: ScenarioPanne.date(4, 10))
+        reunie.date = ScenarioPanne.fin.addingTimeInterval(60)
+        s.thread.integrer(reunie)
+        #expect(s.thread.reseau?.estScinde == false)
+        let b2 = Self.maillage(t.addingTimeInterval(240), partition: autre)
+        #expect(s.thread.sujets(b2).routeurs[1]?.id == qualifiee, "marge : evalue avant d'entrer dans l'historique")
+        s.thread.recevoir(b2, a: t.addingTimeInterval(240))
+        #expect(s.thread.historique.last?.actives == [])
+        #expect(s.thread.sujets(b2).routeurs[1]?.id == qualifiee, "marge : deja dans l'historique")
+
+        let relu = Surveillance(mode: .direct, dossier: dossier)
+        await relu.thread.chargerHistorique()
+        relu.thread.integrer(reunie)
+        let b3 = Self.maillage(t.addingTimeInterval(360), partition: autre)
+        #expect(relu.thread.sujets(b3).routeurs[1]?.id == qualifiee, "deuxieme releve de la marge, apres le redemarrage")
+        relu.thread.recevoir(b3, a: t.addingTimeInterval(360))
+        #expect(relu.thread.sujets(b3).routeurs[1]?.id == qualifiee)
+        let b4 = Self.maillage(t.addingTimeInterval(480), partition: autre)
+        #expect(relu.thread.sujets(b4).routeurs[1]?.id == "rloc:0400", "troisieme releve sans scission : fin")
+        relu.thread.recevoir(b4, a: t.addingTimeInterval(480))
+        #expect(relu.thread.sujets(b4).routeurs[1]?.id == "rloc:0400")
+        let cles = ClesHistorique(releves: relu.thread.historique)
+        #expect(relu.thread.historique.indices.map { cles.cle(releve: $0, routeur: 1) }
+                == ["rloc:0400", qualifiee, qualifiee, qualifiee, "rloc:0400"])
+    }
 }

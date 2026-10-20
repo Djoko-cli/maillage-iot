@@ -194,8 +194,11 @@ struct ClesHistoriqueTests {
     }
 
     /// Les collisions de RLOC16 a la lettre (phase 8, correctifs du 20/10), ecrites d'apres le texte de la regle et non
-    /// d'apres le code, en rejouant les releves 0 a `i`. La scission en cours : la suite des releves jusqu'a `i` qui ont
-    /// des partitions actives (deux ou plus, dont la sienne) ; hors scission, aucune collision. Seuls comptent les releves
+    /// d'apres le code, en rejouant les releves 0 a `i`. Les partitions actives d'un releve : les siennes (deux ou plus,
+    /// dont la sienne) ; a defaut, pendant la marge (un des deux releves qui suivent un releve de la scission, decision de
+    /// Djoko du 20/10), celles du dernier releve de la scission. La scission en cours : la suite des releves jusqu'a `i`
+    /// qui ont des partitions actives ; hors scission, ou pour un releve dont la partition n'en est pas, aucune
+    /// collision. Seuls comptent les releves
     /// de la scission en cours : une partition active a un identifiant si son dernier releve de la scission le cite (liste,
     /// lien, parent d'un enfant, signal, parent de la sonde). Un identifiant qu'ont deux partitions actives ou plus et qui
     /// n'a pas encore de tenante en recoit une, gardee jusqu'a la fin de la scission : parmi elles, celles qui l'avaient
@@ -209,21 +212,27 @@ struct ClesHistoriqueTests {
                 + (r.parentSonde.map { [$0] } ?? [])).filter { (0...62).contains($0) }
         }
         func scinde(_ r: ReleveMaillage) -> Bool { Set(r.actives).count >= 2 && r.actives.contains(r.partition) }
-        guard scinde(releves[i]) else { return [] }
-        let debut = (0...i).last { !scinde(releves[$0]) }.map { $0 + 1 } ?? 0
+        func actives(_ k: Int) -> [String] {
+            if scinde(releves[k]) { return releves[k].actives }
+            return (max(0, k - 2)..<k).last { scinde(releves[$0]) }.map { releves[$0].actives } ?? []
+        }
+        func membre(_ k: Int) -> Bool { actives(k).contains(releves[k].partition) }
+        guard membre(i) else { return [] }
+        let debut = (0...i).last { actives($0).isEmpty }.map { $0 + 1 } ?? 0
         var tenantes: [Int: String] = [:]
         var resultat: Set<Int> = []
         for k in debut...i {
             let r = releves[k]
             /// Le dernier releve de `p` dans la scission, jusqu'a `fin` compris.
             func dernier(_ p: String, jusqua fin: Int) -> ReleveMaillage? {
-                fin < debut ? nil : (debut...fin).last { releves[$0].partition == p }.map { releves[$0] }
+                fin < debut ? nil : (debut...fin).last { releves[$0].partition == p && membre($0) }.map { releves[$0] }
             }
             func a(_ p: String, _ id: Int, jusqua fin: Int) -> Bool { dernier(p, jusqua: fin).map { cites($0).contains(id) } ?? false }
             let precedent = resultat
             resultat = []
+            guard membre(k) else { continue }
             for id in 0...62 {
-                let ont = Set(r.actives).filter { a($0, id, jusqua: k) }
+                let ont = Set(actives(k)).filter { a($0, id, jusqua: k) }
                 if tenantes[id] == nil && ont.count >= 2 {
                     let avant = ont.filter { a($0, id, jusqua: k - 1) }
                     if k > debut, avant.contains(releves[k - 1].partition), cites(releves[k - 1]).contains(id), !precedent.contains(id) {
@@ -247,7 +256,8 @@ struct ClesHistoriqueTests {
     /// identifications eparses, des ExtMac qui changent d'identifiant, des identifiants seulement cites. Tirage fixe (un
     /// generateur congruentiel de graine donnee) : aucun hasard. Chaque cas de la regle est rencontre. Deux scissions
     /// (phase 8) : A et B actives ensemble aux releves 18 a 23, A et C aux releves 36 a 45 (B y est active aussi un
-    /// releve sur trois) ; les releves 24 a 31 (B seule, apres A) sont un changement d'identifiant, sans collision.
+    /// releve sur trois) ; les releves 24 et 25 sont la marge de la premiere ; les releves 26 a 31 (B seule, apres A) sont
+    /// un changement d'identifiant, sans collision.
     @Test func commeLaVersionNaive() {
         var graine: UInt64 = 0x5EED
         func tirage(_ n: UInt64) -> Int {
@@ -286,7 +296,8 @@ struct ClesHistoriqueTests {
         }
         #expect(vus == [.horsPlage, .jamais, .directe, .suivant, .precedent, .refusee, .horsBorne], "\(vus)")
         #expect(qualifiees > 0, "des cles qualifiees (deux scissions)")
-        #expect((24..<32).allSatisfy { collisions[$0].isEmpty }, "changement d'identifiant : aucune collision")
+        #expect((26..<32).allSatisfy { collisions[$0].isEmpty }, "changement d'identifiant : aucune collision")
+        #expect(!collisions[24].isEmpty || !collisions[25].isEmpty, "la marge de la premiere scission")
         #expect(releves.indices.allSatisfy { cles.collisions.collisions(releve: $0) == collisions[$0] })
     }
 }
