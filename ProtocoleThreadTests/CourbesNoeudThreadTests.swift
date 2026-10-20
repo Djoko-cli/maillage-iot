@@ -83,7 +83,8 @@ struct CourbesNoeudThreadTests {
     /// Un routeur identifie plus tard (verification du 05/10) : ses releves sans ExtMac prennent celle du suivant le plus
     /// proche (`ClesHistorique`), sur toute la liste et non la seule periode : ses liens d'avant rejoignent sa courbe, sans
     /// doublon « rloc », et sa fiche montre ses points d'avant son identification. Le meme identifiant dans une autre
-    /// partition reste a part.
+    /// partition reste a part ; sans scission (les deux partitions jamais actives ensemble, phase 8), sa cle de repli
+    /// reste simple.
     @Test func routeurIdentifiePlusTard() {
         let releves = [Self.releve(0, q: 1, rssi: -70, sansExt0: true, sansExt1: true),
                        Self.releve(5, q: 2, rssi: -65, sansExt0: true, sansExt1: true),

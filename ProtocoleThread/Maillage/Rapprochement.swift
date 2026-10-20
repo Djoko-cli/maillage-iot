@@ -8,7 +8,7 @@ public struct NoeudSonde: Hashable, Sendable, Identifiable {
     }
 
     /// Id du noeud du graphe : instance du routeur de bordure, id de l'appareil, ou
-    /// "rloc:B400" quand l'instantane ne le connait pas.
+    /// "rloc:B400" quand l'instantane ne le connait pas ("rloc:<partition>:B400" pendant une collision, `CleRloc`).
     public let id: String
     public let rloc16: UInt16
     public let genre: Genre
@@ -134,7 +134,9 @@ public struct MaillageAffiche: Hashable, Sendable {
     /// - par elimination : le seul routeur de bordure non identifie est la seule annonce
     ///   de la partition qu'aucun routeur n'a reprise ;
     /// - sinon "rloc:XXXX", inconnu de l'instantane ; un routeur de bordure y garde ses
-    ///   candidats, les annonces non reprises qui peuvent etre la sienne.
+    ///   candidats, les annonces non reprises qui peuvent etre la sienne. Pendant une collision de son identifiant de
+    ///   routeur avec une autre partition active (`collisions`, de `CollisionsRloc` ; aucune sans historique),
+    ///   "rloc:<partition>:XXXX", pour lui et ses enfants inconnus (`CleRloc`).
     /// Ces quatre dernieres regles ecartent une annonce dont le `xa` et l'ExtMac du routeur sont
     /// connus tous deux et differents, ou dont le `xa` est l'ExtMac connue d'un autre routeur.
     /// Un enfant vu deux fois (meme ExtMac, precision 26 du plan 4b) ne donne qu'un noeud et un
@@ -148,12 +150,12 @@ public struct MaillageAffiche: Hashable, Sendable {
     /// enfant qui n'a l'adresse annoncee d'aucun appareil est rapproche de celui dont c'est la derniere (un
     /// accessoire HomeKit, dont l'hote n'est pas l'ExtMac, se reconnait ainsi).
     public init(maillage: Maillage, reseau: Reseau, appareils: [Appareil], trel: Set<String> = [],
-                dernieresAdresses: [String: AdresseIPv6] = [:]) {
+                dernieresAdresses: [String: AdresseIPv6] = [:], collisions: Set<Int> = []) {
         partition = maillage.partition
         date = maillage.date
         let bordures = reseau.partitions.first { $0.id == maillage.partition }?.routeurs ?? []
         let parId = Dictionary(appareils.map { ($0.id.uppercased(), $0) }, uniquingKeysWith: { a, _ in a })
-        func rloc(_ r: UInt16) -> String { String(format: "rloc:%04X", r) }
+        func rloc(_ r: UInt16) -> String { CleRloc.cle(r, partition: maillage.partition, collisions: collisions) }
 
         // Routeurs reconnus par leur ExtMac (id de noeud, par identifiant de routeur) : le `xa`
         // d'une annonce, sinon l'hote d'un appareil.

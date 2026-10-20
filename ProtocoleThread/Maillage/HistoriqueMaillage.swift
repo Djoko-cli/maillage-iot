@@ -14,7 +14,10 @@ import MaillageCoeur
 ///   il ne donne pas de qualite (`AccesCanal`). Un enfant sans ExtMac n'a pas d'identite stable (son
 ///   RLOC16 change avec son parent) : il n'est pas garde ;
 /// - `signaux` : `[identifiant, dBm]`, les routeurs que la sonde entend, son parent compris ;
-/// - `parentSonde` : identifiant du parent de la sonde (absent sans parent connu).
+/// - `parentSonde` : identifiant du parent de la sonde (absent sans parent connu) ;
+/// - `actives` : pendant une scission seulement, les partitions que Bonjour annoncait ensemble pour le reseau de la
+///   sonde, la sienne comprise, triees (phase 8 : les collisions de RLOC16, `CollisionsRloc`) ; absent sinon, la ligne
+///   s'ecrit alors comme avant.
 /// Les champs facultatifs manquent aux lignes d'avant : elles se lisent comme avant, sources et taux
 /// inconnus ; une source inconnue (version plus recente) aussi.
 public struct ReleveMaillage: Hashable, Sendable {
@@ -56,9 +59,15 @@ public struct ReleveMaillage: Hashable, Sendable {
     public let enfants: [Enfant]
     public let signaux: [SignalSonde]
     public let parentSonde: Int?
+    /// Les partitions actives en meme temps que celle du releve, la sienne comprise, triees : deux ou plus pendant une
+    /// scission, vide sinon (`CollisionsRloc`).
+    public let actives: [String]
 
     public init(date: Date, partition: String, routeurs: [Routeur], liens: [LienRadio], enfants: [Enfant],
-                signaux: [SignalSonde], parentSonde: Int?) {
+                signaux: [SignalSonde], parentSonde: Int?, actives: [String] = []) {
+        // Une scission compte la partition du releve et au moins une autre ; sinon (une seule partition annoncee, ou
+        // pas la sienne) elle n'est pas gardee.
+        let ensemble = Set(actives)
         self.date = date
         self.partition = partition
         self.routeurs = routeurs
@@ -66,35 +75,40 @@ public struct ReleveMaillage: Hashable, Sendable {
         self.enfants = enfants
         self.signaux = signaux
         self.parentSonde = parentSonde
+        self.actives = ensemble.count >= 2 && ensemble.contains(partition) ? ensemble.sorted() : []
     }
 
     /// Releve d'un maillage : ses enfants identifies (`Maillage.enfantsIdentifies`), avec leur source et leur taux
-    /// d'acces au canal refuses arrondi au 1/10 000 ; ses liens sans les dates de leurs mesures.
-    public init(_ m: Maillage) {
+    /// d'acces au canal refuses arrondi au 1/10 000 ; ses liens sans les dates de leurs mesures ; les partitions actives
+    /// en meme temps, d'apres Bonjour (voir `actives`).
+    public init(_ m: Maillage, actives: [String] = []) {
         self.init(date: m.date, partition: m.partition,
                   routeurs: m.routeurs.map { Routeur(id: $0.id, extMac: $0.extMac) },
                   liens: m.liens.map(\.sansDates),
                   enfants: m.enfantsIdentifies.sorted { $0.key < $1.key }
                       .map { Enfant(extMac: $0.key, parent: $0.value.parent, qualite: $0.value.qualite, source: $0.value.source,
                                     echecs: $0.value.echecs.map { ($0 * 10_000).rounded() / 10_000 }) },
-                  signaux: m.signaux, parentSonde: m.parentSonde)
+                  signaux: m.signaux, parentSonde: m.parentSonde, actives: actives)
     }
 
     /// Identifiants de routeur possibles : 0 a 62 (un RLOC16 porte 6 bits de routeur ; 63 n'est pas
     /// attribue).
     static let identifiantsRouteur = 0...62
 
-    /// Cle d'un routeur du releve : son ExtMac, sinon "rloc:XXXX" (valable dans sa partition) ;
-    /// "rloc:?" pour un identifiant hors plage (fonction totale : jamais d'arret du programme).
+    /// Cle d'un routeur du releve seul : son ExtMac, sinon "rloc:XXXX" (valable dans sa partition) ;
+    /// "rloc:?" pour un identifiant hors plage (fonction totale : jamais d'arret du programme). Hors de toute liste,
+    /// pas de collision : la cle de repli est simple (dans l'historique, `ClesHistorique` la qualifie pendant une
+    /// collision).
     public func cle(routeur id: Int) -> String {
-        guard Self.identifiantsRouteur.contains(id) else { return "rloc:?" }
-        return routeurs.first { $0.id == id }?.extMac ?? String(format: "rloc:%04X", UInt16(id) << 10)
+        guard Self.identifiantsRouteur.contains(id) else { return CleRloc.horsPlage }
+        return routeurs.first { $0.id == id }?.extMac
+            ?? CleRloc.cle(UInt16(id) << 10, partition: partition, collisions: [])
     }
 }
 
 extension ReleveMaillage: Codable {
     private enum CodingKeys: String, CodingKey {
-        case date, partition, routeurs, liens, enfants, signaux, parentSonde
+        case date, partition, routeurs, liens, enfants, signaux, parentSonde, actives
     }
 
     /// Codes courts des sources dans l'historique.
@@ -156,7 +170,9 @@ extension ReleveMaillage: Codable {
                                                    debugDescription: "identifiant de routeur hors de 0...62 : \(p)")
         }
         self.init(date: try c.decode(Date.self, forKey: .date), partition: try c.decode(String.self, forKey: .partition),
-                  routeurs: routeurs, liens: liens, enfants: enfants, signaux: signaux, parentSonde: parentSonde)
+                  routeurs: routeurs, liens: liens, enfants: enfants, signaux: signaux, parentSonde: parentSonde,
+                  // Un champ `actives` illisible ne refuse pas la ligne : elle se lit sans scission.
+                  actives: (try? c.decodeIfPresent([String].self, forKey: .actives)).flatMap { $0 } ?? [])
     }
 
     /// N'ecrit jamais un identifiant de routeur hors de 0...62 (donnees non conformes) : la lecture
@@ -203,6 +219,7 @@ extension ReleveMaillage: Codable {
             try l.encode(x.rssi)
         }
         try c.encodeIfPresent(parentSonde.flatMap { ids.contains($0) ? $0 : nil }, forKey: .parentSonde)
+        if !actives.isEmpty { try c.encode(actives, forKey: .actives) }
     }
 }
 

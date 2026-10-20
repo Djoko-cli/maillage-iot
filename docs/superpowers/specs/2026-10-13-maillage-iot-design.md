@@ -501,6 +501,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 5 : publication
 - [x] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
 - [x] Phase 7 : pièce proposée aux HomePod et à l'Apple TV par leur annonce AirPlay (conception du 19/10 : `2026-10-19-piece-airplay-design.md`)
+- [x] Phase 8 : clés `rloc:` de Thread qualifiées par la partition en cas de collision (décisions du 20/10 : seulement entre partitions actives en même temps, tenante stable pendant la scission, fin après trois relevés sans scission)
 
 ### 6.2 Les tests
 
@@ -695,8 +696,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
   dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.
 - Catégories de notification propres à Zigbee (parent perdu, pont injoignable).
-- Clés `rloc:` de Thread qualifiées par leur partition : deux partitions peuvent avoir le même RLOC16. Le
-  comportement actuel est gardé à l'étape 1 ; à corriger ensuite, sous le rejeu.
 - « Identifier les candidats » dans le menu d'association (proposé chez Thread, gelé jusqu'à la fusion).
 - Mineurs reportés de Zigbee : pertes de parent de la sonde non journalisées (la nuit de comparaison du plan Wi-Fi
   est restée partielle), messages neutres affichés en rouge.

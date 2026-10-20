@@ -7,7 +7,8 @@ import MaillageCoeur
 /// - son ExtMac dans ce releve, s'il en a une (celle du premier routeur de cet `id`, comme `cle(routeur:)`) ;
 /// - sinon, l'ExtMac du meme `id`, dans la meme partition, au releve suivant le plus proche qui en a une, a 7 jours au
 ///   plus (`ecartMax`) ; a defaut, au precedent le plus proche, a 7 jours au plus ;
-/// - sinon "rloc:XXXX".
+/// - sinon "rloc:XXXX", ou "rloc:<partition>:XXXX" pendant une collision de cet identifiant avec une autre partition
+///   active en meme temps (`CollisionsRloc`, phase 8 : une scission gardee dans le releve).
 ///
 /// Deux routeurs d'un releve n'ont jamais la meme cle : une ExtMac ainsi trouvee est refusee (la cle reste "rloc")
 /// si un autre identifiant du releve, de sa liste ou seulement cite (lien, parent d'un enfant, signal, parent de la
@@ -44,9 +45,12 @@ public struct ClesHistorique: Sendable {
     /// Par partition et identifiant : les releves ou le premier routeur de cet identifiant a une ExtMac, par indice
     /// croissant.
     private let identifies: [Routeur: [Identifie]]
+    /// Les collisions de RLOC16 entre partitions de ces releves : la cle de repli de chacun.
+    public let collisions: CollisionsRloc
 
-    /// `releves` : du plus ancien au plus recent.
-    public init(releves: [ReleveMaillage]) {
+    /// `releves` : du plus ancien au plus recent. `collisions` : celles de ces memes releves, si elles sont deja
+    /// calculees (la surveillance les garde) ; nil : calculees ici.
+    public init(releves: [ReleveMaillage], collisions: CollisionsRloc? = nil) {
         var identifies: [Routeur: [Identifie]] = [:]
         for (i, r) in releves.enumerated() {
             // Identifiants deja vus dans ce releve, en masque (0...62 tient dans 64 bits) : seul le premier compte.
@@ -61,16 +65,24 @@ public struct ClesHistorique: Sendable {
         }
         self.releves = releves
         self.identifies = identifies
+        self.collisions = collisions ?? CollisionsRloc(releves: releves)
     }
 
-    private static func rloc(_ id: Int) -> String { String(format: "rloc:%04X", UInt16(id) << 10) }
+    /// La cle de repli du routeur `id` au releve `i` (`CleRloc`) ; simple pour un releve hors de la liste.
+    private func rloc(releve i: Int, _ id: Int) -> String {
+        guard releves.indices.contains(i) else { return CleRloc.cle(UInt16(id) << 10, partition: "", collisions: []) }
+        return CleRloc.cle(UInt16(id) << 10, partition: releves[i].partition,
+                           collisions: collisions.collisions(releve: i))
+    }
 
     /// Cle du routeur `id` au releve d'indice `i` de la liste (voir le type). Fonction totale : un releve hors de la
     /// liste rend "rloc:XXXX".
     public func cle(releve i: Int, routeur id: Int) -> String {
-        guard ReleveMaillage.identifiantsRouteur.contains(id) else { return "rloc:?" }
-        guard releves.indices.contains(i), let (e, directe) = extMac(releve: i, routeur: id) else { return Self.rloc(id) }
-        return directe || !prise(e, releve: i, sauf: id) ? e : Self.rloc(id)
+        guard ReleveMaillage.identifiantsRouteur.contains(id) else { return CleRloc.horsPlage }
+        guard releves.indices.contains(i), let (e, directe) = extMac(releve: i, routeur: id) else {
+            return rloc(releve: i, id)
+        }
+        return directe || !prise(e, releve: i, sauf: id) ? e : rloc(releve: i, id)
     }
 
     /// L'ExtMac `e` est tenue ou trouvee par un autre identifiant que `id` au releve `i`, de sa liste ou cite. Un

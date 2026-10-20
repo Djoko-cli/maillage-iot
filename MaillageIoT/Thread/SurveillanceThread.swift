@@ -108,6 +108,10 @@ final class SurveillanceThread: ModeleProtocole {
     @ObservationIgnored private var clesGardees: ClesHistorique?
     /// Nombre de resolutions construites : une par changement de l'historique au plus (lu par les tests).
     @ObservationIgnored private(set) var constructionsCles = 0
+    /// Collisions de RLOC16 entre partitions actives en meme temps, d'apres l'historique (`CollisionsRloc`, phase 8),
+    /// calculees a la premiere demande et gardees, comme `clesGardees`, jusqu'au prochain changement de l'historique. A
+    /// part de la resolution des cles : le journal et la scene en ont besoin a chaque tournee, sans la resolution.
+    @ObservationIgnored private var collisionsGardees: CollisionsRloc?
 
     /// La coque qui porte le journal, les alertes et les surnoms ; posee par `Surveillance.init`.
     @ObservationIgnored weak var coque: Surveillance?
@@ -398,13 +402,17 @@ final class SurveillanceThread: ModeleProtocole {
         maillage = m
         maillageRecu = date
         maillageRelu = false
+        // Les partitions actives a la reception, lues avant que le releve n'entre dans l'historique : les sujets du
+        // journal et le releve garde voient la meme scission.
+        let actives = partitionsActives(m)
         ajouter(suiviMaillage.integrer(m, sujets: sujets(m)))
         guard mode == .direct else { return }
         garderMaillage(m, recu: date)
-        let r = ReleveMaillage(m)
+        let r = ReleveMaillage(m, actives: actives)
         let limite = date.addingTimeInterval(-Surveillance.dureeHistorique)
         historique = historique.filter { $0.date >= limite } + [r]
         clesGardees = nil
+        collisionsGardees = nil
         coque?.purgerSiNouveauMois(date)
         guard let f = fichiersHistorique else { return }
         do {
@@ -439,6 +447,7 @@ final class SurveillanceThread: ModeleProtocole {
             let premier = (historique.first?.date ?? .distantFuture).addingTimeInterval(-0.001)
             historique = lus.filter { $0.date < premier } + historique
             clesGardees = nil
+            collisionsGardees = nil
         } catch {
             Surveillance.journalMac.error("historique illisible : \(error.localizedDescription, privacy: .public)")
         }
@@ -452,7 +461,8 @@ final class SurveillanceThread: ModeleProtocole {
             return nil
         }
         return MaillageAffiche(maillage: m, reseau: r, appareils: i.appareils + Array(suivi.disparus.values),
-                               trel: i.trel, dernieresAdresses: dernieresAdressesVerifiees(a: maintenant))
+                               trel: i.trel, dernieresAdresses: dernieresAdressesVerifiees(a: maintenant),
+                               collisions: collisions(m))
     }
 
     /// Noeuds d'un maillage pour le journal : leur id dans le graphe et leur nom affiche,
@@ -462,12 +472,13 @@ final class SurveillanceThread: ModeleProtocole {
     func sujets(_ m: Maillage) -> SujetsMaillage {
         let affiche = rapprochement(m)
         let appareils = (instantane?.appareils ?? []) + Array(suivi.disparus.values)
+        let collisions = collisions(m)
         func sujet(_ n: NoeudSonde?, rloc16: UInt16, genre: NoeudSonde.Genre, bordure: Bool) -> Sujet {
-            let noeud = n ?? NoeudSonde(id: String(format: "rloc:%04X", rloc16), rloc16: rloc16, genre: genre,
-                                        reconnu: false, bordure: bordure)
+            let noeud = n ?? NoeudSonde(id: CleRloc.cle(rloc16, partition: m.partition, collisions: collisions),
+                                        rloc16: rloc16, genre: genre, reconnu: false, bordure: bordure)
             return Sujet(id: noeud.id, nom: nomNoeud(noeud.id, maillage: affiche) ?? LibellesNoeuds.inconnu(noeud))
         }
-        var s = SujetsMaillage()
+        var s = SujetsMaillage(collisions: collisions)
         for r in m.routeurs {
             s.routeurs[r.id] = sujet(affiche?.routeurs[r.id], rloc16: r.rloc16, genre: .routeur, bordure: r.bordure)
         }
@@ -636,10 +647,36 @@ final class SurveillanceThread: ModeleProtocole {
         Dictionary(r.routeurs.map { ($0.instance, nom($0)) }, uniquingKeysWith: { a, _ in a })
     }
 
-    /// La resolution des cles de l'historique, gardee (`clesGardees`).
+    /// Les collisions de RLOC16 de l'historique, gardees (`collisionsGardees`).
+    private var collisionsRloc: CollisionsRloc {
+        if let c = collisionsGardees { return c }
+        let c = CollisionsRloc(releves: historique)
+        collisionsGardees = c
+        return c
+    }
+
+    /// Identifiants de routeur du maillage `m` dont une autre partition active tient la cle simple (`CollisionsRloc`) :
+    /// `m` evalue apres l'historique avec ses partitions actives (`partitionsActives`), qu'il y soit deja (son releve est
+    /// le dernier, meme resultat) ou pas encore (`recevoir` nomme ses sujets avant d'ajouter son releve) ; aucun en demo
+    /// (pas d'historique : les autres partitions n'ont aucun identifiant connu).
+    func collisions(_ m: Maillage) -> Set<Int> { collisionsRloc.collisions(apres: m, actives: partitionsActives(m)) }
+
+    /// Les partitions actives en meme temps que celle du maillage `m` (phase 8, decision de Djoko du 20/10) : celles du
+    /// reseau de Bonjour qui contient sa partition, quand il est scinde (`Reseau.estScinde`, le bandeau « Reseau
+    /// scinde »), la sienne comprise ; vide sinon, ou si aucun reseau n'annonce sa partition. Une fois le releve de `m`
+    /// dans l'historique (le dernier, `recevoir`), celles qu'il garde : les cles d'un maillage ne changent pas avec
+    /// l'instantane, et restent celles de ses courbes.
+    func partitionsActives(_ m: Maillage) -> [String] {
+        if let r = historique.last, r.date == m.date, r.partition == m.partition { return r.actives }
+        guard let r = instantane?.reseaux.first(where: { r in r.partitions.contains { $0.id == m.partition } }),
+              r.estScinde else { return [] }
+        return Set(r.partitions.map(\.id)).sorted()
+    }
+
+    /// La resolution des cles de l'historique, gardee (`clesGardees`), sur les collisions gardees.
     private var clesHistorique: ClesHistorique {
         if let c = clesGardees { return c }
-        let c = ClesHistorique(releves: historique)
+        let c = ClesHistorique(releves: historique, collisions: collisionsRloc)
         clesGardees = c
         constructionsCles += 1
         return c
@@ -654,11 +691,13 @@ final class SurveillanceThread: ModeleProtocole {
         return (clesHistorique, historique.count - 1)
     }
 
-    /// Cle d'un routeur du dernier maillage dans l'historique, celle de ses courbes (verification du 05/10) : son
-    /// ExtMac ; sans elle, celle que `ClesHistorique` donne au releve du maillage dans l'historique ; sinon "rloc:XXXX".
-    private func cleHistorique(routeur r: RouteurMaillage, _ resolution: (cles: ClesHistorique, releve: Int)?) -> String {
+    /// Cle d'un routeur du dernier maillage `m` dans l'historique, celle de ses courbes (verification du 05/10) : son
+    /// ExtMac ; sans elle, celle que `ClesHistorique` donne au releve du maillage dans l'historique ; sinon "rloc:XXXX"
+    /// (qualifiee pendant une collision, `CleRloc`).
+    private func cleHistorique(routeur r: RouteurMaillage, de m: Maillage,
+                               _ resolution: (cles: ClesHistorique, releve: Int)?) -> String {
         if let x = r.extMac { return x }
-        guard let resolution else { return String(format: "rloc:%04X", r.rloc16) }
+        guard let resolution else { return CleRloc.cle(r.rloc16, partition: m.partition, collisions: collisions(m)) }
         return resolution.cles.cle(releve: resolution.releve, routeur: r.id)
     }
 
@@ -675,7 +714,9 @@ final class SurveillanceThread: ModeleProtocole {
         if let m = maillage, let n = rapprochement(m)?.noeud(id) {
             switch n.genre {
             case .routeur:
-                if let r = m.routeur(Int(n.rloc16 >> 10)) { return cleHistorique(routeur: r, resoudre ? resolution(m) : nil) }
+                if let r = m.routeur(Int(n.rloc16 >> 10)) {
+                    return cleHistorique(routeur: r, de: m, resoudre ? resolution(m) : nil)
+                }
             case .enfant:
                 if let x = m.enfants.first(where: { $0.rloc16 == n.rloc16 })?.extMac { return x }
             }
@@ -695,7 +736,7 @@ final class SurveillanceThread: ModeleProtocole {
         var routeurs: [(routeur: RouteurMaillage, cle: String)] = []
         if let m = maillage {
             let r = resolution(m)
-            routeurs = m.routeurs.map { ($0, cleHistorique(routeur: $0, r)) }
+            routeurs = m.routeurs.map { ($0, cleHistorique(routeur: $0, de: m, r)) }
         }
         func nomDe(_ cle: String) -> String {
             if let affiche {
@@ -809,7 +850,8 @@ final class SurveillanceThread: ModeleProtocole {
             return nil
         }
         return MaillageAffiche(maillage: m, reseau: r, appareils: i.appareils + Array(suivi.disparus.values),
-                               trel: i.trel, dernieresAdresses: dernieresAdressesVerifiees(a: maintenant))
+                               trel: i.trel, dernieresAdresses: dernieresAdressesVerifiees(a: maintenant),
+                               collisions: collisions(m))
     }
 
     /// Chiffres du reseau affiche.
