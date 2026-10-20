@@ -502,6 +502,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
 - [x] Phase 7 : pièce proposée aux HomePod et à l'Apple TV par leur annonce AirPlay (conception du 19/10 : `2026-10-19-piece-airplay-design.md`)
 - [x] Phase 8 : clés `rloc:` de Thread qualifiées par la partition en cas de collision (décisions du 20/10 : seulement entre partitions actives en même temps, tenante stable pendant la scission, fin après trois relevés sans scission)
+- [ ] Phase 9 : le journal nomme la pièce de l'appareil en français naturel (décisions du 20/10)
 
 ### 6.2 Les tests
 
