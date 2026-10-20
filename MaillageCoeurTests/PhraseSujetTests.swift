@@ -190,6 +190,66 @@ struct PhraseSujetTests {
         }
     }
 
+    // MARK: Parenthese finale du nom (phase 9, correctif)
+
+    /// Une precision entre parentheses en fin de nom (« (Hue) », « (droite) ») est mise de cote, la phrase se construit sur
+    /// le reste, puis la parenthese est remise juste apres le groupe nominal.
+    @Test func parentheseFinaleNomQuiContientLaPiece() {
+        #expect(Self.fr("Prise salon (Hue)", "Salon") == "La prise du salon (Hue) a perdu son parent")
+        #expect(Self.fr("Lampe bureau (droite)", "Bureau") == "La lampe du bureau (droite) a perdu son parent")
+        #expect(Self.fr("Lampe bureau (gauche)", "Bureau") == "La lampe du bureau (gauche) a perdu son parent")
+        #expect(Self.fr("Bureau - lampe (droite)", "Bureau") == "La lampe du bureau (droite) a perdu son parent")
+    }
+
+    @Test func parentheseFinaleEnIncise() {
+        #expect(Self.fr("Lampe chevet (droite)", "Bureau") == "La lampe chevet (droite), dans le bureau, a perdu son parent")
+        #expect(Self.fr("HomePod Avant (Hue)", "Salon") == "HomePod Avant (Hue), dans le salon, a perdu son parent")
+        #expect(Self.fr("Lampe salonique (gauche)", "Salon") == "La lampe salonique (gauche), dans le salon, a perdu son parent")
+    }
+
+    @Test func parentheseFinaleRepliSansArticle() {
+        // Piece inconnue : le nom (avec sa parenthese), un tiret, la piece.
+        #expect(Self.fr("Hue Go (droite)", "Zone Z7") == "Hue Go (droite) — Zone Z7 : a perdu son parent")
+        #expect(Self.fr("Lampe chevet (droite)", "Zone Z7") == "La lampe chevet (droite) — Zone Z7 : a perdu son parent")
+        // Appareil inconnu, piece dans le nom : le nom seul, parenthese comprise.
+        #expect(Self.fr("Zeta bureau (droite)", "Bureau") == "Zeta bureau (droite) a perdu son parent")
+        #expect(Self.fr("Hue Go bureau (Hue)", "Bureau") == "Hue Go bureau (Hue) a perdu son parent")
+    }
+
+    @Test func deuxParenthesesFinales() {
+        #expect(Self.fr("Prise salon (Hue) (gauche)", "Salon") == "La prise du salon (Hue) (gauche) a perdu son parent")
+        #expect(Self.fr("Lampe chevet (Hue) (droite)", "Bureau") == "La lampe chevet (Hue) (droite), dans le bureau, a perdu son parent")
+    }
+
+    /// Une parenthese au milieu du nom n'est pas touchee ; la piece entre parentheses reste la piece.
+    @Test func parentheseAuMilieuOuPieceEntreParentheses() {
+        #expect(Self.fr("Lampe (droite) bureau", "Bureau") == "La lampe (droite) du bureau a perdu son parent")
+        #expect(Self.fr("Lampe (droite) chevet", "Bureau") == "La lampe (droite) chevet, dans le bureau, a perdu son parent")
+        #expect(Self.fr("Lampe (Bureau)", "Bureau") == "La lampe du bureau a perdu son parent")
+        #expect(Self.fr("Lampe (Bureau) (droite)", "Bureau") == "La lampe du bureau (droite) a perdu son parent")
+        // Un nom qui n'est qu'une parenthese : rien a mettre de cote.
+        #expect(Self.fr("(Hue)", "Salon") == "(Hue), dans le salon, a perdu son parent")
+    }
+
+    @Test func parentheseFinaleMilieuDePhraseEtAccord() {
+        let m = PhraseSujet.de(nom: "Prise salon (Hue)", piece: "Salon", langue: .francais, debutDePhrase: false)
+        #expect(m.texte == "la prise du salon (Hue)")
+        #expect(m.suite == "")
+        let n = PhraseSujet.de(nom: "HomePod Avant (Hue)", piece: "Salon", langue: .francais, debutDePhrase: false)
+        #expect(n.texte == "HomePod Avant (Hue), dans le salon")
+        #expect(n.suite == ",")
+        #expect(Self.accord("Lampes bureau (droite)", "Bureau") == AccordSujet(feminin: true, pluriel: true))
+    }
+
+    @Test func parentheseFinaleEnAnglais() {
+        func en(_ nom: String, _ piece: String?) -> String {
+            PhraseSujet.de(nom: nom, piece: piece, langue: .anglais).suivi(de: "lost its parent")
+        }
+        #expect(en("Prise salon (Hue)", "Salon") == "Prise salon (Hue) lost its parent", "la piece est dans le nom : pas ajoutee")
+        #expect(en("Desk lamp (Hue)", "Office") == "Desk lamp (Hue) (Office) lost its parent", "la piece n'est pas dans le nom : ajoutee")
+        #expect(en("Desk lamp office (Hue)", "Office") == "Desk lamp office (Hue) lost its parent")
+    }
+
     // MARK: Anglais
 
     @Test func anglais() {

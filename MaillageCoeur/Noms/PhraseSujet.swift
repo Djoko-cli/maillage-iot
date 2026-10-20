@@ -36,6 +36,9 @@ public struct AccordSujet: Hashable, Sendable {
 /// Un mot d'appareil connu recoit son article partout (« La lampe chevet, dans le bureau, »). Le mot de la piece n'est
 /// retire du nom que s'il en termine ou en commence le texte, en mots entiers, sans casse ni accents : « Salon de thé »
 /// dans la piece « Salon » ne perd pas son « Salon ».
+/// Une precision entre parentheses en fin de nom (« (Hue) », « (droite) ») est mise de cote : la phrase se construit sur le
+/// reste, puis la parenthese est remise juste apres le groupe nominal (« La prise du salon (Hue) », « La lampe chevet
+/// (droite), dans le bureau, »). Une parenthese au milieu du nom, ou qui est la piece elle-meme, n'est pas touchee.
 public struct PhraseSujet: Hashable, Sendable {
     /// Le sujet, sans ponctuation finale : « La lampe du bureau », « HomePod Avant, dans le salon ». Il se place tel
     /// quel au milieu d'une phrase (avec `debutDePhrase: false`, sans majuscule a l'article).
@@ -59,13 +62,16 @@ public struct PhraseSujet: Hashable, Sendable {
     /// `debutDePhrase` : majuscule a l'article du groupe nominal (un nom propre garde sa casse).
     public static func de(nom: String, piece: String?, langue: LangueSujet, debutDePhrase: Bool = true) -> PhraseSujet {
         let piece = piece?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let jn = Texte.jetons(nom)
         let jp = Texte.jetons(piece)
-        guard !piece.isEmpty, !jp.isEmpty, !jn.isEmpty else { return PhraseSujet(texte: nom, suite: "") }
+        guard !piece.isEmpty, !jp.isEmpty, !Texte.jetons(nom).isEmpty else { return PhraseSujet(texte: nom, suite: "") }
+        // Les parentheses finales sont mises de cote : tout ce qui suit s'ecrit sur le nom restant.
+        let (noyau, parentheses) = Self.sansParenthesesFinales(nom, piece: jp)
+        let nom = noyau
+        let jn = Texte.jetons(nom)
         let emplacement = Self.emplacement(de: jp, dans: jn)
 
         if langue == .anglais {
-            return PhraseSujet(texte: emplacement == .fin ? nom : "\(nom) (\(piece))", suite: "")
+            return PhraseSujet(texte: emplacement == .fin ? noyau + parentheses : "\(noyau)\(parentheses) (\(piece))", suite: "")
         }
 
         let salle = LexiqueMaison.piece(dans: jp)
@@ -76,13 +82,13 @@ public struct PhraseSujet: Hashable, Sendable {
             let reste = emplacement == .fin ? 0..<(jn.count - jp.count) : jp.count..<jn.count
             if let g = Self.groupe(nom, jn, reste) {
                 let lieu = Self.lieu(piece, jp, salle)
-                let texte = g.texte + " " + lieu.avec(.de)
+                let texte = g.texte + " " + lieu.avec(.de) + parentheses
                 return PhraseSujet(texte: debutDePhrase ? Self.majuscule(texte) : texte, suite: "", accord: g.accord)
             }
         }
         // Le nom du noeud, avec l'article de son mot d'appareil quand il est connu, sinon tel quel.
         let groupeNom = Self.groupe(nom, jn, 0..<jn.count)
-        let nomGroupe = groupeNom.map(enTete) ?? nom
+        let nomGroupe = (groupeNom.map(enTete) ?? nom) + parentheses
         let accord = groupeNom?.accord ?? AccordSujet()
         // 2. La piece termine le nom (mais le mot d'appareil est inconnu, ou la piece) : le nom dit deja la piece.
         if emplacement == .fin { return PhraseSujet(texte: nomGroupe, suite: "", accord: accord) }
@@ -106,6 +112,26 @@ public struct PhraseSujet: Hashable, Sendable {
         if Array(jn.suffix(jp.count)).map(\.plie) == mots { return .fin }
         if Array(jn.prefix(jp.count)).map(\.plie) == mots { return .debut }
         return nil
+    }
+
+    /// Le nom sans ses parentheses finales (« Prise salon (Hue) » : « Prise salon » et « (Hue) »), dans l'ordre ecrit, chacune
+    /// precedee d'une espace. Une parenthese qui est la piece elle-meme reste dans le nom (« Lampe (Bureau) »), et on ne met
+    /// rien de cote si le nom n'a plus de mot ensuite.
+    private static func sansParenthesesFinales(_ nom: String, piece jp: [Texte.Jeton]) -> (nom: String, parentheses: String) {
+        let mots = jp.map(\.plie)
+        var reste = Substring(nom).trimmingCharacters(in: .whitespacesAndNewlines)
+        var trouvees: [String] = []
+        while reste.hasSuffix(")"), let ouvrante = reste.lastIndex(of: "(") {
+            let contenu = reste[reste.index(after: ouvrante)..<reste.index(before: reste.endIndex)]
+            let jetons = Texte.jetons(String(contenu))
+            guard !contenu.contains(")"), !jetons.isEmpty, jetons.map(\.plie) != mots else { break }
+            let avant = String(reste[..<ouvrante]).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !Texte.jetons(avant).isEmpty else { break }
+            trouvees.insert(String(reste[ouvrante...]), at: 0)
+            reste = avant
+        }
+        guard !trouvees.isEmpty else { return (nom, "") }
+        return (reste, trouvees.map { " " + $0 }.joined())
     }
 
     private static func majuscule(_ s: String) -> String {

@@ -285,7 +285,11 @@ struct JournalPiecesTests {
         #expect(menu.map(\.titre) == lignes.map { TexteEvenement.titre($0, pieces: pieces) })
         #expect(menu.map(\.quand) == lignes.map { $0.evenements.first.map(TexteEvenement.quand) ?? "" })
         #expect(menu.map(\.id) == lignes.map(\.id))
-        #expect(menu.map(\.titre) != lignes.map { TexteEvenement.titre($0, pieces: .aucune) }, "le menu nomme les pieces")
+        // Les trois premieres lignes de la demo changent avec la piece en francais seulement : en anglais, « Prise salon (Hue) »
+        // dit deja la piece dans son nom, et la parenthese finale reste telle quelle.
+        if LangueSujet.courante == .francais {
+            #expect(menu.map(\.titre) != lignes.map { TexteEvenement.titre($0, pieces: .aucune) }, "le menu nomme les pieces")
+        }
         // Une alerte du journal : la notification et le menu disent le meme sujet.
         for ligne in s.lignesJournal {
             guard case .evenement(let e) = ligne, let nom = e.sujet?.nom, pieces.piece(de: e.sujet, protocole: e.protocole ?? .thread) != nil,
