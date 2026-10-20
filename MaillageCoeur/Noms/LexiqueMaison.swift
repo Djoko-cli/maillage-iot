@@ -192,6 +192,11 @@ public enum LexiqueMaison {
         // Electromenager
         "m four", "m réfrigérateur", "m frigo", "m congélateur", "m lave-linge/lave-linge", "m lave-vaisselle/lave-vaisselle", "m sèche-linge/sèche-linge",
         "m micro-ondes", "f cafetière", "f bouilloire", "m aspirateur", "m robot", "f machine", "f horloge",
+        // Composes (un seul mot : le s du pluriel va au premier mot, ou rien)
+        "f porte-fenêtre/portes-fenêtres", "m radio-réveil/radios-réveils", "m robot-aspirateur/robots-aspirateurs",
+        "m porte-serviettes/porte-serviettes", "m sèche-serviettes/sèche-serviettes", "m chauffe-serviettes/chauffe-serviettes",
+        "m sèche-cheveux/sèche-cheveux", "m sèche-mains/sèche-mains", "m grille-pain/grille-pain", "m va-et-vient/va-et-vient",
+        "m porte-manteau/porte-manteaux", "m porte-clés/porte-clés", "m thermo-hygromètre/thermo-hygromètres",
         // Reseau
         "m pont", "m routeur", "m répéteur", "f passerelle", "f borne", "f box", "m hub !",
     ]
@@ -200,10 +205,10 @@ public enum LexiqueMaison {
         "m bureau/bureaux", "f cuisine", "f entrée", "m salon", "m séjour", "f chambre", "f salle", "f pièce", "f suite",
         "m grenier", "m garage", "m cellier", "f buanderie", "f lingerie", "m dressing", "m couloir", "m dégagement",
         "m palier @sur", "fp toilettes", "mp WC", "m sous-sol", "f cave", "f terrasse @sur", "m balcon @sur",
-        "m jardin", "m abri", "f véranda", "mp combles", "m étage @a", "m rez-de-chaussée @a", "m rangement",
+        "m jardin", "m abri", "f véranda", "mp combles", "m étage @a", "m rez-de-chaussée/rez-de-chaussée @a", "m rangement",
         "m atelier", "f cour", "m hall !", "f mezzanine", "f loggia", "m patio", "m vestibule", "m sas", "m porche",
         "f allée", "m cabinet", "m placard", "m cagibi", "m débarras", "m appentis", "f serre", "f piscine",
-        "m local", "f nursery", "m studio", "m loft", "m living", "f bibliothèque", "f mansarde", "f grange",
+        "m local/locaux", "f nursery", "m studio", "m loft", "m living", "f bibliothèque", "f mansarde", "f grange",
         "f remise", "m cabanon", "m carport", "m garde-manger/garde-manger", "f arrière-cuisine", "m coin", "m espace", "m office",
         "m escalier", "m toit @sur", "f toiture", "m parking",
     ]

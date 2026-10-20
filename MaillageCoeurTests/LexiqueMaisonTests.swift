@@ -65,6 +65,25 @@ struct LexiqueMaisonTests {
         #expect(Self.piece("salon")?.toujoursPluriel == false)
     }
 
+    /// Pluriels irreguliers : « locaux », « rez-de-chaussee » invariable, et les composes de la maison.
+    @Test func plurielsIrreguliers() {
+        #expect(Self.piece("local")?.pluriel == "locaux")
+        #expect(Self.piece("rez-de-chaussée")?.pluriel == "rez-de-chaussée", "invariable")
+        #expect(Self.appareil("porte-fenêtre")?.pluriel == "portes-fenêtres")
+        #expect(Self.appareil("radio-réveil")?.pluriel == "radios-réveils")
+        #expect(Self.appareil("porte-fenêtre")?.genre == .feminin)
+        #expect(Self.appareil("radio-réveil")?.genre == .masculin)
+        #expect(Self.appareil("porte-serviettes")?.pluriel == "porte-serviettes")
+    }
+
+    /// Tout le lexique : un mot en -al, -au ou -eu ne prend pas un simple s (« locals », « rideaus »).
+    @Test func aucunPlurielEnSDeTrop() {
+        for m in LexiqueMaison.appareils + LexiqueMaison.pieces where !m.toujoursPluriel {
+            guard ["al", "au", "eu"].contains(where: { m.singulier.hasSuffix($0) }) else { continue }
+            #expect(m.pluriel != m.singulier + "s", "\(m.singulier) -> \(m.pluriel)")
+        }
+    }
+
     /// Un locatif propre a la piece quand « dans » serait faux : sur la terrasse, sur le balcon, a l'etage.
     @Test func locatif() {
         #expect(Self.piece("terrasse")?.locatif == .sur)

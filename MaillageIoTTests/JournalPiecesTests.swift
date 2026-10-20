@@ -301,14 +301,16 @@ struct JournalPiecesTests {
 
     /// Les lignes de la demo combinee, a la main : la ligne telle que la fenetre du journal la montre (et le menu, et la
     /// notification), puis, pour une ligne de pertes regroupees, chaque perte de son detail ; a droite, le texte d'avant (sans
-    /// piece). Ecrit sur la sortie (marqueur `JOURNAL`) pour les captures de la tache, dans la langue de l'app.
+    /// piece). N'ecrit rien sur la sortie par defaut ; pour regenerer les captures, lancer avec
+    /// `TEST_RUNNER_MAILLAGE_CAPTURE_JOURNAL=1` : une ligne `JOURNAL|...` par ligne, dans la langue de l'app.
     @Test func rendreLaDemo() {
         let s = Self.combinee()
         let pieces = PiecesJournal.de(s)
         let langue = Bundle.main.preferredLocalizations.first ?? "?"
+        let capturer = ProcessInfo.processInfo.environment["MAILLAGE_CAPTURE_JOURNAL"] == "1"
         var avecPiece = 0
         func ecrire(_ marque: String, _ protocole: Protocole, _ apres: String, _ avant: String) {
-            print("JOURNAL|\(langue)|\(protocole.rawValue)|\(marque)|\(apres)|\(avant)")
+            if capturer { print("JOURNAL|\(langue)|\(protocole.rawValue)|\(marque)|\(apres)|\(avant)") }
             if apres != avant { avecPiece += 1 }
         }
         for ligne in s.lignesJournal {

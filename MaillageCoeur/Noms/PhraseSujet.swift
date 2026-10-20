@@ -35,7 +35,10 @@ public struct AccordSujet: Hashable, Sendable {
 /// - **anglais** : « Desk lamp (Office) », sans accord.
 /// Un mot d'appareil connu recoit son article partout (« La lampe chevet, dans le bureau, »). Le mot de la piece n'est
 /// retire du nom que s'il en termine ou en commence le texte, en mots entiers, sans casse ni accents : « Salon de thé »
-/// dans la piece « Salon » ne perd pas son « Salon ».
+/// dans la piece « Salon » ne perd pas son « Salon ». Une piece suivie d'un numero ou d'un mot court sans sens propre
+/// (« Lampe salon 2 », « Prise cuisine bis ») est retiree aussi, et le numero passe avant elle : « La lampe 2 du salon ».
+/// Un mot d'appareil colle a un trait d'union (« radio-reveil ») est un mot compose : connu au lexique il s'accorde, inconnu
+/// il n'a pas d'article.
 /// Une precision entre parentheses en fin de nom (« (Hue) », « (droite) ») est mise de cote : la phrase se construit sur le
 /// reste, puis la parenthese est remise juste apres le groupe nominal (« La prise du salon (Hue) », « La lampe chevet
 /// (droite), dans le bureau, »). Une parenthese au milieu du nom, ou qui est la piece elle-meme, n'est pas touchee.
@@ -71,7 +74,9 @@ public struct PhraseSujet: Hashable, Sendable {
         let emplacement = Self.emplacement(de: jp, dans: jn)
 
         if langue == .anglais {
-            return PhraseSujet(texte: emplacement == .fin ? noyau + parentheses : "\(noyau)\(parentheses) (\(piece))", suite: "")
+            // La piece est ajoutee entre parentheses seulement si le nom ne la dit pas deja, a n'importe quelle place.
+            let dejaDite = Self.contient(jp, dans: jn)
+            return PhraseSujet(texte: dejaDite ? noyau + parentheses : "\(noyau)\(parentheses) (\(piece))", suite: "")
         }
 
         let salle = LexiqueMaison.piece(dans: jp)
@@ -79,10 +84,17 @@ public struct PhraseSujet: Hashable, Sendable {
 
         // 1. Le nom contient la piece : on la retire, et si ce qui reste commence par un mot d'appareil connu on accorde.
         if let emplacement, let salle {
-            let reste = emplacement == .fin ? 0..<(jn.count - jp.count) : jp.count..<jn.count
+            let reste: Range<Int>
+            switch emplacement {
+            case .fin: reste = 0..<(jn.count - jp.count)
+            case .debut: reste = jp.count..<jn.count
+            case .avantQualificatif: reste = 0..<(jn.count - 1 - jp.count)
+            }
             if let g = Self.groupe(nom, jn, reste) {
                 let lieu = Self.lieu(piece, jp, salle)
-                let texte = g.texte + " " + lieu.avec(.de) + parentheses
+                // « Lampe salon 2 » : le numero (ou le qualificatif) suit le groupe, la piece vient apres lui.
+                let qualificatif = emplacement == .avantQualificatif ? " " + String(nom[jn[jn.count - 1].plage]) : ""
+                let texte = g.texte + qualificatif + " " + lieu.avec(.de) + parentheses
                 return PhraseSujet(texte: debutDePhrase ? Self.majuscule(texte) : texte, suite: "", accord: g.accord)
             }
         }
@@ -91,7 +103,7 @@ public struct PhraseSujet: Hashable, Sendable {
         let nomGroupe = (groupeNom.map(enTete) ?? nom) + parentheses
         let accord = groupeNom?.accord ?? AccordSujet()
         // 2. La piece termine le nom (mais le mot d'appareil est inconnu, ou la piece) : le nom dit deja la piece.
-        if emplacement == .fin { return PhraseSujet(texte: nomGroupe, suite: "", accord: accord) }
+        if emplacement == .fin || emplacement == .avantQualificatif { return PhraseSujet(texte: nomGroupe, suite: "", accord: accord) }
         // 3. Piece connue : en incise.
         if let salle {
             let lieu = Self.lieu(piece, jp, salle)
@@ -103,15 +115,39 @@ public struct PhraseSujet: Hashable, Sendable {
 
     // MARK: Interne
 
-    private enum Emplacement { case debut, fin }
+    /// `avantQualificatif` : la piece est suivie d'un seul mot final, un numero ou un qualificatif sans sens propre
+    /// (« Lampe salon 2 », « Prise cuisine bis »).
+    private enum Emplacement { case debut, fin, avantQualificatif }
 
-    /// Ou la piece se trouve dans le nom : a la fin (de preference) ou au debut, en mots entiers.
+    /// Ou la piece se trouve dans le nom : a la fin (de preference), au debut, ou juste avant un numero ou un qualificatif
+    /// final qui suit un debut de nom (« Lampe salon 2 »), en mots entiers.
     private static func emplacement(de jp: [Texte.Jeton], dans jn: [Texte.Jeton]) -> Emplacement? {
         guard jp.count <= jn.count else { return nil }
         let mots = jp.map(\.plie)
         if Array(jn.suffix(jp.count)).map(\.plie) == mots { return .fin }
         if Array(jn.prefix(jp.count)).map(\.plie) == mots { return .debut }
+        // Au moins un mot avant la piece, et un seul mot apres : le qualificatif.
+        let apres = jn.count - 1
+        if apres - jp.count >= 1, estQualificatif(jn[apres]),
+           Array(jn[(apres - jp.count)..<apres]).map(\.plie) == mots { return .avantQualificatif }
         return nil
+    }
+
+    /// Mots courts sans sens propre qui suivent un nom : positions et variantes (« bis », « gauche »).
+    private static let qualificatifs: Set<String> = ["bis", "ter", "quater", "gauche", "droite", "haut", "bas", "avant", "arriere"]
+
+    /// Un numero, une lettre seule ou l'un des mots de `qualificatifs`.
+    private static func estQualificatif(_ j: Texte.Jeton) -> Bool {
+        guard !j.elide else { return false }
+        return j.plie.allSatisfy(\.isNumber) || j.plie.count == 1 || qualificatifs.contains(j.plie)
+    }
+
+    /// Le texte de la piece (suite de mots entiers) apparait dans le nom, a n'importe quelle place.
+    private static func contient(_ jp: [Texte.Jeton], dans jn: [Texte.Jeton]) -> Bool {
+        let mots = jp.map(\.plie)
+        guard !mots.isEmpty, mots.count <= jn.count else { return false }
+        let noms = jn.map(\.plie)
+        return (0...(noms.count - mots.count)).contains { Array(noms[$0..<($0 + mots.count)]) == mots }
     }
 
     /// Le nom sans ses parentheses finales (« Prise salon (Hue) » : « Prise salon » et « (Hue) »), dans l'ordre ecrit, chacune
@@ -162,6 +198,12 @@ public struct PhraseSujet: Hashable, Sendable {
         while fin > debut, estLiaison(jetons[fin - 1]) { fin -= 1 }
         guard debut < fin, let t = LexiqueMaison.appareil(dans: Array(jetons[..<fin]), depuis: debut) else { return nil }
         let dernierMot = jetons[debut + t.longueur - 1].plage.upperBound
+        // Un mot colle a un trait d'union fait partie d'un mot compose inconnu (« radio-reveil », « capteur-temperature ») :
+        // ce n'est pas le mot d'appareil, aucun article, aucun genre devine.
+        if dernierMot < nom.endIndex, "-\u{2010}\u{2011}".contains(nom[dernierMot]) {
+            let suivant = nom.index(after: dernierMot)
+            if suivant < nom.endIndex, nom[suivant].isLetter || nom[suivant].isNumber { return nil }
+        }
         var finTexte = jetons[fin - 1].plage.upperBound
         // Les fermantes qui suivent le dernier mot gardent leurs parentheses : « Lampe (droite) bureau ».
         while finTexte < nom.endIndex, ")]»".contains(nom[finTexte]) { finTexte = nom.index(after: finTexte) }

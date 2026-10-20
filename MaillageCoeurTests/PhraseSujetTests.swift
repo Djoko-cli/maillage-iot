@@ -250,7 +250,92 @@ struct PhraseSujetTests {
         #expect(en("Desk lamp office (Hue)", "Office") == "Desk lamp office (Hue) lost its parent")
     }
 
+    // MARK: Mots composes a trait d'union (correctif 1)
+
+    /// Un mot compose est un seul mot : connu au lexique, il s'accorde ; inconnu, repli sans article. Jamais « La radio -reveil ».
+    @Test func motComposeConnu() {
+        #expect(Self.fr("Radio-réveil chambre", "Chambre") == "Le radio-réveil de la chambre a perdu son parent")
+        #expect(Self.fr("Porte-fenêtre salon", "Salon") == "La porte-fenêtre du salon a perdu son parent")
+        #expect(Self.fr("Portes-fenêtres salon", "Salon") == "Les portes-fenêtres du salon a perdu son parent")
+        #expect(Self.fr("Porte-serviettes salle de bain", "Salle de bain") == "Le porte-serviettes de la salle de bain a perdu son parent")
+        #expect(Self.fr("Radio-réveil", "Chambre") == "Le radio-réveil, dans la chambre, a perdu son parent")
+        #expect(Self.accord("Radio-réveil chambre", "Chambre") == AccordSujet(feminin: false, pluriel: false))
+        #expect(Self.accord("Porte-fenêtre salon", "Salon") == AccordSujet(feminin: true, pluriel: false))
+        #expect(Self.accord("Portes-fenêtres salon", "Salon") == AccordSujet(feminin: true, pluriel: true))
+    }
+
+    @Test func motComposeInconnu() {
+        // Le premier morceau est un mot d'appareil, mais le compose est inconnu : un seul mot, aucun article invente.
+        #expect(Self.fr("Capteur-température salon", "Salon") == "Capteur-température salon a perdu son parent")
+        #expect(Self.fr("Capteur-température", "Salon") == "Capteur-température, dans le salon, a perdu son parent")
+        #expect(Self.fr("Lampe-tempête bureau (droite)", "Bureau") == "Lampe-tempête bureau (droite) a perdu son parent")
+        #expect(Self.fr("Prise-murale", "Zone Z7") == "Prise-murale — Zone Z7 : a perdu son parent")
+        #expect(Self.accord("Capteur-température salon", "Salon") == AccordSujet())
+        for nom in ["Radio-réveil chambre", "Porte-fenêtre salon", "Capteur-température salon", "Capteur-température"] {
+            #expect(!Self.fr(nom, "Chambre").contains(" -"), "\(nom)")
+            #expect(!Self.fr(nom, "Salon").contains(" -"), "\(nom)")
+        }
+        // Un tiret entoure d'espaces separe deux mots : l'accord reste.
+        #expect(Self.fr("Lampe - salon", "Salon") == "La lampe du salon a perdu son parent")
+    }
+
+    // MARK: Piece suivie d'un numero ou d'un qualificatif final (correctif 1)
+
+    @Test func pieceSuivieDUnNumero() {
+        #expect(Self.fr("Lampe salon 2", "Salon") == "La lampe 2 du salon a perdu son parent")
+        #expect(Self.fr("Prise cuisine bis", "Cuisine") == "La prise bis de la cuisine a perdu son parent")
+        #expect(Self.fr("Spot cuisine gauche", "Cuisine") == "Le spot gauche de la cuisine a perdu son parent")
+        #expect(Self.fr("Ampoule entrée 3", "Entrée") == "L'ampoule 3 de l'entrée a perdu son parent")
+        #expect(Self.fr("Volets combles 1", "Combles") == "Les volets 1 des combles a perdu son parent")
+        #expect(Self.fr("Lampe salle de bain 2", "Salle de bain") == "La lampe 2 de la salle de bain a perdu son parent")
+        #expect(Self.fr("Lampe chevet salon 2", "Salon") == "La lampe chevet 2 du salon a perdu son parent")
+        #expect(Self.fr("Lampe salon B", "Salon") == "La lampe B du salon a perdu son parent")
+    }
+
+    @Test func pieceSuivieDUnNumeroDetails() {
+        #expect(Self.fr("Lampe salon 2 (Hue)", "Salon") == "La lampe 2 du salon (Hue) a perdu son parent")
+        let m = PhraseSujet.de(nom: "Lampe salon 2", piece: "Salon", langue: .francais, debutDePhrase: false)
+        #expect(m.texte == "la lampe 2 du salon")
+        #expect(m.suite == "")
+        #expect(m.accord == AccordSujet(feminin: true, pluriel: false))
+        #expect(Self.accord("Volets combles 1", "Combles") == AccordSujet(feminin: false, pluriel: true))
+        // Appareil inconnu : le nom dit deja la piece, aucun article invente, pas d'incise.
+        #expect(Self.fr("Zeta salon 2", "Salon") == "Zeta salon 2 a perdu son parent")
+        // Piece inconnue : le nom la dit deja (comme quand elle termine le nom), rien a retirer ni a ajouter.
+        #expect(Self.fr("Lampe zone 2", "Zone") == "La lampe zone 2 a perdu son parent")
+    }
+
+    /// Ce qui suit n'est ni un numero ni un qualificatif sans sens propre : la piece n'est pas retiree, forme en incise.
+    @Test func pieceSuivieDUnMotAvecUnSens() {
+        #expect(Self.fr("Spot cuisine plafond", "Cuisine") == "Le spot cuisine plafond, dans la cuisine, a perdu son parent")
+        #expect(Self.fr("Lampe salon Zeta", "Salon") == "La lampe salon Zeta, dans le salon, a perdu son parent")
+        #expect(Self.fr("Lampe salon 2 etage", "Salon") == "La lampe salon 2 etage, dans le salon, a perdu son parent")
+        #expect(Self.fr("Lampe salon chevet lumineux", "Salon") == "La lampe salon chevet lumineux, dans le salon, a perdu son parent")
+    }
+
+    // MARK: Pluriels du lexique (correctif 1)
+
+    @Test func plurielsIrreguliersDansLaPhrase() {
+        #expect(Self.fr("Lampe locaux", "Locaux") == "La lampe des locaux a perdu son parent")
+        #expect(Self.fr("Lampe local", "Local") == "La lampe du local a perdu son parent")
+        #expect(Self.fr("Lampe rez-de-chaussée", "Rez-de-chaussée") == "La lampe du rez-de-chaussée a perdu son parent")
+    }
+
     // MARK: Anglais
+
+    @Test func anglaisPieceDejaDansLeNom() {
+        func en(_ nom: String, _ piece: String?) -> String {
+            PhraseSujet.de(nom: nom, piece: piece, langue: .anglais).suivi(de: "lost its parent")
+        }
+        // La piece est dans le nom, a n'importe quelle place, sans casse ni accents : pas ajoutee entre parentheses.
+        #expect(en("Office lamp", "Office") == "Office lamp lost its parent")
+        #expect(en("Lamp office 2", "Office") == "Lamp office 2 lost its parent")
+        #expect(en("Desk OFFICE lamp", "office") == "Desk OFFICE lamp lost its parent")
+        #expect(en("Lampe entree", "Entrée") == "Lampe entree lost its parent")
+        #expect(en("Desk lamp (Hue)", "Office") == "Desk lamp (Hue) (Office) lost its parent", "pas dans le nom : ajoutee")
+        // Un morceau de mot n'est pas le mot.
+        #expect(en("Officer lamp", "Office") == "Officer lamp (Office) lost its parent")
+    }
 
     @Test func anglais() {
         func en(_ nom: String, _ piece: String?) -> String {
