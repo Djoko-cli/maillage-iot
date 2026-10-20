@@ -38,8 +38,7 @@ public struct SujetsMaillage: Sendable {
 /// Le premier maillage, et le premier d'une autre partition (les identifiants de routeur y sont
 /// redistribues), sont un point de depart : aucun evenement.
 /// Les routeurs se comparent par identifiant, dans une meme partition, et non par cle : une cle qui change (debut ou
-/// fin d'une collision, `CollisionsRloc`) ne fait ni apparition ni disparition ; le debut d'une collision est toujours
-/// un changement de partition de la sonde, donc un point de depart.
+/// fin d'une collision entre partitions actives en meme temps, `CollisionsRloc`) ne fait ni apparition ni disparition.
 public struct SuiviMaillage: Sendable {
     /// Absences sures avant « n'a plus de parent ».
     public static let absencesAvantPerte = 2

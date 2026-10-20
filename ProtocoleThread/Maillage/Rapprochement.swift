@@ -135,7 +135,7 @@ public struct MaillageAffiche: Hashable, Sendable {
     ///   de la partition qu'aucun routeur n'a reprise ;
     /// - sinon "rloc:XXXX", inconnu de l'instantane ; un routeur de bordure y garde ses
     ///   candidats, les annonces non reprises qui peuvent etre la sienne. Pendant une collision de son identifiant de
-    ///   routeur avec une autre partition (`collisions`, de `CollisionsRloc` ; aucune sans historique),
+    ///   routeur avec une autre partition active (`collisions`, de `CollisionsRloc` ; aucune sans historique),
     ///   "rloc:<partition>:XXXX", pour lui et ses enfants inconnus (`CleRloc`).
     /// Ces quatre dernieres regles ecartent une annonce dont le `xa` et l'ExtMac du routeur sont
     /// connus tous deux et differents, ou dont le `xa` est l'ExtMac connue d'un autre routeur.

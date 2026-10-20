@@ -2,9 +2,9 @@ import Foundation
 import MaillageCoeur
 
 /// Cles "rloc:" des noeuds Thread que seule la sonde connait (phase 8, decision de Djoko du 20/10). Deux partitions
-/// peuvent avoir le meme RLOC16 : ce sont deux routeurs (les identifiants de routeur sont redistribues d'une
-/// partition a l'autre). La cle reste "rloc:XXXX" tant qu'une seule partition a cet identifiant de routeur ; pendant
-/// une collision seulement, les noeuds des autres partitions prennent "rloc:<partition>:XXXX" (`CollisionsRloc` dit
+/// actives en meme temps peuvent avoir le meme RLOC16 : ce sont deux routeurs (les identifiants de routeur sont
+/// distribues dans chaque partition). La cle reste "rloc:XXXX" hors collision ; pendant une collision seulement, les
+/// noeuds des partitions qui ne tiennent pas la cle simple prennent "rloc:<partition>:XXXX" (`CollisionsRloc` dit
 /// lesquels). Aucun fichier n'est converti : hors collision, les cles sont celles d'avant.
 public enum CleRloc {
     /// Cle d'un identifiant de routeur hors de 0...62 (fonction totale : jamais d'arret du programme).
@@ -19,60 +19,79 @@ public enum CleRloc {
     }
 }
 
-/// Collisions de RLOC16 entre partitions, d'apres les releves de l'historique (du plus ancien au plus recent) : la
-/// sonde ne voit qu'une partition a la fois, l'historique dit lesquelles ont eu chaque identifiant de routeur.
+/// Collisions de RLOC16 entre partitions actives en meme temps (decision de Djoko du 20/10), d'apres les releves de
+/// l'historique, du plus ancien au plus recent.
 ///
-/// Une partition a un identifiant de routeur tant que son dernier releve qui l'a dans sa liste des routeurs date de
-/// `duree` au plus (avec ou sans ExtMac : la cle de repli d'un noeud de la scene ne depend pas de son ExtMac). Un
-/// identifiant qu'ont deux partitions ou plus est en collision : la cle simple reste a la partition qui la tenait au
-/// releve precedent ; si elle ne l'a plus, elle va a la plus grande (le nombre de routeurs de son dernier releve), puis
-/// au plus petit identifiant de partition (en hexadecimal). Les autres sont qualifiees. Quand une seule partition a
-/// l'identifiant, la collision est finie : elle tient la cle simple, qualifiee jusque-la ou non.
+/// Une collision n'existe que pendant une scission : le releve garde les partitions que Bonjour annoncait ensemble pour
+/// le reseau de la sonde (`ReleveMaillage.actives`, la scission du bandeau « Reseau scinde »), la sienne comprise. La
+/// sonde ne voit qu'une partition a la fois : les identifiants de routeur d'une autre partition active sont ceux de son
+/// dernier releve de la liste (sa liste des routeurs et les identifiants cites : liens, parents des enfants, signaux,
+/// parent de la sonde) ; une partition jamais vue n'en a aucun. Un identifiant qu'ont deux partitions actives ou plus est
+/// en collision ; garde la cle simple :
+/// 1. la tenante, tant qu'elle l'a (pas d'oscillation pendant une collision stable) ;
+/// 2. a defaut, la partition du releve precedent, si elle l'avait sans y etre qualifiee ;
+/// 3. puis la plus grande partition (le nombre de routeurs de son dernier releve) ;
+/// 4. puis le plus petit identifiant de partition (en hexadecimal, a defaut en texte).
+/// Les autres sont qualifiees. Une partition qui n'est plus active (ancien identifiant, plus annoncee) ne cree jamais de
+/// collision : un simple changement d'identifiant de partition garde les cles simples. Hors scission, plus de collision
+/// ni de tenante : la partition de la sonde a la cle simple (si c'est l'autre partition qui reste seule, ses routeurs
+/// reprennent "rloc:XXXX" ; sans ExtMac rien ne les distingue, comportement d'avant la phase 8).
 ///
-/// Deterministe : la meme liste donne les memes collisions. Seule limite : la liste commence 30 jours en arriere ;
-/// une collision ou les deux partitions reviennent sans cesse pendant plus de 30 jours peut changer de tenante quand
-/// le debut de la liste glisse au-dela du premier releve de l'ancienne. Calcule en un passage, en O(N x 63 x P) pour
-/// N releves et P partitions vues en `duree`, sans tri tant que la tenante reste.
+/// Deterministe : la meme liste donne les memes collisions. Calcule en un passage : O(1) par releve hors scission,
+/// O(63 x P) pendant une scission de P partitions.
 public struct CollisionsRloc: Sendable {
-    /// Duree pendant laquelle une partition garde un identifiant apres son dernier releve : 30 jours, l'historique
-    /// garde en memoire et la plus longue periode des courbes. Une cle ne montre ainsi jamais, dans une courbe, deux
-    /// routeurs de partitions differentes.
-    public static let duree: TimeInterval = PeriodeCourbes.mois.duree
-
     /// L'etat apres un releve.
     struct Etat: Sendable {
-        /// Par identifiant de routeur : la date du dernier releve de chaque partition qui l'a dans sa liste.
-        var vus: [Int: [String: Date]] = [:]
-        /// Nombre de routeurs de chaque partition, a son dernier releve.
+        /// Par partition : les identifiants de routeur de son dernier releve, cites compris (masque, 0...62).
+        var identifiants: [String: UInt64] = [:]
+        /// Par partition : le nombre de routeurs de la liste de son dernier releve.
         var tailles: [String: Int] = [:]
-        /// Par identifiant de routeur : la partition qui tient la cle simple.
+        /// Par identifiant de routeur en collision : la partition qui tient la cle simple.
         var tenantes: [Int: String] = [:]
+        /// La partition du releve precedent et ses collisions.
+        var precedent: (partition: String, collisions: Set<Int>)?
 
-        /// Integre le releve de la partition `partition`, date `date`, dont la liste des routeurs a les identifiants
-        /// `routeurs` ; rend les identifiants dont une autre partition tient la cle simple, a ce releve. Integrer deux
-        /// fois le meme releve rend la meme chose.
-        mutating func integrer(partition: String, date: Date, routeurs: [Int]) -> Set<Int> {
-            let ids = Set(routeurs.filter(ReleveMaillage.identifiantsRouteur.contains))
-            tailles[partition] = ids.count
-            for id in ids { vus[id, default: [:]][partition] = date }
+        /// Integre le releve `r` ; rend les identifiants de routeur qu'il a et dont une autre partition active tient la
+        /// cle simple. Integrer deux fois le meme releve rend la meme chose.
+        mutating func integrer(_ r: ReleveMaillage) -> Set<Int> {
+            let plage = ReleveMaillage.identifiantsRouteur
+            var masque: UInt64 = 0
+            func noter(_ id: Int) { if plage.contains(id) { masque |= 1 << UInt64(id) } }
+            for x in r.routeurs { noter(x.id) }
+            tailles[r.partition] = masque.nonzeroBitCount
+            for l in r.liens {
+                noter(l.a)
+                noter(l.b)
+            }
+            for e in r.enfants { noter(e.parent) }
+            for s in r.signaux { noter(s.routeur) }
+            if let p = r.parentSonde { noter(p) }
+            identifiants[r.partition] = masque
             var collisions: Set<Int> = []
-            for (id, parts) in vus {
-                let vivantes = parts.allSatisfy { date.timeIntervalSince($0.value) <= CollisionsRloc.duree }
-                    ? parts : parts.filter { date.timeIntervalSince($0.value) <= CollisionsRloc.duree }
-                guard !vivantes.isEmpty else {
-                    vus[id] = nil
+            defer { precedent = (r.partition, collisions) }
+            // `actives` est vide hors scission (`ReleveMaillage` le normalise) : aucune collision, aucune tenante.
+            guard !r.actives.isEmpty else {
+                tenantes = [:]
+                return []
+            }
+            let actives = r.actives.map { (partition: $0, masque: identifiants[$0] ?? 0) }
+            for id in plage {
+                let bit: UInt64 = 1 << UInt64(id)
+                let ont = actives.filter { $0.masque & bit != 0 }.map(\.partition)
+                guard ont.count >= 2 else {
                     tenantes[id] = nil
                     continue
                 }
-                if vivantes.count != parts.count { vus[id] = vivantes }
                 let tenante: String
-                if let t = tenantes[id], vivantes[t] != nil {
+                if let t = tenantes[id], ont.contains(t) {
                     tenante = t
+                } else if let p = precedent, ont.contains(p.partition), !p.collisions.contains(id) {
+                    tenante = p.partition
                 } else {
-                    tenante = vivantes.keys.min(by: precede) ?? partition
-                    tenantes[id] = tenante
+                    tenante = ont.min(by: precede) ?? r.partition
                 }
-                if tenante != partition { collisions.insert(id) }
+                tenantes[id] = tenante
+                if tenante != r.partition && masque & bit != 0 { collisions.insert(id) }
             }
             return collisions
         }
@@ -97,21 +116,23 @@ public struct CollisionsRloc: Sendable {
         var etat = Etat()
         var parReleve: [Int: Set<Int>] = [:]
         for (i, r) in releves.enumerated() {
-            let c = etat.integrer(partition: r.partition, date: r.date, routeurs: r.routeurs.map(\.id))
+            let c = etat.integrer(r)
             if !c.isEmpty { parReleve[i] = c }
         }
         self.parReleve = parReleve
         fin = etat
     }
 
-    /// Identifiants de routeur du releve d'indice `i` dont une autre partition tient la cle simple ; aucun pour un
-    /// releve hors de la liste.
+    /// Identifiants de routeur du releve d'indice `i` dont une autre partition active tient la cle simple ; aucun pour
+    /// un releve hors de la liste.
     public func collisions(releve i: Int) -> Set<Int> { parReleve[i] ?? [] }
 
-    /// De meme pour le maillage `m`, evalue apres le dernier releve de la liste : le maillage d'une tournee, avant que
-    /// son releve n'entre dans l'historique, ou deja dedans (meme resultat). Sans historique (demo) : aucun.
-    public func collisions(apres m: Maillage) -> Set<Int> {
+    /// De meme pour le maillage `m`, evalue apres le dernier releve de la liste avec les partitions `actives` (celles de
+    /// son releve, `ReleveMaillage(m, actives:)`) : le maillage d'une tournee, avant que son releve n'entre dans
+    /// l'historique, ou deja dedans (meme resultat). Sans historique (demo) : aucun, les autres partitions n'ayant aucun
+    /// identifiant connu.
+    public func collisions(apres m: Maillage, actives: [String]) -> Set<Int> {
         var e = fin
-        return e.integrer(partition: m.partition, date: m.date, routeurs: m.routeurs.map(\.id))
+        return e.integrer(ReleveMaillage(m, actives: actives))
     }
 }

@@ -8,7 +8,7 @@ import MaillageCoeur
 /// - sinon, l'ExtMac du meme `id`, dans la meme partition, au releve suivant le plus proche qui en a une, a 7 jours au
 ///   plus (`ecartMax`) ; a defaut, au precedent le plus proche, a 7 jours au plus ;
 /// - sinon "rloc:XXXX", ou "rloc:<partition>:XXXX" pendant une collision de cet identifiant avec une autre partition
-///   (`CollisionsRloc`, phase 8).
+///   active en meme temps (`CollisionsRloc`, phase 8 : une scission gardee dans le releve).
 ///
 /// Deux routeurs d'un releve n'ont jamais la meme cle : une ExtMac ainsi trouvee est refusee (la cle reste "rloc")
 /// si un autre identifiant du releve, de sa liste ou seulement cite (lien, parent d'un enfant, signal, parent de la

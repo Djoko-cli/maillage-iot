@@ -3,11 +3,11 @@ import Testing
 @testable import MaillageCoeur
 @testable import ProtocoleThread
 
-/// Cles "rloc:" qualifiees en cas de collision (phase 8, decision de Djoko du 20/10) : deux partitions peuvent avoir le
-/// meme RLOC16. La cle reste "rloc:XXXX" tant qu'une seule partition a cet identifiant de routeur ; pendant une
-/// collision, les routeurs des autres partitions prennent "rloc:<partition>:XXXX". Garde la cle simple la partition qui
-/// la tenait au releve precedent ; a defaut la plus grande partition, puis le plus petit identifiant de partition.
-/// Valeurs inventees.
+/// Cles "rloc:" qualifiees en cas de collision (phase 8, decisions de Djoko du 20/10) : une collision n'existe que
+/// pendant une scission, entre partitions actives en meme temps (celles que Bonjour annonce ensemble pour le reseau de la
+/// sonde, gardees dans le releve). Un RLOC16 qu'ont deux de ces partitions est qualifie "rloc:<partition>:XXXX" pour les
+/// partitions qui ne gardent pas la cle simple : la tenante, sinon la partition du releve precedent, puis la plus grande,
+/// puis le plus petit identifiant. Une partition qui n'est plus active ne cree jamais de collision. Valeurs inventees.
 @Suite("Cles rloc qualifiees en cas de collision")
 struct CollisionsRlocTests {
     static let t0 = Date(timeIntervalSince1970: 1_790_006_400)
@@ -16,13 +16,14 @@ struct CollisionsRlocTests {
     static let c = "0000000C"
     static let jour: TimeInterval = 24 * 3600
 
-    /// Releve a `jours` de t0 de la partition `p` : les routeurs donnes, sans ExtMac sauf `ext`.
+    /// Releve a `jours` de t0 de la partition `p` : les routeurs donnes, sans ExtMac sauf `ext` ; `actives` : les
+    /// partitions que Bonjour annoncait ensemble (vide : reseau non scinde).
     static func releve(jours: Double, _ p: String, _ routeurs: [Int], ext: [Int: String] = [:],
-                       liens: [(Int, Int)] = []) -> ReleveMaillage {
+                       liens: [(Int, Int)] = [], actives: [String] = []) -> ReleveMaillage {
         ReleveMaillage(date: t0.addingTimeInterval(jours * jour), partition: p,
                        routeurs: routeurs.sorted().map { .init(id: $0, extMac: ext[$0]) },
                        liens: liens.map { LienRadio(a: $0.0, b: $0.1, qualiteAB: 3, qualiteBA: 2) }, enfants: [], signaux: [],
-                       parentSonde: nil)
+                       parentSonde: nil, actives: actives)
     }
 
     /// Maillage de la partition `p` a `jours` de t0 : les routeurs donnes (le premier est chef), sans ExtMac, et un
@@ -36,7 +37,7 @@ struct CollisionsRlocTests {
         return c.maillage()
     }
 
-    /// Les cles du routeur 1 a chaque releve de la liste.
+    /// Les cles du routeur `id` a chaque releve de la liste.
     static func cles(_ releves: [ReleveMaillage], routeur id: Int = 1) -> [String] {
         let cles = ClesHistorique(releves: releves)
         return releves.indices.map { cles.cle(releve: $0, routeur: id) }
@@ -53,87 +54,160 @@ struct CollisionsRlocTests {
         #expect(IdNoeud(texte: "thread:rloc:0000000B:0400") == idt("rloc:0000000B:0400"), "coupee au premier « : »")
     }
 
-    /// Une seule partition, meme sur 60 jours : aucune collision, les cles d'avant.
-    @Test func sansCollision() {
-        let releves = (0..<60).map { Self.releve(jours: Double($0), Self.a, [0, 1, 5]) }
+    /// Sans scission, aucune collision, meme sur 60 jours et meme quand la sonde passe d'une partition a l'autre (jamais
+    /// annoncees ensemble) : les cles d'avant la phase 8.
+    @Test func sansScission() {
+        let seule = (0..<60).map { Self.releve(jours: Double($0), Self.a, [0, 1, 5]) }
+        #expect(seule.indices.allSatisfy { CollisionsRloc(releves: seule).collisions(releve: $0).isEmpty })
+        #expect(Self.cles(seule) == Array(repeating: "rloc:0400", count: 60))
+        #expect(Self.cles(seule, routeur: 5).allSatisfy { $0 == "rloc:1400" })
+        let alternees = (0..<6).map { Self.releve(jours: Double($0), $0 % 2 == 0 ? Self.a : Self.b, [0, 1, 2]) }
+        #expect(Self.cles(alternees) == Array(repeating: "rloc:0400", count: 6), "jamais actives ensemble")
+    }
+
+    /// Un simple changement d'identifiant de partition (memes routeurs, l'ancienne partition n'est plus annoncee) :
+    /// les cles simples restent, dans l'historique comme pour le maillage recu, et rien n'est qualifie ensuite.
+    @Test func changementDIdentifiantDePartition() {
+        let releves = [Self.releve(jours: 0, Self.a, [0, 1, 2]), Self.releve(jours: 1, Self.a, [0, 1, 2]),
+                       Self.releve(jours: 1.1, Self.b, [0, 1, 2]), Self.releve(jours: 2, Self.b, [0, 1, 2]),
+                       Self.releve(jours: 40, Self.b, [0, 1, 2])]
+        #expect(Self.cles(releves) == Array(repeating: "rloc:0400", count: 5))
+        #expect(Self.cles(releves, routeur: 2) == Array(repeating: "rloc:0800", count: 5))
         let collisions = CollisionsRloc(releves: releves)
         #expect(releves.indices.allSatisfy { collisions.collisions(releve: $0).isEmpty })
-        #expect(Self.cles(releves) == Array(repeating: "rloc:0400", count: 60))
-        #expect(Self.cles(releves, routeur: 5).allSatisfy { $0 == "rloc:1400" })
+        let m = Self.maillage(jours: 41, Self.b, [0, 1, 2])
+        #expect(collisions.collisions(apres: m, actives: []).isEmpty)
+        #expect(collisions.collisions(apres: m, actives: [Self.b]).isEmpty, "Bonjour n'annonce que la nouvelle")
+        #expect(collisions.collisions(apres: m, actives: [Self.a, Self.c]).isEmpty,
+                "une scission ou la partition de la sonde n'est pas annoncee : pas la sienne")
     }
 
-    /// Debut de collision : la partition qui tenait la cle au releve precedent la garde, meme plus petite ; l'autre est
-    /// qualifiee des son premier releve. Un identifiant que l'autre partition n'a pas reste simple.
-    @Test func debutDeCollision() {
-        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 0.1, Self.b, [0, 1, 2, 3])]
-        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400"])
-        #expect(Self.cles(releves, routeur: 2) == ["rloc:0800", "rloc:0800"], "seule B a le 2")
-        #expect(CollisionsRloc(releves: releves).collisions(releve: 1) == [1])
+    /// Deux partitions actives ensemble avec le meme RLOC16 : deux noeuds. La partition du releve precedent garde la
+    /// cle simple, l'autre est qualifiee ; un identifiant qu'une seule partition a reste simple. Tant que la sonde n'a
+    /// jamais vu l'autre partition, ses identifiants sont inconnus : pas de collision.
+    @Test func deuxPartitionsActives() throws {
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1, 5]), Self.releve(jours: 0.01, Self.a, [1, 5], actives: actives),
+                       Self.releve(jours: 0.02, Self.b, [0, 1, 2, 3], actives: actives)]
+        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400"])
+        #expect(Self.cles(releves, routeur: 2) == ["rloc:0800", "rloc:0800", "rloc:0800"], "seule B a le 2")
+        #expect(Self.cles(releves, routeur: 5) == ["rloc:1400", "rloc:1400", "rloc:1400"], "seule A a le 5")
+        let collisions = CollisionsRloc(releves: releves)
+        #expect(collisions.collisions(releve: 1).isEmpty && collisions.collisions(releve: 2) == [1])
+        // Dans la scene : le routeur 1 de A et celui de B sont deux noeuds.
+        let i = RapprochementTests.instantane(ailleurs: [])
+        let r = try #require(i.reseaux.first)
+        let mA = Self.maillage(jours: 0.01, Self.a, [1, 5]), mB = Self.maillage(jours: 0.02, Self.b, [0, 1, 2, 3])
+        let avant = CollisionsRloc(releves: Array(releves.prefix(2)))
+        let nA = MaillageAffiche(maillage: mA, reseau: r, appareils: i.appareils,
+                                 collisions: CollisionsRloc(releves: Array(releves.prefix(1))).collisions(apres: mA, actives: actives))
+        let nB = MaillageAffiche(maillage: mB, reseau: r, appareils: i.appareils,
+                                 collisions: avant.collisions(apres: mB, actives: actives))
+        #expect(nA.routeurs[1]?.id == "rloc:0400" && nB.routeurs[1]?.id == "rloc:0000000B:0400")
+        #expect(nB.enfants[0x0402]?.id == "rloc:0000000B:0402" && nB.routeurs[2]?.id == "rloc:0800")
     }
 
-    /// Collision stable sur trois releves de chaque partition, en alternance : les memes cles a chaque fois, sans
-    /// osciller (le departage par la taille ne joue pas tant que la tenante est la).
-    @Test func collisionStable() {
-        let releves = (0..<6).map { n in
-            n % 2 == 0 ? Self.releve(jours: Double(n), Self.a, [1]) : Self.releve(jours: Double(n), Self.b, [0, 1, 2, 3])
-        }
-        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400",
-                                       "rloc:0400", "rloc:0000000B:0400"])
-    }
-
-    /// Fin de collision : la partition partie depuis plus de `duree` (30 jours, l'historique en memoire et la plus longue
-    /// periode des courbes) ne compte plus ; le routeur qualifie retrouve la cle simple. 30 jours pile comptent encore.
-    @Test func finDeCollision() {
-        #expect(CollisionsRloc.duree == PeriodeCourbes.mois.duree)
-        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 1, Self.b, [1]),
-                       Self.releve(jours: 30, Self.b, [1]), Self.releve(jours: 30 + 1 / 86_400, Self.b, [1]),
-                       Self.releve(jours: 40, Self.b, [1])]
-        #expect(Self.cles(releves) == ["rloc:0400", "rloc:0000000B:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400"])
-        // La tenante revient apres la fin : la cle simple est a B, A est qualifiee a son tour.
-        let retour = releves + [Self.releve(jours: 41, Self.a, [1])]
-        #expect(Self.cles(retour).last == "rloc:0000000A:0400")
-    }
-
-    /// La tenante partie, deux autres partitions encore en collision : la plus grande prend la cle simple ; a taille
-    /// egale, le plus petit identifiant de partition.
+    /// Departage quand ni une tenante ni la partition du releve precedent n'ont l'identifiant : la plus grande partition
+    /// (nombre de routeurs de son dernier releve), puis le plus petit identifiant de partition.
     @Test func departageTaillePuisIdentifiant() {
-        let base = [Self.releve(jours: 0, Self.a, [0, 1, 2, 3, 4, 5]), Self.releve(jours: 10, Self.c, [0, 1, 2]),
-                    Self.releve(jours: 20, Self.b, [1, 2])]
-        #expect(Self.cles(base) == ["rloc:0400", "rloc:0000000C:0400", "rloc:0000000B:0400"], "A tient, meme plus petite plus tard")
-        // Jour 31 : A est partie ; C (3 routeurs) l'emporte sur B (2).
-        let taille = base + [Self.releve(jours: 31, Self.b, [1, 2])]
-        #expect(Self.cles(taille).last == "rloc:0000000B:0400")
-        #expect(Self.cles(taille + [Self.releve(jours: 32, Self.c, [0, 1, 2])]).last == "rloc:0400")
-        // A taille egale (B passe a 3 routeurs), le plus petit identifiant : B.
-        let egale = base.dropLast() + [Self.releve(jours: 20, Self.b, [1, 2, 7]), Self.releve(jours: 31, Self.b, [1, 2, 7])]
-        #expect(Self.cles(Array(egale)).last == "rloc:0400")
-        #expect(Self.cles(Array(egale) + [Self.releve(jours: 32, Self.c, [0, 1, 2])]).last == "rloc:0000000C:0400")
+        let actives = [Self.a, Self.b, Self.c]
+        // C a ete vue d'abord ; B est plus grande : B garde la cle simple, C est qualifiee.
+        let taille = [Self.releve(jours: 0, Self.c, [1, 2]), Self.releve(jours: 1, Self.b, [1, 2, 7]),
+                      Self.releve(jours: 1.5, Self.a, [5]), Self.releve(jours: 2, Self.a, [5], actives: actives),
+                      Self.releve(jours: 2.1, Self.c, [1, 2], actives: actives),
+                      Self.releve(jours: 2.2, Self.b, [1, 2, 7], actives: actives)]
+        #expect(Self.cles(taille) == ["rloc:0400", "rloc:0400", "rloc:0400", "rloc:0400", "rloc:0000000C:0400", "rloc:0400"])
+        // A taille egale, le plus petit identifiant : B.
+        let egale = [Self.releve(jours: 0, Self.c, [1, 2]), Self.releve(jours: 1, Self.b, [1, 2]),
+                     Self.releve(jours: 1.5, Self.a, [5]), Self.releve(jours: 2, Self.a, [5], actives: actives),
+                     Self.releve(jours: 2.1, Self.c, [1, 2], actives: actives)]
+        #expect(Self.cles(egale).last == "rloc:0000000C:0400")
+        // La partition du releve precedent l'emporte sur la taille : C, vue juste avant la scission, garde la cle.
+        let precedent = [Self.releve(jours: 1, Self.b, [1, 2, 7]), Self.releve(jours: 1.5, Self.c, [1, 2]),
+                         Self.releve(jours: 2, Self.b, [1, 2, 7], actives: [Self.b, Self.c])]
+        #expect(Self.cles(precedent) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400"])
     }
 
-    /// Deterministe : la meme liste donne les memes cles ; et le maillage du dernier releve, evalue apres la liste,
-    /// donne les memes collisions que ce releve (l'app evalue le maillage recu avant de l'ajouter a l'historique).
+    /// Collision stable sur trois releves de chaque partition, en alternance pendant la scission : les memes cles a
+    /// chaque fois, sans osciller (la plus grande, B, ne prend pas la cle tant que la tenante, A, est active).
+    @Test func collisionStable() {
+        let actives = [Self.a, Self.b]
+        let releves = (0..<6).map { n in
+            n % 2 == 0 ? Self.releve(jours: Double(n) / 10, Self.a, [1], actives: actives)
+                : Self.releve(jours: Double(n) / 10, Self.b, [0, 1, 2, 3], actives: actives)
+        }
+        let avant = [Self.releve(jours: -1, Self.b, [0, 1, 2, 3]), Self.releve(jours: -0.5, Self.a, [1])]
+        #expect(Array(Self.cles(avant + releves).dropFirst(2))
+                == ["rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0000000B:0400"])
+    }
+
+    /// Fin de la scission : Bonjour n'annonce plus qu'une partition, plus de collision. Le routeur qui tenait la cle
+    /// simple la garde (la sonde revenue dans A) ; les releves de B pendant la scission restent qualifies (recalcules de
+    /// la liste seule, rien n'est melange). Si c'est B qui reste seule, elle reprend la cle simple : sans ExtMac, rien ne
+    /// distingue ses routeurs (comportement d'avant la phase 8, accepte).
+    @Test func finDeScission() {
+        let actives = [Self.a, Self.b]
+        let scission = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 0.1, Self.a, [1], actives: actives),
+                        Self.releve(jours: 0.2, Self.b, [1, 2], actives: actives),
+                        Self.releve(jours: 0.3, Self.a, [1], actives: actives)]
+        let finA = scission + [Self.releve(jours: 0.4, Self.a, [1]), Self.releve(jours: 0.5, Self.a, [1])]
+        #expect(Self.cles(finA) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400", "rloc:0400"])
+        let finB = scission + [Self.releve(jours: 0.4, Self.b, [1, 2])]
+        #expect(Self.cles(finB) == ["rloc:0400", "rloc:0400", "rloc:0000000B:0400", "rloc:0400", "rloc:0400"])
+        // Une nouvelle scission plus tard : la partition du releve precedent (A) tient de nouveau la cle simple.
+        let encore = finA + [Self.releve(jours: 2, Self.b, [1, 2], actives: actives)]
+        #expect(Self.cles(encore).last == "rloc:0000000B:0400")
+    }
+
+    /// Deterministe : la meme liste donne les memes cles ; le maillage du dernier releve, evalue apres la liste avec les
+    /// memes partitions actives, donne les memes collisions que ce releve (l'app evalue le maillage recu avant de
+    /// l'ajouter a l'historique). Sans historique (demo), aucune, meme pendant une scission.
     @Test func deterministeEtIdempotent() {
-        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 1, Self.b, [1, 5])]
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1]), Self.releve(jours: 1, Self.b, [0, 1, 2], liens: [(0, 1)], actives: actives)]
         #expect(Self.cles(releves) == Self.cles(releves))
         let collisions = CollisionsRloc(releves: releves)
-        let m = Self.maillage(jours: 1, Self.b, [1, 5])
-        #expect(collisions.collisions(apres: m) == collisions.collisions(releve: 1))
-        #expect(CollisionsRloc(releves: Array(releves.prefix(1))).collisions(apres: m) == [1])
-        #expect(CollisionsRloc(releves: []).collisions(apres: m).isEmpty, "sans historique (demo) : aucune")
+        let m = Self.maillage(jours: 1, Self.b, [0, 1, 2])
+        #expect(collisions.collisions(releve: 1) == [1])
+        #expect(collisions.collisions(apres: m, actives: actives) == collisions.collisions(releve: 1))
+        #expect(CollisionsRloc(releves: Array(releves.prefix(1))).collisions(apres: m, actives: actives) == [1])
+        #expect(CollisionsRloc(releves: []).collisions(apres: m, actives: actives).isEmpty, "sans historique (demo) : aucune")
+    }
+
+    /// Le releve garde les partitions actives, triees et avec la sienne, et seulement pendant une scission : une ligne
+    /// hors scission s'ecrit exactement comme avant (rejeu, `HistoriqueTests.ligneDUnReleve`) ; une ligne d'avant se
+    /// relit sans scission.
+    @Test func partitionsActivesDuReleve() throws {
+        let scinde = Self.releve(jours: 0, Self.b, [1], actives: [Self.c, Self.b, Self.c])
+        #expect(scinde.actives == [Self.b, Self.c])
+        let json = String(decoding: try CodageJSON.encodeur().encode(scinde), as: UTF8.self)
+        #expect(json.contains(#""actives":["0000000B","0000000C"]"#))
+        #expect(try CodageJSON.decodeur().decode(ReleveMaillage.self, from: Data(json.utf8)) == scinde)
+        #expect(Self.releve(jours: 0, Self.b, [1], actives: [Self.b]).actives.isEmpty, "une seule partition")
+        #expect(Self.releve(jours: 0, Self.b, [1], actives: [Self.a, Self.c]).actives.isEmpty, "sans la sienne")
+        let normal = Self.releve(jours: 0, Self.b, [1])
+        #expect(!String(decoding: try CodageJSON.encodeur().encode(normal), as: UTF8.self).contains("actives"))
+        let m = Self.maillage(jours: 0, Self.b, [1, 2])
+        #expect(ReleveMaillage(m, actives: [Self.a, Self.b]).actives == [Self.a, Self.b])
+        #expect(ReleveMaillage(m).actives.isEmpty)
     }
 
     /// Un routeur identifie (ExtMac) garde son ExtMac pendant une collision : seule la cle de repli est qualifiee. Un
-    /// identifiant seulement cite (un lien) que tient une autre partition est qualifie aussi.
+    /// identifiant seulement cite (un lien) qu'a aussi une autre partition active est qualifie aussi.
     @Test func extMacEtCites() {
         let x = "E0000000000000C1"
-        let releves = [Self.releve(jours: 0, Self.a, [1, 4]), Self.releve(jours: 1, Self.b, [1, 2], ext: [1: x], liens: [(2, 4)])]
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1, 4]),
+                       Self.releve(jours: 0.1, Self.b, [1, 2], ext: [1: x], liens: [(2, 4)], actives: actives)]
         #expect(Self.cles(releves) == ["rloc:0400", x])
         #expect(Self.cles(releves, routeur: 4) == ["rloc:1000", "rloc:0000000B:1000"])
     }
 
     /// Courbes : chaque routeur a les siennes ; la cle simple ne montre que la partition qui la tient.
     @Test func courbesSeparees() {
-        let releves = [Self.releve(jours: 0, Self.a, [1, 2], liens: [(1, 2)]), Self.releve(jours: 0.01, Self.b, [1, 3], liens: [(1, 3)])]
+        let actives = [Self.a, Self.b]
+        let releves = [Self.releve(jours: 0, Self.a, [1, 2], liens: [(1, 2)], actives: actives),
+                       Self.releve(jours: 0.01, Self.b, [1, 3], liens: [(1, 3)], actives: actives)]
         let fin = Self.t0.addingTimeInterval(Self.jour)
         let simple = CourbesNoeud(cle: "rloc:0400", releves: releves, periode: .jour, fin: fin)
         #expect(simple.liens.map(\.id) == ["rloc:0800"])
@@ -164,22 +238,22 @@ struct CollisionsRlocTests {
     }
 
     /// Suivi du maillage : les sujets de repli suivent la meme fabrique ; une cle qui change dans une meme partition (fin
-    /// de collision) ne fait ni apparition ni disparition de routeur ; le debut d'une collision est un changement de
-    /// partition, point de depart sans evenement.
+    /// de la scission) ne fait ni apparition ni disparition de routeur ; la sonde qui passe dans l'autre partition est un
+    /// changement de partition, point de depart sans evenement.
     @Test func suiviSansEvenementParasite() {
         var suivi = SuiviMaillage()
         let a = Self.maillage(jours: 0, Self.a, [0, 1, 2])
-        let b1 = Self.maillage(jours: 1, Self.b, [0, 1, 2])
-        let b2 = Self.maillage(jours: 31, Self.b, [0, 1, 2])
-        let b3 = Self.maillage(jours: 32, Self.b, [0, 1])
+        let b1 = Self.maillage(jours: 0.1, Self.b, [0, 1, 2])
+        let b2 = Self.maillage(jours: 0.2, Self.b, [0, 1, 2])
+        let b3 = Self.maillage(jours: 0.3, Self.b, [0, 1])
         #expect(suivi.integrer(a, sujets: SujetsMaillage()).isEmpty)
         #expect(suivi.integrer(b1, sujets: SujetsMaillage(collisions: [0, 1, 2])).isEmpty, "autre partition : point de depart")
-        #expect(suivi.integrer(b2, sujets: SujetsMaillage()).isEmpty, "fin de collision : cles changees, aucun evenement")
+        #expect(suivi.integrer(b2, sujets: SujetsMaillage()).isEmpty, "fin de la scission : cles changees, aucun evenement")
         let ev = suivi.integrer(b3, sujets: SujetsMaillage())
         #expect(ev.map(\.type) == [.routeurThreadDisparu] && ev.first?.sujet?.id == "rloc:0800")
         var qualifie = SuiviMaillage()
         _ = qualifie.integrer(b1, sujets: SujetsMaillage(collisions: [0, 1, 2]))
-        let parti = qualifie.integrer(Self.maillage(jours: 1.1, Self.b, [0, 1]), sujets: SujetsMaillage(collisions: [0, 1, 2]))
+        let parti = qualifie.integrer(Self.maillage(jours: 0.15, Self.b, [0, 1]), sujets: SujetsMaillage(collisions: [0, 1, 2]))
         #expect(parti.first?.sujet?.id == "rloc:0000000B:0800", "sujet de repli qualifie")
     }
 }

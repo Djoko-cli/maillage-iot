@@ -25,11 +25,11 @@ struct ClesHistoriqueTests {
     /// Releve a `jours` de t0, de la partition `p` : les routeurs donnes, et des identifiants seulement cites (un lien
     /// de chacun vers le routeur 0, et le parent de la sonde).
     static func releve(jours: Double, _ routeurs: [Int: String?], partition p: String = "0000000A", cites: [Int] = [],
-                       parentSonde: Int? = nil) -> ReleveMaillage {
+                       parentSonde: Int? = nil, actives: [String] = []) -> ReleveMaillage {
         ReleveMaillage(date: t0.addingTimeInterval(jours * 24 * 3600), partition: p,
                        routeurs: routeurs.keys.sorted().map { .init(id: $0, extMac: routeurs[$0] ?? nil) },
                        liens: cites.map { LienRadio(a: 0, b: $0, qualiteAB: 3, qualiteBA: 3) }, enfants: [], signaux: [],
-                       parentSonde: parentSonde)
+                       parentSonde: parentSonde, actives: actives)
     }
 
     static let semaine: TimeInterval = 7 * 24 * 3600
@@ -193,36 +193,47 @@ struct ClesHistoriqueTests {
         return ids.contains { proche($0, borne: true)?.0 == e } ? (rloc, .refusee) : (e, cas)
     }
 
-    /// Les collisions de RLOC16 a la lettre (phase 8), en rejouant les releves 0 a `i` : a chaque releve, une partition
-    /// a un identifiant si l'un de ses releves jusque-la l'a dans sa liste, a 30 jours au plus ; la tenante de la cle
-    /// simple reste tant qu'elle l'a, sinon la plus grande (le nombre de routeurs de son dernier releve), puis le plus
-    /// petit identifiant de partition. Rend les identifiants du releve `i` dont une autre partition est la tenante.
+    /// Les collisions de RLOC16 a la lettre (phase 8, correctif du 20/10), en rejouant les releves 0 a `i` : seul un
+    /// releve d'une scission (deux partitions actives ou plus, dont la sienne) en a. Une partition active a un
+    /// identifiant si son dernier releve jusque-la le cite (liste, lien, parent d'un enfant, signal, parent de la sonde).
+    /// Un identifiant qu'ont deux partitions actives ou plus : la tenante reste si elle l'a encore ; sinon la partition du
+    /// releve precedent, s'il l'a sans y etre qualifie ; sinon la plus grande (nombre de routeurs de son dernier releve),
+    /// puis le plus petit identifiant de partition. Hors scission, plus aucune tenante. Rend les identifiants du releve
+    /// `i` qu'il a et dont une autre partition est la tenante.
     static func naiveCollisions(_ releves: [ReleveMaillage], _ i: Int) -> Set<Int> {
+        func cites(_ r: ReleveMaillage) -> Set<Int> {
+            Set(r.routeurs.map(\.id) + r.liens.flatMap { [$0.a, $0.b] } + r.enfants.map(\.parent) + r.signaux.map(\.routeur)
+                + (r.parentSonde.map { [$0] } ?? [])).filter { (0...62).contains($0) }
+        }
         var tenantes: [Int: String] = [:]
+        var precedent: Set<Int> = []
         var resultat: Set<Int> = []
         for k in 0...i {
             let r = releves[k]
             resultat = []
+            defer { precedent = resultat }
+            let actives = Set(r.actives)
+            guard actives.count >= 2, actives.contains(r.partition) else {
+                tenantes = [:]
+                continue
+            }
+            func dernier(_ p: String) -> ReleveMaillage? { (0...k).last { releves[$0].partition == p }.map { releves[$0] } }
             for id in 0...62 {
-                var derniers: [String: Int] = [:]
-                for j in 0...k where releves[j].routeurs.contains(where: { $0.id == id })
-                    && r.date.timeIntervalSince(releves[j].date) <= 30 * 24 * 3600 {
-                    derniers[releves[j].partition] = j
-                }
-                guard !derniers.isEmpty else {
+                let ont = actives.filter { dernier($0).map { cites($0).contains(id) } ?? false }
+                guard ont.count >= 2 else {
                     tenantes[id] = nil
                     continue
                 }
-                if tenantes[id].flatMap({ derniers[$0] }) == nil {
-                    func taille(_ p: String) -> Int {
-                        let dernier = (0...k).last { releves[$0].partition == p }!
-                        return Set(releves[dernier].routeurs.map(\.id).filter { (0...62).contains($0) }).count
-                    }
-                    tenantes[id] = derniers.keys.sorted {
+                if let t = tenantes[id], ont.contains(t) {
+                } else if k > 0, ont.contains(releves[k - 1].partition), !precedent.contains(id) {
+                    tenantes[id] = releves[k - 1].partition
+                } else {
+                    func taille(_ p: String) -> Int { Set(dernier(p)!.routeurs.map(\.id).filter { (0...62).contains($0) }).count }
+                    tenantes[id] = ont.sorted {
                         (taille($0), UInt64($1, radix: 16)!) > (taille($1), UInt64($0, radix: 16)!)
                     }.first
                 }
-                if tenantes[id] != r.partition { resultat.insert(id) }
+                if ont.contains(r.partition) && tenantes[id] != r.partition { resultat.insert(id) }
             }
         }
         return resultat
@@ -230,7 +241,9 @@ struct ClesHistoriqueTests {
 
     /// `cle` contre la version naive (relecture, Mineur 4) : 50 releves sur pres de deux mois, trois partitions, des
     /// identifications eparses, des ExtMac qui changent d'identifiant, des identifiants seulement cites. Tirage fixe (un
-    /// generateur congruentiel de graine donnee) : aucun hasard. Chaque cas de la regle est rencontre.
+    /// generateur congruentiel de graine donnee) : aucun hasard. Chaque cas de la regle est rencontre. Deux scissions
+    /// (phase 8) : A et B actives ensemble aux releves 18 a 23, A et C aux releves 36 a 45 (B y est active aussi un
+    /// releve sur trois) ; les releves 24 a 31 (B seule, apres A) sont un changement d'identifiant, sans collision.
     @Test func commeLaVersionNaive() {
         var graine: UInt64 = 0x5EED
         func tirage(_ n: UInt64) -> Int {
@@ -249,8 +262,10 @@ struct ClesHistoriqueTests {
                 routeurs[id] = tirage(5) == 0 ? macs[(id + n / 17) % 6] : nil
             }
             let cites = [5, 6].filter { routeurs[$0] == nil && tirage(2) == 0 }
+            let actives = (18..<24).contains(n) ? ["0000000A", "0000000B"]
+                : (36..<46).contains(n) ? (n % 3 == 0 ? ["0000000A", "0000000B", "0000000C"] : ["0000000A", "0000000C"]) : []
             releves.append(Self.releve(jours: jours, routeurs, partition: partition, cites: cites,
-                                       parentSonde: routeurs[4] == nil && tirage(3) == 0 ? 4 : nil))
+                                       parentSonde: routeurs[4] == nil && tirage(3) == 0 ? 4 : nil, actives: actives))
             jours += pas[n % pas.count]
         }
         let cles = ClesHistorique(releves: releves)
@@ -266,7 +281,8 @@ struct ClesHistoriqueTests {
             }
         }
         #expect(vus == [.horsPlage, .jamais, .directe, .suivant, .precedent, .refusee, .horsBorne], "\(vus)")
-        #expect(qualifiees > 0, "des cles qualifiees (trois partitions)")
+        #expect(qualifiees > 0, "des cles qualifiees (deux scissions)")
+        #expect((24..<32).allSatisfy { collisions[$0].isEmpty }, "changement d'identifiant : aucune collision")
         #expect(releves.indices.allSatisfy { cles.collisions.collisions(releve: $0) == collisions[$0] })
     }
 }
