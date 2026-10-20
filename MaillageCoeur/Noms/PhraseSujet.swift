@@ -11,6 +11,19 @@ public enum LangueSujet: Sendable, Equatable {
     }
 }
 
+/// Genre et nombre du sujet, pour accorder le verbe et le participe qui le suivent : « La lampe du bureau est apparue »,
+/// « Les volets de la chambre sont apparus ». Un sujet sans article (mot inconnu, sans piece, anglais) reste au masculin
+/// singulier, comme le texte d'avant.
+public struct AccordSujet: Hashable, Sendable {
+    public var feminin: Bool
+    public var pluriel: Bool
+
+    public init(feminin: Bool = false, pluriel: Bool = false) {
+        self.feminin = feminin
+        self.pluriel = pluriel
+    }
+}
+
 /// Le sujet d'une ligne du journal, d'une notification ou d'une entree du menu : le nom du noeud avec sa piece, en
 /// francais naturel (« La lampe du bureau a perdu son parent »).
 ///
@@ -29,6 +42,15 @@ public struct PhraseSujet: Hashable, Sendable {
     public let texte: String
     /// Ce qui separe le sujet du verbe : vide, « , » (la piece est une incise) ou « : » (precede d'une espace).
     public let suite: String
+
+    init(texte: String, suite: String, accord: AccordSujet = AccordSujet()) {
+        self.texte = texte
+        self.suite = suite
+        self.accord = accord
+    }
+
+    /// L'accord du verbe : celui du mot d'appareil quand le sujet a recu son article, sinon masculin singulier.
+    public let accord: AccordSujet
 
     /// Le sujet suivi du reste de la phrase : `suivi(de: "a perdu son parent")`.
     public func suivi(de predicat: String) -> String { texte + suite + " " + predicat }
@@ -55,20 +77,22 @@ public struct PhraseSujet: Hashable, Sendable {
             if let g = Self.groupe(nom, jn, reste) {
                 let lieu = Self.lieu(piece, jp, salle)
                 let texte = g.texte + " " + lieu.avec(.de)
-                return PhraseSujet(texte: debutDePhrase ? Self.majuscule(texte) : texte, suite: "")
+                return PhraseSujet(texte: debutDePhrase ? Self.majuscule(texte) : texte, suite: "", accord: g.accord)
             }
         }
         // Le nom du noeud, avec l'article de son mot d'appareil quand il est connu, sinon tel quel.
-        let nomGroupe = Self.groupe(nom, jn, 0..<jn.count).map(enTete) ?? nom
+        let groupeNom = Self.groupe(nom, jn, 0..<jn.count)
+        let nomGroupe = groupeNom.map(enTete) ?? nom
+        let accord = groupeNom?.accord ?? AccordSujet()
         // 2. La piece termine le nom (mais le mot d'appareil est inconnu, ou la piece) : le nom dit deja la piece.
-        if emplacement == .fin { return PhraseSujet(texte: nomGroupe, suite: "") }
+        if emplacement == .fin { return PhraseSujet(texte: nomGroupe, suite: "", accord: accord) }
         // 3. Piece connue : en incise.
         if let salle {
             let lieu = Self.lieu(piece, jp, salle)
-            return PhraseSujet(texte: nomGroupe + ", " + lieu.dans, suite: ",")
+            return PhraseSujet(texte: nomGroupe + ", " + lieu.dans, suite: ",", accord: accord)
         }
         // 4. Piece inconnue : aucun article invente.
-        return PhraseSujet(texte: nomGroupe + " — " + piece, suite: " :")
+        return PhraseSujet(texte: nomGroupe + " — " + piece, suite: " :", accord: accord)
     }
 
     // MARK: Interne
@@ -92,6 +116,8 @@ public struct PhraseSujet: Hashable, Sendable {
     /// Un groupe nominal d'appareil : l'article, le mot du lexique, et le reste du nom tel qu'ecrit.
     private struct Groupe {
         let texte: String
+        /// Genre et nombre du mot d'appareil : ceux du sujet quand il recoit son article.
+        let accord: AccordSujet
     }
 
     /// Mots qui lient (articles, prepositions) : retires aux bords du nom restant, jamais au milieu.
@@ -115,7 +141,8 @@ public struct PhraseSujet: Hashable, Sendable {
         while finTexte < nom.endIndex, ")]»".contains(nom[finTexte]) { finTexte = nom.index(after: finTexte) }
         let complement = dernierMot < finTexte ? String(nom[dernierMot..<finTexte]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
         let mot = t.mot.defini(pluriel: t.pluriel)
-        return Groupe(texte: complement.isEmpty ? mot : mot + " " + complement)
+        return Groupe(texte: complement.isEmpty ? mot : mot + " " + complement,
+                      accord: AccordSujet(feminin: t.mot.genre == .feminin, pluriel: t.pluriel || t.mot.toujoursPluriel))
     }
 
     /// Une piece connue, prete a recevoir une preposition : « salle de bain », « combles ».

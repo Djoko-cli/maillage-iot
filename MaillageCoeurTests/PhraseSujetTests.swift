@@ -209,4 +209,34 @@ struct PhraseSujetTests {
         #expect(LangueSujet(code: "de") == .anglais, "toute langue sans accord")
         #expect(LangueSujet(code: nil) == .anglais)
     }
+
+    // MARK: Accord du verbe (tache 2 : « est apparue », « sont apparus »)
+
+    static func accord(_ nom: String, _ piece: String?, _ langue: LangueSujet = .francais) -> AccordSujet {
+        PhraseSujet.de(nom: nom, piece: piece, langue: langue).accord
+    }
+
+    /// Le genre et le nombre sont ceux du mot d'appareil, lus dans le lexique, quelle que soit la forme de la phrase.
+    @Test func accordDuMotDAppareil() {
+        #expect(Self.accord("Lampe bureau", "Bureau") == AccordSujet(feminin: true, pluriel: false))
+        #expect(Self.accord("Capteur cuisine", "Cuisine") == AccordSujet(feminin: false, pluriel: false))
+        #expect(Self.accord("Volets chambre", "Chambre") == AccordSujet(feminin: false, pluriel: true))
+        #expect(Self.accord("Lampes bureau", "Bureau") == AccordSujet(feminin: true, pluriel: true))
+        #expect(Self.accord("Prise toilettes", "Toilettes") == AccordSujet(feminin: true, pluriel: false), "le pluriel de la piece n'est pas celui du sujet")
+        #expect(Self.accord("Ampoule salon", "Salon") == AccordSujet(feminin: true, pluriel: false))
+        // Un mot d'appareil connu qui recoit son article hors de la forme « contient la piece ».
+        #expect(Self.accord("Lampe chevet", "Bureau") == AccordSujet(feminin: true, pluriel: false))
+        #expect(Self.accord("Volets chevet", "Zeta") == AccordSujet(feminin: false, pluriel: true), "piece inconnue, appareil connu")
+    }
+
+    /// Pas d'article, pas d'accord : le masculin singulier, comme le texte d'avant.
+    @Test func accordParDefaut() {
+        let defaut = AccordSujet()
+        #expect(Self.accord("HomePod Avant", "Salon") == defaut, "mot inconnu")
+        #expect(Self.accord("Hue Go (droite)", "Zone Z7") == defaut)
+        #expect(Self.accord("Lampe bureau", nil) == defaut, "sans piece : le nom seul")
+        #expect(Self.accord("Lampes bureau", "") == defaut)
+        #expect(Self.accord("Lampe bureau", "Bureau", .anglais) == defaut, "l'anglais n'accorde pas")
+        #expect(Self.accord("Petite lampe bureau", "Bureau") == defaut, "adjectif en tete : repli sans article")
+    }
 }
