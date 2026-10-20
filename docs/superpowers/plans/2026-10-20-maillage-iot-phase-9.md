@@ -43,10 +43,10 @@
 
 ### Task 2: Le journal, les notifications et le menu
 
-- [ ] **Step 1: Tests RED** — chaque type d'événement du journal (Thread et Zigbee) donne une phrase juste avec la pièce ; notifications et menu de la barre identiques ; recherche par nom brut et par pièce ; démo ; anglais.
-- [ ] **Step 2: GREEN** — brancher la fonction là où les textes d'événements sont produits.
-- [ ] **Step 3: Vérifier** — porte, passe anglaise, rejeux.
-- [ ] **Step 4: Commit** — « Journal : la piece de l'appareil dans le journal, les notifications et le menu ».
+- [x] **Step 1: Tests RED** — chaque type d'événement du journal (Thread et Zigbee) donne une phrase juste avec la pièce ; notifications et menu de la barre identiques ; recherche par nom brut et par pièce ; démo ; anglais.
+- [x] **Step 2: GREEN** — brancher la fonction là où les textes d'événements sont produits.
+- [x] **Step 3: Vérifier** — porte, passe anglaise, rejeux.
+- [x] **Step 4: Commit** — « Journal : la piece de l'appareil dans le journal, les notifications et le menu ».
 
 ---
 

@@ -107,17 +107,19 @@ struct FenetrePieces: View {
         return IdNoeud(texte: argument) ?? IdNoeud(.thread, argument)
     }
 
+    /// `piecesChoisies` : celles de la coque (`Surveillance.piecesChoisies`), que le journal lit aussi ; nil (les tests) :
+    /// les siennes, lues dans `fichierPieces`.
     /// `preferences` : celles ou la vue lit, au depart, son mode 2D / 3D, ses liens et ses voisins montres, et l'argument de
     /// selection (celles de l'app ; les tests passent les leurs, pour que le reglage de la machine ne change pas la fenetre).
     init(fichierPlaces: URL?, fichierPieces: URL? = nil, places: PlacesGardees? = nil,
-         preferences: UserDefaults = .standard) {
+         piecesChoisies: PiecesChoisies? = nil, preferences: UserDefaults = .standard) {
         _moteur = State(initialValue: MoteurPieces(troisD: preferences.bool(forKey: Self.cleMode),
                                                    fichierPlaces: fichierPlaces,
                                                    selection: Self.selection(argument: preferences.string(forKey: "selection")),
                                                    places: places,
                                                    liens: Self.modeLiens(preferences.string(forKey: Self.cleLiens)),
                                                    voisins: Self.voisinsMontres(preferences.object(forKey: Self.cleVoisins))))
-        _piecesChoisies = State(initialValue: PiecesChoisies(fichier: fichierPieces))
+        _piecesChoisies = State(initialValue: piecesChoisies ?? PiecesChoisies(fichier: fichierPieces))
     }
 
     /// Places des pieces, a cote des identites des routeurs ; ni en demo ni sous les tests.

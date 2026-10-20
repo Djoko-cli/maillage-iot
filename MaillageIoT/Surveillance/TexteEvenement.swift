@@ -30,17 +30,19 @@ enum TexteEvenement {
         }
     }
 
-    static func titre(_ e: Evenement) -> String {
+    /// Le titre d'un evenement : son sujet nomme avec sa piece (`pieces`, la meme dans la fenetre du journal, les
+    /// notifications et le menu de la barre).
+    static func titre(_ e: Evenement, pieces: PiecesJournal) -> String {
         switch protocole(e) {
-        case .thread: TexteEvenementThread.titre(e)
-        case .zigbee: TexteEvenementZigbee.titre(e)
+        case .thread: TexteEvenementThread.titre(e, pieces: pieces)
+        case .zigbee: TexteEvenementZigbee.titre(e, pieces: pieces)
         }
     }
 
-    static func titre(_ l: LigneJournal) -> String {
+    static func titre(_ l: LigneJournal, pieces: PiecesJournal) -> String {
         switch protocole(l) {
-        case .thread: TexteEvenementThread.titre(l)
-        case .zigbee: TexteEvenementZigbee.titre(l)
+        case .thread: TexteEvenementThread.titre(l, pieces: pieces)
+        case .zigbee: TexteEvenementZigbee.titre(l, pieces: pieces)
         }
     }
 
@@ -62,10 +64,10 @@ enum TexteEvenement {
 
     /// Titre et texte d'une notification : ceux du protocole de son premier evenement (une notification groupee ne l'est que
     /// de pertes d'un meme protocole, `Alertes`).
-    static func notification(_ a: AlerteAEnvoyer) -> (titre: String, corps: String) {
+    static func notification(_ a: AlerteAEnvoyer, pieces: PiecesJournal) -> (titre: String, corps: String) {
         switch a.evenements.first.map(protocole) ?? .thread {
-        case .thread: TexteEvenementThread.notification(a)
-        case .zigbee: TexteEvenementZigbee.notification(a)
+        case .thread: TexteEvenementThread.notification(a, pieces: pieces)
+        case .zigbee: TexteEvenementZigbee.notification(a, pieces: pieces)
         }
     }
 }

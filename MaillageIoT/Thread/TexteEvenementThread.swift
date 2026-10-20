@@ -37,10 +37,16 @@ enum TexteEvenementThread {
         }
     }
 
-    static func titre(_ e: Evenement) -> String {
+    /// Le titre d'un evenement. Le sujet d'un noeud est nomme avec sa piece (`pieces`, voir `PhrasesEvenement`) : il ouvre la
+    /// phrase, ou la suit apres « : ». Le nom d'un reseau ou d'un prefixe reste tel quel, ce ne sont pas des noeuds.
+    static func titre(_ e: Evenement, pieces: PiecesJournal = .aucune) -> String {
         let nom = e.sujet?.nom ?? ""
         let avant = e.avant ?? "?"
         let apres = e.apres ?? "?"
+        /// Le sujet qui ouvre la phrase.
+        var sujet: PhraseSujet { pieces.sujet(de: e) }
+        /// Le sujet au milieu d'une phrase, sans sa suite : « Routeur Thread apparu : la lampe du bureau ».
+        var milieu: String { pieces.sujet(de: e, debutDePhrase: false).texte }
         switch e.type {
         case .surveillanceDemarree:
             let r = e.details["routeurs"] ?? "0"
@@ -65,42 +71,42 @@ enum TexteEvenementThread {
         case .jeuActifChange:
             return String(localized: "Réseau \(nom) : nouveau jeu de paramètres actif")
         case .routeurApparu, .appareilNouveau:
-            return String(localized: "\(nom) est apparu")
+            return PhrasesEvenement.apparu(sujet)
         case .routeurDisparu, .appareilDisparu:
-            return String(localized: "\(nom) a disparu")
+            return PhrasesEvenement.disparu(sujet)
         case .routeurRoleChange:
-            return String(localized: "\(nom) : rôle \(role(e.avant)) → \(role(e.apres))")
+            return String(localized: "\(sujet.texte) : rôle \(role(e.avant)) → \(role(e.apres))")
         case .routeurNouvelleAdresseLien:
-            return String(localized: "\(nom) : nouvelle adresse de lien (redémarrage probable)")
+            return String(localized: "\(sujet.texte) : nouvelle adresse de lien (redémarrage probable)")
         case .prefixeNouveau:
             return String(localized: "Nouveau préfixe \(nom)")
         case .prefixeRetire:
             return String(localized: "Préfixe \(nom) retiré")
         case .appareilRevenu:
-            return String(localized: "\(nom) est revenu")
+            return PhrasesEvenement.revenu(sujet)
         case .appareilSansAdresse:
-            return String(localized: "\(nom) n'annonce plus d'adresse")
+            return PhrasesEvenement.sansAdresse(sujet)
         case .appareilChangePartition:
-            if e.details["coupee"] == "oui" { return String(localized: "\(nom) est isolé dans la partition \(apres)") }
-            return String(localized: "\(nom) a rejoint la partition \(apres)")
+            if e.details["coupee"] == "oui" { return PhrasesEvenement.isole(sujet, partition: apres) }
+            return PhrasesEvenement.rejoint(sujet, partition: apres)
         case .parentChange:
-            return String(localized: "\(nom) a changé de parent : \(avant) → \(apres)")
+            return PhrasesEvenement.parentChange(sujet, avant: avant, apres: apres)
         case .sansParent:
-            return String(localized: "\(nom) n'a plus de parent")
+            return PhrasesEvenement.sansParent(sujet)
         case .routeurThreadApparu:
-            return String(localized: "Routeur Thread apparu : \(nom)")
+            return String(localized: "Routeur Thread apparu : \(milieu)")
         case .routeurThreadDisparu:
-            return String(localized: "Routeur Thread disparu : \(nom)")
+            return String(localized: "Routeur Thread disparu : \(milieu)")
         default:
             // Type d'un autre protocole, ou relu d'un journal plus recent : son nom, tel que le journal l'ecrit.
             return e.type.rawValue
         }
     }
 
-    static func titre(_ l: LigneJournal) -> String {
+    static func titre(_ l: LigneJournal, pieces: PiecesJournal = .aucune) -> String {
         switch l {
         case .evenement(let e):
-            return titre(e)
+            return titre(e, pieces: pieces)
         case .pertes(let p):
             let debut = heure(p.first?.date ?? .distantPast)
             let fin = heure(p.last?.date ?? .distantPast)
@@ -108,8 +114,8 @@ enum TexteEvenementThread {
         case .parents(let p), .chemins(let p):
             // Thread ne produit pas de `.chemins` (protocole Zigbee) : texte des changements de parent, sans cle neuve.
             // Le dernier nom connu : le nom d'un noeud peut changer d'un changement a l'autre.
-            let nom = p.last?.sujet?.nom ?? ""
-            return String(localized: "\(nom) a changé \(p.count) fois de parent en 1 h")
+            let sujet = pieces.sujet(p.last?.sujet, protocole: p.last?.protocole ?? .thread)
+            return PhrasesEvenement.parentsRegroupes(sujet, fois: p.count)
         }
     }
 
@@ -159,7 +165,7 @@ enum TexteEvenementThread {
     }
 
     /// Titre et texte d'une notification.
-    static func notification(_ a: AlerteAEnvoyer) -> (titre: String, corps: String) {
+    static func notification(_ a: AlerteAEnvoyer, pieces: PiecesJournal = .aucune) -> (titre: String, corps: String) {
         guard let e = a.evenements.first else { return ("", "") }
         switch a.categorie {
         case .scission:
@@ -167,15 +173,15 @@ enum TexteEvenementThread {
             return (String(localized: "Réseau Thread scindé"),
                     String(localized: "\(nom) — partition à part : \(isoles(e))"))
         case .routeurDisparu:
-            return (String(localized: "Routeur de bordure disparu"), titre(e) + " · " + quand(e))
+            return (String(localized: "Routeur de bordure disparu"), titre(e, pieces: pieces) + " · " + quand(e))
         case .pertes:
-            let noms = a.evenements.compactMap { $0.sujet?.nom }.joined(separator: ", ")
+            let noms = PhrasesEvenement.liste(a.evenements, pieces: pieces)
             let debut = heure(a.evenements.first?.date ?? .distantPast)
             let fin = heure(a.evenements.last?.date ?? .distantPast)
             return (String(localized: "\(a.evenements.count) appareils Thread perdus"),
                     String(localized: "Entre \(debut) et \(fin) : \(noms)"))
         case .informations:
-            return (titre(e), quand(e))
+            return (titre(e, pieces: pieces), quand(e))
         }
     }
 }

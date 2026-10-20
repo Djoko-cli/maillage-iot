@@ -401,6 +401,22 @@
         }
       }
     },
+    "%@ est apparue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ appeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est apparue"
+          }
+        }
+      }
+    },
     "%@ est isolé dans la partition %@" : {
       "localizations" : {
         "en" : {
@@ -417,6 +433,22 @@
         }
       }
     },
+    "%@ est isolée dans la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ is isolated in partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est isolée dans la partition %2$@"
+          }
+        }
+      }
+    },
     "%@ est revenu" : {
       "localizations" : {
         "en" : {
@@ -429,6 +461,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ est revenu"
+          }
+        }
+      }
+    },
+    "%@ est revenue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ is back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est revenue"
           }
         }
       }
@@ -481,6 +529,22 @@
         }
       }
     },
+    "%@ n'annoncent plus d'adresse" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ no longer advertise an address"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'annoncent plus d'adresse"
+          }
+        }
+      }
+    },
     "%@ n'est pas une sonde (« %@ »)" : {
       "localizations" : {
         "en" : {
@@ -509,6 +573,214 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ n'est pas une sonde Zigbee (« %2$@ »)"
+          }
+        }
+      }
+    },
+    "%@ n'ont plus de parent" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ have no parent anymore"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ n'ont plus de parent"
+          }
+        }
+      }
+    },
+    "%@ ont changé %lld fois de chemin vers le pont en 1 h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed their path to the bridge %2$lld times in 1 h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ont changé %2$lld fois de chemin vers le pont en 1 h"
+          }
+        }
+      }
+    },
+    "%@ ont changé %lld fois de parent en 1 h" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed parent %2$lld times within 1 h"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ont changé %2$lld fois de parent en 1 h"
+          }
+        }
+      }
+    },
+    "%@ ont changé de chemin vers le pont : %@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed their path to the bridge: %2$@ → %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ont changé de chemin vers le pont : %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%@ ont changé de parent : %@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ changed parent: %2$@ → %3$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ont changé de parent : %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%@ ont disparu" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ disappeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ont disparu"
+          }
+        }
+      }
+    },
+    "%@ ont rejoint la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ joined partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ ont rejoint la partition %2$@"
+          }
+        }
+      }
+    },
+    "%@ sont apparues" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ appeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sont apparues"
+          }
+        }
+      }
+    },
+    "%@ sont apparus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ appeared"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sont apparus"
+          }
+        }
+      }
+    },
+    "%@ sont isolées dans la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ are isolated in partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sont isolées dans la partition %2$@"
+          }
+        }
+      }
+    },
+    "%@ sont isolés dans la partition %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ are isolated in partition %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sont isolés dans la partition %2$@"
+          }
+        }
+      }
+    },
+    "%@ sont revenues" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ are back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sont revenues"
+          }
+        }
+      }
+    },
+    "%@ sont revenus" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ are back"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sont revenus"
           }
         }
       }

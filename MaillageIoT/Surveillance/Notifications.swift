@@ -82,9 +82,13 @@ final class Notifications {
         }
     }
 
-    func presenter(_ alertes: [AlerteAEnvoyer]) {
-        for a in Self.aPresenter(alertes) {
-            let (titre, corps) = TexteEvenement.notification(a)
+    /// `pieces` : celles de la scene, au moment ou la notification part (`PiecesJournal`).
+    func presenter(_ alertes: [AlerteAEnvoyer], pieces: () -> PiecesJournal) {
+        let aPresenter = Self.aPresenter(alertes)
+        guard !aPresenter.isEmpty else { return }
+        let pieces = pieces()
+        for a in aPresenter {
+            let (titre, corps) = TexteEvenement.notification(a, pieces: pieces)
             let contenu = UNMutableNotificationContent()
             contenu.title = titre
             contenu.body = corps
