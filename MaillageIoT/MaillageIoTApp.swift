@@ -76,7 +76,8 @@ struct MaillageIoTApp: App {
         if !Self.demo {
             UserDefaults.standard.set(true, forKey: Self.clePremierGraphe)
             let n = notifications
-            s.surAlertes = { n.presenter($0) }
+            // Les pieces sont lues au moment ou la notification part, sur la scene du moment (`PiecesJournal`).
+            s.surAlertes = { [weak s] alertes in n.presenter(alertes, pieces: { s.map { PiecesJournal.de($0) } ?? .aucune }) }
             n.demanderAutorisation()
             o.proposerAuPremierLancement()
             m.brancher()
@@ -147,8 +148,7 @@ struct MaillageIoTApp: App {
         Window("Maillage IoT", id: "graphe") {
             // En demo, le jardin au niveau du rez-de-chaussee, hors de la maison (polissage C, section 7), en memoire.
             FenetrePieces(fichierPlaces: FenetrePieces.fichierPlaces(demo: Self.demo, sousTests: Surveillance.sousTests),
-                          fichierPieces: PiecesChoisies.fichier(demo: Self.demo, sousTests: Surveillance.sousTests),
-                          places: Self.placesDeLaDemo)
+                          places: Self.placesDeLaDemo, piecesChoisies: surveillance.piecesChoisies)
                 .environment(surveillance)
                 .environment(nomsMaison)
                 .environment(nomsPont)

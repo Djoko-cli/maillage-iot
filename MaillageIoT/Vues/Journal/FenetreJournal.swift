@@ -44,8 +44,8 @@ enum FamilleEvenement: String, CaseIterable, Identifiable {
     }
 }
 
-/// Filtre du journal : protocoles montres, famille, gravite minimale, recherche dans le titre, le sujet et les noms
-/// « avant » et « apres » (les parents d'un changement de parent regroupe ne sont pas dans son titre). Une ligne est du protocole
+/// Filtre du journal : protocoles montres, famille, gravite minimale, recherche dans le titre (qui nomme la piece du noeud), le
+/// sujet (son nom brut, son identifiant, sa piece) et les noms « avant » et « apres » (les parents d'un changement de parent regroupe ne sont pas dans son titre). Une ligne est du protocole
 /// de son premier evenement, Thread sans protocole ; les lignes regroupees sont par protocole, elles suivent le leur.
 struct FiltreJournal: Equatable {
     var famille: FamilleEvenement = .toutes
@@ -59,16 +59,18 @@ struct FiltreJournal: Equatable {
         if famille.grisee(montres: montres) { famille = .toutes }
     }
 
-    func appliquer(_ lignes: [LigneJournal]) -> [LigneJournal] {
+    /// `pieces` : celles de la scene (`PiecesJournal`) : le titre porte la piece du noeud, et la recherche la trouve aussi.
+    func appliquer(_ lignes: [LigneJournal], pieces: PiecesJournal = .aucune) -> [LigneJournal] {
         let r = recherche.trimmingCharacters(in: .whitespaces)
         return lignes.filter { l in
             let ev = l.evenements
             guard protocoles.contains(MarqueProtocole.protocole(de: l)) else { return false }
             guard ev.contains(where: { famille.contient($0.type) }), l.gravite >= graviteMinimale else { return false }
             guard !r.isEmpty else { return true }
-            return TexteEvenement.titre(l).localizedCaseInsensitiveContains(r)
+            return TexteEvenement.titre(l, pieces: pieces).localizedCaseInsensitiveContains(r)
                 || ev.contains { ($0.sujet?.id ?? "").localizedCaseInsensitiveContains(r)
                     || ($0.sujet?.nom ?? "").localizedCaseInsensitiveContains(r)
+                    || (pieces.piece(de: $0.sujet, protocole: $0.protocole ?? .thread) ?? "").localizedCaseInsensitiveContains(r)
                     || ($0.avant ?? "").localizedCaseInsensitiveContains(r)
                     || ($0.apres ?? "").localizedCaseInsensitiveContains(r) }
         }
@@ -90,9 +92,11 @@ struct FenetreJournal: View {
 
     var body: some View {
         let montres = preferences.preferes
-        let lignes = filtreApplique.appliquer(surveillance.lignesJournal)
+        // Les pieces que la scene donne aux noeuds, lues une fois par rendu : les lignes les nomment, la recherche les trouve.
+        let pieces = PiecesJournal.de(surveillance)
+        let lignes = filtreApplique.appliquer(surveillance.lignesJournal, pieces: pieces)
         List(lignes) { ligne in
-            LigneJournalVue(ligne: ligne)
+            LigneJournalVue(ligne: ligne, pieces: pieces)
         }
         .overlay {
             if lignes.isEmpty {
@@ -127,25 +131,26 @@ struct FenetreJournal: View {
 /// regroupes, les relais et, a deplier, leurs changements (comme dans la fiche).
 struct LigneJournalVue: View {
     let ligne: LigneJournal
+    var pieces: PiecesJournal = .aucune
 
     var body: some View {
         switch ligne {
         case .evenement(let e):
-            contenu(TexteEvenement.titre(e), quand: TexteEvenement.quand(e), gravite: e.gravite)
+            contenu(TexteEvenement.titre(e, pieces: pieces), quand: TexteEvenement.quand(e), gravite: e.gravite)
         case .parents(let groupe), .chemins(let groupe):
             // Les relais, et a deplier leurs changements, comme dans la fiche (repris de Maillage Zigbee, 09/10).
             LigneChangements(groupe: groupe, police: .callout) {
-                contenu(TexteEvenement.titre(ligne), quand: TexteEvenement.quand(ligne), gravite: ligne.gravite)
+                contenu(TexteEvenement.titre(ligne, pieces: pieces), quand: TexteEvenement.quand(ligne), gravite: ligne.gravite)
             }
         case .pertes(let groupe):
             DisclosureGroup {
                 ForEach(groupe) { e in
-                    Text("\(TexteEvenement.heure(e.date)) · \(TexteEvenement.titre(e))")
+                    Text("\(TexteEvenement.heure(e.date)) · \(TexteEvenement.titre(e, pieces: pieces))")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             } label: {
-                contenu(TexteEvenement.titre(ligne), quand: TexteEvenement.quand(ligne),
+                contenu(TexteEvenement.titre(ligne, pieces: pieces), quand: TexteEvenement.quand(ligne),
                         gravite: ligne.gravite)
             }
         }

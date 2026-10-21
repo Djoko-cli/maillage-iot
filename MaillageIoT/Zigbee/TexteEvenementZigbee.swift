@@ -26,10 +26,15 @@ enum TexteEvenementZigbee {
         }
     }
 
-    static func titre(_ e: Evenement) -> String {
-        let nom = e.sujet?.nom ?? ""
+    /// Le titre d'un evenement. Le sujet d'un noeud est nomme avec sa piece (`pieces`, voir `PhrasesEvenement`) : il ouvre la
+    /// phrase, ou la suit apres « : ».
+    static func titre(_ e: Evenement, pieces: PiecesJournal = .aucune) -> String {
         let avant = e.avant ?? "?"
         let apres = e.apres ?? "?"
+        /// Le sujet qui ouvre la phrase.
+        var sujet: PhraseSujet { pieces.sujet(de: e) }
+        /// Le sujet au milieu d'une phrase, sans sa suite : « Routeur apparu : la lampe du bureau ».
+        var milieu: String { pieces.sujet(de: e, debutDePhrase: false).texte }
         switch e.type {
         case .surveillanceDemarree:
             let r = e.details["routeurs"] ?? "0"
@@ -39,42 +44,42 @@ enum TexteEvenementZigbee {
             guard let p = e.periode else { return String(localized: "Mac en veille") }
             return String(localized: "Mac en veille de \(heure(p.start)) à \(heure(p.end))")
         case .routeurApparu:
-            return String(localized: "Routeur apparu : \(nom)")
+            return String(localized: "Routeur apparu : \(milieu)")
         case .routeurDisparu:
-            return String(localized: "Routeur disparu : \(nom)")
+            return String(localized: "Routeur disparu : \(milieu)")
         case .appareilNouveau:
-            return String(localized: "\(nom) est apparu")
+            return PhrasesEvenement.apparu(sujet)
         case .appareilDisparu:
-            return String(localized: "\(nom) a disparu")
+            return PhrasesEvenement.disparu(sujet)
         case .appareilRevenu:
-            return String(localized: "\(nom) est revenu")
+            return PhrasesEvenement.revenu(sujet)
         case .parentChange:
-            return String(localized: "\(nom) a changé de parent : \(avant) → \(apres)")
+            return PhrasesEvenement.parentChange(sujet, avant: avant, apres: apres)
         case .sansParent:
-            return String(localized: "\(nom) n'a plus de parent")
+            return PhrasesEvenement.sansParent(sujet)
         case .cheminChange:
-            return String(localized: "\(nom) a changé de chemin vers le pont : \(avant) → \(apres)")
+            return PhrasesEvenement.cheminChange(sujet, avant: avant, apres: apres)
         default:
             // Un type d'un autre protocole (le journal du coeur est commun) : Zigbee n'en ecrit jamais.
             return e.type.rawValue
         }
     }
 
-    static func titre(_ l: LigneJournal) -> String {
+    static func titre(_ l: LigneJournal, pieces: PiecesJournal = .aucune) -> String {
         switch l {
         case .evenement(let e):
-            return titre(e)
+            return titre(e, pieces: pieces)
         case .pertes(let p):
             let debut = heure(p.first?.date ?? .distantPast)
             let fin = heure(p.last?.date ?? .distantPast)
             return String(localized: "\(p.count) appareils perdus entre \(debut) et \(fin)")
         case .parents(let p):
             // Le dernier nom connu : le nom d'un noeud peut changer d'un changement a l'autre.
-            let nom = p.last?.sujet?.nom ?? ""
-            return String(localized: "\(nom) a changé \(p.count) fois de parent en 1 h")
+            let sujet = pieces.sujet(p.last?.sujet, protocole: p.last?.protocole ?? .zigbee)
+            return PhrasesEvenement.parentsRegroupes(sujet, fois: p.count)
         case .chemins(let p):
-            let nom = p.last?.sujet?.nom ?? ""
-            return String(localized: "\(nom) a changé \(p.count) fois de chemin vers le pont en 1 h")
+            let sujet = pieces.sujet(p.last?.sujet, protocole: p.last?.protocole ?? .zigbee)
+            return PhrasesEvenement.cheminsRegroupes(sujet, fois: p.count)
         }
     }
 
@@ -117,20 +122,20 @@ enum TexteEvenementZigbee {
     }
 
     /// Titre et texte d'une notification.
-    static func notification(_ a: AlerteAEnvoyer) -> (titre: String, corps: String) {
+    static func notification(_ a: AlerteAEnvoyer, pieces: PiecesJournal = .aucune) -> (titre: String, corps: String) {
         guard let e = a.evenements.first else { return ("", "") }
         switch a.categorie {
         case .routeurDisparu:
-            return (String(localized: "Routeur disparu"), titre(e) + " · " + quand(e))
+            return (String(localized: "Routeur disparu"), titre(e, pieces: pieces) + " · " + quand(e))
         case .pertes:
-            let noms = a.evenements.compactMap { $0.sujet?.nom }.joined(separator: ", ")
+            let noms = PhrasesEvenement.liste(a.evenements, pieces: pieces)
             let debut = heure(a.evenements.first?.date ?? .distantPast)
             let fin = heure(a.evenements.last?.date ?? .distantPast)
             return (String(localized: "\(a.evenements.count) appareils perdus"),
                     String(localized: "Entre \(debut) et \(fin) : \(noms)"))
         // Une scission est propre a Thread : Zigbee n'en notifie jamais.
         case .informations, .scission:
-            return (titre(e), quand(e))
+            return (titre(e, pieces: pieces), quand(e))
         }
     }
 }

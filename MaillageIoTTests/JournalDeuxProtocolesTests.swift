@@ -60,7 +60,7 @@ struct JournalDeuxProtocolesTests {
         s.chargerJournal()
         let e = try #require(s.evenements.first)
         #expect(e.protocole == nil)
-        #expect(TexteEvenement.titre(e) == TexteEvenementThread.titre(e))
+        #expect(TexteEvenement.titre(e, pieces: .aucune) == TexteEvenementThread.titre(e))
         #expect(TexteEvenement.protocole(e) == .thread)
     }
 
@@ -69,27 +69,27 @@ struct JournalDeuxProtocolesTests {
     /// retombait sur le nom brut du type pour tout type de Zigbee.)
     @Test func textesParProtocole() {
         let chemin = Self.evenement(.cheminChange, "Lampe", protocole: .zigbee, avant: "Prise", apres: "Pont Hue")
-        #expect(TexteEvenement.titre(chemin) == TexteEvenementZigbee.titre(chemin))
-        #expect(TexteEvenement.titre(chemin) != chemin.type.rawValue, "pas le nom brut du type")
-        #expect(TexteEvenement.titre(chemin) == String(localized: "\("Lampe") a changé de chemin vers le pont : \("Prise") → \("Pont Hue")"))
+        #expect(TexteEvenement.titre(chemin, pieces: .aucune) == TexteEvenementZigbee.titre(chemin))
+        #expect(TexteEvenement.titre(chemin, pieces: .aucune) != chemin.type.rawValue, "pas le nom brut du type")
+        #expect(TexteEvenement.titre(chemin, pieces: .aucune) == String(localized: "\("Lampe") a changé de chemin vers le pont : \("Prise") → \("Pont Hue")"))
         // Un meme type, deux textes : celui du protocole de l'evenement.
         let routeurZ = Self.evenement(.routeurApparu, "Prise", protocole: .zigbee)
         let routeurT = Self.evenement(.routeurApparu, "Prise", protocole: .thread)
         let routeurN = Self.evenement(.routeurApparu, "Prise")
-        #expect(TexteEvenement.titre(routeurZ) == String(localized: "Routeur apparu : \("Prise")"))
-        #expect(TexteEvenement.titre(routeurT) == String(localized: "\("Prise") est apparu"))
-        #expect(TexteEvenement.titre(routeurN) == TexteEvenement.titre(routeurT), "sans protocole : Thread")
+        #expect(TexteEvenement.titre(routeurZ, pieces: .aucune) == String(localized: "Routeur apparu : \("Prise")"))
+        #expect(TexteEvenement.titre(routeurT, pieces: .aucune) == String(localized: "\("Prise") est apparu"))
+        #expect(TexteEvenement.titre(routeurN, pieces: .aucune) == TexteEvenement.titre(routeurT, pieces: .aucune), "sans protocole : Thread")
         // Un type de Thread garde son texte.
         let scinde = Evenement(date: Self.t, type: .reseauScinde, sujet: Sujet(id: "XP", nom: "Reseau 1"), apres: "2",
                                protocole: .thread)
-        #expect(TexteEvenement.titre(scinde) == TexteEvenementThread.titre(scinde))
+        #expect(TexteEvenement.titre(scinde, pieces: .aucune) == TexteEvenementThread.titre(scinde))
         // Les lignes regroupees : celles de Zigbee disent « chemin vers le pont », avec le nom du dernier changement.
         let chemins = LigneJournal.chemins([chemin, Self.evenement(.cheminChange, "Lampe", minutes: 5, protocole: .zigbee)])
-        #expect(TexteEvenement.titre(chemins) == TexteEvenementZigbee.titre(chemins))
-        #expect(TexteEvenement.titre(chemins) == String(localized: "\("Lampe") a changé \(2) fois de chemin vers le pont en 1 h"))
+        #expect(TexteEvenement.titre(chemins, pieces: .aucune) == TexteEvenementZigbee.titre(chemins))
+        #expect(TexteEvenement.titre(chemins, pieces: .aucune) == String(localized: "\("Lampe") a changé \(2) fois de chemin vers le pont en 1 h"))
         let parentsZ = LigneJournal.parents([Self.evenement(.parentChange, "Lampe", protocole: .zigbee),
                                              Self.evenement(.parentChange, "Lampe", minutes: 5, protocole: .zigbee)])
-        #expect(TexteEvenement.titre(parentsZ) == TexteEvenementZigbee.titre(parentsZ))
+        #expect(TexteEvenement.titre(parentsZ, pieces: .aucune) == TexteEvenementZigbee.titre(parentsZ))
         #expect(TexteEvenement.quand(chemins) == TexteEvenementZigbee.quand(chemins))
         #expect(TexteEvenement.changement(chemin) == TexteEvenementZigbee.changement(chemin))
     }
@@ -101,18 +101,18 @@ struct JournalDeuxProtocolesTests {
         let disparuT = Self.evenement(.routeurDisparu, "HomePod", protocole: .thread)
         let z = AlerteAEnvoyer(categorie: .routeurDisparu, identifiant: disparuZ.id, evenements: [disparuZ])
         let t = AlerteAEnvoyer(categorie: .routeurDisparu, identifiant: disparuT.id, evenements: [disparuT])
-        #expect(TexteEvenement.notification(z).titre == String(localized: "Routeur disparu"))
-        #expect(TexteEvenement.notification(t).titre == String(localized: "Routeur de bordure disparu"))
-        #expect(TexteEvenement.notification(z) == TexteEvenementZigbee.notification(z))
-        #expect(TexteEvenement.notification(t) == TexteEvenementThread.notification(t))
+        #expect(TexteEvenement.notification(z, pieces: .aucune).titre == String(localized: "Routeur disparu"))
+        #expect(TexteEvenement.notification(t, pieces: .aucune).titre == String(localized: "Routeur de bordure disparu"))
+        #expect(TexteEvenement.notification(z, pieces: .aucune) == TexteEvenementZigbee.notification(z))
+        #expect(TexteEvenement.notification(t, pieces: .aucune) == TexteEvenementThread.notification(t))
         let pertesZ = (0..<3).map { Self.evenement(.appareilDisparu, "Lampe \($0)", minutes: Double($0), protocole: .zigbee) }
         let pertesT = pertesZ.map { e in var e = e; e.protocole = .thread; return e }
-        let nZ = TexteEvenement.notification(AlerteAEnvoyer(categorie: .pertes, identifiant: "p", evenements: pertesZ))
-        let nT = TexteEvenement.notification(AlerteAEnvoyer(categorie: .pertes, identifiant: "p", evenements: pertesT))
+        let nZ = TexteEvenement.notification(AlerteAEnvoyer(categorie: .pertes, identifiant: "p", evenements: pertesZ), pieces: .aucune)
+        let nT = TexteEvenement.notification(AlerteAEnvoyer(categorie: .pertes, identifiant: "p", evenements: pertesT), pieces: .aucune)
         #expect(nZ.titre == String(localized: "\(3) appareils perdus") && nT.titre == String(localized: "\(3) appareils Thread perdus"))
         // Une information de Zigbee : son titre, pas le nom brut du type.
         let info = Self.evenement(.cheminChange, "Lampe", protocole: .zigbee, avant: "A", apres: "B")
-        #expect(TexteEvenement.notification(AlerteAEnvoyer(categorie: .informations, identifiant: info.id, evenements: [info])).titre
+        #expect(TexteEvenement.notification(AlerteAEnvoyer(categorie: .informations, identifiant: info.id, evenements: [info]), pieces: .aucune).titre
                 == TexteEvenementZigbee.titre(info))
         // La politique du journal reste celle d'avant : memes categories pour les memes evenements.
         #expect(Surveillance.politiqueJournal.categorie(disparuZ) == .routeurDisparu)

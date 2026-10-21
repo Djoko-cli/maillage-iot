@@ -1,0 +1,19 @@
+{
+  "%@ est apparue": "%@ appeared",
+  "%@ sont apparus": "%@ appeared",
+  "%@ sont apparues": "%@ appeared",
+  "%@ est revenue": "%@ is back",
+  "%@ sont revenus": "%@ are back",
+  "%@ sont revenues": "%@ are back",
+  "%@ ont disparu": "%@ disappeared",
+  "%@ n'annoncent plus d'adresse": "%@ no longer advertise an address",
+  "%@ est isolée dans la partition %@": "%@ is isolated in partition %@",
+  "%@ sont isolés dans la partition %@": "%@ are isolated in partition %@",
+  "%@ sont isolées dans la partition %@": "%@ are isolated in partition %@",
+  "%@ ont rejoint la partition %@": "%@ joined partition %@",
+  "%@ ont changé de parent : %@ → %@": "%@ changed parent: %@ → %@",
+  "%@ n'ont plus de parent": "%@ have no parent anymore",
+  "%@ ont changé de chemin vers le pont : %@ → %@": "%@ changed their path to the bridge: %@ → %@",
+  "%@ ont changé %lld fois de parent en 1 h": "%@ changed parent %lld times within 1 h",
+  "%@ ont changé %lld fois de chemin vers le pont en 1 h": "%@ changed their path to the bridge %lld times in 1 h"
+}

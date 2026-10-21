@@ -37,6 +37,10 @@ final class Surveillance {
     let thread: SurveillanceThread
     /// Le modele de Zigbee : pont, sonde, suivi des connexions, historique, noms, fichiers sous `Zigbee/`.
     let zigbee: SurveillanceZigbee
+    /// Les pieces choisies pour les noeuds que Maison ne place pas (« Placer dans une piece… »), `pieces-noeuds.json` : celles
+    /// de la vue par pieces, et du journal, des notifications et du menu, qui nomment la piece que la scene donne a un
+    /// noeud (`PiecesJournal`). Une seule instance : un choix fait dans la fiche change tout de suite les textes.
+    let piecesChoisies: PiecesChoisies
 
     /// La coque a ete arretee (`arreter()`), par exemple pour une reprise de donnees : tant qu'elle l'est, aucun reglage ne
     /// relance un module (`ModulesApp`), et les pages des protocoles sont grisees. Remise a faux par `demarrer()`.
@@ -144,8 +148,10 @@ final class Surveillance {
                                     rejoueLaDemo: demo.rejoue(.thread), demoAirPlay: demoAirPlay, recenseur: recenseur)
         zigbee = SurveillanceZigbee(mode: mode, dossier: dossier, surnoms: surnoms, preferences: preferences,
                                     rejoueLaDemo: demo.rejoue(.zigbee), demo: demoZigbee ?? demo.zigbeeRejouee)
+        piecesChoisies = PiecesChoisies(fichier: PiecesChoisies.fichier(demo: mode == .demo, sousTests: Surveillance.sousTests))
         thread.coque = self
         zigbee.coque = self
+        piecesChoisies.coque = self
     }
 
     func demarrer() {

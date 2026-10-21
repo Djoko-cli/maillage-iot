@@ -57,10 +57,10 @@ struct MenuBarre: View {
         VStack(alignment: .leading, spacing: 10) {
             entete
             Divider()
-            ForEach(surveillance.lignesJournal.prefix(3)) { l in
+            ForEach(Self.dernieresLignes(surveillance)) { l in
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(TexteEvenement.titre(l)).font(.callout).lineLimit(2)
-                    Text(l.evenements.first.map(TexteEvenement.quand) ?? "").font(.caption).foregroundStyle(.secondary)
+                    Text(l.titre).font(.callout).lineLimit(2)
+                    Text(l.quand).font(.caption).foregroundStyle(.secondary)
                 }
             }
             Divider()
@@ -90,6 +90,22 @@ struct MenuBarre: View {
         .padding(14)
         .frame(width: 320, alignment: .leading)
         .background(FenetreHote { fenetreMenu.fenetre = $0 })
+    }
+
+    /// Une ligne du journal dans le menu : son titre, avec la piece du noeud comme dans la fenetre du journal, et son heure.
+    struct LigneMenu: Equatable, Identifiable {
+        var id: String
+        var titre: String
+        var quand: String
+    }
+
+    /// Les trois dernieres lignes du journal. Les pieces sont celles de la scene (`PiecesJournal`), lues a l'affichage.
+    static func dernieresLignes(_ s: Surveillance, pieces: PiecesJournal? = nil) -> [LigneMenu] {
+        let pieces = pieces ?? PiecesJournal.de(s)
+        return s.lignesJournal.prefix(3).map {
+            LigneMenu(id: $0.id, titre: TexteEvenement.titre($0, pieces: pieces),
+                      quand: $0.evenements.first.map(TexteEvenement.quand) ?? "")
+        }
     }
 
     /// Un bloc par protocole actif, l'un sous l'autre (Thread, puis Zigbee) ; un protocole eteint n'a rien. Aucun protocole
