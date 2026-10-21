@@ -131,10 +131,11 @@ public enum LexiqueMaison {
     }
 
     private static func index(_ mots: [MotMaison]) -> [String: (mot: MotMaison, pluriel: Bool)] {
+        // Les singuliers d'abord : un mot du lexique gagne sur le pluriel d'un autre (« cours » n'est pas « les cour »).
         var r: [String: (mot: MotMaison, pluriel: Bool)] = [:]
-        for m in mots {
-            let cles = [(m.singulier, m.toujoursPluriel), (m.pluriel, true)]
-            for (forme, plur) in cles {
+        for singuliers in [true, false] {
+            for m in mots {
+                let (forme, plur) = singuliers ? (m.singulier, m.toujoursPluriel) : (m.pluriel, true)
                 let cle = Texte.jetons(forme).map(\.plie).joined(separator: " ")
                 if r[cle] == nil { r[cle] = (m, plur) }
             }
@@ -206,7 +207,7 @@ public enum LexiqueMaison {
         "m grenier", "m garage", "m cellier", "f buanderie", "f lingerie", "m dressing", "m couloir", "m dégagement",
         "m palier @sur", "fp toilettes", "mp WC", "m sous-sol", "f cave", "f terrasse @sur", "m balcon @sur",
         "m jardin", "m abri", "f véranda", "mp combles", "m étage @a", "m rez-de-chaussée/rez-de-chaussée @a", "m rangement",
-        "m atelier", "f cour", "m hall !", "f mezzanine", "f loggia", "m patio", "m vestibule", "m sas", "m porche",
+        "m atelier", "f cour", "f cours/cours", "m hall !", "f mezzanine", "f loggia", "m patio", "m vestibule", "m sas", "m porche",
         "f allée", "m cabinet", "m placard", "m cagibi", "m débarras", "m appentis", "f serre", "f piscine",
         "m local/locaux", "f nursery", "m studio", "m loft", "m living", "f bibliothèque", "f mansarde", "f grange",
         "f remise", "m cabanon", "m carport", "m garde-manger/garde-manger", "f arrière-cuisine", "m coin", "m espace", "m office",

@@ -35,6 +35,12 @@ struct PhraseSujetTests {
         #expect(Self.fr("Lampe hall", "Hall") == "La lampe du hall a perdu son parent", "h aspire : du hall")
     }
 
+    /// Banc du 21/10 : une piece nommee « Cours » (une cour) est feminine et au singulier : « la cours », pas « les cours ».
+    @Test func coursEstUneCourAuSingulier() {
+        #expect(PhraseSujet.de(nom: "Lampe cours", piece: "Cours", langue: .francais).texte == "La lampe de la cours")
+        #expect(PhraseSujet.de(nom: "Spot", piece: "Cours", langue: .francais).texte.contains("dans la cours"))
+    }
+
     @Test func pluriels() {
         #expect(Self.fr("Volets chambre", "Chambre") == "Les volets de la chambre a perdu son parent")
         #expect(Self.fr("Volet chambre", "Chambre") == "Le volet de la chambre a perdu son parent")
