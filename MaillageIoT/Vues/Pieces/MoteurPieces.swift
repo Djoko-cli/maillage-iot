@@ -186,6 +186,12 @@ final class MoteurPieces {
     }
     @ObservationIgnored var calcul: Task<Void, Never>?
     @ObservationIgnored var cleCalculee: EntreeScene.CleDisposition?
+    /// Un choix vient d'etre fait dans la vue (`rangerPiece`, `ranger`) : le prochain calcul fixe les pieces des plateaux
+    /// inchanges a leur place affichee (`fixeesInchangees`). Il vaut une fois : le calcul qui s'en sert l'efface en
+    /// aboutissant, un calcul abandonne la garde pour le suivant, `replacerPieces` l'efface.
+    @ObservationIgnored var fixerInchanges = false
+    /// Le calcul en cours (ou le dernier lance) s'est servi de la marque `fixerInchanges`.
+    @ObservationIgnored var calculFixe = false
     @ObservationIgnored var placesCalculees: [ScenePieces.NomPiece: SIMD2<Double>] = [:]
     @ObservationIgnored var rayonsCalcules: [String: Double] = [:]
     @ObservationIgnored var cartesCalculees: [ScenePieces.NomPiece: CartesPieces.Carte] = [:]

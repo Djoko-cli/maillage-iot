@@ -26,17 +26,52 @@ extension MoteurPieces {
         attente = nil
         let cle = e.cleDisposition
         if cle == cleCalculee {
+            // Aucun calcul n'est a faire : la marque d'un choix qui ne change pas la disposition ne doit pas trainer
+            // jusqu'au prochain changement de Maison.
+            fixerInchanges = false
+            calculFixe = false
             calcul?.cancel()
             enCalcul = nil
             installer(e)
             return
         }
-        // Meme structure que la disposition en calcul : elle vaudra pour cette scene.
+        // Meme structure que la disposition en calcul : elle vaudra pour cette scene. Le choix de la vue que cette scene
+        // porte n'a rien change a la structure ; si ce calcul est parti sans la marque, elle ne lui servira plus.
         if enCalcul?.cleDisposition == cle {
+            if !calculFixe { fixerInchanges = false }
             enCalcul = e
             return
         }
         calculer(e)
+    }
+
+    /// Les pieces des plateaux inchanges de `e`, a leur position affichee (indice de piece de la scene `e` -> position
+    /// locale). Un plateau est inchange quand sa cle, ses pieces et leurs noeuds (`cleDisposition.pieces`) et sa place de
+    /// niveau (`cleDisposition.niveaux`) sont ceux de la disposition affichee (`cleCalculee`) ; ses pieces y sont prises dans
+    /// `placesCalculees`. Rien avant la premiere disposition, ni pour une cle de plateau en double.
+    func fixeesInchangees(_ e: EntreeScene) -> [Int: SIMD2<Double>] {
+        guard let avant = cleCalculee else { return [:] }
+        let cle = e.cleDisposition, scene = e.scene
+        let doubles = Dictionary(grouping: scene.etages, by: \.id).filter { $0.value.count > 1 }.keys
+        var r: [Int: SIMD2<Double>] = [:]
+        for et in scene.etages where !doubles.contains(et.id) {
+            guard let pieces = cle.pieces[et.id], pieces == avant.pieces[et.id],
+                  cle.niveaux[et.id] == avant.niveaux[et.id] else { continue }
+            for i in et.pieces {
+                if let place = placesCalculees[scene.pieces[i].nom], place.x.isFinite, place.y.isFinite { r[i] = place }
+            }
+        }
+        return r
+    }
+
+    /// Les pieces fixees du calcul de `e` : les places gardees a la main, et, apres un choix fait dans la vue
+    /// (`fixerInchanges`), les pieces des plateaux inchanges. Une place gardee a la main l'emporte. Note si la marque a servi
+    /// (`calculFixe`).
+    private func fixeesPour(_ e: EntreeScene) -> [Int: SIMD2<Double>] {
+        let main = places.fixees(e.scene, domicile: e.domicile)
+        calculFixe = fixerInchanges
+        guard fixerInchanges else { return main }
+        return fixeesInchangees(e).merging(main) { _, main in main }
     }
 
     /// Lance le calcul de la disposition d'une scene, hors du fil principal, avec les places gardees
@@ -46,7 +81,7 @@ extension MoteurPieces {
         enCalcul = e
         let cle = e.cleDisposition
         let cartes = cartesPour(e)
-        let fixees = places.fixees(e.scene, domicile: e.domicile)
+        let fixees = fixeesPour(e)
         let scene = e.scene
         calcul = Task { [weak self] in
             let d = await Task.detached(priority: .userInitiated) {
@@ -61,8 +96,7 @@ extension MoteurPieces {
     func installerMaintenant(_ e: EntreeScene) {
         calcul?.cancel()
         let cartes = cartesPour(e)
-        let d = DispositionPieces(scene: e.scene, cartes: cartes,
-                                  fixees: places.fixees(e.scene, domicile: e.domicile))
+        let d = DispositionPieces(scene: e.scene, cartes: cartes, fixees: fixeesPour(e))
         enCalcul = e
         retenir(d, scene: e.scene, cartes: cartes, cle: e.cleDisposition)
     }
@@ -96,6 +130,10 @@ extension MoteurPieces {
             (scene.pieces[$0].nom, cartes[$0])
         })
         cleCalculee = cle
+        // La marque d'un choix de la vue a servi a ce calcul : elle ne vaut qu'une fois. Un calcul parti sans elle ne
+        // l'efface pas (le choix est venu apres).
+        if calculFixe { fixerInchanges = false }
+        calculFixe = false
         enCalcul = nil
         if occupe {
             if attente == nil { attente = e }
@@ -376,6 +414,7 @@ extension MoteurPieces {
               case .maison(let piece) = p.nom, zone.map({ z in e.scene.zonesDe(piece).contains(z) }) ?? true else { return }
         places.choisirZone(zone, piece: piece, domicile: e.domicile)
         enregistrer()
+        fixerInchanges = true
     }
 
     /// Un choix du menu, calcule sur la scene la plus recente et sur les choix gardes : le nouvel ordre des plateaux et
@@ -386,6 +425,7 @@ extension MoteurPieces {
         guard let e = sceneRecente, let r = operation(e.scene.niveaux, places.maison(e.domicile).aCote) else { return }
         places.ranger(r, domicile: e.domicile)
         enregistrer()
+        fixerInchanges = true
     }
 
     /// La cle du plateau `e` de la scene affichee, celle des noms et de la projection.
@@ -438,6 +478,8 @@ extension MoteurPieces {
         guard let e = sceneRecente else { return }
         places.replacer(domicile: e.domicile)
         enregistrer()
+        fixerInchanges = false
+        calculFixe = false
         cleCalculee = nil
         enCalcul = nil
         appliquer(e)

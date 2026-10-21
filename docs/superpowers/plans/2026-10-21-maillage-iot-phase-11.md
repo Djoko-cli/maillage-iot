@@ -48,15 +48,15 @@
 **Interfaces:**
 - Produces : `MoteurPieces.fixerInchanges` (marque, `Bool`, posée par `rangerPiece` et `ranger`, effacée par le calcul qui la prend et par `replacerPieces`) ; `MoteurPieces.fixeesInchangees(_ e: EntreeScene) -> [Int: SIMD2<Double>]` (indices de pièces de la scène `e` → position calculée, pour les plateaux inchangés).
 
-- [ ] **Step 1: Tests RED** — scène inventée : « Zone 1 » (plusieurs pièces), « Zone 2 » (une seule pièce P, aussi dans « Zone 1 », à côté et hors de la maison), « Zone 3 » et « Zone 4 » (autres pièces).
+- [x] **Step 1: Tests RED** — scène inventée : « Zone 1 » (plusieurs pièces), « Zone 2 » (une seule pièce P, aussi dans « Zone 1 », à côté et hors de la maison), « Zone 3 » et « Zone 4 » (autres pièces).
   - Après `rangerPiece(P, dans: "Zone 1")` puis la scène suivante, les positions locales des pièces des Zones 3 et 4 sont identiques au bit près ; même chose au retour (« Automatiquement »).
   - Même chose après `basculerDehors` et `mettreAuNiveau` sur un plateau.
   - Sans choix (scène suivante venue d'un changement de Maison), le calcul est libre : mêmes positions que `DispositionPieces` sans fixées supplémentaires.
   - La marque ne vaut qu'une fois ; un calcul abandonné la garde ; `replacerPieces` l'efface et recalcule tout.
   - Une place gardée à la main l'emporte sur une position fixée.
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — suites ciblées (nouvelle suite, disposition, menus des plateaux, zones, démo), `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, `git diff --exit-code docs/rejeu`.
-- [ ] **Step 4: Commit** — « Pieces : apres un choix dans la vue, les plateaux inchanges gardent leur place ».
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — suites ciblées (nouvelle suite, disposition, menus des plateaux, zones, démo), `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, `git diff --exit-code docs/rejeu`.
+- [x] **Step 4: Commit** — « Pieces : apres un choix dans la vue, les plateaux inchanges gardent leur place ».
 
 ---
 
