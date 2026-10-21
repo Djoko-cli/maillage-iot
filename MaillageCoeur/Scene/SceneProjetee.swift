@@ -462,11 +462,11 @@ public struct SceneProjetee: Sendable {
         // plateau de son ancre de plus fort poids, et celui d'une piece hors du focus ; un noeud, celui de la piece
         // qu'il quitte, si elle reste : il part de son opacite affichee, meme de la piece isolee (relecture ciblee de
         // la vague finale, Mineur 1).
+        // Sur un plateau qui part, absent de la scene : le voile de son disque (relecture finale de la phase 11, I1).
         func voileAncres(_ ancres: [PosesScene.Ancre]) -> Double {
-            guard let a = ancres.max(by: { $0.poids < $1.poids }), let e = plateaux[a.plateau], e < ve.count else {
-                return 1
-            }
-            return ve[e]
+            guard let a = ancres.max(by: { $0.poids < $1.poids }) else { return 1 }
+            if let e = plateaux[a.plateau] { return e < ve.count ? ve[e] : 1 }
+            return poses.plateauxPartis.contains { $0.cle == a.plateau } ? 1 - 0.85 * ee : 1
         }
         // Sans transition, pas de noeud qui s'efface : pas d'indice a construire.
         let indicesPieces = poses.noeuds.isEmpty ? [:]

@@ -1,5 +1,7 @@
 import Foundation
 @testable import MaillageCoeur
+import ProtocoleThread
+import ProtocoleZigbee
 import simd
 import SwiftUI
 import Testing
@@ -367,6 +369,90 @@ struct PlateauxPartisTests {
         let autre = try #require(p.plateaux.first { $0.etage == zone3 }?.opacite)
         #expect(abs(autre - 0.15) < 1e-9 && abs((p.partis.first?.opacite ?? 0) - voile) < 1e-9,
                 "\(cas) : le plateau parti, sous le voile, comme avant le choix")
+    }
+
+    /// Relecture finale de la phase 11, I1 : la demo des deux reseaux, plus une « Zone 5 » dont l'unique piece, l'« Atelier »,
+    /// n'a que le detecteur Zigbee de l'Abri (les noms de Zigbee le rangent la, Thread n'y met rien).
+    static func demoZone5() -> Surveillance {
+        let s = EntreeSceneTests.deuxReseaux()
+        var pont = NomsDemo.maisonPont
+        pont.accessoires = pont.accessoires.map { var a = $0; if a.piece == "Abri" { a.piece = "Atelier" }; return a }
+        var releve = NomsDemo.releveMaison
+        releve.accessoires = releve.accessoires.map { var a = $0; if a.piece == "Abri" { a.piece = "Atelier" }; return a }
+        s.zigbee.nomsPont = pont
+        s.zigbee.recevoirReleveMaison(releve)
+        var maison = s.thread.noms.maison
+        maison?.zones = NomsDemo.zones + [ZoneMaison(nom: "Zone 5", pieces: ["Atelier"])]
+        s.thread.noms.maison = maison
+        return s
+    }
+
+    /// Masquer Zigbee pendant qu'un etage est isole : la Zone 5 part avec son Atelier et ses appareils. Ils partent sous le
+    /// voile de l'isolement, comme le disque de leur plateau (15 %), et non de plein : le bloc de l'Atelier et les pastilles
+    /// de Zigbee, qui s'effacent ensuite, ne s'allument pas a la premiere image. En 2D : en 3D, le vol vers l'etage isole
+    /// cadre l'etage et laisse la Zone 5 hors de l'image.
+    @Test func masquerUnProtocoleSousIsolement() throws {
+        let s = Self.demoZone5()
+        let tout = EntreeScene(surveillance: s, places: PlacesGardees())
+        let sansZigbee = EntreeScene(surveillance: s, places: PlacesGardees(), montres: [.thread])
+        let zone5 = "zone:Zone 5"
+        try #require(tout.scene.etages.contains { $0.id == zone5 } && !sansZigbee.scene.etages.contains { $0.id == zone5 },
+                     "la Zone 5 n'a que du Zigbee")
+        let m = MoteurPiecesTests.moteur(tout)
+        m.fige = true
+        m.poserEtageIsole(try #require(m.entree?.scene.etages.firstIndex { $0.id == "zone:Rez-de-chaussée" }))
+        MoteurPiecesTests.dessiner(m)
+        m.installerMaintenant(sansZigbee)
+        let tr = try #require(m.transition, "masquer un protocole glisse")
+        try #require(tr.plateauxPartis.map(\.cle) == [zone5])
+        let atelier = tr.depart.noeuds.filter { n in
+            n.value.ancres.max { $0.poids < $1.poids }?.plateau == zone5 && sansZigbee.scene.noeud(n.key) == nil
+        }.keys
+        try #require(!atelier.isEmpty, "des appareils de Zigbee partent avec la Zone 5")
+        m.poserTransition(0)
+        MoteurPiecesTests.dessiner(m)
+        let p = try #require(m.projetee)
+        #expect(abs((p.partis.first?.opacite ?? 0) - 0.15) < 1e-9, "le disque parti, sous le voile")
+        let blocs = p.blocs.filter { $0.piece < 0 }
+        #expect(!blocs.isEmpty, "le bloc de l'Atelier part avec son plateau")
+        for b in blocs { #expect(abs(b.opaciteAretes - 0.75 * 0.15) < 1e-9, "le bloc de l'Atelier, sous le voile (\(b.opaciteAretes))") }
+        for id in atelier {
+            let d = try #require(p.disques.first { $0.noeud == id })
+            #expect(abs(d.opacite - 0.15) < 1e-9, "\(id.texte), sous le voile (\(d.opacite))")
+            #expect(abs((p.opacitesNoms[id] ?? 1) - 0.15) < 1e-9, "son nom aussi")
+        }
+    }
+
+    /// Relecture finale de la phase 11, I2 : la piece isolee rangee dans une autre zone reste nette pendant toute la
+    /// transition, avec ses appareils : l'isolement de son ancien etage passe a son nouvel etage.
+    @Test(arguments: [false, true]) func pieceIsoleeRangeeAilleurs(troisD: Bool) throws {
+        let url = MoteurPiecesTests.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let m = try Self.moteur(url, troisD: troisD)
+        m.poserIsolement(try Self.indice(m, piece: Self.abri))
+        MoteurPiecesTests.dessiner(m)
+        /// L'opacite du bloc de l'Abri (cle « bloc ») et de ses pastilles dessinees, a l'image.
+        func abri() throws -> [String: Double] {
+            let i = try Self.indice(m, piece: Self.abri)
+            let p = try #require(m.projetee)
+            let noeuds = try #require(m.entree?.scene.pieces[i].noeuds)
+            let bloc = try #require(p.blocs.first { $0.piece == i })
+            var r = ["bloc": bloc.opaciteAretes]
+            for id in noeuds { if let d = p.disques.first(where: { $0.noeud == id }) { r[id.texte] = d.opacite } }
+            return r
+        }
+        let avant = try abri()
+        try #require(avant.count > 1 && avant.values.allSatisfy { $0 > 0.7 }, "l'Abri isole est net")
+        try Self.aller(m)
+        try #require(m.transition != nil)
+        for q in [0, 0.25, 0.5, 1] {
+            m.poserTransition(q)
+            MoteurPiecesTests.dessiner(m)
+            let a = try abri()
+            // Une pastille peut sortir de l'image en 3D, au bout de la transition : celles qui restent sont nettes.
+            #expect(a["bloc"] != nil && !a.isEmpty && a.allSatisfy { abs($0.value - (avant[$0.key] ?? .nan)) < 1e-9 },
+                    "t = \(q) : l'Abri reste net (\(a))")
+        }
     }
 
     // MARK: Une seule duree en 2D

@@ -163,6 +163,26 @@ struct PlateauxInchangesTests {
         #expect(!m.fixerInchanges, "une piece inconnue, une zone qui ne contient pas la piece")
     }
 
+    /// Relecture finale de la phase 11, M1 : cliquer la zone deja cochee, ou « Automatiquement » deja coche, ne change rien :
+    /// pas de scene differente, donc pas de calcul qui efface la marque. Elle ne se pose pas ; un changement de Maison qui
+    /// suit est calcule librement.
+    @Test func choixInchangeNePoseAucuneMarque() throws {
+        let url = MoteurPiecesTests.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let (m, _) = try Self.moteur(url)
+        m.rangerPiece("piece:Abri", dans: nil)
+        #expect(!m.fixerInchanges, "« Automatiquement » deja coche : pas de marque")
+        m.rangerPiece("piece:Abri", dans: "Zone 1")
+        #expect(m.fixerInchanges, "un vrai choix pose la marque")
+        m.installerMaintenant(try Self.scene(m.places))
+        #expect(!m.fixerInchanges)
+        m.rangerPiece("piece:Abri", dans: "Zone 1")
+        #expect(!m.fixerInchanges, "la zone deja cochee : pas de marque")
+        // Un changement de Maison qui suit : la Cuisine quitte la Zone 1, la disposition est calculee librement.
+        m.installerMaintenant(try Self.scene(m.places, zone1: Self.piecesZone1.filter { $0 != "Cuisine" }))
+        #expect(m.positions == (try Self.libre(m)), "calcul libre, comme avant")
+    }
+
     // MARK: Sans choix dans la vue
 
     /// Un changement venu de Maison (les places gardees sont changees sans passer par la vue) : le calcul est libre, comme

@@ -243,6 +243,13 @@ extension MoteurPieces {
         // disparait rend aussi la maison.
         let clesPieces = Set(scene.pieces.map(\.id)), clesEtages = Set(scene.etages.map(\.id))
         fk = fk.filter { clesPieces.contains($0.key) }
+        // La piece isolee rangee dans une autre zone emporte l'isolement de son etage : sans cela, son nouvel etage est
+        // sous le voile des autres, et la piece tombe a 15 % avant de remonter (relecture finale de la phase 11, I2).
+        if case .piece(let cle, _) = isolement, let ancien = etageEnVue,
+           let i = scene.pieces.firstIndex(where: { $0.id == cle }) {
+            let nouveau = scene.etages[scene.pieces[i].etage].id
+            if nouveau != ancien { ek[nouveau] = max(ek[nouveau] ?? 0, ek[ancien] ?? 0) }
+        }
         ek = ek.filter { clesEtages.contains($0.key) }
         isolement = isolement.recaler(pieces: clesPieces, etages: clesEtages)
         if let cle = ancienFocus, let i = scene.pieces.firstIndex(where: { $0.id == cle }) {
@@ -441,6 +448,9 @@ extension MoteurPieces {
     func rangerPiece(_ cle: String, dans zone: String?) {
         guard let e = sceneRecente, let p = e.scene.pieces.first(where: { $0.id == cle }),
               case .maison(let piece) = p.nom, zone.map({ z in e.scene.zonesDe(piece).contains(z) }) ?? true else { return }
+        // Un choix qui ne change rien (la zone deja cochee, « Automatiquement » deja coche) ne change pas la scene : aucun
+        // calcul n'effacerait la marque, qui trainerait jusqu'au prochain changement de Maison (relecture finale, M1).
+        guard places.zonesChoisies(e.domicile)[piece] != zone else { return }
         places.choisirZone(zone, piece: piece, domicile: e.domicile)
         enregistrer()
         fixerInchanges = true
