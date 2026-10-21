@@ -91,6 +91,6 @@
 
 ### Task 3: Relecture et banc
 
-- [ ] **Step 1: Relecture** — Sonnet par tâche, Opus sur la branche.
-- [ ] **Step 2: Banc** — avec Djoko, sur sa maison réelle : la pièce extérieure retrouve sa zone et son menu « Hors de la maison » ; le clic droit range une pièce ailleurs et le choix tient après un relancement.
-- [ ] **Step 3: Verdict** — cocher « Phase 10 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
+- [x] **Step 1: Relecture** — Opus sur la branche, pour les deux tâches (décision du 21/10, deux petites tâches sur la même surface).
+- [x] **Step 2: Banc** — avec Djoko, sur sa maison réelle : la pièce extérieure retrouve sa zone et son menu « Hors de la maison » ; le clic droit range une pièce ailleurs et le choix tient après un relancement.
+- [x] **Step 3: Verdict** — cocher « Phase 10 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
