@@ -4,7 +4,9 @@ import Foundation
 /// etages, les pieces qui ont au moins un noeud, les noeuds et les liens.
 ///
 /// - Etages : les zones de Maison, dans leur ordre (le premier en bas) ; une piece dans plusieurs
-///   zones va dans la premiere ; deux zones du meme nom n'en font qu'une, a la place de la premiere ;
+///   zones va dans la zone choisie pour elle (`zonesChoisies`), sinon dans la plus precise, celle qui a le moins de
+///   pieces dans Maison (pieces distinctes, montrees ou non), et a egalite la premiere ; une zone dont aucune piece
+///   n'est rangee chez elle n'a pas de plateau ; deux zones du meme nom n'en font qu'une, a la place de la premiere ;
 ///   les pieces hors zone forment « Autres pieces ». Sans zones (ou fichier d'avant les zones), un seul
 ///   plateau « Maison ». Un ordre garde passe avant. Sans aucun noeud, ni etage ni piece.
 /// - Niveaux (polissage C, section 1) : un plateau est un etage, ou une zone a cote d'un etage, dont elle
@@ -121,17 +123,22 @@ public struct ScenePieces: Hashable, Sendable {
     /// Maison n'a encore aucune piece : cartes par routeur, et le bandeau du passeur.
     public private(set) var sansPiecesMaison: Bool
     private var indices: [IdNoeud: Int] = [:]
+    /// Pour chaque piece montree : les zones de Maison qui la contiennent, dans l'ordre de Maison apres fusion.
+    private var zonesParPiece: [String: [String]] = [:]
+    /// Les choix gardes qui s'appliquent : piece -> zone, pour une zone qui contient la piece.
+    private var choisies: [String: String] = [:]
 
     /// `libelles` : nom de chaque noeud, sans ses badges (son id a defaut) ; `piecesNoeuds` : piece de Maison
     /// de chaque noeud qui en a une ; `zones` : celles de Maison (nil : fichier d'avant les zones) ;
     /// `chefs` : noeuds couronnes ; `piecesMaison` : Maison a au moins une piece ; `ordreEtages` :
-    /// cles des etages dans l'ordre garde, du bas vers le haut ; `aCote` : les choix de niveau gardes ; `piles` : les
+    /// cles des etages dans l'ordre garde, du bas vers le haut ; `aCote` : les choix de niveau gardes ; `zonesChoisies` :
+    /// la zone gardee de chaque piece (nom de piece -> nom de zone), qui l'emporte sur la zone la plus precise ; `piles` : les
     /// noeuds dont la pile est connue ; `classement` : le rang dans sa carte (1 a 3) et le rayon naturel de la
     /// pastille de chaque noeud, la regle de son protocole (`classementThread`, `ScenePieces.classementZigbee`) : le coeur
     /// n'en a pas de par defaut.
     public init(graphe: GrapheReseau, libelles: [IdNoeud: String], piecesNoeuds: [IdNoeud: String],
                 zones: [ZoneMaison]?, chefs: Set<IdNoeud>, piecesMaison: Bool, ordreEtages: [String] = [],
-                aCote: [String: PlacesGardees.ACote] = [:], piles: Set<IdNoeud> = [],
+                aCote: [String: PlacesGardees.ACote] = [:], zonesChoisies: [String: String] = [:], piles: Set<IdNoeud> = [],
                 classement: @Sendable (GrapheReseau.Noeud) -> (rang: Int, rayon: Double)) {
         sansPiecesMaison = !piecesMaison
         func libelle(_ id: IdNoeud) -> String { libelles[id] ?? id.cle }
@@ -169,9 +176,27 @@ public struct ScenePieces: Hashable, Sendable {
                     fusionnees.append(z)
                 }
             }
+            // Zones de chaque piece montree (ordre de Maison) ; taille d'une zone = ses pieces distinctes, montrees ou non.
+            let tailles = fusionnees.map { Set($0.pieces).count }
+            var candidates: [String: [Int]] = [:]
+            for (k, z) in fusionnees.enumerated() {
+                for p in Set(z.pieces) where montrees.contains(p) { candidates[p, default: []].append(k) }
+            }
+            // La zone d'une piece : le choix garde s'il designe une de ses zones, sinon la plus precise, a egalite la premiere.
+            var zoneDe: [String: Int] = [:]
+            for (p, ks) in candidates {
+                let ks = ks.sorted()
+                if let nom = zonesChoisies[p], let k = ks.first(where: { fusionnees[$0].nom == nom }) {
+                    zoneDe[p] = k
+                    choisies[p] = nom
+                } else {
+                    zoneDe[p] = ks.min { (tailles[$0], $0) < (tailles[$1], $1) }
+                }
+                zonesParPiece[p] = ks.map { fusionnees[$0].nom }
+            }
             var restantes = montrees
-            for z in fusionnees {
-                let dedans = z.pieces.filter { restantes.contains($0) }
+            for (k, z) in fusionnees.enumerated() {
+                let dedans = Set(z.pieces).filter { zoneDe[$0] == k }
                 guard !dedans.isEmpty else { continue }
                 for p in dedans {
                     etageDe[p] = noms.count
@@ -256,6 +281,14 @@ public struct ScenePieces: Hashable, Sendable {
     }
 
     public func noeud(_ id: IdNoeud) -> Noeud? { indices[id].map { noeuds[$0] } }
+
+    /// Les zones de Maison qui contiennent la piece, dans l'ordre de Maison (zones du meme nom fusionnees), pour le menu
+    /// « Ranger dans la zone… » ; vide pour une piece sans zone ou inconnue, ou si la scene n'a pas de zones.
+    public func zonesDe(_ piece: String) -> [String] { zonesParPiece[piece] ?? [] }
+
+    /// La zone gardee qui s'applique a la piece (la coche du menu) ; `nil` sans choix, ou si le choix ne designe plus une
+    /// de ses zones.
+    public func zoneChoisie(_ piece: String) -> String? { choisies[piece] }
 
     /// Ce qui oblige a recalculer la disposition (spec de la vue par pieces, section 4.3 ; polissage C, section 4 ;
     /// polissage D, section 2).

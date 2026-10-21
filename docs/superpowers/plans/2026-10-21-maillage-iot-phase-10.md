@@ -52,7 +52,7 @@
   - `ScenePieces.zonesDe(_ piece: String) -> [String]` : les zones de Maison qui contiennent la pièce (ordre de Maison, après fusion), pour le menu ; vide si la scène n'a pas de zones. Le constructeur choisit où le garder (propriété calculée à la construction).
   - `ScenePieces.zoneChoisie(_ piece: String) -> String?` : le choix gardé qui s'applique (`nil` si aucun, ou périmé), pour la coche du menu.
 
-- [ ] **Step 1: Tests RED**
+- [x] **Step 1: Tests RED**
   - Une pièce dans « Zone A » (3 pièces) et « Zone B » (1 pièce) va dans B, quel que soit l'ordre de Maison ; « Zone B » garde son plateau.
   - À égalité de taille, la première dans l'ordre de Maison.
   - Avec `zonesChoisies` = A, elle va dans A ; avec un choix périmé (zone qui ne la contient pas, ou inconnue), la règle 1.
@@ -61,9 +61,9 @@
   - `zonesDe` et `zoneChoisie` pour une pièce partagée, une pièce simple et une pièce sans zone.
   - `PlacesGardees` : aller-retour avec des choix ; un fichier d'avant (sans `zones`) se lit sans perte ; sans choix, le JSON écrit n'a pas de clé `zones` ; `choisirZone(nil, …)` oublie le choix ; `zones` mal formé est ignoré sans perdre l'ordre ni les places.
   - Le choix « à côté / hors de la maison » d'une zone revient quand la zone retrouve une pièce (un test qui le montre de bout en bout dans `ScenePieces`).
-- [ ] **Step 2: GREEN** — implémenter.
-- [ ] **Step 3: Vérifier** — `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, références de rejeu inchangées (`git diff --exit-code docs/rejeu`).
-- [ ] **Step 4: Commit** — « Zones : une piece de plusieurs zones va dans la plus precise, choix garde ».
+- [x] **Step 2: GREEN** — implémenter.
+- [x] **Step 3: Vérifier** — `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, références de rejeu inchangées (`git diff --exit-code docs/rejeu`).
+- [x] **Step 4: Commit** — « Zones : une piece de plusieurs zones va dans la plus precise, choix garde ».
 
 ---
 
