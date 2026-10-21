@@ -503,6 +503,8 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 7 : pièce proposée aux HomePod et à l'Apple TV par leur annonce AirPlay (conception du 19/10 : `2026-10-19-piece-airplay-design.md`)
 - [x] Phase 8 : clés `rloc:` de Thread qualifiées par la partition en cas de collision (décisions du 20/10 : seulement entre partitions actives en même temps, tenante stable pendant la scission, fin après trois relevés sans scission)
 - [x] Phase 9 : le journal nomme la pièce de l'appareil en français naturel (décisions du 20/10)
+- [x] Phase 10 : une pièce dans plusieurs zones de Maison va dans la plus précise, et se range au clic droit (décisions du 20/10)
+- [ ] Phase 11 : une transition en un seul mouvement quand une pièce change de plateau, et les autres étages gardent leur place après un choix fait dans la vue (banc et décisions du 21/10)
 
 ### 6.2 Les tests
 

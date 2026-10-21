@@ -118,7 +118,7 @@ struct EntreeScene: Equatable {
         // La scene voit les noms sans leurs badges : un badge qui change ne la change pas (polissage D, section 2).
         let scene = ScenePieces(graphe: graphe, libelles: libelles.mapValues(\.nom), piecesNoeuds: pieces,
                                 zones: zones, chefs: chefs, piecesMaison: piecesMaison,
-                                ordreEtages: gardees.ordreEtages, aCote: gardees.aCote,
+                                ordreEtages: gardees.ordreEtages, aCote: gardees.aCote, zonesChoisies: gardees.zones,
                                 piles: Set(affiches.filter { $0.batterie != nil }.map(\.id)),
                                 classement: Self.classement(thread: thread.classement, zigbee: zigbee.classement))
         let principale = r?.partitions.first(where: \.estPrincipale)?.id

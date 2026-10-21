@@ -420,13 +420,15 @@ struct VuePieces: View {
     }
 }
 
-/// Clics droits, un menu natif (polissage C, section 1.3) : sur le nom ou le disque d'un plateau, son nom en tete,
+/// Clics droits, un menu natif (polissage C, section 1.3 ; phase 10) : sur le nom ou le disque d'un plateau, son nom en tete,
 /// grise ; « Monter d'un etage » et « Descendre d'un etage » ; « Au meme niveau que », un sous-menu des autres niveaux,
 /// celui de la zone coche ; « Hors de la maison », une case a cocher ; « Sur son propre niveau ». Le plateau et les
 /// niveaux y sont designes par leur cle : une scene qui s'installe pendant que le menu est ouvert ne change pas ce qu'un
 /// article vise. Ses coches et ses grises suivent la scene la plus recente (`MoteurPieces.menuEtage`, qui lit sa
-/// version) : rouvert sur la meme cible apres un choix, le menu en montre l'effet. Sur le fond, « Replacer les pieces
-/// automatiquement ».
+/// version) : rouvert sur la meme cible apres un choix, le menu en montre l'effet. Sur une piece, son nom en tete, grise,
+/// et « Ranger dans la zone… », un sous-menu : « Automatiquement » (coche tant qu'aucun choix ne s'applique), un
+/// separateur, puis les zones de la piece, celle du choix coche ; grise pour une piece de moins de deux zones
+/// (`MoteurPieces.menuPiece`, designee de meme par sa cle). Sur le fond, « Replacer les pieces automatiquement ».
 struct MenuPieces: View {
     let moteur: MoteurPieces
 
@@ -452,6 +454,20 @@ struct MenuPieces: View {
                     .disabled(!m.aCote)
                 Button("Sur son propre niveau") { moteur.mettreSurSonNiveau(cle) }
                     .disabled(!m.aCote)
+            }
+        case .piece(let cle):
+            if let m = moteur.menuPiece(cle) {
+                Button(m.nom) {}
+                    .disabled(true)
+                Menu("Ranger dans la zone…") {
+                    Toggle("Automatiquement", isOn: Binding(get: { m.automatique },
+                                                            set: { _ in moteur.rangerPiece(cle, dans: nil) }))
+                    Divider()
+                    ForEach(m.zones, id: \.nom) { z in
+                        Toggle(z.nom, isOn: Binding(get: { z.coche }, set: { _ in moteur.rangerPiece(cle, dans: z.nom) }))
+                    }
+                }
+                .disabled(!m.peutRanger)
             }
         case .fond:
             Button("Replacer les pièces automatiquement") { moteur.replacerPieces() }

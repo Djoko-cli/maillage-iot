@@ -4,11 +4,13 @@ import Foundation
 /// `positions-pieces.json` : par maison (`domicile` de Maison), l'ordre des etages et, par etage, la
 /// place (x, z) de chaque piece deplacee, par rapport au centre du plateau, en unites. Une piece est
 /// reconnue par la cle de son etage et la sienne : renommee, ou passee dans un autre etage, elle
-/// perd sa place. Depuis le polissage C, le choix de niveau des zones a cote (`aCote`).
+/// perd sa place. Depuis le polissage C, le choix de niveau des zones a cote (`aCote`). Depuis la phase 10, la zone
+/// choisie pour une piece que Maison range dans plusieurs zones (`zones`).
 public struct PlacesGardees: Hashable, Sendable, Codable {
-    /// Version 1 : l'ordre et les places, puis, depuis le polissage C, les zones a cote (`aCote`), un champ
-    /// facultatif, comme `appareils` dans `pieces-routeurs.json`. Un fichier d'avant se lit sans perte ; une
-    /// app d'avant lit encore l'ordre et les places d'un fichier d'apres, et ignore le champ.
+    /// Version 1 : l'ordre et les places, puis, depuis le polissage C, les zones a cote (`aCote`) et, depuis la phase 10,
+    /// les zones choisies (`zones`), des champs facultatifs, comme `appareils` dans `pieces-routeurs.json`. Un fichier
+    /// d'avant se lit sans perte ; une app d'avant lit encore l'ordre et les places d'un fichier d'apres, et ignore les
+    /// champs.
     public static let versionActuelle = 1
     /// Distance au centre de son plateau au-dela de laquelle une place gardee est ignoree (unites) : elle
     /// vient d'un fichier abime ou edite a la main, un glisser restant dans le plateau. Un plateau fait
@@ -45,32 +47,39 @@ public struct PlacesGardees: Hashable, Sendable, Codable {
         public var etages: [String: [String: Place]] = [:]
         /// Cle d'une zone a cote -> son choix ; un plateau qui n'y est pas est un etage.
         public var aCote: [String: ACote] = [:]
+        /// Nom d'une piece que Maison range dans plusieurs zones -> nom de la zone choisie pour elle. Un choix qui ne
+        /// designe plus une zone de la piece (renommee, retiree) reste ici, ignore par la scene.
+        public var zones: [String: String] = [:]
 
-        public init(ordreEtages: [String] = [], etages: [String: [String: Place]] = [:], aCote: [String: ACote] = [:]) {
+        public init(ordreEtages: [String] = [], etages: [String: [String: Place]] = [:], aCote: [String: ACote] = [:],
+                    zones: [String: String] = [:]) {
             self.ordreEtages = ordreEtages
             self.etages = etages
             self.aCote = aCote
+            self.zones = zones
         }
 
         private enum CodingKeys: String, CodingKey {
-            case ordreEtages, etages, aCote
+            case ordreEtages, etages, aCote, zones
         }
 
-        /// `aCote` manque aux fichiers d'avant le polissage C : des etages seulement. Mal forme, il est ignore
-        /// de meme : un champ facultatif ne doit pas faire perdre l'ordre ni les places.
+        /// `aCote` manque aux fichiers d'avant le polissage C : des etages seulement ; `zones`, a ceux d'avant la phase 10.
+        /// Mal forme, un champ facultatif est ignore de meme : il ne doit pas faire perdre l'ordre ni les places.
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             ordreEtages = try c.decode([String].self, forKey: .ordreEtages)
             etages = try c.decode([String: [String: Place]].self, forKey: .etages)
             aCote = (try? c.decodeIfPresent([String: ACote].self, forKey: .aCote)) ?? [:]
+            zones = (try? c.decodeIfPresent([String: String].self, forKey: .zones)) ?? [:]
         }
 
-        /// Sans zone a cote, le champ n'est pas ecrit : le fichier reste celui d'avant le polissage C.
+        /// Sans zone a cote ni zone choisie, les champs ne sont pas ecrits : le fichier reste celui d'avant.
         public func encode(to encoder: any Encoder) throws {
             var c = encoder.container(keyedBy: CodingKeys.self)
             try c.encode(ordreEtages, forKey: .ordreEtages)
             try c.encode(etages, forKey: .etages)
             if !aCote.isEmpty { try c.encode(aCote, forKey: .aCote) }
+            if !zones.isEmpty { try c.encode(zones, forKey: .zones) }
         }
     }
 
@@ -120,8 +129,21 @@ public struct PlacesGardees: Hashable, Sendable, Codable {
         maisons[domicile, default: Maison()].aCote = r.aCote
     }
 
-    /// « Replacer les pieces automatiquement » : oublie les places de la maison, garde l'ordre des etages et
-    /// les choix de niveau.
+    /// Les zones choisies de la maison : nom de piece -> nom de zone (`ScenePieces(zonesChoisies:)`).
+    public func zonesChoisies(_ domicile: String) -> [String: String] { maison(domicile).zones }
+
+    /// Garde la zone choisie pour une piece que Maison range dans plusieurs zones ; `nil` oublie le choix (la zone la
+    /// plus precise s'applique de nouveau).
+    public mutating func choisirZone(_ zone: String?, piece: String, domicile: String) {
+        if let zone {
+            maisons[domicile, default: Maison()].zones[piece] = zone
+        } else {
+            maisons[domicile]?.zones[piece] = nil
+        }
+    }
+
+    /// « Replacer les pieces automatiquement » : oublie les places de la maison, garde l'ordre des etages, les
+    /// choix de niveau et les zones choisies.
     public mutating func replacer(domicile: String) {
         maisons[domicile]?.etages = [:]
     }

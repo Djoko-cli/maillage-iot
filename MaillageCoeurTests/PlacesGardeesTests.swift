@@ -139,6 +139,66 @@ struct PlacesGardeesTests {
         #expect(p.maison("Maison").etages.isEmpty && p.rangement("Maison") == r)
     }
 
+    /// Phase 10, le choix de zone d'une piece de plusieurs zones (`zones` par maison, nom de piece -> nom de zone) : champ
+    /// facultatif, comme `aCote`. Sans choix, il n'est pas ecrit ; un fichier d'avant se lit sans perte ; un aller-retour
+    /// garde les choix ; `nil` oublie un choix ; un champ mal forme est ignore sans perdre l'ordre ni les places ; ni
+    /// « Replacer les pieces automatiquement » ni un choix de niveau ne les touchent.
+    @Test func zonesChoisies() throws {
+        let url = Self.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        var p = PlacesGardees()
+        p.garder(SIMD2(1.5, -2.25), piece: "piece:Pièce 1", etage: "zone:Zone 1", domicile: "Maison")
+        p.ordonner(["zone:Zone 1", "zone:Zone 2"], domicile: "Maison")
+        // Sans choix : pas de cle, le fichier reste celui d'avant.
+        try p.ecrire(dans: url)
+        #expect(!String(decoding: try Data(contentsOf: url), as: UTF8.self).contains("\"zones\""))
+        #expect(PlacesGardees.lire(url) == p && PlacesGardees.lire(url).zonesChoisies("Maison").isEmpty)
+        // Un fichier d'avant (sans `zones`) se lit sans perte, et se relit tel quel apres un choix puis son oubli.
+        let avant = PlacesGardees.lire(url)
+        p.choisirZone("Zone 2", piece: "Pièce 1", domicile: "Maison")
+        p.choisirZone("Zone 1", piece: "Pièce 2", domicile: "Maison")
+        #expect(p.zonesChoisies("Maison") == ["Pièce 1": "Zone 2", "Pièce 2": "Zone 1"] && p.zonesChoisies("Autre").isEmpty)
+        try p.ecrire(dans: url)
+        let relu = PlacesGardees.lire(url)
+        #expect(relu == p && relu.version == PlacesGardees.versionActuelle && PlacesGardees.versionActuelle == 1)
+        #expect(relu.maison("Maison").etages == avant.maison("Maison").etages && relu.maison("Maison").ordreEtages == avant.maison("Maison").ordreEtages)
+        // Changer de choix, puis l'oublier.
+        p.choisirZone("Zone 1", piece: "Pièce 1", domicile: "Maison")
+        #expect(p.zonesChoisies("Maison")["Pièce 1"] == "Zone 1")
+        p.choisirZone(nil, piece: "Pièce 1", domicile: "Maison")
+        p.choisirZone(nil, piece: "Pièce 2", domicile: "Maison")
+        p.choisirZone(nil, piece: "Pièce 3", domicile: "Maison")
+        p.choisirZone(nil, piece: "Pièce 1", domicile: "Inconnue")
+        #expect(p.zonesChoisies("Maison").isEmpty && p == avant && p.maisons["Inconnue"] == nil, "oublier ne cree pas de maison")
+        try p.ecrire(dans: url)
+        #expect(!String(decoding: try Data(contentsOf: url), as: UTF8.self).contains("\"zones\""), "plus de choix, plus de cle")
+        // Les choix survivent au replacement et aux choix de niveau.
+        p.choisirZone("Zone 2", piece: "Pièce 1", domicile: "Maison")
+        p.replacer(domicile: "Maison")
+        p.ranger(Rangement(ordre: ["zone:Zone 2", "zone:Zone 1"], aCote: [:]), domicile: "Maison")
+        #expect(p.zonesChoisies("Maison") == ["Pièce 1": "Zone 2"])
+        // Une app d'avant : son schema, sans le champ, relit l'ordre et les places.
+        struct AncienneMaison: Decodable {
+            var ordreEtages: [String]
+            var etages: [String: [String: PlacesGardees.Place]]
+        }
+        struct Ancienne: Decodable {
+            var version: Int
+            var maisons: [String: AncienneMaison]
+        }
+        try p.ecrire(dans: url)
+        let ancienne = try JSONDecoder().decode(Ancienne.self, from: Data(contentsOf: url))
+        #expect(ancienne.version == 1 && ancienne.maisons["Maison"]?.ordreEtages == ["zone:Zone 2", "zone:Zone 1"])
+        // Un champ mal forme est ignore, sans perdre l'ordre ni les places.
+        p.garder(SIMD2(3, 4), piece: "piece:Pièce 1", etage: "zone:Zone 2", domicile: "Maison")
+        try p.ecrire(dans: url)
+        let texte = String(decoding: try Data(contentsOf: url), as: UTF8.self)
+        #expect(texte.contains("\"Pièce 1\" : \"Zone 2\""))
+        try Data(texte.replacingOccurrences(of: "\"Pièce 1\" : \"Zone 2\"", with: "\"Pièce 1\" : 7").utf8).write(to: url)
+        let abime = PlacesGardees.lire(url).maison("Maison")
+        #expect(abime.zones.isEmpty && abime.ordreEtages == p.maison("Maison").ordreEtages && abime.etages == p.maison("Maison").etages)
+    }
+
     /// Ordre des etages garde, puis « Replacer les pieces automatiquement » : les places partent,
     /// l'ordre reste.
     @Test func ordreDesEtagesEtReplacement() throws {

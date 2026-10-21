@@ -354,6 +354,30 @@ extension MoteurPieces {
                          dehors: n.dehors(cle))
     }
 
+    /// Le menu du clic droit sur la piece `cle`, sur la scene la plus recente (comme `menuEtage`, qui en explique la
+    /// version lue) : son nom, et les zones de Maison qui la contiennent, celle du choix qui s'applique cochee. nil si la
+    /// scene n'a plus cette piece. Une piece qui n'est pas de Maison (carte d'un routeur, « Sans piece ») n'a pas de zone.
+    func menuPiece(_ cle: String) -> MenuPiece? {
+        _ = versionScene
+        guard let e = sceneRecente, let p = e.scene.pieces.first(where: { $0.id == cle }) else { return nil }
+        let nom = LibellesNoeuds.nom(p.nom, libelles: e.libelles)
+        guard case .maison(let piece) = p.nom else { return MenuPiece(nom: nom, automatique: true, zones: []) }
+        let choisie = e.scene.zoneChoisie(piece)
+        return MenuPiece(nom: nom, automatique: choisie == nil,
+                         zones: e.scene.zonesDe(piece).map { MenuPiece.Zone(nom: $0, coche: $0 == choisie) })
+    }
+
+    /// « Ranger dans la zone… » : la piece `cle` (sa cle de piece, jamais un indice) va dans la zone `zone` de Maison, qui doit
+    /// la contenir ; `nil`, « Automatiquement », oublie le choix. Le choix est calcule sur la scene la plus recente et garde
+    /// dans les places, comme les choix de niveau (`ranger`) ; la scene suivante le prend (`EntreeScene`). Rien pour une
+    /// piece inconnue, qui n'est pas de Maison, ou une zone qui ne la contient pas.
+    func rangerPiece(_ cle: String, dans zone: String?) {
+        guard let e = sceneRecente, let p = e.scene.pieces.first(where: { $0.id == cle }),
+              case .maison(let piece) = p.nom, zone.map({ z in e.scene.zonesDe(piece).contains(z) }) ?? true else { return }
+        places.choisirZone(zone, piece: piece, domicile: e.domicile)
+        enregistrer()
+    }
+
     /// Un choix du menu, calcule sur la scene la plus recente et sur les choix gardes : le nouvel ordre des plateaux et
     /// les nouveaux choix de niveau, gardes ; la scene suivante les prend (`EntreeScene`), et les plateaux glissent
     /// vers leur nouvelle place. Sur la scene affichee, un choix fait pendant que la scene du precedent attend (un vol,
@@ -368,6 +392,12 @@ extension MoteurPieces {
     func cleEtage(_ e: Int) -> String? {
         guard let scene, scene.etages.indices.contains(e) else { return nil }
         return scene.etages[e].id
+    }
+
+    /// La cle de la piece `i` de la scene affichee, celle de la cible du menu et de ses articles.
+    func clePiece(_ i: Int) -> String? {
+        guard let scene, scene.pieces.indices.contains(i) else { return nil }
+        return scene.pieces[i].id
     }
 
     /// « Monter d'un etage » (+1) ou « Descendre d'un etage » (-1) : le niveau entier de l'etage `cle`, zones a cote
