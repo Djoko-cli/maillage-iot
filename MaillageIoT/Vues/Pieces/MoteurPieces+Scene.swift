@@ -181,21 +181,40 @@ extension MoteurPieces {
         // `TransitionScene` (les pieces, les noeuds, les liens presents). Avec « Reduire les animations », tout de
         // suite.
         let arrivee = PosesScene(scene: scene, cartes: cartes, positions: positions)
+        // Les plateaux qui partaient a l'image : l'un d'eux peut revenir, de la ou il etait dessine (phase 11).
+        let partisAffiches = posesAffichees.plateauxPartis
+        // Une nouvelle transition accompagne ce changement : les plateaux glissent avec les pieces, sur sa duree (plus
+        // bas).
+        var nouvelleTransition = false
         if pret, let affichee, let avant,
            transition == nil || TransitionScene(de: avant, vers: arrivee, a: 0) != nil {
             transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire,
                                          cause: cause)
+            if transition != nil {
+                // Un seul mouvement quand une piece change de plateau (phase 11) : le plateau qui part reste a sa place
+                // de l'image et s'efface, la piece glisse depuis lui ; celui qui arrive apparait. La geometrie de l'image
+                // est encore celle de la scene d'avant (`anciens`) : la nouvelle est visee plus bas.
+                let (partis, arrivants) = plateauxEnTransition(depuis: anciens, vers: scene)
+                transition?.plateauxPartis = partis
+                transition?.plateauxArrivants = arrivants
+            }
             if let tr = transition {
+                nouvelleTransition = true
                 posesAffichees = tr.poses(a: tr.debut)
                 apparencesParties = (ancienne?.apparences ?? [:]).merging(apparencesParties) { a, _ in a }
                 // Les noms de ceux qui partent : ceux d'avant (`textes` et `routeurs` sont encore ceux de la scene d'avant).
                 nomsPartis = textes.noeuds.merging(nomsPartis) { a, _ in a }
                 routeursPartis.formUnion(routeurs)
+                // Le nom des plateaux qui partent, de meme (`textes.etages` suit les plateaux de la scene d'avant).
+                var noms = nomsEtagesPartis
+                for (j, c) in anciens.enumerated() where noms[c] == nil { noms[c] = textes.etages[j] }
+                nomsEtagesPartis = noms.filter { c, _ in tr.plateauxPartis.contains { $0.cle == c } }
             } else {
                 posesAffichees = PosesScene()
                 apparencesParties = [:]
                 nomsPartis = [:]
                 routeursPartis = []
+                nomsEtagesPartis = [:]
             }
         }
         // Les rayons changent sans les niveaux : la grille se redemande comme au redimensionnement, par la regle de la
@@ -210,8 +229,12 @@ extension MoteurPieces {
             politique.demander(PolitiqueGrille.redimensionnement, ensemble2D: ensemble, rayons: rayons(scene),
                                    zone: zoneVisible)
         }
+        // Des niveaux changes seuls : les plateaux glissent en 0,4 s en 2D. Accompagnes d'une nouvelle transition (une
+        // piece qui change de plateau, phase 11), ils glissent avec les pieces, sur la duree du glissement : un seul
+        // mouvement.
         let glisse = pret ? PlanTransition.pour(cause).glissement.duree : 0
-        viser(geometriePour(scene), depuis: anciens, duree2D: niveauxChanges ? CameraScene.dureeCases : glisse,
+        viser(geometriePour(scene), depuis: anciens, partis: partisAffiches,
+              duree2D: niveauxChanges && !nouvelleTransition ? CameraScene.dureeCases : glisse,
               duree3D: niveauxChanges ? CameraScene.dureeNiveaux : glisse)
         // Les parts de l'isolement sont gardees par cle (triage A, n° 9) : un releve recu pendant un fondu ne remet pas
         // la piece a pleine taille. L'etage en vue suit ce que vise la vue (polissage C, section 5) : celui de la piece
@@ -295,7 +318,8 @@ extension MoteurPieces {
         switch g {
         case .noeud(let id): "n:" + id.texte
         case .piece(let i): "p:" + (i < clesPieces.count ? clesPieces[i] : "")
-        case .etage(let i): "e:" + (i < clesEtages.count ? clesEtages[i] : "")
+        case .etage(let i): "e:" + (i < clesEtages.count ? clesEtages[i]
+            : i - clesEtages.count < clesEtagesPartis.count ? clesEtagesPartis[i - clesEtages.count] : "")
         case .maison: "m"
         case .ailleurs(let id): "a:" + id.texte
         }
@@ -309,6 +333,7 @@ extension MoteurPieces {
         for l in etiquettes { anciennes[cle(l.genre)] = l }
         clesPieces = scene.pieces.map(\.id)
         clesEtages = scene.etages.map(\.id)
+        clesEtagesPartis = posesAffichees.plateauxPartis.map(\.cle)
         var l: [Etiquette] = []
         func ajouter(_ genre: Etiquette.Genre, _ taille: CGSize) {
             var e = Etiquette(genre, taille: taille)
@@ -326,6 +351,10 @@ extension MoteurPieces {
             ajouter(.noeud(n.id), mesure.noeud(libelle, routeur: n.route))
         }
         for i in scene.etages.indices { ajouter(.etage(i), mesure.etage(textes.etages[i] ?? "")) }
+        // Le nom d'un plateau qui part (phase 11), apres ceux de la scene : il garde sa place, et s'efface avec lui.
+        for (k, c) in clesEtagesPartis.enumerated() {
+            ajouter(.etage(scene.etages.count + k), mesure.etage(nomsEtagesPartis[c] ?? ""))
+        }
         for i in scene.pieces.indices {
             let t = textes.pieces[i] ?? TextesScene.Piece(nom: "", compte: "")
             ajouter(.piece(i), mesure.piece(nom: t.nom, compte: t.compte))

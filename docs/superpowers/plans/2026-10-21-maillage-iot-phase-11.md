@@ -70,7 +70,7 @@
 - Consumes : Task 1 (rien de plus que la scène de test).
 - Produces : les plateaux partis, gardés par le moteur pendant la transition (centre, rayon, nom), à côté de `apparencesParties` et `nomsPartis` ; une opacité par plateau dans `SceneProjetee`.
 
-- [ ] **Step 1: Tests RED** — même scène que la tâche 1, en 2D et en 3D.
+- [x] **Step 1: Tests RED** — même scène que la tâche 1, en 2D et en 3D.
   - Aller : à t = 0 de la transition, le centre de P est sa place d'avant, sur le plateau parti ; à mi-chemin, entre les deux ; à la fin, sa place d'arrivée.
   - Le plateau parti est dessiné à t = 0 avec une opacité de 1, entre 0 et 1 à mi-chemin, absent à la fin ; son nom aussi.
   - Retour : le plateau qui arrive a une opacité de 0 à t = 0, de 1 à la fin.
@@ -78,9 +78,9 @@
   - Une nouvelle scène, un vol, un envol ou un glisser pendant la transition ne laisse aucun plateau parti affiché.
   - Avec « Réduire les animations », tout est posé d'un coup.
   - En 2D, quand une transition de disposition accompagne un changement de niveaux, plateaux et pièces glissent sur la même durée (celle du glissement) ; les tests existants des choix de niveau du menu restent verts ou sont mis à jour pour cette seule durée.
-- [ ] **Step 2: GREEN** — implémenter (voie du diagnostic : plateaux partis hors de `GeometrieMaison`, gardés par le moteur).
-- [ ] **Step 3: Vérifier** — suites ciblées (nouvelle suite, transitions, disposition, isolement, menus, caméra, démo, captures), `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, `git diff --exit-code docs/rejeu`.
-- [ ] **Step 4: Commit** — « Pieces : le plateau qui part s'efface et la piece glisse, en un seul mouvement ».
+- [x] **Step 2: GREEN** — implémenter (voie du diagnostic : plateaux partis hors de `GeometrieMaison`, gardés par le moteur).
+- [x] **Step 3: Vérifier** — suites ciblées (nouvelle suite, transitions, disposition, isolement, menus, caméra, démo, captures), `bash outils/tester-coeur.sh`, `bash outils/controler-index.sh` → 0, `git diff --exit-code docs/rejeu`.
+- [x] **Step 4: Commit** — « Pieces : le plateau qui part s'efface et la piece glisse, en un seul mouvement ».
 
 ---
 

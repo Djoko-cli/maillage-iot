@@ -268,6 +268,13 @@ public struct SceneProjetee: Sendable {
                              (0, 4), (1, 5), (2, 6), (3, 7)]
 
     public var plateaux: [Plateau] = []
+    /// Les plateaux qui partent (phase 11, `PosesScene.plateauxPartis`), absents de la scene : dessines avec les autres,
+    /// ils ne se cliquent pas (hors de `plateaux`). `etage` : l'indice de leur nom, apres ceux de la scene
+    /// (`scene.etages.count` plus leur rang).
+    public var partis: [Plateau] = []
+    /// L'opacite du nom d'un plateau en transition (phase 11), par indice de nom : celui qui arrive apparait, celui qui
+    /// part s'efface, avec son disque. Absent : 1, net. Vide sans plateau en transition.
+    public var opacitesEtages: [Int: Double] = [:]
     /// Voile de chaque plateau dans l'isolement d'un etage : 1 net, 0,15 estompe (polissage C, section 5.1).
     public var voilesEtages: [Double] = []
     public var equateur: Equateur?
@@ -337,14 +344,28 @@ public struct SceneProjetee: Sendable {
 
         // Plateaux : polygone exact de 128 points ; degrade par l'affine du disque.
         // Ceux de la scene seuls : la geometrie d'une scene sans etage garde un plateau de repli, qui ne fait que
-        // dimensionner la sphere et ne se dessine pas.
+        // dimensionner la sphere et ne se dessine pas. Un plateau qui arrive apparait, avec son nom (phase 11).
         for e in g.rayons.indices where e < scene.etages.count {
             let c = g.centrePlateau(e, t), r = g.rayons[e]
             let pts = Self.cercle(c, r, 128)
+            let arrivee = poses.opacitesPlateaux.isEmpty ? 1 : poses.opacitesPlateaux[scene.etages[e].id] ?? 1
+            if arrivee < 1 { opacitesEtages[e] = arrivee }
             guard let poly = proj.polygone(pts) else { continue }
             plateaux.append(Plateau(etage: e, polygone: poly, contour: proj.polyligne(pts, fermee: true),
-                                    disque: proj.disque(c, r), opacite: min(ve[e], 1 - 0.85 * es),
+                                    disque: proj.disque(c, r), opacite: min(ve[e], 1 - 0.85 * es) * arrivee,
                                     profondeur: proj.profondeur(c), eclaire: etat.survolEtage == e))
+        }
+        // Les plateaux qui partent (phase 11), absents de la scene : a leur place d'avant, sous le voile de l'isolement
+        // comme les autres, ils s'effacent avec leur nom ; efface, un plateau n'est plus dessine. Hors de `plateaux` : ils
+        // ne se cliquent pas.
+        for (k, pp) in poses.plateauxPartis.enumerated() where pp.opacite > 0 {
+            let c = pp.centre(t)
+            let pts = Self.cercle(c, pp.rayon, 128)
+            opacitesEtages[scene.etages.count + k] = pp.opacite
+            guard let poly = proj.polygone(pts) else { continue }
+            partis.append(Plateau(etage: scene.etages.count + k, polygone: poly, contour: proj.polyligne(pts, fermee: true),
+                                  disque: proj.disque(c, pp.rayon), opacite: min(1 - 0.85 * ee, 1 - 0.85 * es) * pp.opacite,
+                                  profondeur: proj.profondeur(c), eclaire: false))
         }
 
         // Sphere de la maison : lisere et equateur, pendant l'envol et en 3D.
@@ -401,7 +422,8 @@ public struct SceneProjetee: Sendable {
             SIMD3(centre.x + decalage.x * f, centre.y + 0.1 + 0.5 * h * t, centre.z + decalage.y * f)
         }
         func monde(_ n: PosesScene.Noeud, f: Double) -> SIMD3<Double>? {
-            guard let c = PosesScene.centre(n.ancres, geometrie: g, plateaux: plateaux, t: t) else { return nil }
+            guard let c = PosesScene.centre(n.ancres, geometrie: g, plateaux: plateaux, partis: poses.plateauxPartis,
+                                            t: t) else { return nil }
             return place(c, n.decalage, f: f)
         }
         // Le rayon d'une pastille, le seul : il suit l'echelle, sans depasser 1,1 fois le rayon naturel, 3 px au moins.
@@ -418,7 +440,8 @@ public struct SceneProjetee: Sendable {
             var m = SIMD3(c.x + positions[i].x, c.y, c.z + positions[i].y)
             var taille = SIMD2(cartes[i].largeur, cartes[i].profondeur)
             if let pose = poses.pieces[pc.id],
-               let centre = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux, t: t) {
+               let centre = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux, partis: poses.plateauxPartis,
+                                              t: t) {
                 m = centre
                 taille = pose.taille
                 vis *= pose.opacite
@@ -453,7 +476,8 @@ public struct SceneProjetee: Sendable {
         }
         let presentes = Set(scene.pieces.map(\.id))
         for (k, pose) in poses.pieces.sorted(by: { $0.key < $1.key }) where !presentes.contains(k) {
-            guard let centre = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux, t: t) else { continue }
+            guard let centre = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux, partis: poses.plateauxPartis,
+                                                 t: t) else { continue }
             bloc(-1, centre: centre, taille: pose.taille, f: 1, teinte: pose.teinte,
                  vis: min(1 - 0.85 * es, voileAncres(pose.ancres)) * pose.opacite)
         }
@@ -583,6 +607,12 @@ public struct SceneProjetee: Sendable {
         for e in g.rayons.indices where e < scene.etages.count {
             if let p = proj.ecran(g.centrePlateau(e, t) + hautHorizontal * g.rayons[e]) {
                 ancresEtages[e] = CGRect(origin: p, size: .zero)
+            }
+        }
+        // Le nom d'un plateau qui part, tant qu'il est dessine (phase 11).
+        for (k, pp) in poses.plateauxPartis.enumerated() where pp.opacite > 0 {
+            if let p = proj.ecran(pp.centre(t) + hautHorizontal * pp.rayon) {
+                ancresEtages[scene.etages.count + k] = CGRect(origin: p, size: .zero)
             }
         }
         ancreMaison = proj.ecran(g.centreSphere + orbite.haut * rs).map { CGRect(origin: $0, size: .zero) }

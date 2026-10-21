@@ -76,10 +76,12 @@ extension MoteurPieces {
         return .fond
     }
 
-    /// Nom d'etage sous un point (`marge` points autour).
+    /// Nom d'etage sous un point (`marge` points autour). Le nom d'un plateau qui part (phase 11), apres ceux de la scene,
+    /// ne se clique pas.
     func nomEtageSous(_ p: CGPoint, marge: CGFloat = 0) -> Int? {
+        let n = scene?.etages.count ?? 0
         for l in etiquettes where l.vu && l.rect.insetBy(dx: -marge, dy: -marge).contains(p) {
-            if case .etage(let e) = l.genre { return e }
+            if case .etage(let e) = l.genre, e < n { return e }
         }
         return nil
     }

@@ -586,4 +586,37 @@ struct TransitionSceneTests {
         let mi = projeter(tr.poses(a: 0.45))
         #expect(abs((mi.opacitesNoms[parti] ?? -1) - 0.5) < 1e-9 && abs((mi.opacitesNoms[venu] ?? -1) - 0.5) < 1e-9)
     }
+
+    /// Un plateau qui part (phase 11) : une ancre sur lui compte encore, a sa place (en 2D, en 3D, entre les deux) ; un
+    /// plateau de la scene de meme cle l'emporte. Il s'efface sur la phase du glissement, depuis son opacite du debut ;
+    /// un plateau qui arrive apparait de meme, depuis la sienne.
+    @Test func plateauxQuiPartentEtQuiArrivent() throws {
+        let g = GeometrieMaison(rayons: [5])
+        let parti = PlateauParti(cle: "b", centre2D: SIMD2(20, 3), centre3D: SIMD3(30, 9, -4), rayon: 4, opacite: 0.8)
+        let ancre = [A(plateau: "b", place: SIMD2(1, 2))]
+        #expect(PosesScene.centre(ancre, geometrie: g, plateaux: ["a": 0], t: 0) == nil, "sans lui, l'ancre ne compte pas")
+        #expect(PosesScene.centre(ancre, geometrie: g, plateaux: ["a": 0], partis: [parti], t: 0) == SIMD3(21, 0, 5))
+        #expect(PosesScene.centre(ancre, geometrie: g, plateaux: ["a": 0], partis: [parti], t: 1) == SIMD3(31, 9, -2))
+        #expect(parti.centre(0.5) == SIMD3(25, 4.5, -0.5))
+        let surA = [A(plateau: "b", place: .zero)]
+        #expect(PosesScene.centre(surA, geometrie: g, plateaux: ["b": 0], partis: [parti], t: 0)
+                == SIMD3(g.centres2D[0].x, 0, g.centres2D[0].y), "le plateau de la scene l'emporte")
+        // La moitie de chaque ancre : la moyenne des deux places.
+        let deux = [A(plateau: "a", place: .zero, poids: 0.5), A(plateau: "b", place: SIMD2(1, 2), poids: 0.5)]
+        let m = try #require(PosesScene.centre(deux, geometrie: g, plateaux: ["a": 0], partis: [parti], t: 0))
+        #expect(simd_distance(m, (SIMD3(g.centres2D[0].x, 0, g.centres2D[0].y) + SIMD3(21, 0, 5)) / 2) < 1e-12)
+
+        var d = PosesScene(), a = PosesScene()
+        d.pieces["p"] = Self.piece("b", x: 0)
+        a.pieces["p"] = Self.piece("a", x: 0)
+        var tr = try #require(TransitionScene(de: d, vers: a, a: 10))
+        tr.plateauxPartis = [parti]
+        tr.plateauxArrivants = ["c": 0.2]
+        let debut = tr.poses(a: 10), mi = tr.poses(a: 10.45), fin = tr.poses(a: 10.9)
+        #expect(debut.plateauxPartis == [parti] && debut.opacitesPlateaux == ["c": 0.2], "au debut, l'image d'avant")
+        #expect(abs((mi.plateauxPartis.first?.opacite ?? -1) - 0.4) < 1e-12, "a mi-temps, a mi-chemin de la rampe")
+        #expect(abs((mi.opacitesPlateaux["c"] ?? -1) - 0.6) < 1e-12)
+        #expect(fin.plateauxPartis.first?.opacite == 0 && fin.opacitesPlateaux == ["c": 1], "a la fin, efface ; arrive")
+        #expect(mi.plateauxPartis.first?.centre2D == parti.centre2D, "il ne bouge pas")
+    }
 }
