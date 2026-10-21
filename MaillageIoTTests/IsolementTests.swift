@@ -254,7 +254,7 @@ struct IsolementTests {
     /// Le menu du clic droit (polissage C, section 1.3), article par article, sur le nom et sur le disque, par la cle de
     /// son plateau : le nom de la zone en tete ; « Monter » et « Descendre », grises en haut et en bas de la pile et pour
     /// une zone a cote ; « Au meme niveau que », les autres niveaux, chacun par la cle de son etage principal, coche celui
-    /// de la zone ; « Hors de la maison » coche ; « Sur son propre niveau ». Rien sur une piece ; le fond ailleurs.
+    /// de la zone ; « Hors de la maison » coche ; « Sur son propre niveau ». Sa cle sur une piece (`MenuZonesPieceTests`) ; le fond ailleurs.
     @Test func menuDuClicDroit() throws {
         let url = MoteurPiecesTests.fichier()
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
@@ -263,7 +263,7 @@ struct IsolementTests {
             let nom = try Self.nomDEtage(m, k), disque = try Self.pointDeDisque(m, k)
             #expect(m.cible(en: nom) == .etage(et.id) && m.cible(en: disque) == .etage(et.id), "le nom et le disque de \(et.id)")
         }
-        #expect(m.cible(en: try MoteurPiecesTests.pointDePiece(m, try MoteurPiecesTests.indice(e, "Salon"))) == .aucune)
+        #expect(m.cible(en: try MoteurPiecesTests.pointDePiece(m, try MoteurPiecesTests.indice(e, "Salon"))) == .piece("piece:Salon"))
         #expect(m.cible(en: CGPoint(x: 3, y: MoteurPiecesTests.taille.height - 3)) == .fond)
         typealias N = MenuEtage.Niveau
         #expect(m.menuEtage(Self.rdc) == MenuEtage(nom: "Rez-de-chaussée", monter: true, descendre: false,

@@ -2593,6 +2593,22 @@
         }
       }
     },
+    "Automatiquement" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatiquement"
+          }
+        }
+      }
+    },
     "Autoriser l'accès réseau" : {
       "localizations" : {
         "en" : {
@@ -7229,6 +7245,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rafraîchir depuis Maison"
+          }
+        }
+      }
+    },
+    "Ranger dans la zone…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Move to Zone…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ranger dans la zone…"
           }
         }
       }

@@ -127,11 +127,13 @@ extension MoteurPieces {
         return projetee?.piece(sous: p)
     }
 
-    /// Clic droit (polissage C, section 1.3) : le nom d'un etage, a 2 points pres, ou son disque, hors des pieces et
-    /// des appareils, par la cle de son plateau ; le fond, hors de tout cela ; rien sur une piece ou un appareil.
+    /// Clic droit (polissage C, section 1.3 ; phase 10) : le nom d'un etage, a 2 points pres, ou son disque, hors des pieces
+    /// et des appareils, par la cle de son plateau ; une piece, par sa cle ; le fond, hors de tout cela ; rien sur un
+    /// appareil.
     func cible(en p: CGPoint) -> CibleMenu {
         if let e = nomEtageSous(p, marge: 2) { return cleEtage(e).map(CibleMenu.etage) ?? .aucune }
-        if noeudSous(p) != nil || pieceSous(p) != nil { return .aucune }
+        if noeudSous(p) != nil { return .aucune }
+        if let i = pieceSous(p) { return clePiece(i).map(CibleMenu.piece) ?? .aucune }
         if let e = disqueSous(p) { return cleEtage(e).map(CibleMenu.etage) ?? .aucune }
         return .fond
     }

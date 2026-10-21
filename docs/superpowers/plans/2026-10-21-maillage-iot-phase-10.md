@@ -77,15 +77,15 @@
 - Consumes : Task 1 (`zonesChoisies`, `PlacesGardees.choisirZone`, `zonesDe`, `zoneChoisie`).
 - Produces : `CibleMenu.piece(String)` (clé de la pièce) ; `MoteurPieces.rangerPiece(_ piece: String, dans zone: String?)` : garde le choix (fichier des places, comme les autres choix du menu), puis recalcule la scène.
 
-- [ ] **Step 1: Tests RED**
+- [x] **Step 1: Tests RED**
   - Un clic droit sur une pièce donne `.piece(cle)` (avant : `.aucune`) ; sur un appareil, toujours `.aucune` ; le nom d'un étage, un disque et le fond ne changent pas.
   - Le menu d'une pièce : son nom en tête, grisé ; « Ranger dans la zone… » avec « Automatiquement » (coché sans choix gardé), un séparateur, puis ses zones (cochée : celle où elle est rangée quand un choix s'applique) ; sous-menu grisé pour une pièce d'une seule zone ou sans zone.
   - `rangerPiece` : la pièce passe dans la zone choisie, le choix est écrit dans les places (fichier de test isolé), il survit à une nouvelle scène ; « Automatiquement » l'oublie et la règle 1 revient.
   - La cible garde la clé : une scène remplacée pendant que le menu est ouvert ne fait pas viser une autre pièce.
   - Textes fr et en.
-- [ ] **Step 2: GREEN** — implémenter (menu natif, comme le menu d'un plateau).
-- [ ] **Step 3: Vérifier** — `bash outils/tester.sh` (app quittée), `bash outils/controler-index.sh` → 0, passe anglaise.
-- [ ] **Step 4: Commit** — « Zones : ranger une piece dans une de ses zones au clic droit ».
+- [x] **Step 2: GREEN** — implémenter (menu natif, comme le menu d'un plateau).
+- [x] **Step 3: Vérifier** — `bash outils/tester.sh` (app quittée), `bash outils/controler-index.sh` → 0, passe anglaise.
+- [x] **Step 4: Commit** — « Zones : ranger une piece dans une de ses zones au clic droit ».
 
 ---
 

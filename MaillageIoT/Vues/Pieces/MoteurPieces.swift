@@ -16,12 +16,14 @@ enum LigneNiveau: Equatable {
     case lisibles
 }
 
-/// Cible d'un clic droit : le nom ou le disque d'un plateau, par sa cle, ou le fond (spec, section 7 ; polissage C,
-/// section 1.3). Jamais un indice : une scene qui s'installe pendant que le menu est ouvert peut ranger autrement ses
-/// plateaux.
+/// Cible d'un clic droit : le nom ou le disque d'un plateau, ou une piece, par sa cle, ou le fond (spec, section 7 ;
+/// polissage C, section 1.3 ; phase 10, « Ranger dans la zone… »). Jamais un indice : une scene qui s'installe pendant que
+/// le menu est ouvert peut ranger autrement ses plateaux et ses pieces.
 enum CibleMenu: Equatable {
     case aucune
     case etage(String)
+    /// Une piece, par sa cle (`ScenePieces.Piece.id`, « piece:<nom> » pour une piece de Maison).
+    case piece(String)
     case fond
 }
 
@@ -45,6 +47,22 @@ struct Fil: Equatable {
 
     var etage: Cran?
     var piece: String?
+}
+
+/// Le menu du clic droit sur une piece (phase 10) : son nom, en tete ; « Ranger dans la zone… », un sous-menu avec
+/// « Automatiquement », coche quand aucun choix ne s'applique, puis les zones de Maison qui contiennent la piece, dans
+/// l'ordre de Maison, coche celle du choix qui s'applique. Grise pour une piece de moins de deux zones.
+struct MenuPiece: Equatable {
+    struct Zone: Equatable {
+        var nom: String
+        var coche: Bool
+    }
+    var nom: String
+    var automatique: Bool
+    var zones: [Zone]
+
+    /// Le choix n'a de sens qu'avec au moins deux zones.
+    var peutRanger: Bool { zones.count >= 2 }
 }
 
 /// Le menu du clic droit sur le nom ou le disque d'un plateau (polissage C, section 1.3) : son nom, en tete ; « Monter
