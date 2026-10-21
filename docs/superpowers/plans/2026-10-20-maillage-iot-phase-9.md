@@ -52,6 +52,6 @@
 
 ### Task 3: Relecture et banc
 
-- [ ] **Step 1: Relecture** — Sonnet par tâche, Opus sur la branche.
-- [ ] **Step 2: Banc** — avec Djoko, sur son journal réel.
-- [ ] **Step 3: Verdict** — cocher « Phase 9 » ; retirer le point du backlog ; fusion et push avec l'accord de Djoko.
+- [x] **Step 1: Relecture** — Sonnet sur la branche (relecture Opus non lancée : fusion demandée par Djoko le 21/10).
+- [x] **Step 2: Banc** — avec Djoko, sur son journal réel.
+- [x] **Step 3: Verdict** — cocher « Phase 9 » ; retirer le point du backlog ; fusion et push avec l'accord de Djoko.

@@ -502,7 +502,7 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 6 : panneau de santé dans la vue par pièces (conception du 19/10 : `2026-10-19-panneau-sante-design.md`)
 - [x] Phase 7 : pièce proposée aux HomePod et à l'Apple TV par leur annonce AirPlay (conception du 19/10 : `2026-10-19-piece-airplay-design.md`)
 - [x] Phase 8 : clés `rloc:` de Thread qualifiées par la partition en cas de collision (décisions du 20/10 : seulement entre partitions actives en même temps, tenante stable pendant la scission, fin après trois relevés sans scission)
-- [ ] Phase 9 : le journal nomme la pièce de l'appareil en français naturel (décisions du 20/10)
+- [x] Phase 9 : le journal nomme la pièce de l'appareil en français naturel (décisions du 20/10)
 
 ### 6.2 Les tests
 
@@ -693,9 +693,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 ## 8. Backlog
 
 - Autres protocoles : Wi-Fi, Matter sur Wi-Fi, BLE. L'interface « réseau maillé » les accueillera.
-- **Le journal nomme la pièce de l'appareil** (demande de Djoko, banc de l'étape 3a, 15/10) : chaque ligne dit, en langage
-  naturel, la pièce en plus du nom de l'appareil (par exemple « Lampe bureau, dans le Bureau, a perdu son parent »),
-  dans la fenêtre du journal, les notifications et le menu de la barre. Un appareil sans pièce garde son seul nom.
 - Catégories de notification propres à Zigbee (parent perdu, pont injoignable).
 - « Identifier les candidats » dans le menu d'association (proposé chez Thread, gelé jusqu'à la fusion).
 - Mineurs reportés de Zigbee : pertes de parent de la sonde non journalisées (la nuit de comparaison du plan Wi-Fi
@@ -731,14 +728,6 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   l'ouverture de session », macOS montre « Élément d'arrière-plan ajouté », puis fermeture et réouverture de session : le
   démon doit tourner. Jamais fait jusqu'au bout (Réglages › Maison affichait « connecté »). À faire au prochain
   redémarrage du Mac, avec le démon 2.1 installé le 18/10.
-- **Pièce isolée avec un appareil sélectionné : les repères « ailleurs » des autres appareils restent affichés** (demande
-  de Djoko, 19/10) : les étiquettes « ↗ / ↓ nom · pièce » des liens qui partent vers un autre niveau ou une autre pièce
-  restent visibles pour les appareils non sélectionnés. Avec une sélection, ne garder que les repères des liens du nœud
-  sélectionné (ou estomper les autres), comme les étiquettes des nœuds.
-- **Lien en pointillé vert superposé au lien gris « vers son parent »** (constat de Djoko, 19/10, vu sur des appareils
-  Zigbee ET Thread, à confirmer) : sans doute un chemin supposé ou un rattachement supposé (déduit, non lu) qui suit la
-  même arête que le lien enfant -> parent. Vérifier sur une scène où les deux se recouvrent ; si c'est le cas, ne tracer qu'un seul des deux, ou
-  décaler l'un, pour qu'un même lien ne soit pas dessiné deux fois.
 - **L'app réelle gêne la suite de tests** (constat du 19/10) : `NomsPasseurTests.abonnementEtReleves` dépasse ses 60 s
   quand Maillage IoT tourne sur le Mac pendant `outils/tester.sh` (verte app fermée). Isoler le faux démon du test du vrai
   (port, schéma ou nom de service), ou faire refuser la porte tant que l'app tourne.
