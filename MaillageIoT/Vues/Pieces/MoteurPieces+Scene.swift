@@ -26,17 +26,52 @@ extension MoteurPieces {
         attente = nil
         let cle = e.cleDisposition
         if cle == cleCalculee {
+            // Aucun calcul n'est a faire : la marque d'un choix qui ne change pas la disposition ne doit pas trainer
+            // jusqu'au prochain changement de Maison.
+            fixerInchanges = false
+            calculFixe = false
             calcul?.cancel()
             enCalcul = nil
             installer(e)
             return
         }
-        // Meme structure que la disposition en calcul : elle vaudra pour cette scene.
+        // Meme structure que la disposition en calcul : elle vaudra pour cette scene. Le choix de la vue que cette scene
+        // porte n'a rien change a la structure ; si ce calcul est parti sans la marque, elle ne lui servira plus.
         if enCalcul?.cleDisposition == cle {
+            if !calculFixe { fixerInchanges = false }
             enCalcul = e
             return
         }
         calculer(e)
+    }
+
+    /// Les pieces des plateaux inchanges de `e`, a leur position affichee (indice de piece de la scene `e` -> position
+    /// locale). Un plateau est inchange quand sa cle, ses pieces et leurs noeuds (`cleDisposition.pieces`) et sa place de
+    /// niveau (`cleDisposition.niveaux`) sont ceux de la disposition affichee (`cleCalculee`) ; ses pieces y sont prises dans
+    /// `placesCalculees`. Rien avant la premiere disposition, ni pour une cle de plateau en double.
+    func fixeesInchangees(_ e: EntreeScene) -> [Int: SIMD2<Double>] {
+        guard let avant = cleCalculee else { return [:] }
+        let cle = e.cleDisposition, scene = e.scene
+        let doubles = Dictionary(grouping: scene.etages, by: \.id).filter { $0.value.count > 1 }.keys
+        var r: [Int: SIMD2<Double>] = [:]
+        for et in scene.etages where !doubles.contains(et.id) {
+            guard let pieces = cle.pieces[et.id], pieces == avant.pieces[et.id],
+                  cle.niveaux[et.id] == avant.niveaux[et.id] else { continue }
+            for i in et.pieces {
+                if let place = placesCalculees[scene.pieces[i].nom], place.x.isFinite, place.y.isFinite { r[i] = place }
+            }
+        }
+        return r
+    }
+
+    /// Les pieces fixees du calcul de `e` : les places gardees a la main, et, apres un choix fait dans la vue
+    /// (`fixerInchanges`), les pieces des plateaux inchanges. Une place gardee a la main l'emporte. Note si la marque a servi
+    /// (`calculFixe`).
+    private func fixeesPour(_ e: EntreeScene) -> [Int: SIMD2<Double>] {
+        let main = places.fixees(e.scene, domicile: e.domicile)
+        calculFixe = fixerInchanges
+        guard fixerInchanges else { return main }
+        return fixeesInchangees(e).merging(main) { _, main in main }
     }
 
     /// Lance le calcul de la disposition d'une scene, hors du fil principal, avec les places gardees
@@ -46,7 +81,7 @@ extension MoteurPieces {
         enCalcul = e
         let cle = e.cleDisposition
         let cartes = cartesPour(e)
-        let fixees = places.fixees(e.scene, domicile: e.domicile)
+        let fixees = fixeesPour(e)
         let scene = e.scene
         calcul = Task { [weak self] in
             let d = await Task.detached(priority: .userInitiated) {
@@ -61,8 +96,7 @@ extension MoteurPieces {
     func installerMaintenant(_ e: EntreeScene) {
         calcul?.cancel()
         let cartes = cartesPour(e)
-        let d = DispositionPieces(scene: e.scene, cartes: cartes,
-                                  fixees: places.fixees(e.scene, domicile: e.domicile))
+        let d = DispositionPieces(scene: e.scene, cartes: cartes, fixees: fixeesPour(e))
         enCalcul = e
         retenir(d, scene: e.scene, cartes: cartes, cle: e.cleDisposition)
     }
@@ -96,6 +130,10 @@ extension MoteurPieces {
             (scene.pieces[$0].nom, cartes[$0])
         })
         cleCalculee = cle
+        // La marque d'un choix de la vue a servi a ce calcul : elle ne vaut qu'une fois. Un calcul parti sans elle ne
+        // l'efface pas (le choix est venu apres).
+        if calculFixe { fixerInchanges = false }
+        calculFixe = false
         enCalcul = nil
         if occupe {
             if attente == nil { attente = e }
@@ -143,21 +181,40 @@ extension MoteurPieces {
         // `TransitionScene` (les pieces, les noeuds, les liens presents). Avec « Reduire les animations », tout de
         // suite.
         let arrivee = PosesScene(scene: scene, cartes: cartes, positions: positions)
+        // Les plateaux qui partaient a l'image : l'un d'eux peut revenir, de la ou il etait dessine (phase 11).
+        let partisAffiches = posesAffichees.plateauxPartis
+        // Une nouvelle transition accompagne ce changement : les plateaux glissent avec les pieces, sur sa duree (plus
+        // bas).
+        var nouvelleTransition = false
         if pret, let affichee, let avant,
            transition == nil || TransitionScene(de: avant, vers: arrivee, a: 0) != nil {
             transition = TransitionScene(de: affichee, vers: arrivee, a: Self.maintenant(), reduire: reduire,
                                          cause: cause)
+            if transition != nil {
+                // Un seul mouvement quand une piece change de plateau (phase 11) : le plateau qui part reste a sa place
+                // de l'image et s'efface, la piece glisse depuis lui ; celui qui arrive apparait. La geometrie de l'image
+                // est encore celle de la scene d'avant (`anciens`) : la nouvelle est visee plus bas.
+                let (partis, arrivants) = plateauxEnTransition(depuis: anciens, vers: scene)
+                transition?.plateauxPartis = partis
+                transition?.plateauxArrivants = arrivants
+            }
             if let tr = transition {
+                nouvelleTransition = true
                 posesAffichees = tr.poses(a: tr.debut)
                 apparencesParties = (ancienne?.apparences ?? [:]).merging(apparencesParties) { a, _ in a }
                 // Les noms de ceux qui partent : ceux d'avant (`textes` et `routeurs` sont encore ceux de la scene d'avant).
                 nomsPartis = textes.noeuds.merging(nomsPartis) { a, _ in a }
                 routeursPartis.formUnion(routeurs)
+                // Le nom des plateaux qui partent, de meme (`textes.etages` suit les plateaux de la scene d'avant).
+                var noms = nomsEtagesPartis
+                for (j, c) in anciens.enumerated() where noms[c] == nil { noms[c] = textes.etages[j] }
+                nomsEtagesPartis = noms.filter { c, _ in tr.plateauxPartis.contains { $0.cle == c } }
             } else {
                 posesAffichees = PosesScene()
                 apparencesParties = [:]
                 nomsPartis = [:]
                 routeursPartis = []
+                nomsEtagesPartis = [:]
             }
         }
         // Les rayons changent sans les niveaux : la grille se redemande comme au redimensionnement, par la regle de la
@@ -172,8 +229,12 @@ extension MoteurPieces {
             politique.demander(PolitiqueGrille.redimensionnement, ensemble2D: ensemble, rayons: rayons(scene),
                                    zone: zoneVisible)
         }
+        // Des niveaux changes seuls : les plateaux glissent en 0,4 s en 2D. Accompagnes d'une nouvelle transition (une
+        // piece qui change de plateau, phase 11), ils glissent avec les pieces, sur la duree du glissement : un seul
+        // mouvement.
         let glisse = pret ? PlanTransition.pour(cause).glissement.duree : 0
-        viser(geometriePour(scene), depuis: anciens, duree2D: niveauxChanges ? CameraScene.dureeCases : glisse,
+        viser(geometriePour(scene), depuis: anciens, partis: partisAffiches,
+              duree2D: niveauxChanges && !nouvelleTransition ? CameraScene.dureeCases : glisse,
               duree3D: niveauxChanges ? CameraScene.dureeNiveaux : glisse)
         // Les parts de l'isolement sont gardees par cle (triage A, n° 9) : un releve recu pendant un fondu ne remet pas
         // la piece a pleine taille. L'etage en vue suit ce que vise la vue (polissage C, section 5) : celui de la piece
@@ -182,6 +243,13 @@ extension MoteurPieces {
         // disparait rend aussi la maison.
         let clesPieces = Set(scene.pieces.map(\.id)), clesEtages = Set(scene.etages.map(\.id))
         fk = fk.filter { clesPieces.contains($0.key) }
+        // La piece isolee rangee dans une autre zone emporte l'isolement de son etage : sans cela, son nouvel etage est
+        // sous le voile des autres, et la piece tombe a 15 % avant de remonter (relecture finale de la phase 11, I2).
+        if case .piece(let cle, _) = isolement, let ancien = etageEnVue,
+           let i = scene.pieces.firstIndex(where: { $0.id == cle }) {
+            let nouveau = scene.etages[scene.pieces[i].etage].id
+            if nouveau != ancien { ek[nouveau] = max(ek[nouveau] ?? 0, ek[ancien] ?? 0) }
+        }
         ek = ek.filter { clesEtages.contains($0.key) }
         isolement = isolement.recaler(pieces: clesPieces, etages: clesEtages)
         if let cle = ancienFocus, let i = scene.pieces.firstIndex(where: { $0.id == cle }) {
@@ -257,7 +325,8 @@ extension MoteurPieces {
         switch g {
         case .noeud(let id): "n:" + id.texte
         case .piece(let i): "p:" + (i < clesPieces.count ? clesPieces[i] : "")
-        case .etage(let i): "e:" + (i < clesEtages.count ? clesEtages[i] : "")
+        case .etage(let i): "e:" + (i < clesEtages.count ? clesEtages[i]
+            : i - clesEtages.count < clesEtagesPartis.count ? clesEtagesPartis[i - clesEtages.count] : "")
         case .maison: "m"
         case .ailleurs(let id): "a:" + id.texte
         }
@@ -271,6 +340,7 @@ extension MoteurPieces {
         for l in etiquettes { anciennes[cle(l.genre)] = l }
         clesPieces = scene.pieces.map(\.id)
         clesEtages = scene.etages.map(\.id)
+        clesEtagesPartis = posesAffichees.plateauxPartis.map(\.cle)
         var l: [Etiquette] = []
         func ajouter(_ genre: Etiquette.Genre, _ taille: CGSize) {
             var e = Etiquette(genre, taille: taille)
@@ -288,6 +358,10 @@ extension MoteurPieces {
             ajouter(.noeud(n.id), mesure.noeud(libelle, routeur: n.route))
         }
         for i in scene.etages.indices { ajouter(.etage(i), mesure.etage(textes.etages[i] ?? "")) }
+        // Le nom d'un plateau qui part (phase 11), apres ceux de la scene : il garde sa place, et s'efface avec lui.
+        for (k, c) in clesEtagesPartis.enumerated() {
+            ajouter(.etage(scene.etages.count + k), mesure.etage(nomsEtagesPartis[c] ?? ""))
+        }
         for i in scene.pieces.indices {
             let t = textes.pieces[i] ?? TextesScene.Piece(nom: "", compte: "")
             ajouter(.piece(i), mesure.piece(nom: t.nom, compte: t.compte))
@@ -374,8 +448,12 @@ extension MoteurPieces {
     func rangerPiece(_ cle: String, dans zone: String?) {
         guard let e = sceneRecente, let p = e.scene.pieces.first(where: { $0.id == cle }),
               case .maison(let piece) = p.nom, zone.map({ z in e.scene.zonesDe(piece).contains(z) }) ?? true else { return }
+        // Un choix qui ne change rien (la zone deja cochee, « Automatiquement » deja coche) ne change pas la scene : aucun
+        // calcul n'effacerait la marque, qui trainerait jusqu'au prochain changement de Maison (relecture finale, M1).
+        guard places.zonesChoisies(e.domicile)[piece] != zone else { return }
         places.choisirZone(zone, piece: piece, domicile: e.domicile)
         enregistrer()
+        fixerInchanges = true
     }
 
     /// Un choix du menu, calcule sur la scene la plus recente et sur les choix gardes : le nouvel ordre des plateaux et
@@ -386,6 +464,7 @@ extension MoteurPieces {
         guard let e = sceneRecente, let r = operation(e.scene.niveaux, places.maison(e.domicile).aCote) else { return }
         places.ranger(r, domicile: e.domicile)
         enregistrer()
+        fixerInchanges = true
     }
 
     /// La cle du plateau `e` de la scene affichee, celle des noms et de la projection.
@@ -438,6 +517,8 @@ extension MoteurPieces {
         guard let e = sceneRecente else { return }
         places.replacer(domicile: e.domicile)
         enregistrer()
+        fixerInchanges = false
+        calculFixe = false
         cleCalculee = nil
         enCalcul = nil
         appliquer(e)

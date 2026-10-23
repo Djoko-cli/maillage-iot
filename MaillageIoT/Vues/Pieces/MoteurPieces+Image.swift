@@ -76,11 +76,13 @@ extension MoteurPieces {
         if !fige && !doitContinuer(now) { endormir() }
     }
 
-    /// Les textes de l'image : ceux de la scene, et le nom des noeuds qui s'effacent, de la scene d'avant.
+    /// Les textes de l'image : ceux de la scene, et le nom des noeuds et des plateaux qui s'effacent, de la scene
+    /// d'avant (un plateau qui part a le nom d'indice `clesEtages.count` plus son rang, phase 11).
     private func textesDessines(_ p: SceneProjetee) -> TextesScene {
-        guard !p.fantomes.isEmpty else { return textes }
+        guard !p.fantomes.isEmpty || !clesEtagesPartis.isEmpty else { return textes }
         var t = textes
         for id in p.fantomes where t.noeuds[id] == nil { t.noeuds[id] = nomsPartis[id] }
+        for (k, c) in clesEtagesPartis.enumerated() { t.etages[clesEtages.count + k] = nomsEtagesPartis[c] }
         return t
     }
 
@@ -305,15 +307,23 @@ extension MoteurPieces {
         }
     }
 
-    /// Fin du glissement d'une disposition : tout est pose.
+    /// Fin du glissement d'une disposition : tout est pose ; les noeuds et les plateaux qui partaient ne sont plus la, ni
+    /// leurs noms.
     private func finirTransition() {
         transition = nil
         posesAffichees = PosesScene()
         apparencesParties = [:]
         nomsPartis = [:]
         routeursPartis = []
+        nomsEtagesPartis = [:]
+        clesEtagesPartis = []
+        let n = scene?.etages.count ?? 0
         etiquettes.removeAll { l in
-            if case .noeud(let id) = l.genre { scene?.noeud(id) == nil } else { false }
+            switch l.genre {
+            case .noeud(let id): scene?.noeud(id) == nil
+            case .etage(let i): i >= n
+            default: false
+            }
         }
     }
 

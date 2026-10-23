@@ -186,6 +186,12 @@ final class MoteurPieces {
     }
     @ObservationIgnored var calcul: Task<Void, Never>?
     @ObservationIgnored var cleCalculee: EntreeScene.CleDisposition?
+    /// Un choix vient d'etre fait dans la vue (`rangerPiece`, `ranger`) : le prochain calcul fixe les pieces des plateaux
+    /// inchanges a leur place affichee (`fixeesInchangees`). Il vaut une fois : le calcul qui s'en sert l'efface en
+    /// aboutissant, un calcul abandonne la garde pour le suivant, `replacerPieces` l'efface.
+    @ObservationIgnored var fixerInchanges = false
+    /// Le calcul en cours (ou le dernier lance) s'est servi de la marque `fixerInchanges`.
+    @ObservationIgnored var calculFixe = false
     @ObservationIgnored var placesCalculees: [ScenePieces.NomPiece: SIMD2<Double>] = [:]
     @ObservationIgnored var rayonsCalcules: [String: Double] = [:]
     @ObservationIgnored var cartesCalculees: [ScenePieces.NomPiece: CartesPieces.Carte] = [:]
@@ -207,6 +213,9 @@ final class MoteurPieces {
     /// scene d'avant. Leur nom s'efface avec eux (banc de l'etape 3b).
     @ObservationIgnored var nomsPartis: [IdNoeud: LibellesNoeuds.Libelle] = [:]
     @ObservationIgnored var routeursPartis: Set<IdNoeud> = []
+    /// Le nom des plateaux qui partent (phase 11), par cle : celui de la scene d'avant. Il s'efface avec son plateau
+    /// (`TransitionScene.plateauxPartis`).
+    @ObservationIgnored var nomsEtagesPartis: [String: String] = [:]
     /// La politique de la grille 2D (polissage C, section 3 ; dans le coeur depuis le polissage D, section 5) : le
     /// reglage « Etages en 2D », pose par la fenetre, les colonnes choisies, une demande qui attend la vue d'ensemble
     /// 2D (`aLaVueDEnsemble2D`).
@@ -299,6 +308,8 @@ final class MoteurPieces {
     /// Cles des pieces et des etages de la scene des noms : un nom garde son etat d'une scene a l'autre.
     @ObservationIgnored var clesPieces: [String] = []
     @ObservationIgnored var clesEtages: [String] = []
+    /// Cles des plateaux qui partent, dont le nom suit ceux de la scene (phase 11) : `.etage(clesEtages.count + rang)`.
+    @ObservationIgnored var clesEtagesPartis: [String] = []
     @ObservationIgnored let cache = CacheTextes()
     @ObservationIgnored let mesure = MesureNoms()
     /// Ce qui est pose sur la vue (barre, fil, ligne de niveau, legende, fiche), par element : les noms

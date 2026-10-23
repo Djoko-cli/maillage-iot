@@ -955,8 +955,10 @@ struct MoteurPiecesZigbeeTests {
         #expect(m.orbite == CameraScene.canonique(m.geometrie, aspect: m.aspect, u: 0))
     }
 
-    /// Des niveaux changes (une zone mise a cote d'un etage) : les plateaux glissent vers leur nouvelle place, en 0,4 s
-    /// en 2D et en 0,9 s en 3D (polissage C, section 1.3) ; avec « Reduire les animations », tout de suite. Chaque plateau
+    /// Des niveaux changes (une zone mise a cote d'un etage) : les plateaux glissent vers leur nouvelle place, en 0,9 s
+    /// en 3D (polissage C, section 1.3) ; en 2D, avec les pieces dont la disposition change avec eux, sur la duree de leur
+    /// glissement (phase 11 : un seul mouvement ; des niveaux changes seuls glissent en 0,4 s,
+    /// `PlateauxPartisTests.niveauxSeulsEnDeuxD`) ; avec « Reduire les animations », tout de suite. Chaque plateau
     /// part de sa place d'avant, retrouvee par sa cle, meme si leur ordre change ; un glissement en cours repart de
     /// l'image, avec le temps qui lui restait ; zoomee, la vue attend la grille.
     @Test func glissementApresUnChangementDeNiveau() throws {
@@ -974,7 +976,9 @@ struct MoteurPiecesZigbeeTests {
                 #expect(m.glissementPlateaux == nil && m.geometrie == m.geometrieVisee)
             } else {
                 let g = try #require(m.glissementPlateaux)
-                #expect(g.duree2D == CameraScene.dureeCases && g.duree3D == CameraScene.dureeNiveaux && CameraScene.dureeNiveaux == 0.9)
+                let tr = try #require(m.transition, "la disposition des pieces change avec les niveaux")
+                #expect(g.duree2D == tr.plan.glissement.duree && g.duree3D == CameraScene.dureeNiveaux
+                        && CameraScene.dureeNiveaux == 0.9 && tr.plan.glissement.duree == 0.9)
             }
         }
         // Le reglage glisse en 2,6 s ; des niveaux changes en cours de route : le glissement repart de l'image, avec le

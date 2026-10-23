@@ -30,9 +30,11 @@ extension MoteurPieces {
     }
 
     /// Pose la geometrie visee : tout de suite, ou en glissant (« Reduire les animations » : tout de suite) depuis la
-    /// geometrie de l'image, remise dans l'ordre des plateaux de la scene (`anciens` : celui de l'image). Un
-    /// glissement en cours repart de l'image, avec le temps qui lui restait s'il est plus long.
-    func viser(_ g: GeometrieMaison, depuis anciens: [String], duree2D: Double, duree3D: Double) {
+    /// geometrie de l'image, remise dans l'ordre des plateaux de la scene (`anciens` : celui de l'image ; `partis` : les
+    /// plateaux qui partaient a l'image, dont un peut revenir). Un glissement en cours repart de l'image, avec le temps
+    /// qui lui restait s'il est plus long.
+    func viser(_ g: GeometrieMaison, depuis anciens: [String], partis: [PlateauParti] = [], duree2D: Double,
+               duree3D: Double) {
         let now = Self.maintenant()
         var d2 = reduire ? 0 : duree2D
         var d3 = reduire ? 0 : duree3D
@@ -41,7 +43,7 @@ extension MoteurPieces {
             d3 = max(d3, gl.duree3D - (now - gl.debut))
         }
         geometrieVisee = g
-        let depart = self.depart(geometrie, anciens: anciens, vers: g)
+        let depart = self.depart(geometrie, anciens: anciens, partis: partis, vers: g)
         // Rien ne bouge : pas de glissement (une nouvelle disposition aux memes plateaux).
         guard pret, d2 > 0 || d3 > 0, scene != nil, depart != g || glissementPlateaux != nil else {
             geometrie = g
@@ -55,15 +57,23 @@ extension MoteurPieces {
 
     /// Le depart d'un glissement vers `g`, la geometrie de la scene : la geometrie `image`, remise dans l'ordre des
     /// plateaux de la scene (`anciens` : celui de l'image), chaque plateau a sa place et a son rayon d'avant,
-    /// retrouves par sa cle ; la boite, le pas, la sphere et le cadrage de l'image. Un plateau nouveau part de sa
-    /// place et de son rayon d'arrivee.
-    func depart(_ image: GeometrieMaison, anciens: [String], vers g: GeometrieMaison) -> GeometrieMaison {
+    /// retrouves par sa cle ; la boite, le pas, la sphere et le cadrage de l'image. Un plateau qui partait a l'image et
+    /// revient (`partis`, phase 11) part de la ou il etait dessine. Un plateau nouveau part de sa place et de son rayon
+    /// d'arrivee.
+    func depart(_ image: GeometrieMaison, anciens: [String], partis: [PlateauParti] = [],
+                vers g: GeometrieMaison) -> GeometrieMaison {
         var depart = g
-        for (i, c) in (scene?.etages.map(\.id) ?? []).enumerated() {
-            guard let j = anciens.firstIndex(of: c), j < image.centres2D.count else { continue }
-            depart.centres2D[i] = image.centres2D[j]
-            depart.centres3D[i] = image.centres3D[j]
-            if j < image.rayons.count { depart.rayons[i] = image.rayons[j] }
+        for (i, c) in (scene?.etages.map(\.id) ?? []).enumerated() where i < depart.rayons.count {
+            if let j = anciens.firstIndex(of: c) {
+                guard j < image.centres2D.count else { continue }
+                depart.centres2D[i] = image.centres2D[j]
+                depart.centres3D[i] = image.centres3D[j]
+                if j < image.rayons.count { depart.rayons[i] = image.rayons[j] }
+            } else if let p = partis.first(where: { $0.cle == c }) {
+                depart.centres2D[i] = p.centre2D
+                depart.centres3D[i] = p.centre3D
+                depart.rayons[i] = p.rayon
+            }
         }
         depart.boite = image.boite
         depart.pasEtage = image.pasEtage
@@ -71,6 +81,35 @@ extension MoteurPieces {
         depart.rayonSphere = image.rayonSphere
         depart.rayonCadre = image.rayonCadre
         return depart
+    }
+
+    /// Les plateaux en transition vers `scene` (phase 11), d'apres l'image : ceux de l'image (`anciens`, dans l'ordre de
+    /// sa geometrie, et les plateaux qui partaient encore) absents de `scene` partent, a leur place, a leur rayon et a leur
+    /// opacite affiches ; ceux de `scene` absents de l'image, ou qui apparaissaient encore, arrivent, depuis leur opacite
+    /// affichee (0 s'ils n'etaient pas dessines). A appeler avant de viser la geometrie de `scene`.
+    func plateauxEnTransition(depuis anciens: [String], vers scene: ScenePieces)
+        -> (partis: [PlateauParti], arrivants: [String: Double]) {
+        let cles = Set(scene.etages.map(\.id)), avant = Set(anciens)
+        let affiches = posesAffichees
+        var partis: [PlateauParti] = []
+        for (j, c) in anciens.enumerated()
+        where !cles.contains(c) && j < geometrie.rayons.count && !partis.contains(where: { $0.cle == c }) {
+            partis.append(PlateauParti(cle: c, geometrie: geometrie, plateau: j,
+                                       opacite: affiches.opacitesPlateaux[c] ?? 1))
+        }
+        for p in affiches.plateauxPartis
+        where p.opacite > 0 && !cles.contains(p.cle) && !partis.contains(where: { $0.cle == p.cle }) {
+            partis.append(p)
+        }
+        var arrivants: [String: Double] = [:]
+        for c in cles {
+            if !avant.contains(c) {
+                arrivants[c] = affiches.plateauxPartis.first { $0.cle == c }?.opacite ?? 0
+            } else if let o = affiches.opacitesPlateaux[c], o < 1 {
+                arrivants[c] = o
+            }
+        }
+        return (partis, arrivants)
     }
 
     /// La geometrie de l'image a l'instant `now` : en route vers la geometrie visee, ou elle.
@@ -160,7 +199,8 @@ extension MoteurPieces {
         let g = g ?? geometrie
         // En route (polissage D, section 1) : sa pose affichee.
         if let pose = posesAffichees.pieces[scene.pieces[i].id],
-           let m = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux(scene), t: t) {
+           let m = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux(scene),
+                                     partis: posesAffichees.plateauxPartis, t: t) {
             return SIMD3(m.x, m.y + 0.02 + GeometrieMaison.hauteurBloc(t) / 2, m.z)
         }
         let c = g.centrePlateau(scene.pieces[i].etage, t)

@@ -1,6 +1,39 @@
 import Foundation
 import simd
 
+/// Un plateau qui part (phase 11) : absent de la nouvelle scene, il reste dessine pendant la transition, a sa place et a
+/// son rayon de l'image d'avant, et s'efface sur la phase du glissement. Il est garde hors de la geometrie (le moteur le
+/// tient par sa transition) : il ne compte ni dans le cadrage, ni dans la sphere, ni dans la boite, et ne se clique pas.
+/// Une piece qui le quitte y garde son ancre de depart : elle glisse de lui vers son nouveau plateau.
+public struct PlateauParti: Hashable, Sendable {
+    public var cle: String
+    /// Son centre en 2D (x, z) et en 3D, et son rayon : ceux de l'image d'avant.
+    public var centre2D: SIMD2<Double>
+    public var centre3D: SIMD3<Double>
+    public var rayon: Double
+    /// Son opacite : celle du depart de la transition, ou celle de l'image (dans les poses).
+    public var opacite: Double
+
+    public init(cle: String, centre2D: SIMD2<Double>, centre3D: SIMD3<Double>, rayon: Double, opacite: Double = 1) {
+        self.cle = cle
+        self.centre2D = centre2D
+        self.centre3D = centre3D
+        self.rayon = rayon
+        self.opacite = opacite
+    }
+
+    /// Le plateau `e` de la geometrie `g`, qui part.
+    public init(cle: String, geometrie g: GeometrieMaison, plateau e: Int, opacite: Double = 1) {
+        self.init(cle: cle, centre2D: g.centres2D[e], centre3D: g.centres3D[e], rayon: g.rayons[e], opacite: opacite)
+    }
+
+    /// Son centre a l'avancement `u` de la bascule (0 : 2D, 1 : 3D), comme `GeometrieMaison.centrePlateau`.
+    public func centre(_ u: Double) -> SIMD3<Double> {
+        let a = SIMD3(centre2D.x, 0, centre2D.y)
+        return a + (centre3D - a) * u
+    }
+}
+
 /// Les poses d'une scene, par cle (polissage D, section 1) : chaque piece (son centre sur son plateau, la taille de sa
 /// carte, sa teinte), chaque noeud (le centre de sa piece et sa place dans la carte, le rayon de sa pastille) et chaque
 /// lien, avec leur opacite. Une place est une ancre sur un plateau, par la cle du plateau : la geometrie du moment la
@@ -82,6 +115,11 @@ public struct PosesScene: Hashable, Sendable {
     public var pieces: [String: Piece] = [:]
     public var noeuds: [IdNoeud: Noeud] = [:]
     public var liens: [String: Lien] = [:]
+    /// Les plateaux qui partent, a l'image (phase 11) : absents de la scene, a leur place d'avant, a leur opacite du
+    /// moment. Une ancre sur l'un d'eux compte encore (`centre`).
+    public var plateauxPartis: [PlateauParti] = []
+    /// L'opacite, a l'image, des plateaux qui arrivent (phase 11), par cle ; absent : 1.
+    public var opacitesPlateaux: [String: Double] = [:]
 
     public init() {}
 
@@ -126,13 +164,20 @@ public struct PosesScene: Hashable, Sendable {
 
     /// Le centre dans le monde d'ancres, sur la geometrie `g` a l'avancement `t` de la bascule : la moyenne, ponderee,
     /// du centre de chaque plateau plus sa place ; `plateaux` : l'indice de chaque plateau de `g`, par cle. Une ancre
-    /// sur un plateau absent ne compte pas ; nil sans aucune.
+    /// sur un plateau qui part (`partis`, phase 11) compte a la place de celui-ci ; une ancre sur un plateau absent ne
+    /// compte pas ; nil sans aucune.
     public static func centre(_ ancres: [Ancre], geometrie g: GeometrieMaison, plateaux: [String: Int],
-                              t: Double) -> SIMD3<Double>? {
+                              partis: [PlateauParti] = [], t: Double) -> SIMD3<Double>? {
         var somme = SIMD3<Double>.zero, poids = 0.0
         for a in ancres {
-            guard let e = plateaux[a.plateau], e < g.rayons.count else { continue }
-            let c = g.centrePlateau(e, t)
+            let c: SIMD3<Double>
+            if let e = plateaux[a.plateau], e < g.rayons.count {
+                c = g.centrePlateau(e, t)
+            } else if let p = partis.first(where: { $0.cle == a.plateau }) {
+                c = p.centre(t)
+            } else {
+                continue
+            }
             somme += SIMD3(c.x + a.place.x, c.y, c.z + a.place.y) * a.poids
             poids += a.poids
         }
@@ -243,6 +288,12 @@ public struct TransitionScene: Hashable, Sendable {
     public var debut: Double
     /// Le plan de ses phases, selon la cause du changement.
     public var plan: PlanTransition
+    /// Les plateaux qui partent (phase 11), a leur place et a leur opacite affichees au debut : ils s'effacent sur la
+    /// phase du glissement. Poses par le moteur, qui seul connait la geometrie de l'image.
+    public var plateauxPartis: [PlateauParti] = []
+    /// Les plateaux qui arrivent (phase 11), par cle : leur opacite affichee au debut (0 s'ils n'etaient pas la). Ils
+    /// apparaissent sur la phase du glissement.
+    public var plateauxArrivants: [String: Double] = [:]
 
     /// La transition de `affichee`, la pose affichee de la scene d'avant, a `arrivee`, la nouvelle, depuis l'instant
     /// `debut` ; nil si rien ne change, ou avec « Reduire les animations ». `cause` : le plan des phases (`PlanTransition`) ;
@@ -316,6 +367,14 @@ public struct TransitionScene: Hashable, Sendable {
             l.opacite = opacite(depart.liens[k]?.opacite, arrivee.liens[k]?.opacite)
             r.liens[k] = l
         }
+        // Les plateaux (phase 11) suivent le glissement, en un seul mouvement avec les pieces : celui qui part s'efface
+        // depuis son opacite du debut, celui qui arrive apparait depuis la sienne.
+        r.plateauxPartis = plateauxPartis.map { p in
+            var p = p
+            p.opacite *= 1 - e
+            return p
+        }
+        r.opacitesPlateaux = plateauxArrivants.mapValues { $0 + (1 - $0) * e }
         return r
     }
 
