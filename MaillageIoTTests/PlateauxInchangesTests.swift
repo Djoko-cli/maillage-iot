@@ -69,6 +69,26 @@ struct PlateauxInchangesTests {
 
     // MARK: Apres « Ranger dans la zone… »
 
+    /// Le temoin de `rangerPieceGardeLesPlateauxInchanges` : sur cette scene, le calcul libre de l'aller deplace des pieces des
+    /// Zones 3 et 4 ; sans la marque, elles bougeraient. En francais seulement : les cartes dependent de la largeur des noms
+    /// mesures, et en anglais le calcul libre de cette scene laisse ces plateaux en place par hasard (passe anglaise du
+    /// 23/10). Le comportement, lui, est verifie dans les deux langues.
+    @Test(.enabled(if: Locale.preferredLanguages.first?.hasPrefix("fr") ?? false))
+    func temoinLeCalculLibreRearrangeLesZones3Et4() throws {
+        let url = MoteurPiecesTests.fichier()
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        let (m, _) = try Self.moteur(url)
+        let avant = Self.positions(m, de: [Self.z3, Self.z4])
+        m.rangerPiece("piece:Abri", dans: "Zone 1")
+        m.installerMaintenant(try Self.scene(m.places))
+        let libre = try Self.libre(m)
+        let s = try #require(m.entree?.scene)
+        let deplacees = s.pieces.indices.filter {
+            [Self.z3, Self.z4].contains(s.etages[s.pieces[$0].etage].id) && libre[$0] != avant[s.pieces[$0].id]
+        }
+        #expect(!deplacees.isEmpty, "temoin : le calcul libre rearrange les Zones 3 et 4")
+    }
+
     /// L'Abri passe de la Zone 2 a la Zone 1, puis revient (« Automatiquement ») : les pieces des Zones 3 et 4, qui ne
     /// changent pas, restent exactement au meme endroit (au bit pres). Le temoin : sans cela, un calcul libre les deplace.
     @Test func rangerPieceGardeLesPlateauxInchanges() throws {
@@ -85,13 +105,6 @@ struct PlateauxInchangesTests {
         #expect(Self.zone(de: "Abri", dans: m) == Self.z1)
         #expect(!m.fixerInchanges, "le calcul qui la prend l'efface")
         #expect(Self.positions(m, de: [Self.z3, Self.z4]) == avant, "l'aller : les Zones 3 et 4 n'ont pas bouge")
-        // Le temoin : le calcul libre de cette scene, lui, deplace des pieces de ces plateaux.
-        let libre = try Self.libre(m)
-        let s = try #require(m.entree?.scene)
-        let deplacees = s.pieces.indices.filter {
-            [Self.z3, Self.z4].contains(s.etages[s.pieces[$0].etage].id) && libre[$0] != avant[s.pieces[$0].id]
-        }
-        #expect(!deplacees.isEmpty, "temoin : le calcul libre rearrange les Zones 3 et 4")
         // Le retour : « Automatiquement ».
         m.rangerPiece("piece:Abri", dans: nil)
         #expect(m.fixerInchanges)
