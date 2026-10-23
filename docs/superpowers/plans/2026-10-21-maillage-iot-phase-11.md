@@ -86,6 +86,6 @@
 
 ### Task 3: Relecture et banc
 
-- [ ] **Step 1: Porte et relecture** — porte complète et passe anglaise (app quittée) ; relecture Opus de la branche.
-- [ ] **Step 2: Banc** — avec Djoko, sur sa maison réelle, en 2D et en 3D : « Ranger dans la zone… » aller et retour, et un choix de niveau d'un plateau. Si le mouvement dure encore environ 2 s au lieu de 0,9 s, journaliser `installer` et `retenir` (heure, clé) et la durée des images pendant la transition, pour trancher entre une cadence faible et une pause avant la première image.
-- [ ] **Step 3: Verdict** — cocher « Phase 11 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
+- [x] **Step 1: Porte et relecture** — porte complète et passe anglaise (app quittée) ; relecture Opus de la branche.
+- [x] **Step 2: Banc** — avec Djoko, sur sa maison réelle, en 2D et en 3D : « Ranger dans la zone… » aller et retour, et un choix de niveau d'un plateau. Si le mouvement dure encore environ 2 s au lieu de 0,9 s, journaliser `installer` et `retenir` (heure, clé) et la durée des images pendant la transition, pour trancher entre une cadence faible et une pause avant la première image.
+- [x] **Step 3: Verdict** — cocher « Phase 11 » dans la §6.1 de la spec ; fusion et push avec l'accord de Djoko.
