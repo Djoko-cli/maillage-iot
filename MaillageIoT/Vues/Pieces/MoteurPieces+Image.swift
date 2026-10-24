@@ -32,7 +32,7 @@ extension MoteurPieces {
                              voisins: voisins, protocolesSansMode: protocolesSansMode, noeudsEstompes: noeudsEstompes,
                              liensEstompes: liensEstompes, ailleursEstompes: ailleursEstompes)
         let p = SceneProjetee(scene: scene, cartes: cartes, positions: positions, geometrie: geometrie, etat: etat,
-                              orbite: orbite, cadre: cadre, poses: posesAffichees)
+                              orbite: orbite, cadre: cadre, poses: posesAffichees, derives: derivesDeLaScene(scene))
         // Le nom d'un noeud qui s'est efface s'en va avec lui : plus de noeud en fondu, plus de nom.
         etiquettes.removeAll { l in
             if case .noeud(let id) = l.genre { scene.noeud(id) == nil && !p.fantomes.contains(id) } else { false }
@@ -82,6 +82,16 @@ extension MoteurPieces {
                 Task { @MainActor [weak self] in self?.majCadence() }
             }
         }
+    }
+
+    /// Ce que la projection tire de la seule scene affichee (`scene`, celle de `entree`) : calcule une fois, a la premiere
+    /// image qui la montre, et garde jusqu'a la scene suivante (`entree`, au `didSet`) ; pas a chaque image.
+    func derivesDeLaScene(_ scene: ScenePieces) -> DerivesScene {
+        if let d = derives { return d }
+        let d = DerivesScene(scene)
+        derives = d
+        calculsDerives += 1
+        return d
     }
 
     /// Les textes de l'image : ceux de la scene, et le nom des noeuds et des plateaux qui s'effacent, de la scene

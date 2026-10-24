@@ -325,9 +325,13 @@ public struct SceneProjetee: Sendable {
     /// de `scene`, et `g.rayons` ses etages, memes effectifs et meme ordre. `poses` : ce qui est en transition
     /// (polissage D, section 1), par cle, qui l'emporte sur la disposition ; ce qui s'efface, absent de la scene, s'y
     /// dessine aussi, a sa derniere place, sans se cliquer.
+    ///
+    /// `derives` : ce qui ne depend que de `scene` (`DerivesScene`), calcule une fois par le moteur pour toutes ses images ;
+    /// nil, la projection le calcule elle-meme.
     public init(scene: ScenePieces, cartes: [CartesPieces.Carte], positions: [SIMD2<Double>],
                 geometrie g: GeometrieMaison, etat: EtatAnime, orbite: Orbite, cadre: CGRect,
-                poses: PosesScene = PosesScene()) {
+                poses: PosesScene = PosesScene(), derives: DerivesScene? = nil) {
+        let derives = derives ?? DerivesScene(scene)
         let proj = ProjectionScene(orbite, cadre: cadre)
         let t = etat.t
         let h = GeometrieMaison.hauteurBloc(t)
@@ -381,8 +385,7 @@ public struct SceneProjetee: Sendable {
 
         // Pieces : blocs de verre ; noeuds a mi-hauteur de leur bloc en 3D. Une piece ou un noeud en transition prend
         // sa pose ; une piece qui s'efface, absente de la scene, se dessine a sa derniere place (`piece` -1).
-        let plateaux = Dictionary(scene.etages.indices.map { (scene.etages[$0].id, $0) },
-                                  uniquingKeysWith: { a, _ in a })
+        let plateaux = derives.indicesEtages
         var voiles = [Double](repeating: 1, count: scene.pieces.count)
         var mondes: [IdNoeud: SIMD3<Double>] = [:]
         var centres = [SIMD3<Double>](repeating: .zero, count: scene.pieces.count)
@@ -474,7 +477,7 @@ public struct SceneProjetee: Sendable {
         func pieceRestante(_ n: PosesScene.Noeud) -> Int? {
             n.piece.flatMap { indicesPieces[$0] }.flatMap { $0 < voiles.count ? $0 : nil }
         }
-        let presentes = Set(scene.pieces.map(\.id))
+        let presentes = derives.clesPieces
         for (k, pose) in poses.pieces.sorted(by: { $0.key < $1.key }) where !presentes.contains(k) {
             guard let centre = PosesScene.centre(pose.ancres, geometrie: g, plateaux: plateaux, partis: poses.plateauxPartis,
                                                  t: t) else { continue }
@@ -556,7 +559,7 @@ public struct SceneProjetee: Sendable {
         // avant.
         // Une meme paire de noeuds n'a qu'une trace : un voisin entendu sous le chemin de sa paire, et le lien d'un enfant sous
         // le fil de son repere, ne se dessinent pas (point 10).
-        let masques = Self.voisinsMasques(scene.liens)
+        let masques = derives.voisinsMasques
         for l in scene.liens {
             guard let trace = Self.trace(l, mode: etat.mode(de: l), selection: etat.selection, voisins: etat.voisins),
                   !(trace == .voisin && masques.contains(l)),

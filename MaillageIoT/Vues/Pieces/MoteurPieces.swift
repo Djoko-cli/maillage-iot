@@ -154,8 +154,12 @@ final class MoteurPieces {
     }
     /// Les protocoles dont les liens ignorent `liens` et `voisins` : ceux de la scene dont le modele ne suit pas le mode des
     /// liens (`ModeleProtocole.suitModeLiens`, Thread : ses liens radio sont toujours montres).
+    /// Calcule une fois par scene (`derivesDeLaScene`), avec ce que la projection tire de la scene seule.
     var protocolesSansMode: Set<Protocole> {
-        Set((entree?.modeles ?? []).filter { !$0.suitModeLiens }.map(\.protocole))
+        if let calcules = protocolesSansModeCalcules { return calcules }
+        let calcules = Set((entree?.modeles ?? []).filter { !$0.suitModeLiens }.map(\.protocole))
+        protocolesSansModeCalcules = calcules
+        return calcules
     }
     var ligneNiveau = LigneNiveau.lisibles
     var cibleMenu = CibleMenu.aucune
@@ -180,8 +184,19 @@ final class MoteurPieces {
     @ObservationIgnored weak var coque: Surveillance?
     /// Scene affichee, posee sur sa disposition.
     @ObservationIgnored var entree: EntreeScene? {
-        didSet { versionScene &+= 1 }
+        didSet {
+            versionScene &+= 1
+            // Ce qui ne depend que de la scene (performance, piste 3 du 25/10) est a refaire pour la nouvelle.
+            derives = nil
+            protocolesSansModeCalcules = nil
+        }
     }
+    /// Ce que la projection tire de la seule scene affichee (`DerivesScene`), calcule a la premiere image de la scene et
+    /// garde jusqu'a la suivante (`derivesDeLaScene`) ; nil : a calculer.
+    @ObservationIgnored var derives: DerivesScene?
+    /// Combien de fois `derives` a ete calcule depuis la creation du moteur (les tests).
+    @ObservationIgnored var calculsDerives = 0
+    @ObservationIgnored var protocolesSansModeCalcules: Set<Protocole>?
     /// Scene recue pendant un mouvement ou un glisser : appliquee a sa fin.
     @ObservationIgnored var attente: EntreeScene? {
         didSet { versionScene &+= 1 }

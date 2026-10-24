@@ -298,6 +298,49 @@ struct SceneProjeteeTests {
         #expect(masques.liensEnfants.filter { $0.genre == .parent }.map(\.suppose).sorted { !$0 && $1 } == [false, true])
     }
 
+    /// Ce qui ne depend que de la scene (`DerivesScene`, calcule une fois par le moteur) : les memes voisins masques que
+    /// `voisinsMasques(scene.liens)`, l'indice de chaque plateau et les cles des pieces ; une projection qui le recoit dessine
+    /// comme celle qui le calcule, et c'est bien lui qu'elle lit (celui d'une scene sans chemin montre le voisin que le
+    /// chemin masque).
+    @Test func derivesDeLaScene() throws {
+        let (_, c, d, g) = try Self.scene()
+        let graphe = try ScenePiecesTests.graphe(sonde: true)
+        let chemins = [GrapheReseau.Lien(de: idt("HomePod"), vers: idt("Apple TV"), genre: .chemin, qualite: 2),
+                       GrapheReseau.Lien(de: idt("E000000000000004"), vers: idt("HomePod"), genre: .chemin, qualite: 2, suppose: true)]
+        let gc = GrapheReseau(noeuds: graphe.noeuds, liens: graphe.liens + chemins)
+        let pieces = [idt("Apple TV"): "Salon", idt("HomePod"): "Chambre", idt("E000000000000002"): "Bureau",
+                      idt("E000000000000003"): "Bureau", idt("E000000000000004"): "Salon", idt("E000000000000005"): "Salon"]
+        let zones = [ZoneMaison(nom: "Rez-de-chaussée", pieces: ["Salon"]), ZoneMaison(nom: "Étage", pieces: ["Chambre", "Bureau"])]
+        func scene(_ graphe: GrapheReseau) -> ScenePieces {
+            ScenePieces(graphe: graphe, libelles: ScenePiecesTests.libelles, piecesNoeuds: pieces, zones: zones,
+                        chefs: [idt("Apple TV")], piecesMaison: true, classement: FixturesScene.classement)
+        }
+        let s = scene(gc), sansChemin = scene(graphe)
+        let derives = DerivesScene(s)
+        let doublee = GrapheReseau.Lien(de: idt("Apple TV"), vers: idt("HomePod"), genre: .radio, qualite: 2)
+        #expect(derives.voisinsMasques == SceneProjetee.voisinsMasques(s.liens))
+        #expect(derives.voisinsMasques == [doublee], "la paire HomePod - Apple TV a un chemin, l'autre non")
+        #expect(derives.indicesEtages == Dictionary(uniqueKeysWithValues: s.etages.indices.map { (s.etages[$0].id, $0) }))
+        #expect(derives.clesPieces == Set(s.pieces.map(\.id)))
+        #expect(DerivesScene(sansChemin).voisinsMasques.isEmpty)
+        #expect(derives != DerivesScene(sansChemin))
+        func projeter(_ derives: DerivesScene?, selection: IdNoeud?) -> SceneProjetee {
+            let e = EtatAnime(t: 0, fk: Array(repeating: 0, count: s.pieces.count), selection: selection, liens: .chemins)
+            return SceneProjetee(scene: s, cartes: c, positions: d.positions, geometrie: g, etat: e,
+                                 orbite: CameraScene.canonique(g, aspect: 1.5, u: 0), cadre: Self.cadre, derives: derives)
+        }
+        func resume(_ p: SceneProjetee) -> [String] {
+            (p.liensRouteurs + p.liensEnfants).map { "\($0.genre) \($0.voisin) \($0.suppose) \($0.opacite) \($0.a) \($0.b)" }
+        }
+        for selection in [nil, idt("HomePod"), idt("E000000000000004")] {
+            #expect(resume(projeter(derives, selection: selection)) == resume(projeter(nil, selection: selection)),
+                    "calcule d'avance ou par la projection : le meme dessin")
+        }
+        // C'est bien lui que la projection lit : celui d'une scene sans chemin ne masque rien.
+        #expect(projeter(nil, selection: idt("HomePod")).liensRouteurs.filter(\.voisin).isEmpty)
+        #expect(!projeter(DerivesScene(sansChemin), selection: idt("HomePod")).liensRouteurs.filter(\.voisin).isEmpty)
+    }
+
     /// Le mode des liens ne vaut que pour les protocoles qui ne l'ignorent pas (`EtatAnime.protocolesSansMode`) : un
     /// protocole sans mode montre ses liens radio comme en mode « tous » (jamais masques, ni en voisins), ses chemins
     /// restent caches ; sans cette liste, `liens` vaut pour tous, comme avant. Chaque lien projete porte son protocole.
