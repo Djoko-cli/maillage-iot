@@ -418,6 +418,32 @@ struct SuiviTests {
         #expect(s.disparus.isEmpty)
     }
 
+    /// Un noeud Thread vu une fois « sur IP » (releve mal resolu : plus que des adresses locales) reste un noeud Thread : s'il
+    /// perd ensuite ses adresses, il est « sans adresse » dans Thread, jamais retenu en silence (relecture finale, M1).
+    @Test func noeudThreadVuUneFoisSurIPResteThread() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.neuf, noeud: 9, adresses: [Self.adresseNeuf])
+        _ = s.integrer(b.annonces)
+        #expect(s.instantane?.appareils.contains { $0.id == Self.neuf } == true)
+
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseIP]
+        _ = s.integrer(b.annonces)
+        #expect(s.disparus.isEmpty)
+
+        b.adresses[Self.neuf + ".local"] = []
+        var types: [TypeEvenement] = []
+        for t in [180.0, 240, 300, 360] {
+            b.date = Self.t0 + t
+            types += s.integrer(b.annonces).map(\.type)
+        }
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.genre == .sansAdresse, "toujours dans Thread")
+        #expect(s.disparus.isEmpty)
+        #expect(types.contains(.appareilSansAdresse), "signale, pas retenu en silence : \(types)")
+        #expect(!types.contains(.appareilNouveau) && !types.contains(.appareilDisparu), "ni nouveau ni disparu : \(types)")
+    }
+
     /// Un appareil Thread connu (deja vu avec une adresse Thread) qui perd son adresse garde l'etat "sans adresse" dans
     /// Thread, que la session l'ait vu des le lancement ou apres son attente.
     @Test func appareilThreadConnuSansAdresseResteDansThread() throws {

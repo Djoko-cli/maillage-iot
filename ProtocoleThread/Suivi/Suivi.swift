@@ -176,7 +176,8 @@ public struct Suivi: Sendable {
         for a in nouveau.appareils where a.genre != .sansAdresse { enAttente[a.id] = nil }
         for a in nouveau.appareilsIP { enAttente[a.id] = nil }
         for a in nouveau.appareils where a.genre == .thread { dernierGenre[a.id] = .thread }
-        for a in nouveau.appareilsIP { dernierGenre[a.id] = .ip }
+        // Thread colle : un noeud Thread vu une fois sur IP (releve mal resolu) reste suivi comme un noeud Thread.
+        for a in nouveau.appareilsIP where dernierGenre[a.id] != .thread { dernierGenre[a.id] = .ip }
         reseauxVus.formUnion(nouveau.reseaux.map(\.id))
         for a in nouveau.appareils {
             if let p = a.partition { dernieresPartitions[a.id] = p }
@@ -310,6 +311,13 @@ public struct Suivi: Sendable {
                 // Compte dans le point de depart de son reseau.
             } else if enAttente[n.id] == .depart {
                 // Il attendait son adresse depuis le premier releve du lancement : il est du point de depart.
+            } else if dernierGenre[n.id] == .thread {
+                // Un noeud Thread connu qui revient d'IP (releve mal resolu) : il n'avait pas disparu, il n'est pas nouveau ;
+                // revenu sans adresse, il est signale comme tel.
+                if n.genre == .sansAdresse {
+                    ev.append(Evenement(date: date, type: .appareilSansAdresse, reseau: n.idReseau, sujet: s,
+                                        avant: dernieresPartitions[n.id]))
+                }
             } else {
                 ev.append(Evenement(date: date, type: .appareilNouveau, reseau: n.idReseau, sujet: s, apres: n.partition))
             }
