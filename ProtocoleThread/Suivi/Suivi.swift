@@ -281,7 +281,12 @@ public struct Suivi: Sendable {
                 ev.append(Evenement(date: date, type: .appareilNouveau, reseau: n.idReseau, sujet: s, apres: n.partition))
             }
         }
-        for a in ancien.appareils where nouveaux[a.id] == nil {
+        // Sur le reseau local (adresses resolues, hors Thread) : present, range dans les appareils IP. Un appareil compte
+        // avec Thread parce qu'il etait sans adresse (ses adresses n'avaient pas encore repondu) n'a donc pas disparu quand
+        // elles arrivent ; un disparu qui revient sur le reseau local n'est plus perdu.
+        let surIP = Set(nouveau.appareilsIP.map(\.id))
+        for id in surIP where disparus[id] != nil { disparus[id] = nil }
+        for a in ancien.appareils where nouveaux[a.id] == nil && !surIP.contains(a.id) {
             var dates = a.servicesMatter.compactMap { memoire.abandons[.init(famille: .matter, instance: $0)] }
             if let h = a.hap, let d = memoire.abandons[.init(famille: .hap, instance: h.nom)] { dates.append(d) }
             ev.append(Evenement(date: dates.max() ?? date, type: .appareilDisparu, reseau: a.idReseau,

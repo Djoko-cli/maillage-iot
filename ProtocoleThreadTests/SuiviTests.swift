@@ -259,6 +259,51 @@ struct SuiviTests {
         #expect(s.integrer(Self.banc(Self.t0 + 240).annonces).map(\.type) == [.appareilRevenu])
     }
 
+    /// Appareil Matter du reseau local (Wi-Fi, Ethernet, pont) : hote a 12 hexa, adresse dans le prefixe du reseau local.
+    static let ip = "C0FFEE000001"
+    static let adresseIP = "fd4b:36a2:b7fe:200b:c2ff:eeff:fe00:1"
+
+    /// Cas du 24/10 : un appareil du reseau local entre au releve avant que ses adresses repondent (sans adresse : il est
+    /// compte avec les appareils Thread), puis ses adresses arrivent au releve suivant et il passe dans les appareils IP.
+    /// Il n'a pas disparu : il n'est ni dans le journal comme disparu, ni garde parmi les disparus.
+    @Test func sansAdressePuisSurIPNestPasDisparu() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.ip, noeud: 9, adresses: [])
+        #expect(s.integrer(b.annonces).map(\.type) == [.appareilNouveau])
+        #expect(s.instantane?.appareils.first { $0.id == Self.ip }?.genre == .sansAdresse)
+
+        b.date = Self.t0 + 120
+        b.adresses[Self.ip + ".local"] = [Self.adresseIP]
+        let ev = s.integrer(b.annonces)
+        #expect(!ev.contains { $0.type == .appareilDisparu }, "present sur le reseau local : pas disparu")
+        #expect(s.disparus.isEmpty)
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+        #expect(s.instantane?.appareils.contains { $0.id == Self.ip } == false)
+    }
+
+    /// Un appareil perdu de vue (disparu) qui revient sur le reseau local n'est plus garde parmi les disparus : il est la,
+    /// dans les appareils IP.
+    @Test func disparuRevenuSurIPNestPlusDisparu() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.ip, noeud: 9, adresses: [])
+        _ = s.integrer(b.annonces)
+        b.retirer(Self.ip)
+        for t in [120.0, 180, 240] {
+            b.date = Self.t0 + t
+            _ = s.integrer(b.annonces)
+        }
+        #expect(Array(s.disparus.keys) == [Self.ip], "absent plus de 2 min : disparu")
+
+        b.date = Self.t0 + 300
+        b.appareil(Self.ip, noeud: 9, adresses: [Self.adresseIP])
+        let ev = s.integrer(b.annonces)
+        #expect(!ev.contains { $0.type == .appareilDisparu })
+        #expect(s.disparus.isEmpty, "revenu sur le reseau local : plus perdu")
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+    }
+
     @Test func routeurs() throws {
         var s = Self.demarre()
         // Nouvelle adresse de lien du chef (redemarrage probable), la route suit.
