@@ -151,4 +151,86 @@ struct ReglagesHauteurTests {
         }
         await sonde.oublier()
     }
+
+    /// A quelle distance du haut de la page (en points, vers le bas) commence son contenu : le haut de la vue de
+    /// defilement du formulaire, mesure dans le repere de la vue hote. Positif : du vide au-dessus ; negatif : le haut est
+    /// hors de la page, donc coupe.
+    static func distanceDuHaut(_ page: NSView) -> CGFloat? {
+        guard let defilement = defilements(page).first else { return nil }
+        let r = page.convert(defilement.bounds, from: defilement)
+        return page.isFlipped ? r.minY - page.bounds.minY : page.bounds.maxY - r.maxY
+    }
+
+    /// Donne a la page choisie la hauteur `ideale + ecart` en changeant la taille de la fenetre (le bord du haut ne bouge pas),
+    /// comme le fait l'animation de hauteur : la page est tantot plus petite, tantot plus grande que sa taille ideale.
+    static func hauteurDePage(_ ecart: CGFloat, fenetre: NSWindow, page: NSView) {
+        var cadre = fenetre.frame
+        let d = page.fittingSize.height + ecart - page.frame.height
+        cadre.size.height += d
+        cadre.origin.y -= d
+        fenetre.setFrame(cadre, display: true)
+        page.layoutSubtreeIfNeeded()
+    }
+
+    /// Le fondu enchaine natif de `NSTabViewController`, pose explicitement : il se joue en meme temps que l'animation de
+    /// hauteur, et l'utilisateur peut cliquer un autre onglet sans attendre la fin.
+    @Test func lesOngletsSeFondentEnchaines() async throws {
+        let (fenetre, onglets) = try await Self.fenetre(onglet: .general)
+        defer { fenetre.orderOut(nil); fenetre.contentViewController = nil }
+        #expect(onglets.transitionOptions.contains(.crossfade))
+        #expect(onglets.transitionOptions.contains(.allowUserInteraction))
+    }
+
+    /// Le haut de la page ne bouge pas, quelle que soit la hauteur que lui donne la fenetre pendant l'animation : plus petite
+    /// que sa taille ideale (la fenetre grandit vers une page plus haute, ou se reduit depuis une page plus haute) comme
+    /// plus grande. Cause du haut coupe : une vue SwiftUI plus grande que sa vue hote y est centree, donc decalee vers le
+    /// haut de la moitie du manque.
+    @Test(arguments: OngletReglages.allCases) func laPageResteColleeEnHaut(_ onglet: OngletReglages) async throws {
+        let (fenetre, onglets) = try await Self.fenetre(onglet: onglet)
+        defer { fenetre.orderOut(nil); fenetre.contentViewController = nil }
+        _ = try await Self.attendreAjustement(fenetre, onglets)
+        let page = try #require(onglets.tabViewItems[onglets.selectedTabViewItemIndex].viewController?.view)
+        let repos = try #require(Self.distanceDuHaut(page))
+        for ecart: CGFloat in [-300, -100, 100, 300, 0] {
+            Self.hauteurDePage(ecart, fenetre: fenetre, page: page)
+            #expect(abs(page.frame.height - (page.fittingSize.height + ecart)) < 0.5, "onglet \(onglet.titre) : la page n'a pas la hauteur voulue")
+            let haut = try #require(Self.distanceDuHaut(page))
+            #expect(abs(haut - repos) < 0.5, "onglet \(onglet.titre), page \(ecart) pt de plus que sa taille ideale : le haut est a \(haut) pt, il etait a \(repos) pt au repos")
+        }
+    }
+
+    /// Un vrai changement d'onglet, echantillonne pendant le fondu et l'animation de hauteur, dans les deux sens (page plus
+    /// haute, puis plus courte) : les deux pages, l'ancienne qui s'efface et la nouvelle, gardent leur haut ou il est au repos.
+    @Test(arguments: [(OngletReglages.general, OngletReglages.zigbee), (.zigbee, .general)])
+    func lePendantLeChangementDOnglet(_ de: OngletReglages, vers: OngletReglages) async throws {
+        let (fenetre, onglets) = try await Self.fenetre(onglet: de)
+        defer { fenetre.orderOut(nil); fenetre.contentViewController = nil }
+        _ = try await Self.attendreAjustement(fenetre, onglets)
+        // Le haut au repos de chaque page : on la montre une fois (le fondu et l'animation finissent), puis on revient.
+        var repos: [OngletReglages: CGFloat] = [:]
+        for o in [vers, de] {
+            onglets.selectedTabViewItemIndex = OngletReglages.allCases.firstIndex(of: o)!
+            _ = try await Self.attendreAjustement(fenetre, onglets)
+            try await Task.sleep(for: .milliseconds(600))
+            let haut = try #require(Self.distanceDuHaut(onglets.tabViewItems[onglets.selectedTabViewItemIndex].viewController!.view))
+            repos[o] = haut
+        }
+        onglets.selectedTabViewItemIndex = OngletReglages.allCases.firstIndex(of: vers)!
+        var echantillons = 0
+        var ecarts: [String] = []
+        var vues = Set<OngletReglages>()
+        for _ in 0..<40 {
+            for o in OngletReglages.allCases {
+                let vue = onglets.tabViewItems[OngletReglages.allCases.firstIndex(of: o)!].viewController!.view
+                guard vue.window != nil, vue.superview != nil, let haut = Self.distanceDuHaut(vue) else { continue }
+                vues.insert(o)
+                echantillons += 1
+                if abs(haut - repos[o]!) > 0.5 { ecarts.append("\(o.titre) a \(haut) au lieu de \(repos[o]!), page \(vue.frame.height)") }
+            }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        print("ECHANTILLONS \(de)->\(vers) : \(echantillons), pages vues \(vues.map(\.rawValue).sorted())")
+        #expect(echantillons > 0)
+        #expect(ecarts.isEmpty, "pendant le changement d'onglet : \(ecarts.prefix(3))")
+    }
 }

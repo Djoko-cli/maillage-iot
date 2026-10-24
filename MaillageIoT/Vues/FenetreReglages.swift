@@ -57,6 +57,34 @@ enum OngletReglages: String, CaseIterable {
     }
 }
 
+/// Colle une page en haut de son cadre, quelle que soit la hauteur que celui-ci lui donne. La page garde sa taille ideale :
+/// si le cadre est plus petit, elle deborde en bas, sans jamais etre decalee vers le haut.
+///
+/// Pourquoi pas un simple `.frame(maxHeight: .infinity, alignment: .top)` : un cadre souple prend la taille de son contenu
+/// quand celui-ci est plus grand que la hauteur proposee (le formulaire, en `fixedSize`, garde sa hauteur ideale). Le cadre
+/// devient alors plus grand que la vue hote, et `NSHostingView` centre un contenu plus grand que lui : le haut de la page
+/// est decale vers le haut de la moitie du manque, donc coupe, pendant que la fenetre grandit (mesure du 24/10 : 150 pt
+/// coupes pour une page de 300 pt trop petite). Ici la taille rendue est toujours celle proposee, et la page est posee a
+/// l'origine : la vue hote n'a plus rien a centrer. Sans hauteur proposee (`fittingSize`), la taille est celle de la page.
+struct PageCollee: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let page = subviews.first else { return .zero }
+        let taille = page.sizeThatFits(ProposedViewSize(width: proposal.width, height: nil))
+        return CGSize(width: taille.width, height: proposal.height ?? taille.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard let page = subviews.first else { return }
+        page.place(at: CGPoint(x: bounds.midX, y: bounds.minY), anchor: .top,
+                   proposal: ProposedViewSize(width: bounds.width, height: nil))
+    }
+}
+
+extension View {
+    /// Cette page, collee en haut de son cadre (`PageCollee`).
+    func colleeEnHaut() -> some View { PageCollee { self } }
+}
+
 /// Une page des Reglages, celle d'un onglet : General (ouverture a la connexion, mises a jour, langue, vue par
 /// pieces : les etages en 2D), Notifications (une section par protocole, par categorie), Maison (le demon Passeur Noms et les noms qu'il a releves :
 /// `ReglagesMaison`), Thread (liaison USB ou reseau Thread de la sonde, acces reseau, Thread Route), Zigbee (le pont Hue
@@ -110,8 +138,10 @@ struct FenetreReglages: View {
         }
         .frame(width: 560)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { surHauteur($0) }
-        // Collee en haut : pendant que la fenetre change de hauteur, la page ne bouge pas.
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Collee en haut : pendant que la fenetre change de hauteur, la page ne bouge pas, qu'elle soit plus petite ou plus
+        // grande que son cadre (`PageCollee`). Le `.frame(maxHeight: .infinity, alignment: .top)` d'avant ne tenait que dans
+        // le second cas.
+        .colleeEnHaut()
         // Etat de l'ouverture a la connexion relu a chaque affichage de l'onglet (Reglages Systeme).
         .onAppear {
             if onglet == .general { ouverture.actualiser() }
