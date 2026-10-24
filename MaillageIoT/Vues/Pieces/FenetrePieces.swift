@@ -369,7 +369,10 @@ struct VuePieces: View {
     var body: some View {
         // La `TimelineView` calcule ses images meme dans une fenetre fermee, reduite ou cachee : l'horloge du moteur
         // s'arrete quand la fenetre n'est pas vue (`SondeVisibilite`, plus bas).
-        TimelineView(.animation(minimumInterval: nil, paused: !moteur.horlogeEnMarche)) { contexte in
+        // La rotation lente seule ne demande que 30 images par seconde ; tout autre mouvement, la cadence de l'ecran
+        // (`CadenceHorloge`).
+        let cadence = moteur.cadence
+        TimelineView(.animation(minimumInterval: cadence.intervalle, paused: cadence == .pause)) { contexte in
             Canvas { ctx, taille in
                 _ = contexte.date
                 moteur.marges = marges

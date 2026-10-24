@@ -9,7 +9,7 @@ import Testing
 /// reduite dans le Dock ou entierement cachee. La vue ne calcule plus aucune image tant que sa fenetre n'est pas vue, et
 /// la rotation reprend la ou elle en etait, sans saut.
 @MainActor
-@Suite("Vue par pieces : l'horloge s'arrete quand la fenetre n'est pas vue")
+@Suite("Vue par pieces : l'horloge s'arrete quand la fenetre n'est pas vue", .serialized)
 struct HorlogeFenetreTests {
     /// La fenetre est vue seulement ouverte, hors du Dock, pas entierement cachee, les ecrans allumes, la session a
     /// l'ecran et deverrouillee ; l'horloge ne tourne que pendant un mouvement, dans une fenetre vue.

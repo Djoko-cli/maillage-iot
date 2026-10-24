@@ -118,6 +118,10 @@ final class MoteurPieces {
     var anime = true
     /// Ce que Djoko voit de la fenetre de la vue (`SondeVisibilite`, posee par la vue ; `regler(visibilite:)`).
     var visibilite = VisibiliteFenetre()
+    /// La rotation lente est le seul mouvement en cours : l'horloge se contente de 30 images par seconde (`cadence`).
+    /// Observe, pour que la `TimelineView` change de cadence ; tenu a jour par `majCadence`, qui le lit sur l'etat du
+    /// moteur (non observe).
+    var rotationSeule = false
     /// Nom de la piece isolee ; nil sinon.
     var isolee: String?
     /// Ce que montre la vue, et sa provenance (polissage C, section 5) ; le fil qui le dit.
@@ -298,6 +302,8 @@ final class MoteurPieces {
     @ObservationIgnored var derniereActivite = 0.0
     @ObservationIgnored var instant: Double?
     @ObservationIgnored var dt = 0.0
+    /// Le nombre d'images dessinees depuis la creation du moteur (les tests comptent la cadence de la vue).
+    @ObservationIgnored var imagesDessinees = 0
     /// Djoko a zoome ou deplace la vue : un redimensionnement ne la recadre plus.
     @ObservationIgnored var vueTouchee = false
     @ObservationIgnored var etiquettes: [Etiquette] = []

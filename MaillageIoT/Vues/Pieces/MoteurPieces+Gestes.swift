@@ -171,6 +171,8 @@ extension MoteurPieces {
                 geste = .fond
             }
             majCurseur()
+            // La rotation lente s'arrete pendant le geste : pleine cadence des l'appui, sans attendre l'image suivante.
+            majCadence()
         }
         if !bouge && hypot(p.x - d.x, p.y - d.y) < 5 { return }
         if !bouge {
