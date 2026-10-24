@@ -63,6 +63,9 @@ final class ControleurReglages {
         let onglets = OngletsReglages()
         onglets.preferences = preferences
         onglets.tabStyle = .toolbar
+        // Fondu enchaine natif entre deux pages, en meme temps que l'animation de hauteur (`OngletsReglages.ajuster`) ; un
+        // clic sur un autre onglet n'attend pas la fin. Avec « Reduire les animations », AppKit ne joue pas le fondu.
+        onglets.transitionOptions = [.crossfade, .allowUserInteraction]
         let suivi = SuiviThreadRoute(affiche: { [weak onglets] in onglets?.ongletCourant == .thread })
         suiviThreadRoute = suivi
         for o in OngletReglages.allCases {
