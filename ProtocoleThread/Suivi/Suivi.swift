@@ -22,6 +22,9 @@ import MaillageCoeur
 ///   une adresse, il n'est range nulle part et n'entre pas au journal ; quand son adresse repond, il va dans Thread ou
 ///   dans les appareils IP selon cette adresse, et c'est la qu'il est nouveau. Vu sur IP, il reste hors de Thread s'il
 ///   perd ses adresses (ni "sans adresse", ni disparu).
+/// - Un appareil qui a attendu son adresse est note, quand elle repond, comme s'il etait arrive avec elle au releve ou il
+///   a ete vu la premiere fois : vu au premier releve du lancement, il est du point de depart et n'est jamais "nouveau" ;
+///   sur IP, aucun evenement ; sinon (Thread, apres le premier releve), un seul "nouveau".
 /// - Apres une veille du Mac, ce qui est constate dans les 4 min qui suivent le
 ///   reveil est date de la veille (`periode`), jamais du reveil ; un point de
 ///   depart garde sa date. Une absence en cours reprend au reveil : son sursis
@@ -60,8 +63,13 @@ public struct Suivi: Sendable {
     /// Ou chaque appareil a ete vu la derniere fois avec une adresse (Thread ou IP), cette session ou, pour Thread,
     /// reprise de `amorcer` : de quoi ranger un appareil qui n'en a plus. Rien n'est ecrit sur disque.
     private var dernierGenre: [String: GenreAppareil] = [:]
-    /// Appareils jamais vus avec une adresse, retenus hors de l'instantane jusqu'a ce qu'elle reponde.
-    private var enAttente: Set<String> = []
+    /// Appareils jamais vus avec une adresse, retenus hors de l'instantane jusqu'a ce qu'elle reponde, avec le releve ou
+    /// ils ont ete vus la premiere fois (le premier du lancement, ou un autre).
+    private var enAttente: [String: ReleveDeVue] = [:]
+    private enum ReleveDeVue: Sendable {
+        case depart
+        case ensuite
+    }
     private var memoire = MemoireAnnonces()
     private var derniereVeille: DateInterval?
     /// Reseaux (`Reseau.id`) vus depuis le lancement.
@@ -133,6 +141,7 @@ public struct Suivi: Sendable {
         let nouveau = calcule.sans(appareils: retenus)
         let date = releve.date
         var ev: [Evenement] = []
+        let premierReleve = instantane == nil
         if let ancien = instantane {
             // Reseaux vus pour la premiere fois : chacun son point de depart.
             let apparus = nouveau.reseaux.filter { !reseauxVus.contains($0.id) }
@@ -152,12 +161,6 @@ public struct Suivi: Sendable {
             ev += evenementsRouteurs(ancien, nouveau, date, noms, sauf: Set(apparus.flatMap(\.routeurs).map(\.instance)))
             ev += Self.evenementsPrefixes(ancien, nouveau, date, sauf: Set(apparus.flatMap(\.prefixes)))
             ev += evenementsAppareils(ancien, nouveau, date, noms, fabrique, sauf: Set(apparus.map(\.id)))
-            // Un appareil dont l'adresse repond enfin et tombe sur le reseau local : c'est la qu'il est nouveau (dans
-            // Thread, le calcul ci-dessus le note deja).
-            for n in nouveau.appareilsIP where enAttente.contains(n.id) {
-                ev.append(Evenement(date: date, type: .appareilNouveau,
-                                    sujet: Sujet(id: n.id, nom: noms.nom(appareil: n, fabriqueApple: fabrique))))
-            }
         } else {
             ev.append(Evenement(date: date, type: .surveillanceDemarree,
                                 details: ["routeurs": String(nouveau.routeurs.count),
@@ -167,9 +170,11 @@ public struct Suivi: Sendable {
             }
         }
         instantane = nouveau
-        enAttente.formUnion(retenus.filter { dernierGenre[$0] == nil })
-        enAttente.subtract(nouveau.appareils.filter { $0.genre != .sansAdresse }.map(\.id))
-        enAttente.subtract(nouveau.appareilsIP.map(\.id))
+        for id in retenus where dernierGenre[id] == nil && enAttente[id] == nil {
+            enAttente[id] = premierReleve ? .depart : .ensuite
+        }
+        for a in nouveau.appareils where a.genre != .sansAdresse { enAttente[a.id] = nil }
+        for a in nouveau.appareilsIP { enAttente[a.id] = nil }
         for a in nouveau.appareils where a.genre == .thread { dernierGenre[a.id] = .thread }
         for a in nouveau.appareilsIP { dernierGenre[a.id] = .ip }
         reseauxVus.formUnion(nouveau.reseaux.map(\.id))
@@ -303,6 +308,8 @@ public struct Suivi: Sendable {
                 ev.append(Evenement(date: date, type: .appareilRevenu, reseau: n.idReseau, sujet: s, apres: n.partition))
             } else if let r = n.idReseau, reseauxApparus.contains(r) {
                 // Compte dans le point de depart de son reseau.
+            } else if enAttente[n.id] == .depart {
+                // Il attendait son adresse depuis le premier releve du lancement : il est du point de depart.
             } else {
                 ev.append(Evenement(date: date, type: .appareilNouveau, reseau: n.idReseau, sujet: s, apres: n.partition))
             }
