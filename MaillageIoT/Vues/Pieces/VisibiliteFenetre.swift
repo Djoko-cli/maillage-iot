@@ -39,24 +39,55 @@ extension VisibiliteFenetre {
     }
 }
 
+/// D'ou la sonde tire ce que Djoko voit. Dans l'app : la fenetre et le Mac (`reelle`, les centres de notifications
+/// du systeme). Dans les tests (`FenetrePiecesTests.fenetre`) : une valeur fixe, « toujours vue » par defaut, pour que
+/// la veille des ecrans ou le verrou du Mac ne change rien aux essais d'animation (AppKit juge cachee la fenetre hors
+/// ecran des tests quand les ecrans dorment) ; les essais d'occlusion reelle donnent leurs propres centres, jamais
+/// celui du processus (une fausse annonce de veille y atteindrait toutes les fenetres des suites voisines).
+enum SourceVisibilite: Sendable {
+    /// La vraie sonde. `espace` : le centre des annonces de `NSWorkspace` (ecrans, session) ; `verrou` : le centre des
+    /// annonces du verrou (`com.apple.screenIsLocked`) ; nil : celui du systeme.
+    case reelle(espace: NotificationCenter? = nil, verrou: NotificationCenter? = nil)
+    /// Aucune sonde : la visibilite est toujours celle-ci.
+    case fixe(VisibiliteFenetre)
+
+    /// La fenetre est toujours vue, quoi que fasse le Mac.
+    static let toujoursVue = SourceVisibilite.fixe(VisibiliteFenetre())
+}
+
+private struct CleSourceVisibilite: EnvironmentKey {
+    static let defaultValue = SourceVisibilite.reelle()
+}
+
+extension EnvironmentValues {
+    /// La source de visibilite de la vue par pieces : la vraie sonde, sauf dans les tests.
+    var sourceVisibilite: SourceVisibilite {
+        get { self[CleSourceVisibilite.self] }
+        set { self[CleSourceVisibilite.self] = newValue }
+    }
+}
+
 /// Rapporte ce que Djoko voit de la fenetre de la vue (`VisibiliteFenetre`), a chaque changement : la fenetre fermee,
 /// reduite, rouverte, cachee ou de nouveau vue (`occlusionState`), les ecrans en veille ou rallumes, l'ecran verrouille ou
 /// deverrouille, la session quittee ou reprise. Le rapport part hors de la mise a jour de la vue en cours.
 struct SondeVisibilite: NSViewRepresentable {
     let rapporter: @MainActor (VisibiliteFenetre) -> Void
+    var source = SourceVisibilite.reelle()
 
-    func makeNSView(context: Context) -> Sonde { Sonde(rapporter) }
+    func makeNSView(context: Context) -> Sonde { Sonde(rapporter, source: source) }
     func updateNSView(_ nsView: Sonde, context: Context) {}
 
     final class Sonde: NSView {
         let rapporter: @MainActor (VisibiliteFenetre) -> Void
+        let source: SourceVisibilite
         /// Ce que la fenetre ne dit pas : les ecrans, le verrou, la session.
         private var mac = VisibiliteFenetre()
         private var derniere: VisibiliteFenetre?
         private var observateurs: [(NotificationCenter, NSObjectProtocol)] = []
 
-        init(_ rapporter: @escaping @MainActor (VisibiliteFenetre) -> Void) {
+        init(_ rapporter: @escaping @MainActor (VisibiliteFenetre) -> Void, source: SourceVisibilite = .reelle()) {
             self.rapporter = rapporter
+            self.source = source
             super.init(frame: .zero)
         }
 
@@ -66,18 +97,19 @@ struct SondeVisibilite: NSViewRepresentable {
             super.viewDidMoveToWindow()
             for (centre, o) in observateurs { centre.removeObserver(o) }
             observateurs = []
-            if let window {
+            // Une source fixe n'ecoute rien : elle rapporte sa valeur, une fois.
+            if case .reelle(let centreEspace, let centreVerrou) = source, let window {
                 let fenetre = NotificationCenter.default
                 for nom in [NSWindow.didChangeOcclusionStateNotification, NSWindow.didMiniaturizeNotification,
                             NSWindow.didDeminiaturizeNotification, NSWindow.willCloseNotification] {
                     observer(fenetre, nom, objet: window) { _ in }
                 }
-                let espace = NSWorkspace.shared.notificationCenter
+                let espace = centreEspace ?? NSWorkspace.shared.notificationCenter
                 observer(espace, NSWorkspace.screensDidSleepNotification) { $0.ecransEteints = true }
                 observer(espace, NSWorkspace.screensDidWakeNotification) { $0.ecransEteints = false }
                 observer(espace, NSWorkspace.sessionDidResignActiveNotification) { $0.sessionAilleurs = true }
                 observer(espace, NSWorkspace.sessionDidBecomeActiveNotification) { $0.sessionAilleurs = false }
-                let distribue = DistributedNotificationCenter.default()
+                let distribue = centreVerrou ?? DistributedNotificationCenter.default()
                 observer(distribue, Notification.Name("com.apple.screenIsLocked")) { $0.verrouillee = true }
                 observer(distribue, Notification.Name("com.apple.screenIsUnlocked")) { $0.verrouillee = false }
             }
@@ -105,7 +137,8 @@ struct SondeVisibilite: NSViewRepresentable {
         }
 
         private func rapporterSiChangee() {
-            let v = VisibiliteFenetre(fenetre: window, mac: mac)
+            let v: VisibiliteFenetre
+            if case .fixe(let fixe) = source { v = fixe } else { v = VisibiliteFenetre(fenetre: window, mac: mac) }
             guard v != derniere else { return }
             derniere = v
             let rapporter = rapporter

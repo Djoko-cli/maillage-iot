@@ -216,8 +216,7 @@ struct CadenceHorlogeTests {
     }
 
     /// Les images dessinees pendant une seconde de rotation lente seule, une fois la cadence plafonnee. Les suites de
-    /// fenetre se partagent le centre de notifications de `NSWorkspace` (`ecransEteints` y envoie les ecrans eteints, puis
-    /// rallumes) et la machine : une seconde troublee est mesuree de nouveau (4 essais).
+    /// fenetre se partagent la machine : une seconde troublee est mesuree de nouveau (4 essais).
     static func imagesDeLaRotationSeule(_ moteur: MoteurPieces) async throws -> Int {
         var images = 0
         for _ in 0..<4 {
@@ -230,22 +229,21 @@ struct CadenceHorlogeTests {
     }
 }
 
-/// Les fenetres reelles de ces essais se partagent le centre de notifications de `NSWorkspace` (`ecransEteints` y envoie
-/// les ecrans eteints, puis rallumes) : la suite de l'horloge est serialisee, et cet essai en est.
+/// Cet essai fait partie de la suite de l'horloge, serialisee. Il a ses propres centres de notifications (jamais celui de
+/// `NSWorkspace` du processus) et ne tourne que si l'etat reel des ecrans le permet (`EtatDesEcrans`).
 extension HorlogeFenetreTests {
     /// La vraie fenetre, hors ecran, en 3D : la rotation lente seule dessine au plus 30 images par seconde (plus une
     /// marge de mesure) ; un glisser en mouvement, la cadence de l'ecran ; le glisser fini, de nouveau 30 images par
     /// seconde.
-    @Test(.timeLimit(.minutes(2))) func laTimelineSuitLaCadence() async throws {
+    @Test(.timeLimit(.minutes(2)), .enabled(if: EtatDesEcrans.occlusionReelleMesurable, EtatDesEcrans.motif))
+    func laTimelineSuitLaCadence() async throws {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
-        let (fenetre, moteur) = try await HorlogeFenetreTests.fenetre3D(p)
+        let (fenetre, moteur) = try await HorlogeFenetreTests.fenetre3D(p, source: CentresPrives().source)
         defer { FenetrePiecesTests.fermer(fenetre) }
-        // AppKit juge cachee (`occlusionState`) une fenetre hors ecran quand les ecrans du Mac sont en veille ou le Mac
-        // verrouille : elle ne dessine alors rien, par construction (`HorlogeFenetreTests`). La cadence est verifiee, plus
-        // haut, sur le moteur ; cet essai-ci n'a rien a mesurer.
+        // La vraie sonde juge la fenetre : on attend qu'AppKit l'ait declaree vue avant de mesurer.
         try await CadenceHorlogeTests.attendreFenetreVue(moteur)
-        guard moteur.visibilite.vue else { return }
+        #expect(moteur.visibilite.vue, "la fenetre des tests est vue (ecrans allumes, Mac deverrouille)")
         let seule = try await CadenceHorlogeTests.imagesDeLaRotationSeule(moteur)
         #expect(moteur.cadence == .plafonnee)
         #expect(seule >= 8 && seule <= 36, "rotation lente seule : au plus 30 images par seconde (\(seule))")

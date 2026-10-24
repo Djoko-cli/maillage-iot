@@ -339,6 +339,8 @@ struct VuePieces: View {
     /// Marge du bas de la zone visible ou se choisit la grille (`FenetrePieces.margeBasGrille`).
     let basGrille: CGFloat
     @Environment(\.displayScale) private var echelle
+    /// D'ou vient ce que Djoko voit de la fenetre : la vraie sonde, sauf dans les tests (`SourceVisibilite`).
+    @Environment(\.sourceVisibilite) private var source
     /// Un glisser est en cours. SwiftUI le remet a faux a la fin du geste, meme annule (sans `onEnded`) :
     /// le moteur clot alors un geste qui serait reste ouvert.
     @GestureState private var glisse = false
@@ -408,7 +410,7 @@ struct VuePieces: View {
             moteur.fenetre = v.window
             moteur.vue = v
         })
-        .background(SondeVisibilite { moteur.regler(visibilite: $0) })
+        .background(SondeVisibilite(rapporter: { moteur.regler(visibilite: $0) }, source: source))
         .onChange(of: glisse) { _, g in
             if !g { moteur.abandonnerGeste() }
         }
