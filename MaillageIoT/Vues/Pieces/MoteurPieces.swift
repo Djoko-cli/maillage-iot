@@ -114,8 +114,10 @@ final class MoteurPieces {
     /// Mode vise : 3D ou 2D (l'envol peut etre en cours).
     var troisD: Bool
     var rotation = true
-    /// Horloge en marche : seulement pendant un mouvement, et 0,6 s apres.
+    /// Un mouvement en cours, et 0,6 s apres : l'horloge tourne, si la fenetre est vue (`horlogeEnMarche`).
     var anime = true
+    /// Ce que Djoko voit de la fenetre de la vue (`SondeVisibilite`, posee par la vue ; `regler(visibilite:)`).
+    var visibilite = VisibiliteFenetre()
     /// Nom de la piece isolee ; nil sinon.
     var isolee: String?
     /// Ce que montre la vue, et sa provenance (polissage C, section 5) ; le fil qui le dit.

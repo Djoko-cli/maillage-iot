@@ -330,7 +330,7 @@ extension View {
 }
 
 /// La scene : un `Canvas` redessine a chaque image pendant un mouvement (`MoteurPieces.anime`), plus
-/// du tout au repos ; gestes, molette, clics droits.
+/// du tout au repos, ni dans une fenetre qui n'est pas vue (`MoteurPieces.horlogeEnMarche`) ; gestes, molette, clics droits.
 struct VuePieces: View {
     let moteur: MoteurPieces
     let entree: EntreeScene
@@ -367,7 +367,9 @@ struct VuePieces: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !moteur.anime)) { contexte in
+        // La `TimelineView` calcule ses images meme dans une fenetre fermee, reduite ou cachee : l'horloge du moteur
+        // s'arrete quand la fenetre n'est pas vue (`SondeVisibilite`, plus bas).
+        TimelineView(.animation(minimumInterval: nil, paused: !moteur.horlogeEnMarche)) { contexte in
             Canvas { ctx, taille in
                 _ = contexte.date
                 moteur.marges = marges
@@ -403,6 +405,7 @@ struct VuePieces: View {
             moteur.fenetre = v.window
             moteur.vue = v
         })
+        .background(SondeVisibilite { moteur.regler(visibilite: $0) })
         .onChange(of: glisse) { _, g in
             if !g { moteur.abandonnerGeste() }
         }

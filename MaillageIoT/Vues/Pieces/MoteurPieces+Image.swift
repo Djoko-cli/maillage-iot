@@ -349,6 +349,19 @@ extension MoteurPieces {
         return etiquettes.contains { $0.envie > 0 }
     }
 
+    /// L'horloge tourne : un mouvement en cours, dans une fenetre vue (`VisibiliteFenetre.horloge`). Fenetre fermee,
+    /// reduite ou cachee, ecrans eteints ou verrouilles : aucune image, rotation lente comprise.
+    var horlogeEnMarche: Bool { VisibiliteFenetre.horloge(anime: anime, visibilite: visibilite) }
+
+    /// La fenetre de la vue est fermee, reduite, cachee ou de nouveau vue (`SondeVisibilite`). L'horloge s'arrete ou
+    /// repart : la premiere image qui suit a un temps nul, la rotation lente reprend la ou elle en etait, sans le temps
+    /// passe hors de vue. Le mouvement en cours (`anime`) reste du : il reprend au retour.
+    func regler(visibilite v: VisibiliteFenetre) {
+        guard v != visibilite else { return }
+        if v.vue != visibilite.vue { instant = nil }
+        visibilite = v
+    }
+
     /// Arrete l'horloge apres l'image (pas pendant le rendu).
     private func endormir() {
         guard anime else { return }
