@@ -6,6 +6,52 @@ notes of the GitHub release and those of the update window.
 Maillage IoT : une section par version publiée, en anglais puis en français. `outils/publier.sh` en tire les notes
 de la version publiée sur GitHub et celles de la fenêtre de mise à jour.
 
+## 1.1.0
+
+**English**
+
+- **Health panel in the room view**: a glass panel lists what needs attention, such as a device that disappeared, a
+  router that dropped or a split Thread network, and shows where it is.
+- **Room suggested by AirPlay**: a border router that announces itself over AirPlay gets a room suggestion in its
+  card, to place it or ignore it.
+- **A room in several Home zones** goes to the most precise one, the zone with the fewest rooms. Right-click a room,
+  then "Move to Zone…", to choose another one; the choice is kept, and "Automatically" goes back to the rule.
+- **One smooth movement when a room changes floor**: the room glides, the floor it leaves fades out and the floor it
+  joins fades in. After a choice made in the view, the other floors keep their place.
+- **The log, notifications and menu name the device's room.**
+- **Clearer room view**: each pair of nodes is drawn once, links to another room light up like the parent link they
+  replace, and the 3D house bubble fills the free space.
+- **More reliable Thread splits**: a split network is followed for its whole duration and ends after three
+  consistent readings.
+- **No more false "disappeared" Thread devices**: a Matter device over Wi-Fi or Ethernet that had no address yet at
+  launch waits for it, and stays out of Thread.
+- **Much lighter on the processor**: nothing is drawn while the room view is hidden, closed or minimized (about 1 %
+  instead of 44 %), and the slow rotation runs at 30 frames per second, full speed as soon as you move the house.
+- **Settings**: a crossfade between tabs, pages kept at the top.
+
+**Français**
+
+- **Panneau de santé dans la vue par pièces** : un panneau en verre liste ce qui demande attention, comme un appareil
+  disparu, un routeur tombé ou un réseau Thread scindé, et montre où il se trouve.
+- **Pièce proposée par AirPlay** : un routeur de bordure qui s'annonce en AirPlay reçoit une pièce proposée dans sa
+  fiche, pour le placer ou l'ignorer.
+- **Une pièce de plusieurs zones de Maison** va dans la plus précise, celle qui compte le moins de pièces. Clic droit
+  sur la pièce, puis « Ranger dans la zone… », pour en choisir une autre ; le choix est gardé, et
+  « Automatiquement » revient à la règle.
+- **Un seul mouvement fluide quand une pièce change d'étage** : la pièce glisse, l'étage qu'elle quitte s'efface et
+  celui qu'elle rejoint apparaît. Après un choix fait dans la vue, les autres étages gardent leur place.
+- **Le journal, les notifications et le menu nomment la pièce de l'appareil.**
+- **Vue par pièces plus lisible** : chaque paire de nœuds n'est dessinée qu'une fois, les liens vers une autre pièce
+  s'éclairent comme le lien parent qu'ils remplacent, et la bulle de la maison en 3D remplit l'espace libre.
+- **Scissions de Thread plus fiables** : un réseau scindé est suivi pendant toute la scission, qui se termine après
+  trois relevés concordants.
+- **Plus de faux appareils Thread « disparus »** : un appareil Matter en Wi-Fi ou en Ethernet encore sans adresse au
+  lancement attend la sienne, et reste hors de Thread.
+- **Beaucoup plus léger pour le processeur** : rien n'est dessiné quand la vue par pièces est cachée, fermée ou
+  réduite (environ 1 % au lieu de 44 %), et la rotation lente tourne à 30 images par seconde, à pleine cadence dès
+  qu'on fait bouger la maison.
+- **Réglages** : un fondu enchaîné entre les onglets, pages collées en haut.
+
 ## 1.0.0
 
 **English**
