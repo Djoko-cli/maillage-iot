@@ -17,6 +17,14 @@ import MaillageCoeur
 /// - Ensuite : differences entre deux instantanes. Une absence (service ou
 ///   adresses) n'est retenue qu'apres 2 min (`MemoireAnnonces`) et datee de la
 ///   premiere absence.
+/// - Un appareil sans adresse n'est range dans Thread que s'il y a deja ete vu avec une adresse Thread (cette session,
+///   ou celle d'un lancement precedent reprise par `amorcer`) : il y garde alors l'etat "sans adresse". Jamais vu avec
+///   une adresse, il n'est range nulle part et n'entre pas au journal ; quand son adresse repond, il va dans Thread ou
+///   dans les appareils IP selon cette adresse, et c'est la qu'il est nouveau. Vu sur IP, il reste hors de Thread s'il
+///   perd ses adresses (ni "sans adresse", ni disparu).
+/// - Un appareil qui a attendu son adresse est note, quand elle repond, comme s'il etait arrive avec elle au releve ou il
+///   a ete vu la premiere fois : vu au premier releve du lancement, il est du point de depart et n'est jamais "nouveau" ;
+///   sur IP, aucun evenement ; sinon (Thread, apres le premier releve), un seul "nouveau".
 /// - Apres une veille du Mac, ce qui est constate dans les 4 min qui suivent le
 ///   reveil est date de la veille (`periode`), jamais du reveil ; un point de
 ///   depart garde sa date. Une absence en cours reprend au reveil : son sursis
@@ -52,6 +60,16 @@ public struct Suivi: Sendable {
     /// Date du dernier releve ou chaque appareil avait une adresse sur le prefixe OMR de sa partition (celle de
     /// `dernieresAdresses`) : une resolution de la sonde plus ancienne ne prouve rien apres la perte de l'annonce.
     public private(set) var dernieresAnnonces: [String: Date] = [:]
+    /// Ou chaque appareil a ete vu la derniere fois avec une adresse (Thread ou IP), cette session ou, pour Thread,
+    /// reprise de `amorcer` : de quoi ranger un appareil qui n'en a plus. Rien n'est ecrit sur disque.
+    private var dernierGenre: [String: GenreAppareil] = [:]
+    /// Appareils jamais vus avec une adresse, retenus hors de l'instantane jusqu'a ce qu'elle reponde, avec le releve ou
+    /// ils ont ete vus la premiere fois (le premier du lancement, ou un autre).
+    private var enAttente: [String: ReleveDeVue] = [:]
+    private enum ReleveDeVue: Sendable {
+        case depart
+        case ensuite
+    }
     private var memoire = MemoireAnnonces()
     private var derniereVeille: DateInterval?
     /// Reseaux (`Reseau.id`) vus depuis le lancement.
@@ -101,6 +119,7 @@ public struct Suivi: Sendable {
                 dernieresAnnonces[id] = g.annonce
             }
             if dernieresPartitions[id] == nil { dernieresPartitions[id] = g.partition }
+            if dernierGenre[id] == nil { dernierGenre[id] = .thread }
         }
     }
 
@@ -115,9 +134,14 @@ public struct Suivi: Sendable {
     public mutating func integrer(_ releve: Annonces, noms: ResolveurNoms = ResolveurNoms()) -> [Evenement] {
         // Releve vide : le Mac n'entend rien, rien a conclure sur Thread.
         guard !releve.estVide else { return [] }
-        let nouveau = Instantane(annonces: memoire.completer(releve))
+        let calcule = Instantane(annonces: memoire.completer(releve))
+        // Un appareil sans adresse n'est un noeud Thread que s'il l'a deja ete : jamais vu avec une adresse, il attend la
+        // sienne (hors de l'instantane, hors du journal) ; vu sur IP, il reste hors de Thread.
+        let retenus = Set(calcule.appareils.filter { $0.genre == .sansAdresse && dernierGenre[$0.id] != .thread }.map(\.id))
+        let nouveau = calcule.sans(appareils: retenus)
         let date = releve.date
         var ev: [Evenement] = []
+        let premierReleve = instantane == nil
         if let ancien = instantane {
             // Reseaux vus pour la premiere fois : chacun son point de depart.
             let apparus = nouveau.reseaux.filter { !reseauxVus.contains($0.id) }
@@ -146,6 +170,14 @@ public struct Suivi: Sendable {
             }
         }
         instantane = nouveau
+        for id in retenus where dernierGenre[id] == nil && enAttente[id] == nil {
+            enAttente[id] = premierReleve ? .depart : .ensuite
+        }
+        for a in nouveau.appareils where a.genre != .sansAdresse { enAttente[a.id] = nil }
+        for a in nouveau.appareilsIP { enAttente[a.id] = nil }
+        for a in nouveau.appareils where a.genre == .thread { dernierGenre[a.id] = .thread }
+        // Thread colle : un noeud Thread vu une fois sur IP (releve mal resolu) reste suivi comme un noeud Thread.
+        for a in nouveau.appareilsIP where dernierGenre[a.id] != .thread { dernierGenre[a.id] = .ip }
         reseauxVus.formUnion(nouveau.reseaux.map(\.id))
         for a in nouveau.appareils {
             if let p = a.partition { dernieresPartitions[a.id] = p }
@@ -277,11 +309,25 @@ public struct Suivi: Sendable {
                 ev.append(Evenement(date: date, type: .appareilRevenu, reseau: n.idReseau, sujet: s, apres: n.partition))
             } else if let r = n.idReseau, reseauxApparus.contains(r) {
                 // Compte dans le point de depart de son reseau.
+            } else if enAttente[n.id] == .depart {
+                // Il attendait son adresse depuis le premier releve du lancement : il est du point de depart.
+            } else if dernierGenre[n.id] == .thread {
+                // Un noeud Thread connu qui revient d'IP (releve mal resolu) : il n'avait pas disparu, il n'est pas nouveau ;
+                // revenu sans adresse, il est signale comme tel.
+                if n.genre == .sansAdresse {
+                    ev.append(Evenement(date: date, type: .appareilSansAdresse, reseau: n.idReseau, sujet: s,
+                                        avant: dernieresPartitions[n.id]))
+                }
             } else {
                 ev.append(Evenement(date: date, type: .appareilNouveau, reseau: n.idReseau, sujet: s, apres: n.partition))
             }
         }
-        for a in ancien.appareils where nouveaux[a.id] == nil {
+        // Sur le reseau local (adresses resolues, hors Thread) : present, range dans les appareils IP. Un appareil compte
+        // avec Thread parce qu'il etait sans adresse (ses adresses n'avaient pas encore repondu) n'a donc pas disparu quand
+        // elles arrivent ; un disparu qui revient sur le reseau local n'est plus perdu.
+        let surIP = Set(nouveau.appareilsIP.map(\.id))
+        for id in surIP where disparus[id] != nil { disparus[id] = nil }
+        for a in ancien.appareils where nouveaux[a.id] == nil && !surIP.contains(a.id) {
             var dates = a.servicesMatter.compactMap { memoire.abandons[.init(famille: .matter, instance: $0)] }
             if let h = a.hap, let d = memoire.abandons[.init(famille: .hap, instance: h.nom)] { dates.append(d) }
             ev.append(Evenement(date: dates.max() ?? date, type: .appareilDisparu, reseau: a.idReseau,

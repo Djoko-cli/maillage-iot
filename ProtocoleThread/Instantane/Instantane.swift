@@ -106,6 +106,14 @@ public struct Instantane: Hashable, Sendable {
         appareils.first { $0.id == id } ?? appareilsIP.first { $0.id == id }
     }
 
+    /// Le meme instantane sans ces appareils : le suivi retient ceux qui n'ont jamais eu d'adresse ou qui ne sont
+    /// plus des noeuds Thread (`Suivi.integrer`).
+    func sans(appareils ids: Set<String>) -> Instantane {
+        guard !ids.isEmpty else { return self }
+        return Instantane(date: date, reseaux: reseaux, appareils: appareils.filter { !ids.contains($0.id) },
+                          appareilsIP: appareilsIP, prefixesSansPartition: prefixesSansPartition, trel: trel)
+    }
+
     public func routeur(_ instance: String) -> RouteurBordure? {
         routeurs.first { $0.instance == instance }
     }

@@ -105,7 +105,9 @@ struct SurveillanceTests {
         #expect(!s.thread.appareilsAffiches(pour: maison).contains { $0.id == idt("BBBB000000000001") }, "pas dans le premier reseau")
         #expect(s.thread.appareilsAffiches(pour: voisin).map(\.id) == [idt("BBBB000000000001")])
         #expect(s.thread.appareilsAffiches(pour: voisin).first?.partition == "BBBBBBBB")
-        #expect(s.thread.resume?.appareils == 24, "le premier reseau ne compte pas l'appareil du voisin")
+        // 22 : les 24 appareils du premier reseau, moins les deux qui n'ont aucune adresse des le premier releve. Jamais vus
+        // avec une adresse, ils attendent la leur hors de l'instantane (decision de Djoko du 25/10, Suivi.enAttente).
+        #expect(s.thread.resume?.appareils == 22, "le premier reseau ne compte pas l'appareil du voisin")
     }
 
     @Test func veilleDuMac() {

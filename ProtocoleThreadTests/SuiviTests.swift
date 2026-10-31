@@ -259,6 +259,250 @@ struct SuiviTests {
         #expect(s.integrer(Self.banc(Self.t0 + 240).annonces).map(\.type) == [.appareilRevenu])
     }
 
+    /// Appareil Matter du reseau local (Wi-Fi, Ethernet, pont) : hote a 12 hexa, adresse dans le prefixe du reseau local.
+    static let ip = "C0FFEE000001"
+    static let adresseIP = "fd4b:36a2:b7fe:200b:c2ff:eeff:fe00:1"
+
+    /// Appareil jamais vu avec une adresse (nouveau venu, hote a 16 hexa ou 12) : ses annonces sont la, ses adresses pas encore.
+    static let neuf = "AAAA000000000009"
+    static let adresseNeuf = "fd19:961f:2db3::19"
+
+    /// Cas du 24/10 : un appareil du reseau local entre au releve avant que ses adresses repondent. Jamais vu avec une
+    /// adresse, il n'est range nulle part (ni Thread, ni appareils IP) et n'entre pas au journal ; quand son adresse
+    /// repond, il va dans les appareils IP, sans evenement (comme un appareil IP arrive avec son adresse). Il n'a jamais
+    /// ete perdu.
+    @Test func sansAdressePuisSurIPAttendSonAdresse() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.ip, noeud: 9, adresses: [])
+        #expect(s.integrer(b.annonces).isEmpty, "sans adresse : rien au journal")
+        #expect(s.instantane?.appareil(Self.ip) == nil, "sans adresse : range nulle part")
+        #expect(s.instantane?.appareils.map(\.id) == [Self.a1, Self.a2])
+        #expect(s.instantane?.appareilsIP.isEmpty == true)
+
+        // Il reste en attente, meme au-dela du sursis de 2 min : ni perdu, ni nouveau.
+        for t in [120.0, 180, 240] {
+            b.date = Self.t0 + t
+            #expect(s.integrer(b.annonces).isEmpty)
+        }
+        #expect(s.disparus.isEmpty)
+
+        b.date = Self.t0 + 300
+        b.adresses[Self.ip + ".local"] = [Self.adresseIP]
+        let ev = s.integrer(b.annonces)
+        #expect(ev.isEmpty, "comme un appareil IP arrive directement avec son adresse : aucun evenement")
+        #expect(s.disparus.isEmpty)
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+        #expect(s.instantane?.appareils.contains { $0.id == Self.ip } == false)
+
+        b.date = Self.t0 + 360
+        #expect(s.integrer(b.annonces).isEmpty, "une seule fois")
+    }
+
+    /// Meme attente, mais l'adresse qui repond est une adresse Thread : il va dans Thread, nouveau, une seule fois.
+    @Test func sansAdressePuisThreadAttendSonAdresse() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.neuf, noeud: 9, adresses: [])
+        #expect(s.integrer(b.annonces).isEmpty)
+        #expect(s.instantane?.appareil(Self.neuf) == nil)
+
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseNeuf]
+        let ev = s.integrer(b.annonces)
+        #expect(ev.map(\.type) == [.appareilNouveau], "nouveau, pas revenu")
+        #expect(ev.first?.apres == "73586B68")
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.genre == .thread)
+
+        b.date = Self.t0 + 180
+        #expect(s.integrer(b.annonces).isEmpty, "une seule fois")
+    }
+
+    /// Un appareil sans adresse des le premier releve du lancement n'est pas range : il attend son adresse. Quand elle
+    /// repond sur IP, il arrive sans evenement (il etait la au depart).
+    @Test func sansAdresseDesLeLancementPuisSurIP() throws {
+        var b = Self.banc(Self.t0)
+        b.appareil(Self.ip, noeud: 9, adresses: [])
+        var s = Suivi()
+        let ev = s.integrer(b.annonces)
+        #expect(ev.map(\.type) == [.surveillanceDemarree])
+        #expect(ev.first?.details["appareils"] == "2")
+        #expect(s.instantane?.appareil(Self.ip) == nil)
+
+        b.date = Self.t0 + 60
+        b.adresses[Self.ip + ".local"] = [Self.adresseIP]
+        #expect(s.integrer(b.annonces).isEmpty, "present au depart : ni nouveau, ni autre evenement")
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+        b.date = Self.t0 + 120
+        #expect(s.integrer(b.annonces).isEmpty)
+    }
+
+    /// Meme chose quand l'adresse qui repond est une adresse Thread : il entre dans Thread sans evenement (ni nouveau, ni
+    /// revenu), une fois pour toutes.
+    @Test func sansAdresseDesLeLancementPuisThread() throws {
+        var b = Self.banc(Self.t0)
+        b.appareil(Self.neuf, noeud: 9, adresses: [])
+        var s = Suivi()
+        #expect(s.integrer(b.annonces).map(\.type) == [.surveillanceDemarree])
+        #expect(s.instantane?.appareil(Self.neuf) == nil)
+
+        b.date = Self.t0 + 60
+        #expect(s.integrer(b.annonces).isEmpty, "toujours en attente")
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseNeuf]
+        #expect(s.integrer(b.annonces).isEmpty, "present au depart : aucun evenement")
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.genre == .thread)
+        b.date = Self.t0 + 180
+        #expect(s.integrer(b.annonces).isEmpty)
+    }
+
+    /// Un appareil present des le depart avec son adresse (Thread ou IP) reste silencieux : compte au depart, rien ensuite.
+    @Test func presentDesLeLancementAvecSonAdresseResteSilencieux() throws {
+        var b = Self.banc(Self.t0)
+        b.appareil(Self.ip, noeud: 9, adresses: [Self.adresseIP])
+        b.appareil(Self.neuf, noeud: 10, adresses: [Self.adresseNeuf])
+        var s = Suivi()
+        let ev = s.integrer(b.annonces)
+        #expect(ev.map(\.type) == [.surveillanceDemarree])
+        #expect(ev.first?.details["appareils"] == "3", "a1, a2 et l'appareil Thread ; l'appareil IP est hors de Thread")
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+        for t in [60.0, 120, 180] {
+            b.date = Self.t0 + t
+            #expect(s.integrer(b.annonces).isEmpty)
+        }
+    }
+
+    /// Le depart n'est que le premier releve : un appareil vu sans adresse seulement apres lui reste nouveau (sur Thread),
+    /// meme si un autre, sans adresse des le depart, est arrive sans bruit au meme releve.
+    @Test func attenteDuDepartNExemptePasLesAutres() throws {
+        var b = Self.banc(Self.t0)
+        b.appareil(Self.neuf, noeud: 9, adresses: [])
+        var s = Suivi()
+        _ = s.integrer(b.annonces)
+
+        let tard = "AAAA00000000000A"
+        b.date = Self.t0 + 60
+        b.appareil(tard, noeud: 10, adresses: [])
+        #expect(s.integrer(b.annonces).isEmpty)
+
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseNeuf]
+        b.adresses[tard + ".local"] = ["fd19:961f:2db3::1a"]
+        let ev = s.integrer(b.annonces)
+        #expect(ev.map(\.type) == [.appareilNouveau], "seul celui vu apres le depart est nouveau")
+        #expect(ev.first?.sujet?.id == tard)
+    }
+
+    /// Un appareil deja vu sur le reseau local qui perd ses adresses reste hors de Thread : jamais range en "sans adresse"
+    /// parmi les noeuds Thread, jamais disparu, rien au journal ; son retour sur IP n'est pas un nouvel appareil.
+    @Test func appareilIPSansAdresseResteHorsDeThread() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.ip, noeud: 9, adresses: [Self.adresseIP])
+        _ = s.integrer(b.annonces)
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+
+        b.adresses[Self.ip + ".local"] = []
+        for t in [120.0, 180, 240, 300] {
+            b.date = Self.t0 + t
+            let ev = s.integrer(b.annonces)
+            #expect(ev.isEmpty, "rien au journal : ni sans adresse, ni disparu, ni nouveau")
+            #expect(s.instantane?.appareils.contains { $0.id == Self.ip } == false, "hors de Thread")
+            #expect(s.disparus.isEmpty)
+        }
+
+        b.date = Self.t0 + 360
+        b.adresses[Self.ip + ".local"] = [Self.adresseIP]
+        #expect(s.integrer(b.annonces).isEmpty, "deja vu : pas nouveau")
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.ip])
+        #expect(s.disparus.isEmpty)
+    }
+
+    /// Un noeud Thread vu une fois « sur IP » (releve mal resolu : plus que des adresses locales) reste un noeud Thread : s'il
+    /// perd ensuite ses adresses, il est « sans adresse » dans Thread, jamais retenu en silence (relecture finale, M1).
+    @Test func noeudThreadVuUneFoisSurIPResteThread() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.neuf, noeud: 9, adresses: [Self.adresseNeuf])
+        _ = s.integrer(b.annonces)
+        #expect(s.instantane?.appareils.contains { $0.id == Self.neuf } == true)
+
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseIP]
+        _ = s.integrer(b.annonces)
+        #expect(s.disparus.isEmpty)
+
+        b.adresses[Self.neuf + ".local"] = []
+        var types: [TypeEvenement] = []
+        for t in [180.0, 240, 300, 360] {
+            b.date = Self.t0 + t
+            types += s.integrer(b.annonces).map(\.type)
+        }
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.genre == .sansAdresse, "toujours dans Thread")
+        #expect(s.disparus.isEmpty)
+        #expect(types.contains(.appareilSansAdresse), "signale, pas retenu en silence : \(types)")
+        #expect(!types.contains(.appareilNouveau) && !types.contains(.appareilDisparu), "ni nouveau ni disparu : \(types)")
+    }
+
+    /// Un appareil Thread connu (deja vu avec une adresse Thread) qui perd son adresse garde l'etat "sans adresse" dans
+    /// Thread, que la session l'ait vu des le lancement ou apres son attente.
+    @Test func appareilThreadConnuSansAdresseResteDansThread() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.appareil(Self.neuf, noeud: 9, adresses: [])
+        _ = s.integrer(b.annonces)
+        b.date = Self.t0 + 120
+        b.adresses[Self.neuf + ".local"] = [Self.adresseNeuf]
+        _ = s.integrer(b.annonces)
+
+        b.date = Self.t0 + 180
+        b.adresses[Self.neuf + ".local"] = []
+        #expect(s.integrer(b.annonces).isEmpty, "sursis de 2 min")
+        b.date = Self.t0 + 300
+        let ev = s.integrer(b.annonces)
+        #expect(ev.map(\.type) == [.appareilSansAdresse])
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.etat == .sansAdresse)
+        #expect(s.disparus.isEmpty)
+
+        // Celui du lancement aussi (a2 est deja couvert par `sansAdresse`) : a1 perd son adresse puis la retrouve.
+        b.adresses[Self.a1 + ".local"] = []
+        for t in [360.0, 420, 480] {
+            b.date = Self.t0 + t
+            _ = s.integrer(b.annonces)
+        }
+        #expect(s.instantane?.appareils.first { $0.id == Self.a1 }?.genre == .sansAdresse)
+    }
+
+    /// Ce qu'un lancement precedent avait garde (adresse Thread) rend un appareil "connu" : sans adresse au premier releve,
+    /// il reste dans Thread (sans adresse) et la sonde peut le redemander.
+    @Test func appareilGardeSansAdresseAuLancementResteDansThread() throws {
+        var s = Suivi()
+        s.amorcer([Self.neuf: .init(adresse: AdresseIPv6(Self.adresseNeuf)!, partition: "73586B68", annonce: Self.t0 - 600)])
+        var b = Self.banc(Self.t0)
+        b.appareil(Self.neuf, noeud: 9, adresses: [])
+        _ = s.integrer(b.annonces)
+        #expect(s.instantane?.appareils.first { $0.id == Self.neuf }?.etat == .sansAdresse)
+    }
+
+    /// Un disparu qui revient sur le reseau local n'est plus garde parmi les disparus : il est la, dans les appareils IP.
+    @Test func disparuRevenuSurIPNestPlusDisparu() throws {
+        var s = Self.demarre()
+        var b = Self.banc(Self.t0 + 60)
+        b.retirer(Self.a2)
+        for t in [120.0, 180, 240] {
+            b.date = Self.t0 + t
+            _ = s.integrer(b.annonces)
+        }
+        #expect(Array(s.disparus.keys) == [Self.a2], "absent plus de 2 min : disparu")
+
+        b.date = Self.t0 + 300
+        b.appareil(Self.a2, noeud: 2, adresses: [Self.adresseIP])
+        let ev = s.integrer(b.annonces)
+        #expect(!ev.contains { $0.type == .appareilDisparu })
+        #expect(s.disparus.isEmpty, "revenu sur le reseau local : plus perdu")
+        #expect(s.instantane?.appareilsIP.map(\.id) == [Self.a2])
+    }
+
     @Test func routeurs() throws {
         var s = Self.demarre()
         // Nouvelle adresse de lien du chef (redemarrage probable), la route suit.
