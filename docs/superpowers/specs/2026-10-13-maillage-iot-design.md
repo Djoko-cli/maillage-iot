@@ -733,5 +733,3 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
 - **L'app réelle gêne la suite de tests** (constat du 19/10) : `NomsPasseurTests.abonnementEtReleves` dépasse ses 60 s
   quand Maillage IoT tourne sur le Mac pendant `outils/tester.sh` (verte app fermée). Isoler le faux démon du test du vrai
   (port, schéma ou nom de service), ou faire refuser la porte tant que l'app tourne.
-- **Charge du processeur de l'app réelle** (constat du 19/10) : Maillage IoT 1.0.0 à environ 70 % d'un cœur en continu,
-  pendant des heures. Mesurer fenêtre de la vue par pièces ouverte et fermée (rendu 3D, rotation lente), puis corriger.
