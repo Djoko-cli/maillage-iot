@@ -330,7 +330,7 @@ extension View {
 }
 
 /// La scene : un `Canvas` redessine a chaque image pendant un mouvement (`MoteurPieces.anime`), plus
-/// du tout au repos ; gestes, molette, clics droits.
+/// du tout au repos, ni dans une fenetre qui n'est pas vue (`MoteurPieces.horlogeEnMarche`) ; gestes, molette, clics droits.
 struct VuePieces: View {
     let moteur: MoteurPieces
     let entree: EntreeScene
@@ -339,6 +339,8 @@ struct VuePieces: View {
     /// Marge du bas de la zone visible ou se choisit la grille (`FenetrePieces.margeBasGrille`).
     let basGrille: CGFloat
     @Environment(\.displayScale) private var echelle
+    /// D'ou vient ce que Djoko voit de la fenetre : la vraie sonde, sauf dans les tests (`SourceVisibilite`).
+    @Environment(\.sourceVisibilite) private var source
     /// Un glisser est en cours. SwiftUI le remet a faux a la fin du geste, meme annule (sans `onEnded`) :
     /// le moteur clot alors un geste qui serait reste ouvert.
     @GestureState private var glisse = false
@@ -367,7 +369,12 @@ struct VuePieces: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !moteur.anime)) { contexte in
+        // La `TimelineView` calcule ses images meme dans une fenetre fermee, reduite ou cachee : l'horloge du moteur
+        // s'arrete quand la fenetre n'est pas vue (`SondeVisibilite`, plus bas).
+        // La rotation lente seule ne demande que 30 images par seconde ; tout autre mouvement, la cadence de l'ecran
+        // (`CadenceHorloge`).
+        let cadence = moteur.cadence
+        TimelineView(.animation(minimumInterval: cadence.intervalle, paused: cadence == .pause)) { contexte in
             Canvas { ctx, taille in
                 _ = contexte.date
                 moteur.marges = marges
@@ -403,6 +410,7 @@ struct VuePieces: View {
             moteur.fenetre = v.window
             moteur.vue = v
         })
+        .background(SondeVisibilite(rapporter: { moteur.regler(visibilite: $0) }, source: source))
         .onChange(of: glisse) { _, g in
             if !g { moteur.abandonnerGeste() }
         }

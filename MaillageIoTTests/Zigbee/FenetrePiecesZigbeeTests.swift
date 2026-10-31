@@ -38,9 +38,13 @@ struct FenetrePiecesZigbeeTests {
     /// preferences `p` (jamais celles de l'app) et « Reduire les animations » impose ; et son moteur (l'etat
     /// `moteur` de la vue). La vue couvre toute la fenetre, de `taille` pt comme dans l'app (`setContentSize`
     /// ajouterait la barre de titre), faite comme celle de l'app (`sansBarreDeTitre`). `sonde` : la sonde de la vue
-    /// (sinon une sonde inactive, sans sonde retenue). A retirer par `fermer`.
+    /// (sinon une sonde inactive, sans sonde retenue). `visibilite` : d'ou la vue tire ce que Djoko voit de la fenetre
+    /// (`SourceVisibilite`) ; « toujours vue » par defaut : la fenetre hors ecran des tests est jugee cachee par AppKit
+    /// quand les ecrans dorment ou que le Mac est verrouille, et aucune image n'y serait calculee. Seuls les essais
+    /// d'occlusion reelle (`HorlogeFenetreTests`) la changent. A retirer par `fermer`.
     static func fenetre(_ s: Surveillance, taille: CGSize, preferences p: UserDefaults,
-                        reduire: Bool = false, sonde: SondeMaillageZigbee? = nil) throws -> (NSWindow, MoteurPieces) {
+                        reduire: Bool = false, sonde: SondeMaillageZigbee? = nil,
+                        visibilite: SourceVisibilite = .toujoursVue) throws -> (NSWindow, MoteurPieces) {
         let vue = FenetrePieces(fichierPlaces: nil, preferences: p)
         let etat = try #require(Mirror(reflecting: vue).children.first { $0.label == "_moteur" }?.value)
         let moteur = try #require(Mirror(reflecting: etat).descendant("_value") as? MoteurPieces)
@@ -56,6 +60,7 @@ struct FenetrePiecesZigbeeTests {
             .environment(SondeMaillageThread(preferences: p, actif: false))
             .environment(sonde ?? SondeMaillageZigbee(preferences: p, actif: false, trousseau: TrousseauMemoireZigbee()))
             .environment(\._accessibilityReduceMotion, reduire)
+            .environment(\.sourceVisibilite, visibilite)
             .defaultAppStorage(p))
         fenetre.setFrame(NSRect(origin: fenetre.frame.origin, size: taille), display: false)
         fenetre.orderFrontRegardless()

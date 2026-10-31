@@ -114,8 +114,14 @@ final class MoteurPieces {
     /// Mode vise : 3D ou 2D (l'envol peut etre en cours).
     var troisD: Bool
     var rotation = true
-    /// Horloge en marche : seulement pendant un mouvement, et 0,6 s apres.
+    /// Un mouvement en cours, et 0,6 s apres : l'horloge tourne, si la fenetre est vue (`horlogeEnMarche`).
     var anime = true
+    /// Ce que Djoko voit de la fenetre de la vue (`SondeVisibilite`, posee par la vue ; `regler(visibilite:)`).
+    var visibilite = VisibiliteFenetre()
+    /// La rotation lente est le seul mouvement en cours : l'horloge se contente de 30 images par seconde (`cadence`).
+    /// Observe, pour que la `TimelineView` change de cadence ; tenu a jour par `majCadence`, qui le lit sur l'etat du
+    /// moteur (non observe).
+    var rotationSeule = false
     /// Nom de la piece isolee ; nil sinon.
     var isolee: String?
     /// Ce que montre la vue, et sa provenance (polissage C, section 5) ; le fil qui le dit.
@@ -148,8 +154,12 @@ final class MoteurPieces {
     }
     /// Les protocoles dont les liens ignorent `liens` et `voisins` : ceux de la scene dont le modele ne suit pas le mode des
     /// liens (`ModeleProtocole.suitModeLiens`, Thread : ses liens radio sont toujours montres).
+    /// Calcule une fois par scene (`derivesDeLaScene`), avec ce que la projection tire de la scene seule.
     var protocolesSansMode: Set<Protocole> {
-        Set((entree?.modeles ?? []).filter { !$0.suitModeLiens }.map(\.protocole))
+        if let calcules = protocolesSansModeCalcules { return calcules }
+        let calcules = Set((entree?.modeles ?? []).filter { !$0.suitModeLiens }.map(\.protocole))
+        protocolesSansModeCalcules = calcules
+        return calcules
     }
     var ligneNiveau = LigneNiveau.lisibles
     var cibleMenu = CibleMenu.aucune
@@ -174,8 +184,19 @@ final class MoteurPieces {
     @ObservationIgnored weak var coque: Surveillance?
     /// Scene affichee, posee sur sa disposition.
     @ObservationIgnored var entree: EntreeScene? {
-        didSet { versionScene &+= 1 }
+        didSet {
+            versionScene &+= 1
+            // Ce qui ne depend que de la scene (performance, piste 3 du 25/10) est a refaire pour la nouvelle.
+            derives = nil
+            protocolesSansModeCalcules = nil
+        }
     }
+    /// Ce que la projection tire de la seule scene affichee (`DerivesScene`), calcule a la premiere image de la scene et
+    /// garde jusqu'a la suivante (`derivesDeLaScene`) ; nil : a calculer.
+    @ObservationIgnored var derives: DerivesScene?
+    /// Combien de fois `derives` a ete calcule depuis la creation du moteur (les tests).
+    @ObservationIgnored var calculsDerives = 0
+    @ObservationIgnored var protocolesSansModeCalcules: Set<Protocole>?
     /// Scene recue pendant un mouvement ou un glisser : appliquee a sa fin.
     @ObservationIgnored var attente: EntreeScene? {
         didSet { versionScene &+= 1 }
@@ -296,6 +317,8 @@ final class MoteurPieces {
     @ObservationIgnored var derniereActivite = 0.0
     @ObservationIgnored var instant: Double?
     @ObservationIgnored var dt = 0.0
+    /// Le nombre d'images dessinees depuis la creation du moteur (les tests comptent la cadence de la vue).
+    @ObservationIgnored var imagesDessinees = 0
     /// Djoko a zoome ou deplace la vue : un redimensionnement ne la recadre plus.
     @ObservationIgnored var vueTouchee = false
     @ObservationIgnored var etiquettes: [Etiquette] = []

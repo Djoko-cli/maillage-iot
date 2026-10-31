@@ -13,6 +13,7 @@ extension MoteurPieces {
         // Taille ou marges changees : la vue d'ensemble se recadre, sauf si Djoko a zoome ou isole une piece ; une
         // nouvelle zone visible recalcule la grille (polissage C, sections 3.3 et 3.5).
         taille = nouvelle
+        imagesDessinees &+= 1
         let changee = zoneVisible != zoneGrille
         zoneGrille = zoneVisible
         let now = Self.maintenant()
@@ -31,7 +32,7 @@ extension MoteurPieces {
                              voisins: voisins, protocolesSansMode: protocolesSansMode, noeudsEstompes: noeudsEstompes,
                              liensEstompes: liensEstompes, ailleursEstompes: ailleursEstompes)
         let p = SceneProjetee(scene: scene, cartes: cartes, positions: positions, geometrie: geometrie, etat: etat,
-                              orbite: orbite, cadre: cadre, poses: posesAffichees)
+                              orbite: orbite, cadre: cadre, poses: posesAffichees, derives: derivesDeLaScene(scene))
         // Le nom d'un noeud qui s'est efface s'en va avec lui : plus de noeud en fondu, plus de nom.
         etiquettes.removeAll { l in
             if case .noeud(let id) = l.genre { scene.noeud(id) == nil && !p.fantomes.contains(id) } else { false }
@@ -73,7 +74,24 @@ extension MoteurPieces {
                 Task { @MainActor [weak self] in self?.ligneNiveau = nouvelle }
             }
         }
-        if !fige && !doitContinuer(now) { endormir() }
+        if !fige {
+            if !doitContinuer(now) { endormir() }
+            // La cadence suit l'etat a chaque image (la fin d'un vol, d'un fondu, d'un glissement, de l'activite) ; hors
+            // du rendu, comme `endormir`.
+            if (rotationLente && !mouvementVisible(now)) != rotationSeule {
+                Task { @MainActor [weak self] in self?.majCadence() }
+            }
+        }
+    }
+
+    /// Ce que la projection tire de la seule scene affichee (`scene`, celle de `entree`) : calcule une fois, a la premiere
+    /// image qui la montre, et garde jusqu'a la scene suivante (`entree`, au `didSet`) ; pas a chaque image.
+    func derivesDeLaScene(_ scene: ScenePieces) -> DerivesScene {
+        if let d = derives { return d }
+        let d = DerivesScene(scene)
+        derives = d
+        calculsDerives += 1
+        return d
     }
 
     /// Les textes de l'image : ceux de la scene, et le nom des noeuds et des plateaux qui s'effacent, de la scene
@@ -334,6 +352,14 @@ extension MoteurPieces {
     // MARK: Horloge
 
     func doitContinuer(_ now: Double) -> Bool {
+        mouvementVisible(now) || rotationLente || etiquettes.contains { $0.envie > 0 }
+    }
+
+    /// Un mouvement autre que la rotation lente, qui se voit : le seul cas ou la cadence n'est pas plafonnee
+    /// (`CadenceHorloge`). L'envie d'un nom de changer de place n'en est pas un : c'est un delai (`PlacementNoms.patience`,
+    /// en secondes, que les images accumulent par leur temps, pas par leur nombre), et la rotation lente en fait naitre
+    /// sans cesse ; elle tient l'horloge (`doitContinuer`), pas la pleine cadence.
+    func mouvementVisible(_ now: Double) -> Bool {
         // Une scene qui attend la fin d'un glisser s'applique au relachement : pas d'image pour elle.
         if enMouvement || s != sCible || margesEnRoute || glissementPlateaux != nil || transition != nil
             || (attente != nil && geste == nil) {
@@ -343,10 +369,38 @@ extension MoteurPieces {
             || ek.values.contains(where: { $0 != 0 && $0 != 1 }) || focusEnRoute {
             return true
         }
-        if rotationLente { return true }
         if zoomEnAttente != 0 || rotationEnAttente != .zero || (geste != nil && bouge) { return true }
-        if now - derniereActivite < 0.6 { return true }
-        return etiquettes.contains { $0.envie > 0 }
+        return now - derniereActivite < 0.6
+    }
+
+    /// La cadence de l'horloge pour la `TimelineView` : en pause sans mouvement ou fenetre non vue, 30 images par seconde
+    /// pour la seule rotation lente, la cadence de l'ecran sinon (`CadenceHorloge`).
+    var cadence: CadenceHorloge { CadenceHorloge.decider(enMarche: horlogeEnMarche, rotationSeule: rotationSeule) }
+
+    /// La cadence que l'etat du moteur demande a l'heure `now`.
+    func cadenceVoulue(_ now: Double) -> CadenceHorloge {
+        CadenceHorloge.decider(enMarche: horlogeEnMarche, rotationSeule: rotationLente && !mouvementVisible(now))
+    }
+
+    /// Met la cadence a jour d'apres l'etat : appelee des qu'un mouvement part (`reveiller`, l'appui d'un glisser) et a
+    /// chaque image, pour que la vue passe a la pleine cadence tout de suite, et revienne a 30 images par seconde a la
+    /// fin du mouvement.
+    func majCadence(_ now: Double = MoteurPieces.maintenant()) {
+        let seule = rotationLente && !mouvementVisible(now)
+        if seule != rotationSeule { rotationSeule = seule }
+    }
+
+    /// L'horloge tourne : un mouvement en cours, dans une fenetre vue (`VisibiliteFenetre.horloge`). Fenetre fermee,
+    /// reduite ou cachee, ecrans eteints ou verrouilles : aucune image, rotation lente comprise.
+    var horlogeEnMarche: Bool { VisibiliteFenetre.horloge(anime: anime, visibilite: visibilite) }
+
+    /// La fenetre de la vue est fermee, reduite, cachee ou de nouveau vue (`SondeVisibilite`). L'horloge s'arrete ou
+    /// repart : la premiere image qui suit a un temps nul, la rotation lente reprend la ou elle en etait, sans le temps
+    /// passe hors de vue. Le mouvement en cours (`anime`) reste du : il reprend au retour.
+    func regler(visibilite v: VisibiliteFenetre) {
+        guard v != visibilite else { return }
+        if v.vue != visibilite.vue { instant = nil }
+        visibilite = v
     }
 
     /// Arrete l'horloge apres l'image (pas pendant le rendu).
@@ -360,6 +414,7 @@ extension MoteurPieces {
 
     func reveiller() {
         derniereActivite = Self.maintenant()
+        majCadence(derniereActivite)
         if !anime {
             // Pas de temps nul a la premiere image : sinon le zoom amorti ferait un bond.
             instant = nil
