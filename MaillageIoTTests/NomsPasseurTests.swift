@@ -10,29 +10,21 @@ import ProtocoleZigbee
 
 /// Faux Passeur des tests (repris de Maillage Thread) : un client TCP sur 127.0.0.1. Les tests ne lancent jamais le vrai
 /// Passeur. Il envoie des octets et ferme son
-/// cote, puis attend que l'app ferme la connexion, comme le vrai passeur ; vrai si elle l'a
-/// fermee, faux si la connexion a echoue (rien n'ecoute sur ce port).
+/// cote, puis attend que l'app ferme la connexion (au plus 5 s), comme le vrai passeur ; vrai si elle l'a
+/// fermee, faux si la connexion a echoue (rien n'ecoute sur ce port, `ConnexionLocale`).
 enum FauxPasseur {
     static func envoyer(_ octets: Data, port: UInt16) async -> Bool {
-        guard let p = NWEndpoint.Port(rawValue: port) else { return false }
-        let c = NWConnection(host: "127.0.0.1", port: p, using: .tcp)
+        guard let c = await ConnexionLocale.ouvrir(port: port) else { return false }
         let fermee = await withCheckedContinuation { (suite: CheckedContinuation<Bool, Never>) in
             let reprise = Reprise(suite)
-            c.stateUpdateHandler = { etat in
-                switch etat {
-                case .ready:
-                    c.send(content: octets, contentContext: .finalMessage, isComplete: true,
-                           completion: .contentProcessed { erreur in
-                        guard erreur == nil else { return reprise.reprendre(false) }
-                        c.receive(minimumIncompleteLength: 1, maximumLength: 1) { _, _, fin, e in
-                            reprise.reprendre(fin || e != nil)
-                        }
-                    })
-                case .waiting, .failed: reprise.reprendre(false)
-                default: break
+            DispatchQueue.global().asyncAfter(deadline: .now() + 5) { reprise.reprendre(false) }
+            c.send(content: octets, contentContext: .finalMessage, isComplete: true,
+                   completion: .contentProcessed { erreur in
+                guard erreur == nil else { return reprise.reprendre(false) }
+                c.receive(minimumIncompleteLength: 1, maximumLength: 1) { _, _, fin, e in
+                    reprise.reprendre(fin || e != nil)
                 }
-            }
-            c.start(queue: .global())
+            })
         }
         c.cancel()
         return fermee
@@ -186,7 +178,7 @@ struct NomsPasseurTests {
         let n = NomsPasseur(cache: cache, attentes: attentes, lanceur: Self.lanceur(lancements))
         n.demarrer()
         let cible = try #require(await Self.cible(lancements))
-        let d = try #require(FauxDemon(port: cible.port))
+        let d = try #require(await FauxDemon.connecter(port: cible.port))
         #expect(await d.jeton(cible.jeton))
         #expect(await attendreQue { n.connecte })
         return (n, d, lancements, cache)
@@ -385,7 +377,7 @@ struct NomsPasseurTests {
                             lanceur: Self.lanceur(lancements))
         n.demarrer()
         let cible = try #require(await Self.cible(lancements))
-        let d = try #require(FauxDemon(port: cible.port))
+        let d = try #require(await FauxDemon.connecter(port: cible.port))
         #expect(await d.jeton(cible.jeton))
         #expect(await attendreQue { n.connecte })
         n.relire()

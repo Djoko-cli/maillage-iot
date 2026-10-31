@@ -730,6 +730,3 @@ D'après l'inventaire des formats (`.superpowers/fusion/inventaire-phase-4.md`),
   l'ouverture de session », macOS montre « Élément d'arrière-plan ajouté », puis fermeture et réouverture de session : le
   démon doit tourner. Jamais fait jusqu'au bout (Réglages › Maison affichait « connecté »). À faire au prochain
   redémarrage du Mac, avec le démon 2.1 installé le 18/10.
-- **L'app réelle gêne la suite de tests** (constat du 19/10) : `NomsPasseurTests.abonnementEtReleves` dépasse ses 60 s
-  quand Maillage IoT tourne sur le Mac pendant `outils/tester.sh` (verte app fermée). Isoler le faux démon du test du vrai
-  (port, schéma ou nom de service), ou faire refuser la porte tant que l'app tourne.

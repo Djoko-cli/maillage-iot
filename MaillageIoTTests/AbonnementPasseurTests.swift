@@ -12,10 +12,14 @@ final class FauxDemon: Sendable {
     private let lecture = Mutex(EnvoiPasseur.LectureTrames())
     private let recus = Mutex<[MessagePasseur]>([])
 
-    init?(port: UInt16) {
-        guard let p = NWEndpoint.Port(rawValue: port) else { return nil }
-        connexion = NWConnection(host: "127.0.0.1", port: p, using: .tcp)
-        connexion.start(queue: .global())
+    /// Connecte au port de l'app (`ConnexionLocale`) ; nil si personne n'ecoute.
+    static func connecter(port: UInt16) async -> FauxDemon? {
+        guard let c = await ConnexionLocale.ouvrir(port: port) else { return nil }
+        return FauxDemon(c)
+    }
+
+    private init(_ connexion: NWConnection) {
+        self.connexion = connexion
         lire()
     }
 
@@ -84,7 +88,7 @@ struct AbonnementPasseurTests {
         a.ouvrir { e.liste.append($0) }
         #expect(await attendreQue { e.port != nil })
         let port = try #require(e.port)
-        let d = try #require(FauxDemon(port: port))
+        let d = try #require(await FauxDemon.connecter(port: port))
         return (a, e, d)
     }
 
