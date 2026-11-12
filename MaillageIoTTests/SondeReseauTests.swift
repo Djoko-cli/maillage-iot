@@ -589,7 +589,9 @@ struct SondeReseauTests {
         let (p, domaine) = try SondeMaillageTests.preferences()
         defer { p.removePersistentDomain(forName: domaine) }
         let t = try Self.prete(p, liaison: .reseau)
-        let horloge = HorlogeFactice(Date(timeIntervalSince1970: 1_790_000_000))
+        // Ancree sur maintenant : la perte, 60 s plus tard, tombe a l'heure reelle, que DernierePerteSonde lit pour dire
+        // depuis quand (« il y a… »). Avec une date fixe, ce texte vieillissait avec le calendrier.
+        let horloge = HorlogeFactice(Date(timeIntervalSinceNow: -60))
         let premiere = Self.sonde()
         let reseau = ReseauFactice([.success(premiere), .failure(ErreurReseau.aucunDefi), .success(Self.sonde())])
         let s = SondeMaillageThread(preferences: p, actif: true, ouvrirCanal: { _ in Self.sonde() }, trousseau: t,
