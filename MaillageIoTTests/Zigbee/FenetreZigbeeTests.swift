@@ -18,15 +18,20 @@ struct FenetreZigbeeTests {
     }
 
     /// La capsule de la tournee garde la meme largeur a chaque etape (celle de la plus longue,
-    /// compteur et duree compris) : elle ne change pas de taille a chaque pas.
+    /// compteur et duree compris) : elle ne change pas de taille a chaque pas. Deux debuts : une
+    /// tournee qui commence (0:42), et une tournee de deux heures (2:00:00) qui, avec un compteur a
+    /// trois chiffres (160/160), met la ligne au bord de son gabarit. De 1 h a 9 h 59, le chrono
+    /// garde ses cinq chiffres : ce cas ne bouge pas pendant le test.
     @Test func capsuleDeLargeurFixe() {
-        let debut = Date(timeIntervalSinceNow: -42)
+        let debuts = [Date(timeIntervalSinceNow: -42), Date(timeIntervalSinceNow: -2 * 3600)]
         let avancements = AvancementTourneeZigbee.Etape.allCases.flatMap { e in
             [AvancementTourneeZigbee(etape: e, fait: 0, total: 0), AvancementTourneeZigbee(etape: e, fait: 3, total: 7),
              AvancementTourneeZigbee(etape: e, fait: 24, total: 48), AvancementTourneeZigbee(etape: e, fait: 160, total: 160)]
         }
-        let largeurs = avancements.map {
-            NSHostingView(rootView: IndicateurTourneeZigbee(avancement: $0, debut: debut)).fittingSize.width
+        let largeurs = debuts.flatMap { debut in
+            avancements.map {
+                NSHostingView(rootView: IndicateurTourneeZigbee(avancement: $0, debut: debut)).fittingSize.width
+            }
         }
         #expect(Set(largeurs).count == 1, "\(largeurs)")
     }
