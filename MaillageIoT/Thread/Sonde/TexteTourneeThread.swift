@@ -28,10 +28,10 @@ enum TexteTourneeThread {
         String(localized: "\(avancement(a)) · \(TexteTournee.chrono(maintenant.timeIntervalSince(debut)))")
     }
 
-    /// Texte le plus large de la barre pour une etape (compteur a trois chiffres, duree de
-    /// 99:59), invisible : il donne sa largeur fixe a la capsule de la tournee.
+    /// Texte le plus large de la barre pour une etape (compteur a trois chiffres, duree de moins
+    /// de 10 h : 9:59:59), invisible : il donne sa largeur fixe a la capsule de la tournee.
     static func gabaritBarre(_ e: AvancementTournee.Etape) -> String {
-        String(localized: "\(avancement(AvancementTournee(etape: e, fait: 888, total: 888))) · \(TexteTournee.chrono(99 * 60 + 59))")
+        String(localized: "\(avancement(AvancementTournee(etape: e, fait: 888, total: 888))) · \(TexteTournee.chrono(9 * 3600 + 59 * 60 + 59))")
     }
 
     /// Reglages › Sonde : « Resolution des parents · 12/26 · depuis 42 s ».
