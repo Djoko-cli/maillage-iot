@@ -47,13 +47,16 @@ struct FenetreTests {
     /// tournee) ; rien sans sonde. Le gabarit que compte la marge a la taille de la ligne montree.
     @Test func placeDeLaTournee() {
         let a = AvancementTournee(etape: .resolution, fait: 24, total: 48)
-        let debut = Date(timeIntervalSince1970: 1_790_000_000)
+        // Un debut recent, comme en tournee : la ligne montre la duree ecoulee depuis son debut, a l'heure reelle (sa
+        // TimelineView lit l'horloge). Avec un debut fixe, cette duree grandissait avec le calendrier : passee a
+        // 1000 h (02/11/2026), la ligne a depasse le gabarit de 4 pt en largeur, sans aucun changement du code.
+        let debut = Date(timeIntervalSinceNow: -42)
         #expect(LigneTournee.place(serie: "A0:00:00:00:00:01", debut: debut) == .montree)
         #expect(LigneTournee.place(serie: "A0:00:00:00:00:01", debut: nil) == .comptee)
         #expect(LigneTournee.place(serie: nil, debut: nil) == .aucune)
         let tournee = NSHostingView(rootView: IndicateurTournee(avancement: a, debut: debut)).fittingSize
         let place = NSHostingView(rootView: LigneTournee.gabarit).fittingSize
-        #expect(place == tournee)
+        #expect(place == tournee, "gabarit \(place), ligne \(tournee)")
     }
 
     /// Pendant une tournee, la capsule du reseau garde sa largeur : le bouton rafraichir ne bouge
