@@ -505,6 +505,9 @@ plans d'une même phase). L'ancienne « étape 2 bis », la découpe des deux `S
 - [x] Phase 9 : le journal nomme la pièce de l'appareil en français naturel (décisions du 20/10)
 - [x] Phase 10 : une pièce dans plusieurs zones de Maison va dans la plus précise, et se range au clic droit (décisions du 20/10)
 - [x] Phase 11 : une transition en un seul mouvement quand une pièce change de plateau, et les autres étages gardent leur place après un choix fait dans la vue (banc et décisions du 21/10)
+- [ ] Phase 12 : appareils ESPHome sur Thread, contrôleur de Home Assistant nommé (conception du 12/11 : `2026-11-12-home-assistant-design.md`)
+- [ ] Phase 13 : connexion à Home Assistant et relevé de son registre (même conception)
+- [ ] Phase 14 : noms, pièces et étages au choix entre Maison et Home Assistant (même conception)
 
 ### 6.2 Les tests
 
